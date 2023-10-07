@@ -9,6 +9,17 @@ interface ChainableFunction {
 }
 
 export interface Paint extends ChainableFunction {
+  web(color: string): Paint
+
+  readonly number: Paint
+  readonly n: Paint
+
+  readonly boolean: Paint
+  readonly b: Paint
+
+  readonly string: Paint
+  readonly s: Paint
+
   /*
   @example
   ```

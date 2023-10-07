@@ -85,6 +85,15 @@ const ANSI_STYLES = [
   `bgWhiteBright`,
 ]
 
+const CONSOLE_STYLES = [
+  { name: `number`, hex: `#00008b` },
+  { name: `n`, hex: `#00008b` },
+  { name: `boolean`, letter: `b`, hex: `#006400` },
+  { name: `v`, hex: `#006400` },
+  { name: `string`, hex: `#AA1111` },
+  { name: `s`, hex: `#AA1111` },
+]
+
 // Build a prototype with all chainable functions
 const chainingGetters = Object.create(null)
 
@@ -108,6 +117,28 @@ chainingGetters[`hex`] = {
       return chainableFunction
     }
   },
+}
+
+chainingGetters[`web`] = {
+  get() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    return function (color: string) {
+      const chainableFunction = chainableFunctionFactory(self, `web:${color}`)
+      Object.defineProperty(self, `web`, { value: chainableFunction })
+      return chainableFunction
+    }
+  },
+}
+
+for (const style of CONSOLE_STYLES) {
+  chainingGetters[style.name] = {
+    get() {
+      const chainableFunction = chainableFunctionFactory(this, `ansi:hex:${style.hex}`)
+      Object.defineProperty(this, style.name, { value: chainableFunction })
+      return chainableFunction
+    },
+  }
 }
 
 const chainingPrototype = Object.defineProperties(() => {}, chainingGetters)

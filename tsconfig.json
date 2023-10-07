@@ -26,7 +26,13 @@
       "@december/utils": ["./packages/utils/src"],
       "@december/utils/*": ["./packages/utils/src/*"],
       "@december/logger": ["./packages/logger/src"],
-      "@december/logger/*": ["./packages/logger/src/*"]
+      "@december/logger/*": ["./packages/logger/src/*"],
+      "@december/foundry": ["./packages/foundry/src"],
+      "@december/foundry/*": ["./packages/foundry/src/*"],
+      "@december/december": ["./apps/december/src"],
+      "@december/december/*": ["./apps/december/src/*"],
+      "@december/mobile": ["./apps/mobile/src"],
+      "@december/mobile/*": ["./apps/mobile/src/*"]
     }
   },
   "exclude": ["node_modules"],

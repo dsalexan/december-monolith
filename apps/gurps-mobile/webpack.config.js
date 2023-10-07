@@ -69,6 +69,7 @@ module.exports = _env => {
     resolve: {
       extensions: [`.wasm`, `.mjs`, `.ts`, `.tsx`, `.js`, `.jsx`, `.json`],
       alias: {
+        lodash: `lodash-es`,
         // config: path.resolve(DIRECTORY, `./config`),
         // december: path.resolve(DIRECTORY, `./src/december`),
         // utils: path.resolve(DIRECTORY, `./src/december/utils`),
@@ -77,6 +78,9 @@ module.exports = _env => {
         // logger: path.resolve(DIRECTORY, `./src/gurps-mobile/logger`),
         "@december/utils": path.join(DIRECTORY, `packages/utils/src`),
         "@december/logger": path.join(DIRECTORY, `packages/logger/src`),
+        "@december/foundry": path.join(DIRECTORY, `packages/foundry/src`),
+        "@december/december": path.join(DIRECTORY, `apps/december/src`),
+        "@december/mobile": path.join(DIRECTORY, `apps/mobile/src`),
       },
     },
     output: {
@@ -219,13 +223,14 @@ module.exports = _env => {
             { search: /__WEBPACK__MODULE_ID__/g, replace: config.MODULE_ID },
             { search: /__WEBPACK__MODULE_NAME__/g, replace: config.MODULE_NAME },
             { search: /__WEBPACK__MODULE_VERSION__/g, replace: config.VERSION },
-            { search: /"?__WEBPACK__BUNDLE_FILES__"?,?/, replace: `` },
+            { search: /"?__WEBPACK__BUNDLE_FILES__"?,?/, replace: [`js/lodash.bundle.js`].map(path => `"${path}"`).join(`,\n`) },
           ].filter(Boolean),
         },
       ]),
       isProduction && new VisualizerPlugin(),
     ].filter(Boolean),
     optimization: {
+      // chunks: `async`,
       minimize: false,
       // runtimeChunk: `single`,
       // Ensure `react-refresh/runtime` is hoisted and shared
@@ -252,7 +257,7 @@ module.exports = _env => {
           },
           lodash: {
             chunks: `all`,
-            test: /[\\/]node_modules[\\/](lodash)[\\/]/,
+            test: /[\\/]node_modules[\\/](lodash|lodash-es)[\\/]/,
             name: `lodash`,
             minSize: 1,
             filename: `js/[name].bundle.js`,

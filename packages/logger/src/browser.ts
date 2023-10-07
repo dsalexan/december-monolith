@@ -2,6 +2,7 @@ import ILogger from "./interface"
 import { LEVEL_COLOR, LEVEL_COLOR_BROWSER, LEVEL_PRIORITY, LOG_LEVELS, LogLevel } from "./level"
 import Builder, { BuilderOptions } from "./builder"
 import { formatTimestamp } from "./utils"
+import { set } from "lodash"
 
 export default class BrowserLogger implements ILogger {
   name: string
@@ -37,11 +38,21 @@ export default class BrowserLogger implements ILogger {
     // const prefixText = [`[${formattedTimestamp}]`, `[${this.name}]`, `${level.toLocaleUpperCase()}`]
     // const prefixStyles = [`color: gray`, ``, `color: ${LEVEL_COLOR[level]}`]
 
+    // FIXME: Structure this max name auto padder better, so far it is working ok
+    // @ts-ignore
+    if (window.__DECEMBER_LOGGER?.MAX_NAME_LENGTH === undefined) set(window, `__DECEMBER_LOGGER.MAX_NAME_LENGTH`, 0)
+
+    // @ts-ignore
+    if (this.name.length > window.__DECEMBER_LOGGER.MAX_NAME_LENGTH) set(window, `__DECEMBER_LOGGER.MAX_NAME_LENGTH`, this.name.length)
+
+    // @ts-ignore
+    const namePadding = window.__DECEMBER_LOGGER.MAX_NAME_LENGTH
+
     const levelColor = LEVEL_COLOR_BROWSER[level]
 
-    const namePadding = Math.max(...LOG_LEVELS.map(level => level.length))
+    const levelPadding = Math.max(...LOG_LEVELS.map(level => level.length))
 
-    const prefixText = [`[${this.name}]`, `${level.toLocaleUpperCase().padEnd(namePadding + 0)}`]
+    const prefixText = [`[${this.name}] `.padEnd(namePadding + 3), `${level.toLocaleUpperCase().padEnd(levelPadding + 0)} `]
     const prefixStyles = [`color: darkgray;`, `font-weight: bold; color: ${levelColor}`]
 
     return { text: prefixText, style: prefixStyles }
@@ -52,18 +63,14 @@ export default class BrowserLogger implements ILogger {
   }
 
   logWithStyles(level: LogLevel, texts: string[], styles: string[]) {
-    const consoleLevel = ({
-      data: `debug`, // replacing http for npm
-      verbose: `debug`,
-      silly: `debug`,
-    }[level as string] ?? level) as `error` | `warn` | `info` | `debug`
+    const consoleLevel = this._level(level)
 
     const prefix = this._prefix(level)
 
     const _text = [...prefix.text, ...texts]
     const _styles = [...prefix.style, ...styles]
 
-    const pText = _text.map(text => `%c${text}`).join(` `)
+    const pText = _text.map(text => `%c${text}`).join(``)
 
     let logTab = [`%c`, ``]
     if (consoleLevel !== `error` && consoleLevel !== `warn`) {
@@ -71,5 +78,14 @@ export default class BrowserLogger implements ILogger {
     }
 
     console[consoleLevel](logTab[0] + pText, ...[logTab[1], ..._styles])
+  }
+
+  logObjects(level: LogLevel, objects: any[]) {
+    const consoleLevel = this._level(level)
+
+    const { text: prefix } = this._prefix(level)
+    const _prefix = prefix.join(``)
+
+    console[consoleLevel](` `, _prefix.slice(0, -2), ...objects)
   }
 }

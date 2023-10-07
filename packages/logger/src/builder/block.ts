@@ -1,6 +1,7 @@
 import chalk from "chalk"
 import { parseCSS } from "./css"
 import { removeANSI } from "../utils"
+import { isBoolean, isNil, isNumber, isString } from "lodash"
 
 export const DURATION_BLOCK = Symbol.for(`__CHURCHILL_DURATION_BLOCK`)
 
@@ -34,6 +35,11 @@ export default class Block {
   }
 
   _buildForBrowser(options: Partial<BlockBuildOptions> = {}) {
+    let type = `unknown`
+    if (isString(this._data) || isNumber(this._data) || isBoolean(this._data) || isNil(this._data)) type = `primitive`
+
+    if (type === `unknown`) return { data: this._data }
+
     let text = String(this._data)
 
     if (!options.ignoreStyle) {

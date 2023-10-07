@@ -5,6 +5,7 @@ import { LogLevel } from "../level"
 import Block, { DURATION_BLOCK } from "./block"
 import Profiler from "./profiler"
 import { isNil, isNilOrEmpty, isString } from "../utils"
+import { isBoolean, isNumber } from "lodash"
 
 export type BuilderOptions = {
   isBrowser: boolean
@@ -53,8 +54,8 @@ export default class Builder {
       colorize: options.colorize ?? true,
       separator: options.separator ?? ` `,
       tab: {
-        size: options.tab?.size ?? 2,
-        character: options.tab?.character ?? ` `,
+        size: options.tab?.size ?? 0,
+        character: options.tab?.character ?? `  `,
       },
     }
   }
@@ -120,6 +121,10 @@ export default class Builder {
     this.add(character.repeat(length))
 
     return this
+  }
+
+  get t() {
+    return this.space(1, this.options.tab.character)
   }
 
   // #endregion
@@ -191,18 +196,21 @@ export default class Builder {
   buildForBrowser() {
     const blocks = this.postProcessedBlocks()
 
+    const objects = [] as any[]
     const string = [] as string[]
     const css = [] as string[]
     for (const block of blocks) {
-      const { text, style } = block._buildForBrowser({ ignoreStyle: !this.options.colorize, noTimestamp: this.options.noTimestamp })
+      const { data, text, style } = block._buildForBrowser({ ignoreStyle: !this.options.colorize, noTimestamp: this.options.noTimestamp })
+
+      if (data) objects.push(data)
 
       if (isNilOrEmpty(text) && isNilOrEmpty(style)) continue
 
-      string.push(text)
+      string.push(text as string)
       css.push(style ?? ``)
     }
 
-    return [string, css]
+    return [string, css, objects]
   }
 
   buildForTerminal() {
@@ -218,12 +226,21 @@ export default class Builder {
   log(level: LogLevel): this {
     this.lastTimestamp = Date.now()
 
+    const tab = this.options.tab.size === 0 ? `` : this.options.tab.character.repeat(this.options.tab.size)
+
     if (this.options.isBrowser) {
-      const [message, style] = this.buildForBrowser()
+      const [message, style, objects] = this.buildForBrowser()
+
+      message.splice(0, 0, tab)
+      style.splice(0, 0, ``)
 
       this.logger.logWithStyles(level, message, style)
+
+      if (objects.length > 0) this.logger.logObjects(level, objects)
     } else {
-      const message = this.buildForTerminal()
+      let message = this.buildForTerminal()
+
+      message = `${tab}${message}`
 
       this.logger.log(level, message)
     }

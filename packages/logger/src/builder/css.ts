@@ -5,6 +5,11 @@ export function parseCSS(style: string) {
     return _ansi(style.slice(5))
   }
 
+  if (style.startsWith(`web:`)) {
+    const color = style.slice(4)
+    return `color: ${color}`
+  }
+
   debugger
   throw new Error(`Unknown CSS style: ${style}`)
 }
@@ -19,7 +24,7 @@ function _ansi(style: string) {
     if (style === `strikethrough`) return `text-decoration: line-through`
   }
 
-  if (style.startsWith(`hex:`)) return `color: ${style.slice(4)}}`
+  if (style.startsWith(`hex:`)) return `color: ${style.slice(4)}`
 
   if (style === `dim`) debugger // TODO: How to deal with dim?
 

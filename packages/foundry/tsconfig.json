@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["."],
+  "exclude": ["./dist", "dist", "build", "node_modules", "webpack.config.js", "gulpfile.mjs"],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "commonjs",
+    "typeRoots": ["../../node_modules/@league-of-foundry-developers"],
+    "types": ["foundry-vtt-types/index-lenient.d.ts"],                                      
+  }
+}
