@@ -1,0 +1,2530 @@
+2    equipment    ''Barnstormer'' Biplane    
+11    attributes    --------------------    
+20    equipment    2 1/2-Ton Truck    
+29    advantages    360° Vision    
+38    advantages    3D Spatial Sense    
+47    skills    _Combat Art    
+56    skills    _Combat Sport    
+65    advantages    _New Advantage    
+74    advantages    _New Alternative Attacks    
+83    equipment    _New Armor    
+92    equipment    _New Beam Weapon    
+101    disadvantages    _New Disadvantage    
+110    equipment    _New Equipment    
+119    features    _New Feature    
+128    equipment    _New Firearm    
+137    advantages    _New Leveled Advantage    
+146    equipment    _New Melee Innate Attack    
+155    equipment    _New Melee Weapon    
+164    templates    _New Meta-Trait    
+173    equipment    _New Muscle-Powered Ranged Weapon    
+182    advantages    _New Parent Item    
+191    disadvantages    _New Parent Item    
+200    skills    _New Parent Item    
+209    spells    _New Parent Item    
+218    equipment    _New Parent Item    
+227    skills    _New Parent Technique    
+236    perks    _New Perk    
+245    quirks    _New Quirk    
+254    templates    _New Racial Template    
+263    equipment    _New Ranged Innate Attack    
+272    skills    _New Skill    
+281    spells    _New Spell    
+290    spells    _New Spell    Clerical
+299    spells    _New Spell    Ritual
+308    advantages    _New Talent    
+317    skills    _New Technique    %Skill%
+326    skills    _New Technique    [skill]
+335    skills    _New Wildcard Skill    
+344    quirks    _Unused Quirk 1    
+353    quirks    _Unused Quirk 2    
+362    quirks    _Unused Quirk 3    
+371    quirks    _Unused Quirk 4    
+380    quirks    _Unused Quirk 5    
+389    disadvantages    Absent-Mindedness    
+398    advantages    Absolute Direction    
+407    advantages    Absolute Timing    
+416    quirks    Acceleration Weakness    
+425    perks    Accessory    
+434    skills    Accounting    
+443    spells    Accuracy    
+452    spells    Accuracy    Clerical
+461    spells    Accuracy    Ritual
+470    skills    Acrobatics    
+479    skills    Acting    
+488    advantages    Acute [sense]    
+497    advantages    Acute Hearing    
+506    advantages    Acute Taste and Smell    
+515    advantages    Acute Touch    
+524    advantages    Acute Vision    
+533    disadvantages    Addiction    [Physiological]
+542    disadvantages    Addiction    [Psychological]
+551    disadvantages    Addiction    Heroin
+560    disadvantages    Addiction    Tobacco
+569    skills    Administration    
+578    advantages    Administrative Rank    
+587    skills    Aerobatics    
+596    advantages    Affliction    
+605    templates    AI    
+614    equipment    Air Car    
+623    skills    Air College!    
+632    attributes    Air Move    
+641    skills    Airshipman    
+650    skills    Alchemy    
+659    quirks    Alcohol Intolerance    
+668    perks    Alcohol Tolerance    
+677    disadvantages    Alcoholism    
+686    advantages    Ally    
+695    advantages    Altered Time Rate    
+704    advantages    Alternate Form    
+713    advantages    Alternate Form    Cosmetic
+722    advantages    Alternate Identity    
+731    advantages    Ambidexterity    
+740    disadvantages    Amnesia    Partial
+749    disadvantages    Amnesia    Total
+758    advantages    Amphibious    
+767    spells    Analyze Magic    
+776    spells    Analyze Magic    Clerical
+785    spells    Analyze Magic    Ritual
+794    advantages    Animal Empathy    
+803    advantages    Animal Friend    
+812    skills    Animal Handling    
+821    skills    Animal Handling    Big Cats
+830    skills    Animal Handling    Dogs
+839    skills    Animal Handling    Equines
+848    skills    Animal Handling    Raptors
+857    skills    Anthropology    
+866    equipment    Antibiotic    
+875    equipment    Antitoxin Kit    
+884    equipment    APC    
+893    attributes    Appealing    
+902    advantages    Appearance    
+911    disadvantages    Appearance    
+920    spells    Apportation    
+929    spells    Apportation    Clerical
+938    spells    Apportation    Ritual
+947    skills    Aquabatics    
+956    skills    Archaeology    
+965    skills    Architecture    
+974    skills    Area Knowledge    [Area]
+983    advantages    Arm DX    
+992    skills    Arm Lock    Judo
+1001    skills    Arm Lock    Wrestling
+1010    advantages    Arm ST    
+1019    spells    Armor    
+1028    spells    Armor    Clerical
+1037    spells    Armor    Ritual
+1046    skills    Armoury    Battlesuits
+1055    skills    Armoury    Body Armor
+1064    skills    Armoury    Force Shields
+1073    skills    Armoury    Heavy Weapons
+1082    skills    Armoury    Melee Weapons
+1091    skills    Armoury    Missile Weapons
+1100    skills    Armoury    Small Arms
+1109    skills    Armoury    Vehicular Armor
+1118    equipment    Arrow    
+1127    advantages    Artificer    
+1136    skills    Artillery    Beams
+1145    skills    Artillery    Bombs
+1154    skills    Artillery    Cannon
+1163    skills    Artillery    Catapult
+1172    skills    Artillery    Guided Missile
+1181    skills    Artillery    Torpedoes
+1190    skills    Artist    
+1199    skills    Artist    Body Art
+1208    skills    Artist    Calligraphy
+1217    skills    Artist    Drawing
+1226    skills    Artist    Illumination
+1235    skills    Artist    Illusion
+1244    skills    Artist    Interior Decorating
+1253    skills    Artist    Painting
+1262    skills    Artist    Pottery
+1271    skills    Artist    Scene Design
+1280    skills    Artist    Sculpting
+1289    skills    Artist    Woodworking
+1298    equipment    Assault Boots    TL 9
+1307    equipment    Assault Boots    TL10
+1316    equipment    Assault Boots    TL11
+1325    equipment    Assault Boots    TL12
+1334    equipment    Assault Carbine, 5.56mm    
+1343    equipment    Assault Carbine, 5.56mm    Ammunition
+1352    equipment    Assault Carbine, 5.56mm, Civilian    
+1361    equipment    Assault Rifle, 5.56mm    
+1370    equipment    Assault Rifle, 5.56mm    Ammunition
+1379    equipment    Assault Rifle, 5.56mm, Civilian    
+1388    equipment    Assault Rifle, 7.62mmS    
+1397    equipment    Assault Rifle, 7.62mmS    Ammunition
+1406    equipment    Assault Rifle, 7.62mmS, Civilian    
+1415    templates    Astral Entity    
+1424    skills    Astronomy    
+1433    skills    Astronomy    Observational
+1442    equipment    ATGM, 115mm    
+1451    equipment    ATGM, 115mm    Ammunition
+1460    equipment    Atlatl    
+1469    equipment    Atlatl Dart    
+1478    quirks    Attentive    
+1487    spells    Aura    
+1496    spells    Aura    Clerical
+1505    spells    Aura    Ritual
+1514    equipment    Auto Pistol, .40    
+1523    equipment    Auto Pistol, .40    Ammunition
+1532    equipment    Auto Pistol, .44M    
+1541    equipment    Auto Pistol, .44M    Ammunition
+1550    equipment    Auto Pistol, .45    
+1559    equipment    Auto Pistol, .45    Ammunition
+1568    equipment    Auto Pistol, 9mm    TL 6
+1577    equipment    Auto Pistol, 9mm    TL 6, Ammunition
+1586    equipment    Auto Pistol, 9mm    TL 7
+1595    equipment    Auto Pistol, 9mm    TL 7, Ammunition
+1604    equipment    Auto Pistol, 9mm    TL 9
+1613    equipment    Auto Pistol, 9mm    TL 9, Ammunition
+1622    equipment    Auto Rifle, 7.62mm    
+1631    equipment    Auto Rifle, 7.62mm    Ammunition
+1640    equipment    Auto Shotgun, 12G    
+1649    equipment    Auto Shotgun, 12G    Ammunition
+1658    skills    Autohypnosis    
+1667    templates    Automaton    
+1676    perks    Autotrance    
+1685    spells    Awaken    
+1694    spells    Awaken    Clerical
+1703    spells    Awaken    Ritual
+1712    equipment    Axe    
+1721    skills    Axe/Mace    
+1730    skills    Axe/Mace Art    
+1739    skills    Axe/Mace Sport    
+1748    skills    Back Kick    Karate
+1757    equipment    Backpack, Frame    
+1766    equipment    Backpack, Small    
+1775    disadvantages    Bad Back    
+1784    disadvantages    Bad Grip    
+1793    disadvantages    Bad Sight    Farsighted
+1802    disadvantages    Bad Sight    Nearsighted
+1811    disadvantages    Bad Smell    
+1820    disadvantages    Bad Temper    
+1829    equipment    Balance & Weights    
+1838    equipment    Ballistic Gloves    TL 9
+1847    equipment    Ballistic Gloves    TL10
+1856    equipment    Ballistic Gloves    TL11
+1865    equipment    Ballistic Gloves    TL12
+1874    equipment    Ballistic Helmet    TL 8
+1883    equipment    Ballistic Helmet    TL 9
+1892    equipment    Ballistic Helmet    TL10
+1901    equipment    Ballistic Helmet    TL11
+1910    equipment    Ballistic Helmet    TL12
+1919    equipment    Ballistic Helmet Visor    TL 8
+1928    equipment    Ballistic Helmet Visor    TL 9
+1937    equipment    Ballistic Helmet Visor    TL10
+1946    equipment    Ballistic Helmet Visor    TL11
+1955    equipment    Ballistic Helmet Visor    TL12
+1964    equipment    Ballistic Suit    TL 9
+1973    equipment    Ballistic Suit    TL10
+1982    equipment    Ballistic Suit    TL11
+1991    equipment    Ballistic Suit    TL12
+2000    equipment    Ballistic Vest    TL 8
+2009    equipment    Ballistic Vest    TL 9
+2018    equipment    Ballistic Vest    TL10
+2027    equipment    Ballistic Vest    TL11
+2036    equipment    Ballistic Vest    TL12
+2045    equipment    Bandages    
+2054    spells    Banish    
+2063    spells    Banish    Clerical
+2072    spells    Banish    Ritual
+2081    advantages    Bardic Immunity    
+2090    equipment    Barrel Helm    
+2099    attributes    Basic Air Move    
+2108    attributes    Basic Brachiation Move    
+2117    attributes    Basic Ground Move    
+2126    attributes    Basic Lift    
+2135    attributes    Basic Move    
+2144    attributes    Basic Space Move    
+2153    attributes    Basic Speed    
+2162    attributes    Basic Water Move    
+2171    equipment    Bastard Sword    
+2180    equipment    Baton    
+2189    equipment    Batteries    
+2198    equipment    Battle Rifle, 7.62mm    
+2207    equipment    Battle Rifle, 7.62mm    Ammunition
+2216    equipment    Battle Rifle, 7.62mm, Civilian    
+2225    skills    Battlesuit    
+2234    equipment    Battlesuit    TL 9
+2243    equipment    Battlesuit    TL10
+2252    equipment    Battlesuit    TL11
+2261    equipment    Battlesuit    TL12
+2270    equipment    Battlesuit Helmet    TL 9
+2279    equipment    Battlesuit Helmet    TL10
+2288    equipment    Battlesuit Helmet    TL11
+2297    equipment    Battlesuit Helmet    TL12
+2306    equipment    Bazooka, 60mm    
+2315    equipment    Bazooka, 60mm    Ammunition
+2324    skills    Beam Weapons    Pistol
+2333    skills    Beam Weapons    Projector
+2342    skills    Beam Weapons    Rifle
+2351    disadvantages    Berserk    
+2360    disadvantages    Bestial    
+2369    skills    Bicycling    
+2378    advantages    Binding    
+2387    equipment    Binoculars    
+2396    skills    Bioengineering    Cloning
+2405    skills    Bioengineering    Genetic Engineering
+2414    skills    Bioengineering    Tissue Engineering
+2423    skills    Biology    Earthlike
+2432    skills    Biology    Gas Giants
+2441    skills    Biology    Hostile Terrestrial
+2450    skills    Biology    Ice Dwarfs
+2459    skills    Biology    Ice Worlds
+2468    skills    Biology    Rock Worlds
+2477    equipment    Bit & Bridle    
+2486    attributes    Bite    
+2495    equipment    Black Powder Grenade    
+2504    equipment    Blackjack    
+2513    equipment    Blanket    
+2522    equipment    Blaster Pistol    
+2531    equipment    Blaster Pistol    Ammunition
+2540    equipment    Blaster Rifle    
+2549    equipment    Blaster Rifle    Ammunition
+2558    advantages    Blessed    
+2567    advantages    Blessed    Heroic Feat; [Attribute]
+2576    advantages    Blessed    Very Blessed
+2585    equipment    Blimp    
+2594    skills    Blind Fighting    
+2603    disadvantages    Blindness    
+2612    attributes    Block    
+2621    disadvantages    Bloodlust    
+2630    skills    Blowpipe    
+2639    equipment    Blowpipe    
+2648    equipment    Blowpipe Dart    
+2657    equipment    Blunderbuss, 8G    
+2666    equipment    Blunderbuss, 8G    Ammunition
+2675    spells    Blur    
+2684    spells    Blur    Clerical
+2693    spells    Blur    Ritual
+2702    skills    Boating    Large Powerboat
+2711    skills    Boating    Motorboat
+2720    skills    Boating    Sailboat
+2729    skills    Boating    Unpowered
+2738    skills    Body Control    
+2747    skills    Body Control College!    
+2756    skills    Body Language    
+2765    templates    Body of Air    
+2774    templates    Body of Earth    
+2783    templates    Body of Fire    
+2792    templates    Body of Ice    
+2801    templates    Body of Metal    
+2810    templates    Body of Stone    
+2819    templates    Body of Water    
+2828    skills    Body Sense    
+2837    skills    Bolas    
+2846    equipment    Bolas    
+2855    skills    Bolas Art    
+2864    skills    Bolas Sport    
+2873    equipment    Bolt-Action Rifle, 7.62mm    
+2882    equipment    Bolt-Action Rifle, 7.62mm    Ammunition
+2891    equipment    Boots    
+2900    equipment    Bottle, Ceramic    
+2909    skills    Bow    
+2918    skills    Bow Art    
+2927    skills    Bow Sport    
+2936    quirks    Bowlegged    
+2945    skills    Boxing    
+2954    skills    Boxing Art    
+2963    skills    Boxing Sport    
+2972    attributes    Brachiation Move    
+2981    advantages    Brachiator    
+2990    skills    Brain Hacking    
+2999    skills    Brainwashing    
+3008    equipment    Brass Knuckles    
+3017    skills    Brawling    
+3026    skills    Brawling Art    
+3035    skills    Brawling Sport    
+3044    skills    Breaking Blow    
+3053    skills    Breath Control    
+3062    advantages    Breath-Holding    
+3071    spells    Breathe Water    
+3080    spells    Breathe Water    Clerical
+3089    spells    Breathe Water    Ritual
+3098    attributes    Broad Jump    
+3107    quirks    Broad-Minded    
+3116    skills    Broadsword    
+3125    equipment    Broadsword    
+3134    skills    Broadsword Art    
+3143    skills    Broadsword Sport    
+3152    equipment    Bronze Armbands    
+3161    equipment    Bronze Breastplate    
+3170    equipment    Bronze Corselet    
+3179    equipment    Bronze Greaves    
+3188    equipment    Bronze Helmet    
+3197    equipment    Bronze Pot-Helmet    
+3206    equipment    Buff Leather Coat    
+3215    equipment    Bug Stomper    
+3224    equipment    Bug, Audio    
+3233    disadvantages    Bully    
+3242    advantages    Burning Attack    
+3251    equipment    Bus    
+3260    advantages    Business Acumen    
+3269    equipment    Business Jet    
+3278    equipment    Cable, Steel, 1.5''    per 10 yards
+3287    disadvantages    Callous    
+3296    equipment    Camcorder    
+3305    equipment    Camel    
+3314    equipment    Camera, 35mm    
+3323    skills    Camouflage    
+3332    equipment    Camp Stove, Small    
+3341    quirks    Cannot Float    
+3350    disadvantages    Cannot Kick    
+3359    disadvantages    Cannot Learn    
+3368    disadvantages    Cannot Speak    
+3377    equipment    Canoe    
+3386    equipment    Canteen    
+3395    quirks    Careful    
+3404    skills    Carousing    
+3413    skills    Carpentry    
+3422    attributes    Carry on Back    
+3431    skills    Cartography    
+3440    equipment    Cartridge Rifle, .45    
+3449    equipment    Cartridge Rifle, .45    Ammunition
+3458    advantages    Catfall    
+3467    equipment    Cattle Prod    
+3476    equipment    Cavalry Horse    
+3485    equipment    Cavalry Saber    
+3494    equipment    Cell Phone    
+3503    equipment    Chainsaw    
+3512    advantages    Chameleon    
+3521    advantages    Channeling    
+3530    equipment    Chariot    
+3539    advantages    Charisma    
+3548    disadvantages    Charitable    
+3557    quirks    Chauvinistic    
+3566    equipment    Chemical Grenade    
+3575    skills    Chemistry    
+3584    skills    Choke Hold    Judo
+3593    skills    Choke Hold    Wrestling
+3602    disadvantages    Chronic Depression    
+3611    disadvantages    Chronic Pain    
+3620    advantages    Chronolocation    
+3629    disadvantages    Chummy    
+3638    equipment    Cigarette Lighter    
+3647    advantages    Claim to Hospitality    
+3656    advantages    Clairsentience    
+3665    advantages    Claws    Blunt Claws
+3674    advantages    Claws    Hooves
+3683    advantages    Claws    Long Talons
+3692    advantages    Claws    Sharp Claws
+3701    advantages    Claws    Talons
+3710    advantages    Clerical Investment    
+3719    skills    Climbing    
+3728    equipment    Climbing Gear    
+3737    advantages    Clinging    
+3746    skills    Cloak    
+3755    skills    Cloak Art    
+3764    skills    Cloak Sport    
+3773    equipment    Cloth Armor    
+3782    equipment    Cloth Armor Suit    
+3791    equipment    Cloth Cap    
+3800    equipment    Cloth Gloves    
+3809    equipment    Cloth Sleeves    
+3818    disadvantages    Clueless    
+3827    spells    Clumsiness    
+3836    spells    Clumsiness    Clerical
+3845    spells    Clumsiness    Ritual
+3854    equipment    Coach    
+3863    disadvantages    Code of Honor    
+3872    quirks    Code of Honor    
+3881    disadvantages    Code of Honor    Chivalry
+3890    disadvantages    Code of Honor    Gentleman's
+3899    disadvantages    Code of Honor    Pirate's
+3908    disadvantages    Code of Honor    Professional
+3917    disadvantages    Code of Honor    Soldier's
+3926    equipment    Cog    
+3935    spells    Cold    
+3944    spells    Cold    Clerical
+3953    spells    Cold    Ritual
+3962    disadvantages    Cold-Blooded    
+3971    disadvantages    Colorblindness    
+3980    equipment    Combat Hardsuit    TL 9
+3989    equipment    Combat Hardsuit    TL10
+3998    equipment    Combat Hardsuit    TL11
+4007    equipment    Combat Hardsuit    TL12
+4016    equipment    Combat Hardsuit Helmet    TL 9
+4025    equipment    Combat Hardsuit Helmet    TL10
+4034    equipment    Combat Hardsuit Helmet    TL11
+4043    equipment    Combat Hardsuit Helmet    TL12
+4052    disadvantages    Combat Paralysis    
+4061    advantages    Combat Reflexes    
+4070    spells    Command    
+4079    spells    Command    Clerical
+4088    spells    Command    Ritual
+4097    advantages    Common Sense    
+4106    skills    Communication & Empathy College!    
+4115    advantages    Compartmentalized Mind    
+4124    equipment    Compass    
+4133    equipment    Complete Wardrobe    
+4142    equipment    Complete Wardrobe    Status %Status%
+4151    equipment    Composite Bow    ST%choice%
+4160    disadvantages    Compulsive Behavior    
+4169    disadvantages    Compulsive Carousing    
+4178    disadvantages    Compulsive Gambling    
+4187    disadvantages    Compulsive Generosity    
+4196    disadvantages    Compulsive Lying    
+4205    disadvantages    Compulsive Spending    
+4214    disadvantages    Compulsive Vowing    
+4223    skills    Computer Hacking    
+4232    skills    Computer Operation    
+4241    skills    Computer Programming    
+4250    equipment    Computer, Laptop    
+4259    equipment    Computer, Wearable    
+4268    equipment    Concussion Grenade    TL 6
+4277    equipment    Concussion Grenade    TL 7
+4286    disadvantages    Confused    
+4295    quirks    Congenial    
+4304    skills    Connoisseur    
+4313    skills    Connoisseur    Dance
+4322    skills    Connoisseur    Literature
+4331    skills    Connoisseur    Music
+4340    skills    Connoisseur    Visual Arts
+4349    skills    Connoisseur    Wine
+4358    attributes    Consciousness Check    
+4367    advantages    Constriction Attack    
+4376    advantages    Contact    
+4385    advantages    Contact Group    
+4394    spells    Continual Light    
+4403    spells    Continual Light    Clerical
+4412    spells    Continual Light    Ritual
+4421    skills    Cooking    
+4430    equipment    Cord, 3/16''    per 10 yards
+4439    advantages    Corrosion Attack    
+4448    equipment    Cosmetics    
+4457    equipment    Cosmetics    Status %Status%
+4466    attributes    Cost of Living    
+4475    skills    Counterfeiting    
+4484    spells    Counterspell    
+4493    spells    Counterspell    Clerical
+4502    spells    Counterspell    Ritual
+4511    advantages    Courtesy Rank    
+4520    disadvantages    Cowardice    
+4529    equipment    Crash Kit    
+4538    spells    Create Air    
+4547    spells    Create Air    Clerical
+4556    spells    Create Air    Ritual
+4565    spells    Create Earth    
+4574    spells    Create Earth    Clerical
+4583    spells    Create Earth    Ritual
+4592    spells    Create Fire    
+4601    spells    Create Fire    Clerical
+4610    spells    Create Fire    Ritual
+4619    spells    Create Water    
+4628    spells    Create Water    Clerical
+4637    spells    Create Water    Ritual
+4646    skills    Criminology    
+4655    skills    Crossbow    
+4664    equipment    Crossbow    ST%choice%
+4673    skills    Crossbow Art    
+4682    equipment    Crossbow Bolt    
+4691    skills    Crossbow Sport    
+4700    equipment    Crowbar, 3'    
+4709    advantages    Crushing Attack    
+4718    skills    Cryptography    
+4727    advantages    Cultural Adaptability    
+4736    cultures    Cultural Familiarity    
+4745    cultures    Cultural Familiarity    Alien Culture
+4754    cultures    Cultural Familiarity    Native
+4763    disadvantages    Curious    
+4772    skills    Current Affairs    [Regional]
+4781    skills    Current Affairs    Business
+4790    skills    Current Affairs    Headline News
+4799    skills    Current Affairs    High Culture
+4808    skills    Current Affairs    People
+4817    skills    Current Affairs    Politics
+4826    skills    Current Affairs    Popular Culture
+4835    skills    Current Affairs    Science & Technology
+4844    skills    Current Affairs    Sports
+4853    skills    Current Affairs    Travel
+4862    disadvantages    Cursed    
+4871    equipment    Cutlass    
+4880    advantages    Cutting Attack    
+4889    equipment    Cutting Torch    
+4898    equipment    Cutting Torch Gas Bottle    
+4907    equipment    Dagger    
+4916    attributes    Damage Base    
+4925    advantages    Damage Resistance    
+4934    skills    Dancing    
+4943    advantages    Danger Sense    
+4952    advantages    Daredevil    
+4961    advantages    Dark Vision    
+4970    spells    Darkness    
+4979    spells    Darkness    Clerical
+4988    spells    Darkness    Ritual
+4997    equipment    Dart Rifle, 11mm    
+5006    equipment    Dart Rifle, 11mm    Ammunition
+5015    spells    Daze    
+5024    spells    Daze    Clerical
+5033    spells    Daze    Ritual
+5042    attributes    DB    
+5051    disadvantages    Deafness    
+5060    attributes    Death Check    
+5069    spells    Death Vision    
+5078    spells    Death Vision    Clerical
+5087    spells    Death Vision    Ritual
+5096    spells    Deathtouch    
+5105    spells    Deathtouch    Clerical
+5114    spells    Deathtouch    Ritual
+5123    disadvantages    Debt    
+5132    disadvantages    Decreased Time Rate    
+5141    perks    Deep Sleeper    
+5150    spells    Deflect    
+5159    spells    Deflect    Clerical
+5168    spells    Deflect    Ritual
+5177    spells    Deflect Energy    
+5186    spells    Deflect Energy    Clerical
+5195    spells    Deflect Energy    Ritual
+5204    spells    Deflect Missile    
+5213    spells    Deflect Missile    Clerical
+5222    spells    Deflect Missile    Ritual
+5231    disadvantages    Delusion    
+5240    quirks    Delusion    
+5249    disadvantages    Dependency    
+5258    disadvantages    Dependent    
+5267    equipment    Derringer, .41    
+5276    equipment    Derringer, .41    Ammunition
+5285    advantages    Destiny    
+5294    disadvantages    Destiny    
+5303    spells    Destroy Water    
+5312    spells    Destroy Water    Clerical
+5321    spells    Destroy Water    Ritual
+5330    advantages    Detect    
+5339    skills    Detect Lies    
+5348    spells    Detect Magic    
+5357    spells    Detect Magic    Clerical
+5366    spells    Detect Magic    Ritual
+5375    skills    Detective!    
+5384    skills    Diagnosis    
+5393    skills    Diagnosis    [Race]
+5402    advantages    Digital Mind    
+5411    skills    Diplomacy    
+5420    advantages    Diplomatic Immunity    
+5429    skills    Disarming    %Melee Combat Skill%
+5438    disadvantages    Discipline of Faith    
+5447    disadvantages    Discipline of Faith    Asceticism
+5456    disadvantages    Discipline of Faith    Monasticism
+5465    disadvantages    Discipline of Faith    Mysticism
+5474    disadvantages    Discipline of Faith    Ritualism
+5483    advantages    Discriminatory Hearing    
+5492    advantages    Discriminatory Smell    
+5501    advantages    Discriminatory Taste    
+5510    skills    Disguise    
+5519    equipment    Disguise Kit    
+5528    quirks    Dislikes [specify]    
+5537    spells    Dispel Magic    
+5546    spells    Dispel Magic    Clerical
+5555    spells    Dispel Magic    Ritual
+5564    quirks    Distinctive Feature    
+5573    quirks    Distractible    
+5582    disadvantages    Disturbing Voice    
+5591    disadvantages    Divine Curse    
+5600    skills    Diving Suit    
+5609    attributes    Dodge    
+5618    advantages    Doesn't Breathe    
+5627    advantages    Doesn't Eat or Drink    
+5636    features    Doesn't have/cannot use FP    
+5645    advantages    Doesn't Sleep    
+5654    equipment    Dogsled    
+5663    templates    Domestic Animal    
+5672    advantages    Dominance    
+5681    equipment    Donkey    
+5690    equipment    Double Mail Hauberk    
+5699    equipment    Double Shotgun, 10G    
+5708    equipment    Double Shotgun, 10G    Ammunition
+5717    advantages    Double-Jointed    
+5726    attributes    DR    
+5735    equipment    Draft Horse    
+5744    templates    Dragon    Basic Set
+5753    disadvantages    Draining    
+5762    disadvantages    Dread    
+5771    quirks    Dreamer    
+5780    skills    Dreaming    
+5789    skills    Driving    Automobile
+5798    skills    Driving    Construction Equipment
+5807    skills    Driving    Halftrack
+5816    skills    Driving    Heavy Wheeled
+5825    skills    Driving    Hovercraft
+5834    skills    Driving    Locomotive
+5843    skills    Driving    Mecha
+5852    skills    Driving    Motorcycle
+5861    skills    Driving    Tracked
+5870    skills    Dropping    
+5879    equipment    Drum    
+5888    skills    Dual-Weapon Attack    %One Handed Combat Skill%
+5897    skills    Dual-Weapon Attack    Beam Weapons (Pistol)
+5906    skills    Dual-Weapon Attack    Bow
+5915    skills    Dual-Weapon Attack    Guns (Pistol)
+5924    quirks    Dull    
+5933    advantages    Duplication    
+5942    disadvantages    Duty    
+5951    templates    Dwarf    Basic Set
+5960    disadvantages    Dwarfism    
+5969    attributes    DX    
+5978    disadvantages    Dyslexia    
+5987    equipment    Ear Muffs    
+5996    skills    Earth College!    
+6005    spells    Earth to Air    
+6014    spells    Earth to Air    Clerical
+6023    spells    Earth to Air    Ritual
+6032    spells    Earth to Stone    
+6041    spells    Earth to Stone    Clerical
+6050    spells    Earth to Stone    Ritual
+6059    disadvantages    Easy to Kill    
+6068    disadvantages    Easy to Read    
+6077    skills    Economics    
+6086    advantages    Eidetic Memory    
+6095    advantages    Elastic Skin    
+6104    skills    Elbow Strike    Brawling
+6113    skills    Elbow Strike    Karate
+6122    disadvantages    Electrical    
+6131    skills    Electrician    
+6140    equipment    Electrolaser Carbine    
+6149    equipment    Electrolaser Carbine    Ammunition
+6158    equipment    Electrolaser Pistol    
+6167    equipment    Electrolaser Pistol    Ammunition
+6176    equipment    Electronic Lockpicks    
+6185    skills    Electronics Operation    Communications
+6194    skills    Electronics Operation    Electronic Warfare
+6203    skills    Electronics Operation    Force Shields
+6212    skills    Electronics Operation    Matter Transmitters
+6221    skills    Electronics Operation    Media
+6230    skills    Electronics Operation    Medical
+6239    skills    Electronics Operation    Parachronic
+6248    skills    Electronics Operation    Psychotronics
+6257    skills    Electronics Operation    Scientific
+6266    skills    Electronics Operation    Security
+6275    skills    Electronics Operation    Sensors
+6284    skills    Electronics Operation    Sonar
+6293    skills    Electronics Operation    Surveillance
+6302    skills    Electronics Operation    Temporal
+6311    skills    Electronics Repair    Communications
+6320    skills    Electronics Repair    Computers
+6329    skills    Electronics Repair    Electronic Warfare
+6338    skills    Electronics Repair    Force Shields
+6347    skills    Electronics Repair    Matter Transmitters
+6356    skills    Electronics Repair    Media
+6365    skills    Electronics Repair    Medical
+6374    skills    Electronics Repair    Parachronic
+6383    skills    Electronics Repair    Psychotronics
+6392    skills    Electronics Repair    Scientific
+6401    skills    Electronics Repair    Security
+6410    skills    Electronics Repair    Sensors
+6419    skills    Electronics Repair    Sonar
+6428    skills    Electronics Repair    Surveillance
+6437    skills    Electronics Repair    Temporal
+6446    equipment    Elephant    
+6455    templates    Elf    Basic Set
+6464    advantages    Empathy    
+6473    spells    Enchant    
+6482    spells    Enchant    Clerical
+6491    spells    Enchant    Ritual
+6500    skills    Enchantment College!    
+6509    attributes    Encumbrance Penalty    
+6518    disadvantages    Enemy    Formidable group
+6527    disadvantages    Enemy    Less powerful group
+6536    disadvantages    Enemy    One Person
+6545    skills    Engineer    %type%
+6554    skills    Engineer    [Type]
+6563    skills    Engineer    Artillery
+6572    skills    Engineer    Civil
+6581    skills    Engineer    Combat
+6590    skills    Engineer    Electrical
+6599    skills    Engineer    Electronics
+6608    skills    Engineer    Materials
+6617    skills    Engineer    Microtechnology
+6626    skills    Engineer    Mining
+6635    skills    Engineer    Nanotechnology
+6644    skills    Engineer    Parachronic
+6653    skills    Engineer    Psychotronics
+6662    skills    Engineer    Temporal
+6671    attributes    Enhanced Air Move    
+6680    advantages    Enhanced Block    
+6689    advantages    Enhanced Dodge    
+6698    attributes    Enhanced Ground Move    
+6707    advantages    Enhanced Move    Air
+6716    advantages    Enhanced Move    Ground
+6725    advantages    Enhanced Move    Space
+6734    advantages    Enhanced Move    Water
+6743    advantages    Enhanced Parry    %Melee Weapon Art%
+6752    advantages    Enhanced Parry    %Melee Weapon Sport%
+6761    advantages    Enhanced Parry    %Melee Weapon%
+6770    advantages    Enhanced Parry    All Parries
+6779    advantages    Enhanced Parry    Bare Hands
+6788    attributes    Enhanced Space Move    
+6797    advantages    Enhanced Time Sense    
+6806    advantages    Enhanced Tracking    
+6815    attributes    Enhanced Water Move    
+6824    skills    Enthrallment    Captivate
+6833    skills    Enthrallment    Persuade
+6842    skills    Enthrallment    Suggest
+6851    skills    Enthrallment    Sway Emotions
+6860    spells    Entombment    
+6869    spells    Entombment    Clerical
+6878    spells    Entombment    Ritual
+6887    disadvantages    Epilepsy    
+6896    skills    Erotic Art    
+6905    skills    Escape    
+6914    skills    Esoteric Medicine    
+6923    advantages    ESP Talent    
+6932    skills    Exorcism    
+6941    skills    Expert Skill    
+6950    skills    Expert Skill    Computer Security
+6959    skills    Expert Skill    Egyptology
+6968    skills    Expert Skill    Epidemiology
+6977    skills    Expert Skill    Hydrology
+6986    skills    Expert Skill    Military Science
+6995    skills    Expert Skill    Natural Philosophy
+7004    skills    Expert Skill    Political Science
+7013    skills    Expert Skill    Psionics
+7022    skills    Expert Skill    Thanatology
+7031    skills    Expert Skill    Xenology
+7040    spells    Explosive Fireball    
+7049    spells    Explosive Fireball    Clerical
+7058    spells    Explosive Fireball    Ritual
+7067    skills    Explosives    Demolition
+7076    skills    Explosives    Explosive Ordnance Disposal
+7085    skills    Explosives    Fireworks
+7094    skills    Explosives    Nuclear Ordnance Disposal
+7103    skills    Explosives    Underwater Demolition
+7112    quirks    Expression    
+7121    advantages    Extended Lifespan    
+7130    spells    Extinguish Fire    
+7139    spells    Extinguish Fire    Clerical
+7148    spells    Extinguish Fire    Ritual
+7157    advantages    Extra Air Move    
+7166    attributes    Extra Arm Reach    
+7175    attributes    Extra Arm SM    
+7184    advantages    Extra Arms    
+7193    advantages    Extra Attack    
+7202    advantages    Extra Basic Move    
+7211    advantages    Extra Basic Speed    
+7220    advantages    Extra DX    
+7229    advantages    Extra Fatigue Points    
+7238    advantages    Extra Head    
+7247    advantages    Extra Hit Points    
+7256    advantages    Extra HT    
+7265    advantages    Extra IQ    
+7274    advantages    Extra Legs    3 Legs
+7283    advantages    Extra Legs    4 Legs
+7292    advantages    Extra Legs    5 Legs
+7301    advantages    Extra Legs    6 Legs
+7310    advantages    Extra Legs    7+ Legs
+7319    advantages    Extra Life    
+7328    advantages    Extra Mouth    
+7337    advantages    Extra Perception    
+7346    disadvantages    Extra Sleep    
+7355    advantages    Extra ST    
+7364    advantages    Extra Water Move    
+7373    advantages    Extra Will    
+7382    advantages    Extra-Flexible Arms    1 Arm
+7391    advantages    Extra-Flexible Arms    2 Arms
+7400    equipment    Face Mask    
+7409    skills    Falconry    
+7418    disadvantages    Fanaticism    
+7427    skills    Farming    
+7436    advantages    Fashion Sense    
+7445    skills    Fast-Draw    
+7454    skills    Fast-Draw    Ammo
+7463    skills    Fast-Draw    Arrow
+7472    skills    Fast-Draw    Force Sword
+7481    skills    Fast-Draw    Knife
+7490    skills    Fast-Draw    Long Arm
+7499    skills    Fast-Draw    Pistol
+7508    skills    Fast-Draw    Sword
+7517    skills    Fast-Draw    Two-Handed Sword
+7526    skills    Fast-Talk    
+7535    disadvantages    Fat    
+7544    advantages    Fatigue Attack    
+7553    attributes    Fatigue Points    
+7562    disadvantages    Fearfulness    
+7571    advantages    Fearlessness    
+7580    skills    Feint    %Melee Combat Skill%
+7589    templates    Felinoid    Basic Set
+7598    skills    Filch    
+7607    equipment    Film, 35mm    
+7616    advantages    Filter Lungs    
+7625    skills    Finance    
+7634    skills    Finger Lock    Judo
+7643    skills    Finger Lock    Wrestling
+7652    skills    Fire College!    
+7661    skills    Fire Eating    
+7670    spells    Fireball    
+7679    spells    Fireball    Clerical
+7688    spells    Fireball    Ritual
+7697    skills    First Aid    
+7706    skills    First Aid    [Race]
+7715    equipment    First Aid Kit    
+7724    equipment    Fishhooks & Line    
+7733    skills    Fishing    
+7742    advantages    Fit    
+7751    skills    Flail    
+7760    equipment    Flail    
+7769    skills    Flail Art    
+7778    skills    Flail Sport    
+7787    equipment    Flak Jacket    
+7796    equipment    Flamethrower    
+7805    disadvantages    Flashbacks    
+7814    equipment    Flashlight, Heavy    
+7823    equipment    Flashlight, Mini    
+7832    spells    Flesh to Stone    
+7841    spells    Flesh to Stone    Clerical
+7850    spells    Flesh to Stone    Ritual
+7859    advantages    Flexibility    
+7868    advantages    Flight    
+7877    skills    Flight    
+7886    equipment    Flintlock Musket, .75    
+7895    equipment    Flintlock Musket, .75    Ammunition
+7904    equipment    Flintlock Pistol, .51    
+7913    equipment    Flintlock Pistol, .51    Ammunition
+7922    skills    Flying Leap    
+7931    spells    Fog    
+7940    spells    Fog    Clerical
+7949    spells    Fog    Ritual
+7958    spells    Foolishness    
+7967    spells    Foolishness    Clerical
+7976    spells    Foolishness    Ritual
+7985    equipment    Force Buckler    
+7994    equipment    Force Shield    
+8003    skills    Force Sword    
+8012    equipment    Force Sword    
+8021    skills    Force Sword Art    
+8030    skills    Force Sword Sport    
+8039    skills    Force Whip    
+8048    skills    Force Whip Art    
+8057    skills    Force Whip Sport    
+8066    skills    Forced Entry    
+8075    skills    Forensics    
+8084    skills    Forgery    
+8093    spells    Forgetfulness    
+8102    spells    Forgetfulness    Clerical
+8111    spells    Forgetfulness    Ritual
+8120    equipment    Formal Wear    
+8129    equipment    Formal Wear    Status %Status%
+8138    spells    Fortify    
+8147    spells    Fortify    Clerical
+8156    spells    Fortify    Ritual
+8165    skills    Fortune-Telling    
+8174    skills    Fortune-Telling    Astrology
+8183    skills    Fortune-Telling    Augury
+8192    skills    Fortune-Telling    Crystal Gazing
+8201    skills    Fortune-Telling    Dream Interpretation
+8210    skills    Fortune-Telling    Feng Shui
+8219    skills    Fortune-Telling    Palmistry
+8228    skills    Fortune-Telling    Tarot
+8237    skills    Forward Observer    
+8246    equipment    Frag Helmet    
+8255    equipment    Frag Helmet Visor    
+8264    equipment    Frag Vest    
+8273    equipment    Frag Vest Plate Inserts    
+8282    disadvantages    Fragile    
+8291    disadvantages    Fragile    Brittle
+8300    disadvantages    Fragile    Combustible
+8309    disadvantages    Fragile    Explosive
+8318    disadvantages    Fragile    Flammable
+8327    disadvantages    Fragile    Unnatural
+8336    equipment    Fragmentation Grenade    TL 6
+8345    equipment    Fragmentation Grenade    TL 7
+8354    skills    Free Fall    
+8363    skills    Freight Handling    
+8372    attributes    Fright Check    
+8381    disadvantages    Frightens Animals    
+8390    perks    Fur    
+8399    equipment    Fur Loincloth    
+8408    equipment    Fur Tunic    
+8417    advantages    G-Experience    
+8426    disadvantages    G-Intolerance    
+8435    advantages    Gadgeteer    
+8444    skills    Gambling    
+8453    skills    Games    
+8462    skills    Gardening    
+8471    skills    Garrote    
+8480    equipment    Garrote    
+8489    equipment    Gas Mask    
+8498    equipment    Gasoline    per gallon
+8507    skills    Gate College!    
+8516    equipment    Gauntlets    
+8525    equipment    Gauss PDW, 4mm    
+8534    equipment    Gauss PDW, 4mm    Ammunition
+8543    equipment    Gauss Rifle, 4mm    
+8552    equipment    Gauss Rifle, 4mm    Ammunition
+8561    skills    Geography    [Regional]
+8570    skills    Geography    Earthlike
+8579    skills    Geography    Gas Giants
+8588    skills    Geography    Hostile Terrestrial
+8597    skills    Geography    Ice Dwarfs
+8606    skills    Geography    Ice Worlds
+8615    skills    Geography    Political
+8624    skills    Geography    Rock Worlds
+8633    skills    Geology    Earthlike
+8642    skills    Geology    Gas Giants
+8651    skills    Geology    Hostile Terrestrial
+8660    skills    Geology    Ice Dwarfs
+8669    skills    Geology    Ice Worlds
+8678    skills    Geology    Rock Worlds
+8687    skills    Gesture    
+8696    advantages    Gifted Artist    
+8705    disadvantages    Gigantism    
+8714    advantages    Gizmo    
+8723    equipment    Glaive    
+8732    disadvantages    Gluttony    
+8741    equipment    Goat's Foot    
+8750    equipment    GPS Receiver    
+8759    equipment    Grapnel    
+8768    equipment    Grav Bike    
+8777    equipment    Grav Jeep    
+8786    equipment    Great Axe    
+8795    spells    Great Haste    
+8804    spells    Great Haste    Clerical
+8813    spells    Great Haste    Ritual
+8822    spells    Great Healing    
+8831    spells    Great Healing    Clerical
+8840    spells    Great Healing    Ritual
+8849    equipment    Greathelm    
+8858    equipment    Greatsword    
+8867    disadvantages    Greed    
+8876    advantages    Green Thumb    
+8885    disadvantages    Gregarious    
+8894    skills    Ground Fighting    %Melee Combat Skill%
+8903    attributes    Ground Move    
+8912    templates    Ground Vehicle    
+8921    equipment    Group Basics    
+8930    skills    Group Performance    Choreography
+8939    skills    Group Performance    Conducting
+8948    skills    Group Performance    Directing
+8957    skills    Group Performance    Fight Choreography
+8966    advantages    Growth    
+8975    disadvantages    Guilt Complex    
+8984    disadvantages    Gullibility    
+8993    skills    Gun!    
+9002    skills    Gunner    Beams
+9011    skills    Gunner    Cannon
+9020    skills    Gunner    Catapult
+9029    skills    Gunner    Machine Gun
+9038    skills    Gunner    Rockets
+9047    skills    Guns    Grenade Launcher
+9056    skills    Guns    Gyroc
+9065    skills    Guns    Light Anti-Armor Weapon
+9074    skills    Guns    Light Machine Gun
+9083    skills    Guns    Musket
+9092    skills    Guns    Pistol
+9101    skills    Guns    Rifle
+9110    skills    Guns    Shotgun
+9119    skills    Guns    Submachine Gun
+9128    advantages    Gunslinger    
+9137    equipment    Gyroc Pistol, 15mm    
+9146    equipment    Gyroc Pistol, 15mm    Ammunition
+9155    quirks    Habit    
+9164    equipment    Halberd    
+9173    disadvantages    Ham-Fisted    
+9182    equipment    Handcuffs    
+9191    equipment    Handgonne, .90    
+9200    equipment    Handgonne, .90    Ammunition
+9209    disadvantages    Hard of Hearing    
+9218    advantages    Hard to Kill    
+9227    advantages    Hard to Subdue    
+9236    equipment    Harpoon    
+9245    spells    Haste    
+9254    spells    Haste    Clerical
+9263    spells    Haste    Ritual
+9272    equipment    Hatchet    
+9281    skills    Hazardous Materials    
+9290    skills    Hazardous Materials    Biological
+9299    skills    Hazardous Materials    Chemical
+9308    skills    Hazardous Materials    Radioactive
+9317    advantages    Healer    
+9326    advantages    Healing    
+9335    skills    Healing College!    
+9344    attributes    Hearing    
+9353    spells    Heat    
+9362    spells    Heat    Clerical
+9371    spells    Heat    Ritual
+9380    equipment    Heavy Bike    TL 6
+9389    equipment    Heavy Bike    TL 7
+9398    equipment    Heavy Blaster    
+9407    equipment    Heavy Blaster    Ammunition
+9416    equipment    Heavy Cloak    
+9425    attributes    Heavy Encumbrance    
+9434    attributes    Heavy Encumbrance Move    
+9443    equipment    Heavy Gauntlets    
+9452    equipment    Heavy Leather Leggings    
+9461    equipment    Heavy Leather Sleeves    
+9470    equipment    Heavy Plate Arms    
+9479    equipment    Heavy Plate Legs    
+9488    equipment    Heavy Steel Corselet    
+9497    equipment    Heavy Warhorse    
+9506    disadvantages    Hemophilia    
+9515    skills    Heraldry    
+9524    skills    Herb Lore    
+9533    advantages    Hermaphromorph    
+9542    templates    Heroic Knight    Basic Set
+9551    skills    Hidden Lore    
+9560    skills    Hidden Lore    Conspiracies
+9569    skills    Hidden Lore    Demon Lore
+9578    skills    Hidden Lore    Faerie Lore
+9587    skills    Hidden Lore    Spirit Lore
+9596    spells    Hide Thoughts    
+9605    spells    Hide Thoughts    Clerical
+9614    spells    Hide Thoughts    Ritual
+9623    disadvantages    Hidebound    
+9632    attributes    High Jump    
+9641    advantages    High Manual Dexterity    
+9650    advantages    High Pain Threshold    
+9659    advantages    High TL    
+9668    advantages    Higher Purpose    
+9677    skills    Hiking    
+9686    spells    Hinder    
+9695    spells    Hinder    Clerical
+9704    spells    Hinder    Ritual
+9713    equipment    Hip Quiver    
+9722    skills    History    
+9731    attributes    Hit Points    
+9740    equipment    HMG, .50    
+9749    equipment    HMG, .50    Ammunition
+9758    skills    Hobby Skill    [DX-based]
+9767    skills    Hobby Skill    [IQ-based]
+9776    skills    Holdout    
+9785    equipment    Holdout Pistol, .380    
+9794    equipment    Holdout Pistol, .380    Ammunition
+9803    equipment    Holster, Belt    
+9812    equipment    Holster, Shoulder    
+9821    equipment    Homing Beacon    
+9830    perks    Honest Face    
+9839    disadvantages    Honesty    
+9848    disadvantages    Horizontal    
+9857    quirks    Horrible Hangovers    
+9866    skills    Horse Archery    Bow
+9875    equipment    Horse Leather & Cloth Face Mask    
+9884    equipment    Horse Leather & Cloth Full Barding    
+9893    equipment    Horse Leather & Cloth Head/Neck    
+9902    equipment    Horse Leather & Cloth Partial Barding    
+9911    equipment    Horse Mail Face Mask    
+9920    equipment    Horse Mail Full Barding    
+9929    equipment    Horse Mail Head/Neck    
+9938    equipment    Horse Mail Partial Barding    
+9947    equipment    Horse Plate Face Mask    
+9956    equipment    Horse Plate Full Barding    
+9965    equipment    Horse Plate Head/Neck    
+9974    equipment    Horse Plate Leggings    
+9983    equipment    Horse Scale Face Mask    
+9992    equipment    Horse Scale Head/Neck    
+10001    equipment    Horse Scale Partial Barding    
+10010    equipment    Horseshoes    
+10019    equipment    House Cat    
+10028    skills    Housekeeping    
+10037    attributes    HT    
+10046    advantages    Huge Piercing Attack    
+10055    quirks    Humble    
+10064    disadvantages    Hunchback    
+10073    advantages    Hyperspectral Vision    
+10082    skills    Hypnotism    
+10091    skills    Hypnotism    [Race]
+10100    templates    Ichthyoid    
+10109    equipment    ICW, 25mm Grenade    Ammunition
+10118    equipment    ICW, 6.88mm    
+10127    equipment    ICW, 6.88mm Rifle    Ammunition
+10136    spells    Icy Weapon    
+10145    spells    Icy Weapon    Clerical
+10154    spells    Icy Weapon    Ritual
+10163    spells    Identify Spell    
+10172    spells    Identify Spell    Clerical
+10181    spells    Identify Spell    Ritual
+10190    spells    Ignite Fire    
+10199    spells    Ignite Fire    Clerical
+10208    spells    Ignite Fire    Ritual
+10217    advantages    Illuminated    
+10226    quirks    Imaginative    
+10235    advantages    Imaging Radar    
+10244    skills    Immovable Stance    
+10253    advantages    Impaling Attack    
+10262    skills    Impersonate    Mimicry (Speech)
+10271    advantages    Improved G-Tolerance    
+10280    disadvantages    Impulsiveness    
+10289    quirks    Incompetence    %skills%
+10298    quirks    Incompetence    [skill]
+10307    disadvantages    Increased Consumption    
+10316    disadvantages    Increased Life Support    
+10325    disadvantages    Increased Life Support    Extreme Heat/Cold
+10334    disadvantages    Increased Life Support    Massive
+10343    disadvantages    Increased Life Support    Pressurized
+10352    disadvantages    Increased Life Support    Radioactive
+10361    advantages    Increased SM    
+10370    disadvantages    Incurious    
+10379    disadvantages    Indecisive    
+10388    advantages    Independent Income    
+10397    advantages    Indomitable    
+10406    disadvantages    Infectious Attack    
+10415    equipment    Inflatable Boat    
+10424    advantages    Infravision    
+10433    advantages    Injury Tolerance    
+10442    advantages    Innate Attack    %TypeList%
+10451    skills    Innate Attack    Beam
+10460    skills    Innate Attack    Breath
+10469    skills    Innate Attack    Gaze
+10478    skills    Innate Attack    Projectile
+10487    disadvantages    Innumerate    
+10496    disadvantages    Insomniac    
+10505    advantages    Insubstantiality    
+10514    skills    Intelligence Analysis    
+10523    skills    Interrogation    
+10532    skills    Intimidation    
+10541    disadvantages    Intolerance    
+10550    advantages    Intuition    
+10559    advantages    Intuitive Mathematician    
+10568    disadvantages    Invertebrate    
+10577    templates    Investigator    Basic Set
+10586    advantages    Invisibility    
+10595    skills    Invisibility Art    
+10604    attributes    IQ    
+10613    equipment    Iron Spike, Piton    
+10622    spells    Itch    
+10631    spells    Itch    Clerical
+10640    spells    Itch    Ritual
+10649    equipment    Javelin    
+10658    disadvantages    Jealousy    
+10667    equipment    Jeep    
+10676    skills    Jeweler    
+10685    skills    Jitte/Sai    
+10694    skills    Jitte/Sai Art    
+10703    skills    Jitte/Sai Sport    
+10712    skills    Judo    
+10721    skills    Judo Art    
+10730    skills    Judo Sport    
+10739    skills    Jump Kick    Karate
+10748    attributes    Jump Move    
+10757    advantages    Jumper    Time
+10766    advantages    Jumper    World
+10775    skills    Jumping    
+10784    skills    Karate    
+10793    skills    Karate Art    
+10802    skills    Karate Sport    
+10811    equipment    Katana    
+10820    equipment    Kerosene    per gallon
+10829    skills    Kiai    
+10838    attributes    Kick    
+10847    skills    Kicking    Brawling
+10856    skills    Kicking    Karate
+10865    disadvantages    Killjoy    
+10874    disadvantages    Kleptomania    
+10883    disadvantages    Klutz    
+10892    skills    Knee Strike    Brawling
+10901    skills    Knee Strike    Karate
+10910    skills    Knife    
+10919    skills    Knife Art    
+10928    skills    Knife Sport    
+10937    equipment    Knitting Needles    
+10946    skills    Knot-Tying    
+10955    skills    Knowledge College!    
+10964    skills    Kusari    
+10973    equipment    Kusari    
+10982    skills    Kusari Art    
+10991    skills    Kusari Sport    
+11000    advantages    Ladar    
+11009    disadvantages    Lame    Crippled Legs
+11018    disadvantages    Lame    Legless
+11027    disadvantages    Lame    Missing Legs
+11036    disadvantages    Lame    Paraplegic
+11045    skills    Lance    
+11054    equipment    Lance    
+11063    skills    Lance Art    
+11072    skills    Lance Sport    
+11081    languages    Language    
+11090    languages    Language    Spoken
+11099    languages    Language    Written
+11108    languages    Language - Native    
+11117    languages    Language - Native    Spoken
+11126    languages    Language - Native    Written
+11135    languages    Language - Native - using literacy levels    
+11144    languages    Language - using literacy levels    
+11153    advantages    Language Talent    
+11162    equipment    Lantern    
+11171    equipment    Lanyard, Leather    
+11180    equipment    Lanyard, Woven Steel    
+11189    equipment    Large Falcon    
+11198    equipment    Large Guard Dog    
+11207    equipment    Large Iron Shield    
+11216    equipment    Large Knife    
+11225    equipment    Large Mule    
+11234    equipment    Large Net    
+11243    advantages    Large Piercing Attack    
+11252    equipment    Large Plastic Shield    
+11261    equipment    Large Shield    
+11270    equipment    Lariat    
+11279    equipment    Laser Microphone    
+11288    equipment    Laser Pistol    
+11297    equipment    Laser Pistol    Ammunition
+11306    equipment    Laser Rifle    
+11315    equipment    Laser Rifle    Ammunition
+11324    equipment    Laser Sight    
+11333    equipment    Laser Sniper Rifle    
+11342    equipment    Laser Sniper Rifle    Ammunition
+11351    skills    Lasso    
+11360    skills    Lasso Art    
+11369    skills    Lasso Sport    
+11378    skills    Law    
+11387    equipment    LAW, 84mm    
+11396    disadvantages    Laziness    
+11405    skills    Leadership    
+11414    equipment    Leather Armor    
+11423    equipment    Leather Armor Suit    
+11432    equipment    Leather Cap    
+11441    equipment    Leather Gloves    
+11450    equipment    Leather Helm    
+11459    equipment    Leather Jacket    
+11468    equipment    Leather Leggings    
+11477    equipment    Leather Pants    
+11486    skills    Leatherworking    
+11495    disadvantages    Lecherousness    
+11504    attributes    Leg Reach    
+11513    attributes    Leg SM    
+11522    advantages    Legal Enforcement Powers    
+11531    advantages    Legal Immunity    
+11540    equipment    Legionary Helmet    
+11549    spells    Lend Energy    
+11558    spells    Lend Energy    Clerical
+11567    spells    Lend Energy    Ritual
+11576    spells    Lend Vitality    
+11585    spells    Lend Vitality    Clerical
+11594    spells    Lend Vitality    Ritual
+11603    advantages    Less Sleep    
+11612    equipment    Lever-Action Carbine, .30    
+11621    equipment    Lever-Action Carbine, .30    Ammunition
+11630    equipment    Life Jacket    
+11639    disadvantages    Lifebane    
+11648    skills    Lifesaving    Swimming
+11657    skills    Lifting    
+11666    attributes    Lifting ST    
+11675    advantages    Lifting ST    
+11684    spells    Light    
+11693    spells    Light    Clerical
+11702    spells    Light    Ritual
+11711    skills    Light & Darkness College!    
+11720    equipment    Light Buckler    
+11729    equipment    Light Cloak    
+11738    equipment    Light Club    
+11747    attributes    Light Encumbrance    
+11756    attributes    Light Encumbrance Move    
+11765    equipment    Light Helicopter    
+11774    equipment    Light Iron Buckler    
+11783    equipment    Light Iron Shield    
+11792    equipment    Light Monoplane    
+11801    equipment    Light Plastic Buckler    
+11810    equipment    Light Plastic Shield    
+11819    equipment    Light Scale Armor    
+11828    equipment    Light Scale Suit    
+11837    equipment    Light Shield    
+11846    disadvantages    Light Sleeper    
+11855    skills    Light Walk    
+11864    spells    Lightning    
+11873    spells    Lightning    Clerical
+11882    spells    Lightning    Ritual
+11891    advantages    Lightning Calculator    
+11900    quirks    Likes [specify]    
+11909    skills    Linguistics    
+11918    skills    Lip Reading    
+11927    skills    Liquid Projector    Flamethrower
+11936    skills    Liquid Projector    Sprayer
+11945    skills    Liquid Projector    Squirt Gun
+11954    skills    Liquid Projector    Water Cannon
+11963    skills    Literature    
+11972    equipment    LMG, 7.62mm    
+11981    equipment    LMG, 7.62mm    Ammunition
+11990    spells    Lockmaster    
+11999    spells    Lockmaster    Clerical
+12008    spells    Lockmaster    Ritual
+12017    skills    Lockpicking    
+12026    equipment    Lockpicks    
+12035    equipment    Locomotive    
+12044    disadvantages    Loner    
+12053    advantages    Long Arms    1 Arm
+12062    advantages    Long Arms    2 Arms
+12071    advantages    Long Legs    
+12080    equipment    Long Spear    
+12089    advantages    Long Spines    
+12098    equipment    Longbow    ST%choice%
+12107    advantages    Longevity    
+12116    equipment    Lorica Segmentata    
+12125    disadvantages    Low Empathy    
+12134    disadvantages    Low Pain Threshold    
+12143    disadvantages    Low Self-Image    
+12152    disadvantages    Low TL    
+12161    advantages    Luck    
+12170    disadvantages    Lunacy    
+12179    equipment    Luxury Car    
+12188    equipment    Mace    
+12197    templates    Machine    
+12206    equipment    Machine Pistol, 9mm    
+12215    equipment    Machine Pistol, 9mm    Ammunition
+12224    equipment    Machine Pistol, 9mm, Civilian    
+12233    skills    Machinist    
+12242    templates    Mage    Basic Set
+12251    spells    Magelock    
+12260    spells    Magelock    Clerical
+12269    spells    Magelock    Ritual
+12278    attributes    Magery    
+12287    advantages    Magery    
+12296    attributes    Magery 0    
+12305    advantages    Magery 0    
+12314    attributes    Magery Air    
+12323    attributes    Magery Animal    
+12332    attributes    Magery Body Control    
+12341    attributes    Magery Communication & Empathy    
+12350    attributes    Magery Earth    
+12359    attributes    Magery Enchantment    
+12368    attributes    Magery Fire    
+12377    attributes    Magery Food    
+12386    attributes    Magery Gate    
+12395    attributes    Magery Healing    
+12404    attributes    Magery Illusion & Creation    
+12413    attributes    Magery Knowledge    
+12422    attributes    Magery Light & Darkness    
+12431    attributes    Magery Making & Breaking    
+12440    attributes    Magery Meta-Spells    
+12449    attributes    Magery Mind Control    
+12458    attributes    Magery Movement    
+12467    attributes    Magery Necromancy    
+12476    attributes    Magery Plant    
+12485    attributes    Magery Protection & Warning    
+12494    attributes    Magery Sound    
+12503    attributes    Magery Technological    
+12512    attributes    Magery Water    
+12521    attributes    Magery Weather    
+12530    attributes    MageryBase    
+12539    advantages    Magic Resistance    
+12548    disadvantages    Magic Susceptibility    
+12557    skills    Magic!    
+12566    equipment    Mail Coif    
+12575    equipment    Mail Hauberk    
+12584    equipment    Mail Leggings    
+12593    equipment    Mail Shirt    
+12602    equipment    Mail Sleeves    
+12611    equipment    Mail Suit    
+12620    skills    Main-Gauche    
+12629    skills    Main-Gauche Art    
+12638    skills    Main-Gauche Sport    
+12647    disadvantages    Maintenance    
+12656    spells    Major Healing    
+12665    spells    Major Healing    Clerical
+12674    spells    Major Healing    Ritual
+12683    skills    Makeup    
+12692    advantages    Mana Damper    
+12701    advantages    Mana Enhancer    
+12710    disadvantages    Manic-Depressive    
+12719    skills    Market Analysis    
+12728    skills    Masonry    
+12737    spells    Mass Daze    
+12746    spells    Mass Daze    Clerical
+12755    spells    Mass Daze    Ritual
+12764    spells    Mass Sleep    
+12773    spells    Mass Sleep    Clerical
+12782    spells    Mass Sleep    Ritual
+12791    equipment    Matches    
+12800    equipment    Matchlock Musket, .80    
+12809    equipment    Matchlock Musket, .80    Ammunition
+12818    advantages    Mathematical Ability    
+12827    skills    Mathematics    Applied
+12836    skills    Mathematics    Computer Science
+12845    skills    Mathematics    Cryptology
+12854    skills    Mathematics    Pure
+12863    skills    Mathematics    Statistics
+12872    skills    Mathematics    Surveying
+12881    equipment    Maul    
+12890    skills    Mechanic    %type%
+12899    skills    Mechanic    [Type]
+12908    skills    Mechanic    Micromachines
+12917    skills    Mechanic    Nanomachines
+12926    skills    Meditation    
+12935    advantages    Medium    
+12944    equipment    Medium Buckler    
+12953    attributes    Medium Encumbrance    
+12962    attributes    Medium Encumbrance Move    
+12971    equipment    Medium Iron Buckler    
+12980    equipment    Medium Iron Shield    
+12989    equipment    Medium Plastic Buckler    
+12998    equipment    Medium Plastic Shield    
+13007    equipment    Medium Shield    
+13016    disadvantages    Megalomania    
+13025    equipment    Melee Net    
+13034    skills    Mental Strength    
+13043    skills    Merchant    
+13052    advantages    Merchant Rank    
+13061    skills    Meta-Spells College!    
+13070    advantages    Metabolism Control    
+13079    equipment    Metal Detector Wand    
+13088    skills    Metallurgy    
+13097    skills    Meteorology    Earthlike
+13106    skills    Meteorology    Gas Giants
+13115    skills    Meteorology    Hostile Terrestrial
+13124    skills    Meteorology    Ice Dwarfs
+13133    skills    Meteorology    Ice Worlds
+13142    skills    Meteorology    Rock Worlds
+13151    attributes    Metric    
+13160    advantages    Microscopic Vision    
+13169    advantages    Military Rank    
+13178    advantages    Mimicry    
+13187    skills    Mimicry    Animal Sounds
+13196    skills    Mimicry    Bird Calls
+13205    skills    Mimicry    Speech
+13214    skills    Mind Block    
+13223    advantages    Mind Control    
+13232    skills    Mind Control College!    
+13241    advantages    Mind Probe    
+13250    advantages    Mind Reading    
+13259    advantages    Mind Shield    
+13268    spells    Mind-Reading    
+13277    spells    Mind-Reading    Clerical
+13286    spells    Mind-Reading    Ritual
+13295    advantages    Mindlink    
+13304    equipment    Mini-Camera, Digital    
+13313    equipment    Mini-Recorder    
+13322    equipment    Mini-Recorder, Digital    
+13331    quirks    Minor Handicap    
+13340    spells    Minor Healing    
+13349    spells    Minor Healing    Clerical
+13358    spells    Minor Healing    Ritual
+13367    disadvantages    Miserliness    
+13376    disadvantages    Missing Digit    
+13385    disadvantages    Mistaken Identity    
+13394    advantages    Modular Abilities    Chip Slots
+13403    advantages    Modular Abilities    Computer Brain
+13412    advantages    Modular Abilities    Cosmic Power
+13421    advantages    Modular Abilities    Super-Memorization
+13430    equipment    Molotov Cocktail    
+13439    attributes    Money    
+13448    attributes    Money Base    
+13457    skills    Monowire Whip    
+13466    equipment    Monowire Whip    
+13475    skills    Monowire Whip Art    
+13484    skills    Monowire Whip Sport    
+13493    attributes    Monthly Pay    
+13502    equipment    Morningstar    
+13511    advantages    Morph    
+13520    advantages    Morph    Cosmetic
+13529    disadvantages    Motion Sickness    
+13538    skills    Motion-Picture Camera    Photography
+13547    skills    Mount    
+13556    skills    Movement College!    
+13565    disadvantages    Mundane Background    
+13574    advantages    Musical Ability    
+13583    skills    Musical Composition    
+13592    skills    Musical Influence    
+13601    skills    Musical Instrument    
+13610    disadvantages    Mute    
+13619    equipment    Naginata    
+13628    equipment    Nanobug    
+13637    attributes    Native Cultural Familiarities    
+13646    attributes    Native Languages    
+13655    skills    Naturalist    
+13664    skills    Navigation    Air
+13673    skills    Navigation    Hyperspace
+13682    skills    Navigation    Land
+13691    skills    Navigation    Sea
+13700    skills    Navigation    Space
+13709    skills    NBC Suit    
+13718    equipment    NBC Suit    
+13727    attributes    Neck Reach    
+13736    attributes    Neck SM    
+13745    skills    Neck Snap    ST
+13754    skills    Necromancy College!    
+13763    quirks    Nervous Stomach    
+13772    skills    Net    
+13781    skills    Net Art    
+13790    skills    Net Sport    
+13799    disadvantages    Neurological Disorder    
+13808    quirks    Neutered    
+13817    advantages    Neutralize    
+13826    advantages    Nictitating Membrane    
+13835    disadvantages    Night Blindness    
+13844    advantages    Night Vision    
+13853    equipment    Night Vision Goggles    
+13862    disadvantages    Nightmares    
+13871    disadvantages    No Depth Perception    
+13880    attributes    No Encumbrance    
+13889    attributes    No Encumbrance Move    
+13898    attributes    No Fine Manipulators    
+13907    disadvantages    No Fine Manipulators    
+13916    perks    No Hangover    
+13925    disadvantages    No Legs    Aerial
+13934    disadvantages    No Legs    Aquatic
+13943    disadvantages    No Legs    Bounces
+13952    disadvantages    No Legs    Rolls
+13961    disadvantages    No Legs    Semi-Aquatic
+13970    disadvantages    No Legs    Sessile
+13979    disadvantages    No Legs    Slithers
+13988    disadvantages    No Legs    Tracked
+13997    disadvantages    No Legs    Wheeled
+14006    disadvantages    No Manipulators    
+14015    disadvantages    No Physical Attack    1 Arm
+14024    disadvantages    No Physical Attack    2 Arms
+14033    disadvantages    No Sense of Humor    
+14042    disadvantages    No Sense of Smell/Taste    
+14051    skills    No-Landing Extraction    %Piloting Skill%
+14060    spells    No-Smell    
+14069    spells    No-Smell    Clerical
+14078    spells    No-Smell    Ritual
+14087    disadvantages    Nocturnal    
+14096    disadvantages    Noisy    
+14105    disadvantages    Non-Iconographic    
+14114    quirks    Nosy    
+14123    disadvantages    Numb    
+14132    equipment    Nunchaku    
+14141    disadvantages    Oblivious    
+14150    advantages    Obscure    
+14159    skills    Observation    
+14168    disadvantages    Obsession    
+14177    quirks    Obsession    
+14186    skills    Occultism    
+14195    disadvantages    Odious Personal Habit    
+14204    skills    Off-Hand Weapon Training    %Melee Weapon Skill%
+14213    equipment    Oil    per pint
+14222    equipment    Omni-Blaster Pistol    
+14231    equipment    Omni-Blaster Pistol    Ammunition
+14240    equipment    Omni-Blaster Rifle    
+14249    equipment    Omni-Blaster Rifle    Ammunition
+14258    disadvantages    On the Edge    
+14267    disadvantages    One Arm    
+14276    attributes    One Arm Lifting ST    
+14285    attributes    One Arm Reach    
+14294    attributes    One Arm SM    
+14303    attributes    One Arm Striking ST    
+14312    disadvantages    One Eye    
+14321    disadvantages    One Hand    
+14330    attributes    One-Handed Lift    
+14339    advantages    Oracle    
+14348    equipment    Orbital Clipper    TL 9
+14357    equipment    Orbital Clipper    TL10
+14366    equipment    Ordinary Clothes    
+14375    equipment    Ordinary Clothes    Status %Status%
+14384    advantages    Outdoorsman    
+14393    disadvantages    Overconfidence    
+14402    disadvantages    Overweight    
+14411    equipment    Oxen    
+14420    disadvantages    Pacifism    Cannot Harm Innocents
+14429    disadvantages    Pacifism    Cannot Kill
+14438    disadvantages    Pacifism    Reluctant Killer
+14447    disadvantages    Pacifism    Self-Defense Only
+14456    disadvantages    Pacifism    Total Nonviolence
+14465    skills    Packing    
+14474    spells    Pain    
+14483    spells    Pain    Clerical
+14492    spells    Pain    Ritual
+14501    skills    Paleontology    Micropaleontology
+14510    skills    Paleontology    Paleoanthropology
+14519    skills    Paleontology    Paleobotany
+14528    skills    Paleontology    Paleozoology
+14537    skills    Panhandling    
+14546    advantages    Para-Radar    
+14555    advantages    Parabolic Hearing    
+14564    equipment    Parachute    
+14573    skills    Parachuting    
+14582    spells    Paralyze Limb    
+14591    spells    Paralyze Limb    Clerical
+14600    spells    Paralyze Limb    Ritual
+14609    disadvantages    Paranoia    
+14618    attributes    Parry    
+14627    skills    Parry Missile Weapons    
+14636    skills    Path of Air    
+14645    skills    Path of Air    %skillaliaslist%
+14654    skills    Path of Body Control    
+14663    skills    Path of Body Control    %skillaliaslist%
+14672    skills    Path of Communication & Empathy    
+14681    skills    Path of Communication & Empathy    %skillaliaslist%
+14690    skills    Path of Earth    
+14699    skills    Path of Earth    %skillaliaslist%
+14708    skills    Path of Enchantment    
+14717    skills    Path of Enchantment    %skillaliaslist%
+14726    skills    Path of Fire    
+14735    skills    Path of Fire    %skillaliaslist%
+14744    skills    Path of Gate    
+14753    skills    Path of Gate    %skillaliaslist%
+14762    skills    Path of Healing    
+14771    skills    Path of Healing    %skillaliaslist%
+14780    skills    Path of Knowledge    
+14789    skills    Path of Knowledge    %skillaliaslist%
+14798    skills    Path of Light & Darkness    
+14807    skills    Path of Light & Darkness    %skillaliaslist%
+14816    skills    Path of Meta-Spells    
+14825    skills    Path of Meta-Spells    %skillaliaslist%
+14834    skills    Path of Mind Control    
+14843    skills    Path of Mind Control    %skillaliaslist%
+14852    skills    Path of Movement    
+14861    skills    Path of Movement    %skillaliaslist%
+14870    skills    Path of Necromancy    
+14879    skills    Path of Necromancy    %skillaliaslist%
+14888    skills    Path of Protection & Warning    
+14897    skills    Path of Protection & Warning    %skillaliaslist%
+14906    skills    Path of Water    
+14915    skills    Path of Water    %skillaliaslist%
+14924    advantages    Patron    
+14933    advantages    Payload    
+14942    equipment    PDW, 4.6mm    
+14951    equipment    PDW, 4.6mm    Ammunition
+14960    advantages    Penetrating Vision    
+14969    perks    Penetrating Voice    
+14978    equipment    Penteconter    
+14987    attributes    Perception    
+14996    advantages    Perfect Balance    
+15005    skills    Performance    
+15014    advantages    Peripheral Vision    
+15023    advantages    Permeation    
+15032    equipment    Personal Basics    
+15041    quirks    Personality Change    
+15050    disadvantages    Phantom Voices    
+15059    skills    Pharmacy    Herbal
+15068    skills    Pharmacy    Synthetic
+15077    skills    Philosophy    
+15086    disadvantages    Phobia    
+15095    disadvantages    Phobia    %example%
+15104    advantages    Photographic Memory    
+15113    skills    Photography    
+15122    skills    Physician    
+15131    skills    Physician    [Race]
+15140    skills    Physics    
+15149    skills    Physiology    
+15158    skills    Physiology    [Race]
+15167    equipment    Pick    
+15176    equipment    Pickaxe    
+15185    skills    Pickpocket    
+15194    equipment    Pickup Truck    
+15203    advantages    Piercing Attack    
+15212    skills    Piloting    Aerospace
+15221    skills    Piloting    Autogyro
+15230    skills    Piloting    Contragravity
+15239    skills    Piloting    Flight Pack
+15248    skills    Piloting    Glider
+15257    skills    Piloting    Heavy Airplane
+15266    skills    Piloting    Helicopter
+15275    skills    Piloting    High-Performance Airplane
+15284    skills    Piloting    High-Performance Spacecraft
+15293    skills    Piloting    Light Airplane
+15302    skills    Piloting    Lighter-Than-Air
+15311    skills    Piloting    Lightsail
+15320    skills    Piloting    Low-G Wings
+15329    skills    Piloting    Low-Performance Spacecraft
+15338    skills    Piloting    Ultralight
+15347    skills    Piloting    Vertol
+15356    equipment    Pistol Crossbow    ST%choice%
+15365    advantages    Pitiable    
+15374    advantages    PK Talent    
+15383    spells    Planar Summons    [Plane]
+15392    spells    Planar Summons    [Plane]; Clerical
+15401    spells    Planar Summons    [Plane]; Ritual
+15410    spells    Plane Shift    [Plane]
+15419    spells    Plane Shift    [Plane]; Clerical
+15428    spells    Plane Shift    [Plane]; Ritual
+15437    advantages    Plant Empathy    
+15446    equipment    Plasma Grenade    
+15455    equipment    Plate Arms    
+15464    equipment    Plate Legs    
+15473    equipment    Plate Suit    
+15482    equipment    Plow, Iron    
+15491    equipment    Plow, Wooden    
+15500    skills    Poetry    
+15509    skills    Poisons    
+15518    equipment    Pole, 10'    
+15527    equipment    Pole, 6'    
+15536    skills    Polearm    
+15545    skills    Polearm Art    
+15554    skills    Polearm Sport    
+15563    equipment    Poleaxe    
+15572    advantages    Police Rank    
+15581    skills    Politics    
+15590    equipment    Pony    
+15599    equipment    Portable Armoury Tool Kit    
+15608    equipment    Portable Carpentry Tool Kit    
+15617    equipment    Portable Electrician Tool Kit    
+15626    equipment    Portable Electronics Repair Kit    
+15635    equipment    Portable Explosives Tool Kit    
+15644    equipment    Portable Machinist Tool Kit    
+15653    equipment    Portable Mechanic Tool Kit    
+15662    advantages    Possession    
+15671    disadvantages    Post-Combat Shakes    
+15680    equipment    Pot-Helm    
+15689    equipment    Pouch    
+15698    spells    Power    
+15707    spells    Power    Clerical
+15716    spells    Power    Ritual
+15725    skills    Power Blow    
+15734    advantages    Power Investiture    
+15743    advantages    Precognition    
+15752    spells    Predict Weather    
+15761    spells    Predict Weather    Clerical
+15770    spells    Predict Weather    Ritual
+15779    skills    Pressure Points    
+15788    skills    Pressure Secrets    
+15797    advantages    Pressure Support    
+15806    equipment    Prodd    ST%choice%
+15815    equipment    Prodd Lead Pellet    
+15824    skills    Professional Skill    [DX based]
+15833    skills    Professional Skill    [IQ based]
+15842    skills    Professional Skill    Air Traffic Controller
+15851    skills    Professional Skill    Barber
+15860    skills    Professional Skill    Brewer
+15869    skills    Professional Skill    Cooper
+15878    skills    Professional Skill    Distiller
+15887    skills    Professional Skill    Dyer
+15896    skills    Professional Skill    Florist
+15905    skills    Professional Skill    Game Designer
+15914    skills    Professional Skill    Glassblower
+15923    skills    Professional Skill    Journalist
+15932    skills    Professional Skill    Prostitute
+15941    skills    Professional Skill    Tailor
+15950    skills    Professional Skill    Tanner
+15959    skills    Professional Skill    Vinter
+15968    skills    Professional Skill    Weaver
+15977    skills    Propaganda    
+15986    skills    Prospecting    
+15995    advantages    Protected [Sense]    
+16004    skills    Protection & Warning College!    
+16013    quirks    Proud    
+16022    advantages    Psi Static    
+16031    advantages    Psychic Healing Talent    
+16040    skills    Psychology    
+16049    skills    Psychology    [Race]
+16058    advantages    Psychometry    
+16067    skills    Public Speaking    
+16076    skills    Public Speaking    Debate
+16085    skills    Public Speaking    Oratory
+16094    skills    Public Speaking    Punning
+16103    skills    Public Speaking    Rhetoric
+16112    skills    Public Speaking    Storytelling
+16121    spells    Puissance    
+16130    spells    Puissance    Clerical
+16139    spells    Puissance    Ritual
+16148    equipment    Pump Shotgun, 12G    
+16157    equipment    Pump Shotgun, 12G    Ammunition
+16166    attributes    Punch    
+16175    equipment    Punch    Weak Arms
+16184    advantages    Puppet    
+16193    advantages    Puppet    Group of Related Allies
+16202    spells    Purify Air    
+16211    spells    Purify Air    Clerical
+16220    spells    Purify Air    Ritual
+16229    spells    Purify Water    
+16238    spells    Purify Water    Clerical
+16247    spells    Purify Water    Ritual
+16256    equipment    Purse    
+16265    skills    Push    
+16274    disadvantages    Pyromania    
+16283    disadvantages    Quadriplegic    
+16292    templates    Quadruped    
+16301    equipment    Quarterstaff    
+16310    equipment    Racehorse    
+16319    advantages    Racial Memory    
+16328    advantages    Racial Skill Bonus    %skills%
+16337    advantages    Racial Skill Bonus    [skill]
+16346    advantages    Racial Skill Point Bonus    %skills%
+16355    advantages    Racial Skill Point Bonus    [skill]
+16364    advantages    Racial Spell Bonus    %Cleric spells%
+16373    advantages    Racial Spell Bonus    %Ritual spells%
+16382    advantages    Racial Spell Bonus    %spells%
+16391    advantages    Racial Spell Bonus    [spell]
+16400    advantages    Racial Spell Point Bonus    %Cleric spells%
+16409    advantages    Racial Spell Point Bonus    %Ritual spells%
+16418    advantages    Racial Spell Point Bonus    %spells%
+16427    advantages    Racial Spell Point Bonus    [spell]
+16436    advantages    Radar    
+16445    advantages    Radiation Tolerance    
+16454    equipment    Radio, Backpack    
+16463    equipment    Radio, Hand    
+16472    equipment    Radio, Headset    
+16481    equipment    Radio, Headset, Secure/Encrypted    
+16490    advantages    Rank    
+16499    advantages    Rapid Healing    
+16508    skills    Rapier    
+16517    equipment    Rapier    
+16526    skills    Rapier Art    
+16535    skills    Rapier Sport    
+16544    advantages    Rapier Wit    
+16553    attributes    Reaction    
+16562    advantages    Reawakened    
+16571    spells    Recover Energy    
+16580    spells    Recover Energy    Clerical
+16589    spells    Recover Energy    Ritual
+16598    advantages    Recovery    
+16607    disadvantages    Reduced Air Move    
+16616    disadvantages    Reduced Basic Move    
+16625    disadvantages    Reduced Basic Speed    
+16634    advantages    Reduced Consumption    
+16643    disadvantages    Reduced DX    
+16652    disadvantages    Reduced Fatigue Points    
+16661    disadvantages    Reduced Ground Move    
+16670    disadvantages    Reduced Hit Points    
+16679    disadvantages    Reduced HT    
+16688    disadvantages    Reduced IQ    
+16697    disadvantages    Reduced Perception    
+16706    disadvantages    Reduced SM    
+16715    disadvantages    Reduced ST    
+16724    disadvantages    Reduced Water Move    
+16733    disadvantages    Reduced Will    
+16742    advantages    Regeneration    
+16751    advantages    Regrowth    
+16760    equipment    Regular Bow    ST%choice%
+16769    equipment    Reinforced Boots    
+16778    advantages    Religious Rank    
+16787    skills    Religious Ritual    
+16796    attributes    Remaining Funds    
+16805    disadvantages    Reprogrammable    
+16814    advantages    Reputation    
+16823    disadvantages    Reputation    
+16832    skills    Research    
+16841    spells    Resist Cold    
+16850    spells    Resist Cold    Clerical
+16859    spells    Resist Cold    Ritual
+16868    spells    Resist Fire    
+16877    spells    Resist Fire    Clerical
+16886    spells    Resist Fire    Ritual
+16895    advantages    Resistant    
+16904    quirks    Responsive    
+16913    disadvantages    Restricted Diet    
+16922    disadvantages    Restricted Vision    
+16931    skills    Retain Weapon    %Melee Weapon Skill%
+16940    skills    Retain Weapon    %Ranged Weapon Skill%
+16949    equipment    Revolver, .357M    
+16958    equipment    Revolver, .357M    Ammunition
+16967    equipment    Revolver, .36    
+16976    equipment    Revolver, .36    Ammunition
+16985    equipment    Revolver, .38    
+16994    equipment    Revolver, .38    Ammunition
+17003    equipment    Revolver, .44M    
+17012    equipment    Revolver, .44M    Ammunition
+17021    disadvantages    Revulsion    
+17030    skills    Riding    %beast%
+17039    skills    Riding    Big Cats
+17048    skills    Riding    Dogs
+17057    skills    Riding    Equines
+17066    skills    Riding    Raptors
+17075    equipment    Rifle-Musket, .577    
+17084    equipment    Rifle-Musket, .577    Ammunition
+17093    advantages    Ritual Magery    %skill%
+17102    advantages    Ritual Magery    [skill]
+17111    advantages    Ritual Magery 0    
+17120    skills    Ritual Magic    
+17129    equipment    Roadster    
+17138    spells    Rooted Feet    
+17147    spells    Rooted Feet    Clerical
+17156    spells    Rooted Feet    Ritual
+17165    skills    Rope Up    Climbing
+17174    equipment    Rope, 3/4''    per 10 yards
+17183    equipment    Rope, 3/8''    per 10 yards
+17192    equipment    RPG, 85mm    
+17201    equipment    RPG, 85mm    Ammunition
+17210    skills    Running    
+17219    skills    Saber    
+17228    equipment    Saber    
+17237    skills    Saber Art    
+17246    skills    Saber Sport    
+17255    equipment    Saddle & Tack    
+17264    equipment    Saddle Horse    
+17273    equipment    Saddlebags    
+17282    disadvantages    Sadism    
+17291    equipment    SAM, 70mm    
+17300    equipment    SAM, 70mm    Ammunition
+17309    equipment    Sandals    
+17318    perks    Sanitized Metabolism    
+17327    equipment    Sap    
+17336    equipment    Satellite Phone    
+17345    skills    Savoir-Faire    
+17354    skills    Savoir-Faire    Dojo
+17363    skills    Savoir-Faire    High Society
+17372    skills    Savoir-Faire    Mafia
+17381    skills    Savoir-Faire    Military
+17390    skills    Savoir-Faire    Police
+17399    skills    Savoir-Faire    Servant
+17408    equipment    Saw    
+17417    equipment    SAW, 5.56mm    
+17426    equipment    SAW, 5.56mm    Ammunition
+17435    equipment    Scale Armor    
+17444    equipment    Scale Leggings    
+17453    equipment    Scale Sleeves    
+17462    skills    Scaling    Climbing
+17471    skills    Science!    
+17480    equipment    Scooter    
+17489    equipment    Scorpion    
+17498    equipment    Scorpion    Ammunition
+17507    equipment    Scribe's Kit    
+17516    skills    Scrounging    
+17525    skills    Scuba    
+17534    equipment    Scuba Gear    
+17543    equipment    Scythe    
+17552    advantages    Sealed    
+17561    skills    Seamanship    
+17570    skills    Search    
+17579    disadvantages    Secret    
+17588    disadvantages    Secret Identity    
+17597    advantages    Security Clearance    
+17606    equipment    Sedan    TL 6
+17615    equipment    Sedan    TL 7
+17624    advantages    See Invisible    
+17633    spells    Seek Earth    
+17642    spells    Seek Earth    Clerical
+17651    spells    Seek Earth    Ritual
+17660    spells    Seek Water    
+17669    spells    Seek Water    Clerical
+17678    spells    Seek Water    Ritual
+17687    spells    Seeker    
+17696    spells    Seeker    Clerical
+17705    spells    Seeker    Ritual
+17714    disadvantages    Self-Destruct    
+17723    equipment    Self-Loading Rifle, 7.62mm    
+17732    equipment    Self-Loading Rifle, 7.62mm    Ammunition
+17741    disadvantages    Selfish    
+17750    disadvantages    Selfless    
+17759    equipment    Semi-Truck    
+17768    disadvantages    Semi-Upright    
+17777    spells    Sense Emotion    
+17786    spells    Sense Emotion    Clerical
+17795    spells    Sense Emotion    Ritual
+17804    spells    Sense Foes    
+17813    spells    Sense Foes    Clerical
+17822    spells    Sense Foes    Ritual
+17831    disadvantages    Sense of Duty    
+17840    spells    Sense Spirit    
+17849    spells    Sense Spirit    Clerical
+17858    spells    Sense Spirit    Ritual
+17867    advantages    Sensitive    
+17876    advantages    Sensitive Touch    
+17885    advantages    Serendipity    
+17894    skills    Set Trap    Explosives (Demolition)
+17903    skills    Sewing    
+17912    skills    Sex Appeal    
+17921    quirks    Sexless    
+17930    advantages    Shadow Form    
+17939    disadvantages    Shadow Form    
+17948    skills    Shadowing    
+17957    spells    Shape Air    
+17966    spells    Shape Air    Clerical
+17975    spells    Shape Air    Ritual
+17984    spells    Shape Earth    
+17993    spells    Shape Earth    Clerical
+18002    spells    Shape Earth    Ritual
+18011    spells    Shape Fire    
+18020    spells    Shape Fire    Clerical
+18029    spells    Shape Fire    Ritual
+18038    spells    Shape Water    
+18047    spells    Shape Water    Clerical
+18056    spells    Shape Water    Ritual
+18065    spells    Shield    
+18074    skills    Shield    Buckler
+18083    spells    Shield    Clerical
+18092    skills    Shield    Force
+18101    spells    Shield    Ritual
+18110    skills    Shield    Shield
+18119    skills    Shield Art    Buckler
+18128    skills    Shield Art    Force
+18137    skills    Shield Art    Shield
+18146    skills    Shield Sport    Buckler
+18155    skills    Shield Sport    Force
+18164    skills    Shield Sport    Shield
+18173    attributes    Shift Slightly    
+18182    skills    Shiphandling    Airship
+18191    skills    Shiphandling    Ship
+18200    skills    Shiphandling    Spaceship
+18209    skills    Shiphandling    Starship
+18218    skills    Shiphandling    Submarine
+18227    equipment    Shoes    
+18236    disadvantages    Short Arms    1 Arm
+18245    disadvantages    Short Arms    2 Arms
+18254    disadvantages    Short Attention Span    
+18263    equipment    Short Bow    ST%choice%
+18272    disadvantages    Short Lifespan    
+18281    advantages    Short Spines    
+18290    equipment    Short Staff    
+18299    skills    Shortsword    
+18308    equipment    Shortsword    
+18317    skills    Shortsword Art    
+18326    skills    Shortsword Sport    
+18335    equipment    Shotgun Mike    
+18344    equipment    Shoulder Quiver    
+18353    attributes    Shove/Knock Over    
+18362    equipment    Shovel    
+18371    advantages    Shrinking    
+18380    perks    Shtick    
+18389    equipment    Shuriken    
+18398    equipment    Shuttlecraft    
+18407    disadvantages    Shyness    
+18416    attributes    Signature Gear    
+18425    advantages    Signature Gear    
+18434    advantages    Silence    
+18443    equipment    Silencer, Pistol or SMG    
+18452    skills    Singing    
+18461    advantages    Single-Minded    
+18470    attributes    Size Modifier    
+18479    skills    Skating    
+18488    skills    Skiing    
+18497    disadvantages    Skinny    
+18506    disadvantages    Slave Mentality    
+18515    spells    Sleep    
+18524    spells    Sleep    Clerical
+18533    spells    Sleep    Ritual
+18542    equipment    Sleeping Bag    
+18551    equipment    Sleeping Bag, Insulated    
+18560    equipment    Sleeping Fur    
+18569    disadvantages    Sleepwalker    
+18578    disadvantages    Sleepy    
+18587    skills    Sleight of Hand    
+18596    skills    Sling    
+18605    equipment    Sling    
+18614    skills    Sling Art    
+18623    equipment    Sling Lead Pellet    
+18632    skills    Sling Sport    
+18641    skills    Slip Handcuffs    Escape
+18650    advantages    Slippery    
+18659    disadvantages    Slow Eater    
+18668    disadvantages    Slow Healing    
+18677    disadvantages    Slow Riser    
+18686    equipment    Small Buckler    
+18695    equipment    Small Iron Buckler    
+18704    equipment    Small Iron Shield    
+18713    equipment    Small Knife    
+18722    equipment    Small Mace    
+18731    equipment    Small Mule    
+18740    advantages    Small Piercing Attack    
+18749    equipment    Small Plastic Buckler    
+18758    equipment    Small Plastic Shield    
+18767    equipment    Small Shield    
+18776    skills    Smallsword    
+18785    equipment    Smallsword    
+18794    skills    Smallsword Art    
+18803    skills    Smallsword Sport    
+18812    equipment    SMG, .45    
+18821    equipment    SMG, .45    Ammunition
+18830    equipment    SMG, .45, Civilian    
+18839    equipment    SMG, 9mm    TL 6
+18848    equipment    SMG, 9mm    TL 6, Ammunition
+18857    equipment    SMG, 9mm    TL 7
+18866    equipment    SMG, 9mm    TL 7, Ammunition
+18875    equipment    SMG, 9mm, Civilian    TL 6
+18884    equipment    SMG, 9mm, Civilian    TL 7
+18893    skills    Smith    Copper
+18902    skills    Smith    Iron
+18911    skills    Smith    Lead and Tin
+18920    advantages    Smooth Operator    
+18929    skills    Smuggling    
+18938    advantages    Snatcher    
+18947    equipment    Sniper Rifle, .338    
+18956    equipment    Sniper Rifle, .388    Ammunition
+18965    equipment    Snub Revolver, .38    
+18974    equipment    Snub Revolver, .38    Ammunition
+18983    advantages    Social Chameleon    
+18992    disadvantages    Social Disease    
+19001    advantages    Social Regard    
+19010    advantages    Social Regard    Feared
+19019    advantages    Social Regard    Respected
+19028    advantages    Social Regard    Venerated
+19037    disadvantages    Social Stigma    
+19046    disadvantages    Social Stigma    Criminal Record
+19055    disadvantages    Social Stigma    Disowned
+19064    disadvantages    Social Stigma    Excommunicated
+19073    disadvantages    Social Stigma    Ignorant
+19082    disadvantages    Social Stigma    Minor
+19091    disadvantages    Social Stigma    Minority Group
+19100    disadvantages    Social Stigma    Monster
+19109    disadvantages    Social Stigma    Publically disowned
+19118    disadvantages    Social Stigma    Second-Class Citizen
+19127    disadvantages    Social Stigma    Subjugated
+19136    disadvantages    Social Stigma    Uneducated
+19145    disadvantages    Social Stigma    Valuable Property
+19154    skills    Sociology    
+19163    skills    Soldier    
+19172    templates    Soldier of Fortune    Basic Set
+19181    equipment    Sollerets    
+19190    advantages    Sonar    
+19199    equipment    Space Armor    TL 9
+19208    equipment    Space Armor    TL10
+19217    equipment    Space Armor    TL11
+19226    equipment    Space Armor    TL12
+19235    equipment    Space Armor Helmet    TL 9
+19244    equipment    Space Armor Helmet    TL10
+19253    equipment    Space Armor Helmet    TL11
+19262    equipment    Space Armor Helmet    TL12
+19271    attributes    Space Move    
+19280    disadvantages    Space Sickness    
+19289    equipment    Space Suit    
+19298    equipment    Space Suit Helmet    
+19307    skills    Spacer    
+19316    spells    Spasm    
+19325    spells    Spasm    Clerical
+19334    spells    Spasm    Ritual
+19343    advantages    Speak Underwater    
+19352    advantages    Speak With Animals    
+19361    advantages    Speak With Plants    
+19370    skills    Spear    
+19379    equipment    Spear    
+19388    skills    Spear Art    
+19397    skills    Spear Sport    
+19406    skills    Spear Thrower    
+19415    advantages    Special Rapport    
+19424    skills    Speed-Reading    
+19433    equipment    Speedboat    
+19442    equipment    Spinning Wheel    
+19451    templates    Spirit    
+19460    advantages    Spirit Empathy    
+19469    disadvantages    Split Personality    
+19478    skills    Sports    
+19487    equipment    Sports Bike    
+19496    equipment    Sports Car    
+19505    equipment    Spurs    
+19514    equipment    Spy Camera    
+19523    disadvantages    Squeamish    
+19532    attributes    ST    
+19541    skills    Staff    
+19550    spells    Staff    
+19559    spells    Staff    Clerical
+19568    spells    Staff    Ritual
+19577    skills    Staff Art    
+19586    equipment    Staff Sling    
+19595    skills    Staff Sport    
+19604    skills    Stage Combat    
+19613    quirks    Staid    
+19622    equipment    Star Freighter    
+19631    attributes    Starting Wealth    
+19640    attributes    Status    
+19649    advantages    Status    
+19658    disadvantages    Status    
+19667    skills    Stealth    
+19676    equipment    Steel Breastplate    
+19685    equipment    Steel Corselet    
+19694    equipment    Steel Laminate Plate    
+19703    equipment    Steel Laminate Suit    
+19712    equipment    Steel Pot    
+19721    spells    Stench    
+19730    spells    Stench    Clerical
+19739    spells    Stench    Ritual
+19748    equipment    Stirrups    
+19757    spells    Stone to Earth    
+19766    spells    Stone to Earth    Clerical
+19775    spells    Stone to Earth    Ritual
+19784    spells    Stone to Flesh    
+19793    spells    Stone to Flesh    Clerical
+19802    spells    Stone to Flesh    Ritual
+19811    skills    Strategy    Air
+19820    skills    Strategy    Interstellar
+19829    skills    Strategy    Land
+19838    skills    Strategy    Naval
+19847    skills    Strategy    Space
+19856    skills    Streetwise    
+19865    disadvantages    Stress Atavism    
+19874    advantages    Stretching    
+19883    advantages    Striker    Crushing; [Description]
+19892    advantages    Striker    Cutting; [Description]
+19901    advantages    Striker    Impaling; [Description]
+19910    advantages    Striker    Large Piercing; [Description]
+19919    advantages    Striker    Piercing; [Description]
+19928    attributes    Striking ST    
+19937    advantages    Striking ST    
+19946    disadvantages    Stubbornness    
+19955    equipment    Studded Leather Skirt    
+19964    equipment    Stun Grenade    
+19973    equipment    Stun Gun    
+19982    disadvantages    Stuttering    
+19991    skills    Submarine    Free-Flooding Sub
+20000    skills    Submarine    Large Sub
+20009    skills    Submarine    Mini-Sub
+20018    skills    Submariner    
+20027    advantages    Subsonic Hearing    
+20036    advantages    Subsonic Speech    
+20045    equipment    Suitcase Lab    
+20054    equipment    Suitcase, Hard    
+20063    spells    Summon Demon    
+20072    spells    Summon Demon    Clerical
+20081    spells    Summon Demon    Ritual
+20090    spells    Summon Spirit    
+20099    spells    Summon Spirit    Clerical
+20108    spells    Summon Spirit    Ritual
+20117    skills    Sumo Wrestling    
+20126    skills    Sumo Wrestling Art    
+20135    skills    Sumo Wrestling Sport    
+20144    advantages    Super Climbing    
+20153    attributes    Super Jump    
+20162    advantages    Super Jump    
+20171    advantages    Super Luck    
+20180    advantages    Supernatural Durability    
+20189    disadvantages    Supernatural Feature    
+20198    disadvantages    Supersensitive    
+20207    skills    Surgery    
+20216    skills    Surgery    [Race]
+20225    equipment    Surgical Instruments    
+20234    skills    Survival    
+20243    skills    Survival    Arctic
+20252    skills    Survival    Bank
+20261    skills    Survival    Deep Ocean Vent
+20270    skills    Survival    Desert
+20279    skills    Survival    Fresh-Water Lake
+20288    skills    Survival    Island/Beach
+20297    skills    Survival    Jungle
+20306    skills    Survival    Mountain
+20315    skills    Survival    Open Ocean
+20324    skills    Survival    Plains
+20333    skills    Survival    Radioactive Wasteland
+20342    skills    Survival    Reef
+20351    skills    Survival    River/Stream
+20360    skills    Survival    Salt-Water Sea
+20369    skills    Survival    Swampland
+20378    skills    Survival    Tropical Lagoon
+20387    skills    Survival    Woodlands
+20396    disadvantages    Susceptible to [Common]    
+20405    disadvantages    Susceptible to [Occasional]    
+20414    disadvantages    Susceptible to [Very Common]    
+20423    equipment    SUV    
+20432    skills    Sweep    Polearm
+20441    skills    Sweep    Spear
+20450    skills    Sweep    Staff
+20459    skills    Sweeping Kick    Judo
+20468    skills    Sweeping Kick    Karate
+20477    skills    Sweeping Kick    Sumo Wrestling
+20486    skills    Swimming    
+20495    skills    Sword!    
+20504    skills    Symbol Drawing    
+20513    equipment    Tactical Suit    TL 9
+20522    equipment    Tactical Suit    TL10
+20531    equipment    Tactical Suit    TL11
+20540    equipment    Tactical Suit    TL12
+20549    equipment    Tactical Vest    TL 8
+20558    equipment    Tactical Vest    TL 9
+20567    equipment    Tactical Vest    TL10
+20576    equipment    Tactical Vest    TL11
+20585    equipment    Tactical Vest    TL12
+20594    equipment    Tactical Vest Trauma Plates    
+20603    skills    Tactics    
+20612    equipment    Tallow Candle    
+20621    attributes    Taste/Smell    
+20630    skills    Teaching    
+20639    skills    Teamster    
+20648    attributes    Tech Level    
+20657    advantages    Teeth    Blunt Teeth
+20666    advantages    Teeth    Fangs
+20675    advantages    Teeth    Sharp Beak
+20684    advantages    Teeth    Sharp Teeth
+20693    advantages    Telecommunication    Infrared Communication
+20702    advantages    Telecommunication    Laser Communication
+20711    advantages    Telecommunication    Radio
+20720    advantages    Telecommunication    Telesend
+20729    advantages    Telekinesis    
+20738    advantages    Telepathy Talent    
+20747    advantages    Teleportation Talent    
+20756    equipment    Telescope    
+20765    advantages    Telescopic Vision    
+20774    advantages    Temperature Control    
+20783    advantages    Temperature Tolerance    
+20792    advantages    Temporal Inertia    
+20801    equipment    Tent, 1-Man    
+20810    equipment    Tent, 2-Man    
+20819    equipment    Tent, 20-Man    
+20828    equipment    Tent, 4-Man    
+20837    advantages    Tenure    
+20846    disadvantages    Terminally Ill    
+20855    advantages    Terrain Adaptation    
+20864    advantages    Terror    
+20873    skills    Thaumatology    
+20882    skills    Theology    
+20891    equipment    Thermos Bottle    
+20900    attributes    Three Arm Lifting ST    
+20909    attributes    Three Arm Striking ST    
+20918    skills    Throwing    
+20927    skills    Throwing Art    
+20936    equipment    Throwing Axe    
+20945    equipment    Thrown Object    
+20954    skills    Thrown Weapon    Axe/Mace
+20963    skills    Thrown Weapon    Dart
+20972    skills    Thrown Weapon    Harpoon
+20981    skills    Thrown Weapon    Knife
+20990    skills    Thrown Weapon    Shuriken
+20999    skills    Thrown Weapon    Spear
+21008    skills    Thrown Weapon    Stick
+21017    equipment    Thrusting Bastard Sword    
+21026    equipment    Thrusting Broadsword    
+21035    equipment    Thrusting Greatsword    
+21044    disadvantages    Timesickness    
+21053    attributes    TK Basic Lift    
+21062    attributes    TK Heavy Encumbrance    
+21071    attributes    TK Heavy Encumbrance Move    
+21080    attributes    TK Light Encumbrance    
+21089    attributes    TK Light Encumbrance Move    
+21098    attributes    TK Max Lift    
+21107    attributes    TK Medium Encumbrance    
+21116    attributes    TK Medium Encumbrance Move    
+21125    attributes    TK Move    
+21134    attributes    TK No Encumbrance    
+21143    attributes    TK No Encumbrance Move    
+21152    attributes    TK Shift Slightly    
+21161    attributes    TK Shove/Knock Over    
+21170    attributes    TK ST    
+21179    attributes    TK X-Heavy Encumbrance    
+21188    attributes    TK X-Heavy Encumbrance Move    
+21197    skills    Tonfa    
+21206    skills    Tonfa Art    
+21215    skills    Tonfa Sport    
+21224    equipment    Torch    
+21233    attributes    Touch    
+21242    advantages    Toxic Attack    
+21251    spells    Trace    
+21260    spells    Trace    Clerical
+21269    spells    Trace    Ritual
+21278    skills    Tracking    
+21287    disadvantages    Trademark    
+21296    quirks    Trademark    
+21305    advantages    Trading Character Points for Money    
+21314    advantages    Trained By A Master    
+21323    equipment    Tramp Steamer    
+21332    equipment    Transistor Radio    
+21341    skills    Traps    
+21350    equipment    Traveler's Rations    
+21359    disadvantages    Trickster    
+21368    advantages    True Faith    
+21377    disadvantages    Truthfulness    
+21386    spells    Truthsayer    
+21395    spells    Truthsayer    Clerical
+21404    spells    Truthsayer    Ritual
+21413    advantages    Tunneling    
+21422    attributes    Tunneling Move    
+21431    spells    Turn Zombie    
+21440    spells    Turn Zombie    Clerical
+21449    spells    Turn Zombie    Ritual
+21458    equipment    TV Set, Mini    
+21467    equipment    Twin-Prop Transport    
+21476    attributes    Two Arm Lifting ST    
+21485    attributes    Two Arm Reach    
+21494    attributes    Two Arm SM    
+21503    attributes    Two Arm Striking ST    
+21512    skills    Two-Handed Axe/Mace    
+21521    skills    Two-Handed Axe/Mace Art    
+21530    skills    Two-Handed Axe/Mace Sport    
+21539    skills    Two-Handed Flail    
+21548    skills    Two-Handed Flail Art    
+21557    skills    Two-Handed Flail Sport    
+21566    attributes    Two-Handed Lift    
+21575    skills    Two-Handed Sword    
+21584    skills    Two-Handed Sword Art    
+21593    skills    Two-Handed Sword Sport    
+21602    equipment    Typewriter, Manual    
+21611    skills    Typing    
+21620    advantages    Ultrahearing    
+21629    advantages    Ultrasonic Speech    
+21638    advantages    Ultravision    
+21647    advantages    Unaging    
+21656    attributes    Unappealing    
+21665    quirks    Uncongenial    
+21674    disadvantages    Uncontrollable Appetite    
+21683    equipment    Under-Barrel Grenade Launcher, 40mm    
+21692    equipment    Under-Barrel Grenade Launcher, 40mm    Ammunition
+21701    advantages    Unfazeable    
+21710    disadvantages    Unfit    
+21719    disadvantages    Unhealing    
+21728    disadvantages    Unique    
+21737    advantages    Universal Digestion    
+21746    advantages    Unkillable    
+21755    disadvantages    Unluckiness    
+21764    disadvantages    Unnatural Feature    
+21773    advantages    Unusual Background    
+21782    disadvantages    Unusual Biochemistry    
+21791    skills    Urban Survival    
+21800    equipment    Utility Helicopter    TL 7
+21809    equipment    Utility Helicopter    TL 8
+21818    skills    Vacc Suit    
+21827    equipment    Vacc Suit    TL 9
+21836    equipment    Vacc Suit    TL10
+21845    equipment    Vacc Suit    TL11
+21854    equipment    Vacc Suit    TL12
+21863    equipment    Vacc Suit Helmet    TL 9
+21872    equipment    Vacc Suit Helmet    TL10
+21881    equipment    Vacc Suit Helmet    TL11
+21890    equipment    Vacc Suit Helmet    TL12
+21899    advantages    Vacuum Support    
+21908    templates    Vampire    Basic Set
+21917    advantages    Vampiric Bite    
+21926    equipment    Van    
+21935    skills    Ventriloquism    
+21944    templates    Vermiform    
+21953    advantages    Versatile    
+21962    disadvantages    Very Fat    
+21971    advantages    Very Fit    
+21980    advantages    Very Rapid Healing    
+21989    disadvantages    Very Unfit    
+21998    skills    Veterinary    
+22007    advantages    Vibration Sense    
+22016    attributes    Vision    
+22025    advantages    Visualization    
+22034    advantages    Voice    
+22043    disadvantages    Vow    
+22052    quirks    Vow    
+22061    disadvantages    Vulnerability    
+22070    equipment    Wagon    
+22079    advantages    Walk on Air    
+22088    spells    Walk on Air    
+22097    spells    Walk on Air    Clerical
+22106    spells    Walk on Air    Ritual
+22115    advantages    Walk on Liquid    
+22124    equipment    War Saddle    
+22133    equipment    Warhammer    
+22142    advantages    Warp    
+22151    templates    Warrior    Basic Set
+22160    templates    Warrior - Heroic    Basic Set
+22169    templates    Warrior - Knight    Basic Set
+22178    equipment    Water    per gallon
+22187    equipment    Water    per quart
+22196    skills    Water College!    
+22205    attributes    Water Move    
+22214    equipment    Water Purification Tablets    
+22223    equipment    Wax Tablet    
+22232    disadvantages    Weak Arms    1 Arm
+22241    disadvantages    Weak Arms    2 Arms
+22250    disadvantages    Weak Bite    
+22259    disadvantages    Weakness    
+22268    advantages    Wealth    
+22277    disadvantages    Wealth    
+22286    attributes    Wealth Modifier    
+22295    advantages    Weapon Master    
+22304    advantages    Weapon Master    Targets
+22313    disadvantages    Weapon Mount    1 Arm
+22322    disadvantages    Weapon Mount    2 Arms
+22331    skills    Weather Sense    
+22340    equipment    Web Gear    
+22349    skills    Weird Science    
+22358    disadvantages    Weirdness Magnet    
+22367    equipment    Wheel-Lock Pistol, .60    
+22376    equipment    Wheel-Lock Pistol, .60    Ammunition
+22385    equipment    Wheelbarrow    
+22394    equipment    Whetstone    
+22403    skills    Whip    
+22412    equipment    Whip    1-yard
+22421    equipment    Whip    2-yard
+22430    equipment    Whip    3-yard
+22439    equipment    Whip    4-yard
+22448    equipment    Whip    5-yard
+22457    equipment    Whip    6-yard
+22466    equipment    Whip    7-yard
+22475    skills    Whip Art    
+22484    skills    Whip Sport    
+22493    skills    Whirlwind Attack    Broadsword
+22502    skills    Whirlwind Attack    Staff
+22511    skills    Whirlwind Attack    Two-Handed Sword
+22520    templates    Wild Animal    
+22529    advantages    Wild Talent    
+22538    advantages    Wildcard Magery!    
+22547    attributes    Will    
+22556    equipment    Wineskin    
+22565    equipment    Winter Clothes    
+22574    equipment    Winter Clothes    Status %Status%
+22583    spells    Wither Limb    
+22592    spells    Wither Limb    Clerical
+22601    spells    Wither Limb    Ritual
+22610    equipment    Wooden Stake    
+22619    skills    Work by Touch    Lockpicking
+22628    disadvantages    Workaholic    
+22637    disadvantages    Wounded    
+22646    skills    Wrestling    
+22655    skills    Wrestling Art    
+22664    skills    Wrestling Sport    
+22673    equipment    Wristwatch    
+22682    skills    Writing    
+22691    attributes    X-Heavy Encumbrance    
+22700    attributes    X-Heavy Encumbrance Move    
+22709    advantages    Xeno-Adaptability    
+22718    disadvantages    Xenophilia    
+22727    skills    Zen Archery    
+22736    advantages    Zeroed    
+22745    spells    Zombie    
+22754    spells    Zombie    Clerical
+22763    spells    Zombie    Ritual

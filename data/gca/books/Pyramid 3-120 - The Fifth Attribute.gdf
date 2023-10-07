@@ -1,0 +1,3562 @@
+Encoding=UTF-8
+Version=3
+* The version information above MUST be the first line of the data file
+Program=5.0
+Description=2022 November 13. This file installs the Quintessence attribute from 'The Fifth Attribute' and changes to spells to use it.
+LoadAfter="GURPS Basic Set 4th Ed.--Characters.gdf",
+	"GURPS Magic 4e.gdf",
+	"GURPS Magic 4e - Clerical Magic.gdf",
+	"GURPS Magic 4e - Ritual Magic.gdf",
+	"GURPS Fantasy 4e.gdf"
+Incomplete=Yes
+Taboo="Variant Magic 4e - Alt Attribute (DX+IQ) ÷ 2.gdf",
+		"Variant Magic 4e - Alt Attribute (IQ+Will) ÷ 2.gdf",
+		"Variant Magic 4e - Alt Attribute (IQ+Per+Will) ÷ 3.gdf",
+		"Variant Magic 4e - Alt Attribute 5 + (IQ ÷ 2).gdf",
+		"Variant Magic 4e - Alt Attribute 5 + (Per ÷ 2).gdf",
+		"Variant Magic 4e - Alt Attribute 5 + (Will ÷ 2).gdf",
+		"Variant Magic 4e - Alt Attribute DX.gdf",
+		"Variant Magic 4e - Alt Attribute HT.gdf",
+		"Variant Magic 4e - Alt Attribute Lower (IQ,10 + Magery).gdf",
+		"Variant Magic 4e - Alt Attribute Lower (IQ,DX).gdf",
+		"Variant Magic 4e - Alt Attribute Lower (IQ,Per).gdf",
+		"Variant Magic 4e - Alt Attribute Lower (IQ,Per,Will).gdf",
+		"Variant Magic 4e - Alt Attribute Lower (IQ,Will).gdf",
+		"Variant Magic 4e - Alt Attribute Per.gdf",
+		"Variant Magic 4e - Alt Attribute Will.gdf",
+		"Variant Magic 4e - Alt Attribute 10.gdf"
+
+[AUTHOR]
+*******************************************************************************************************\[START]
+//  
+//   GURPS® Character Assistant
+//   Filename: Pyramid 3-120 - The Fifth Attribute.gdf
+//   Requires GCA v4 or later!
+//  
+//   This data file contains information taken from the GURPS Basic Set: Characters sourcebook. GURPS Basic Set:
+//   Characters is Copyright © 1986, 1987, 1988, 1989, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2002, 2004 by
+//   Steve Jackson Games Incorporated. All rights reserved.
+//  
+//   Information in this file includes:
+//		Stuff for Quintessence!
+//  
+*******************************************************************************************************************
+//  
+//	 From Armin, Eric, and Phantasm.
+//  
+//   Questions or concerns? Please drop a message in the GURPS Character Assistant forum at:
+//   http://forums.sjgames.com
+//  
+*******************************************************************************************************************
+//  
+//   GURPS is a registered trademark of Steve Jackson Games Incorporated, used with GCA by permission of Steve Jackson
+//   Games. All rights reserved.
+//  
+//   The GURPS game is Copyright © 1986-1989, 1991-1994 by Steve Jackson Games Incorporated. This product includes
+//   copyrighted material from the GURPS game, which is used by permission of Steve Jackson Games Incorporated. All
+//   rights reserved by Steve Jackson Games Incorporated.
+//  
+*******************************************************************************************************************
+
+
+********************************************************************************************************\[STOP]
+[ATTRIBUTES]
+*******************************************************************************************************\[START]
+QN, symbol(QN), basevalue(10), step(1), maxscore(1000000), minscore(0), up(10), down(-10), mainwin(4), disadat(-1), display(no)
+Quintessence Points, symbol(QP), basevalue(ST:QN), step(1), maxscore(1000000), minscore(0), up(3), down(-3), display(No), mainwin(9), disadat(-1)
+
+********************************************************************************************************\[STOP]
+[SKILLTYPES]
+*******************************************************************************************************\[START]
+QN/E, cost(1/2/4/8), base(-1), defaultstat(ST:QN), relname(QN)
+QN/A, cost(1/2/4/8), base(-2), defaultstat(ST:QN), relname(QN)
+QN/H, cost(1/2/4/8), base(-3), defaultstat(ST:QN), relname(QN)
+QN/VH, cost(1/2/4/8), base(-4), defaultstat(ST:QN), relname(QN)
+QN/WC, cost(3/6/12/24), base(-4), defaultstat(ST:QN), relname(QN)
+
+********************************************************************************************************\[STOP]
+[SKILLS]
+*******************************************************************************************************\[START]
+<_New Skills>
+_New Wildcard Skill, %typelist%, page(B175), cat(_New Skills, Wildcard!),_
+	x(#InputToTagReplace("Please enter the name of this Wildcard Skill:" , name, , "New Wildcard Skill"),_
+	#ChoiceList(_
+			name(parry),_
+			title(New Skill: Can this skill be used to parry in combat?),_
+			text(Can this skill be used to parry in combat? Choose one:),_
+			picksallowed(1),_
+			method(bynumber),_
+			list(_
+				"_No Parry",_
+				"Normal Parry",_
+				"Knife Parry"=-1,_
+				"Staff Parry"=+2_
+			),_
+			aliaslist(_
+				"",_
+				"@int(%level/2)+3",_
+				"@int(%level/2)+3-1",_
+				"@int(%level/2)+3+2"_
+			)_
+			),_
+	#ChoiceList(_
+			name(block),_
+			title(New Skill: Can this skill be used to Block in combat?),_
+			text(Can this skill be used to block in combat? Choose one:),_
+			picksallowed(1),_
+			method(bynumber),_
+			list(_
+				"_No Block",_
+				"Normal Block"_
+			),_
+			aliaslist(_
+				"",_
+				"@int(%level/2)+3"_
+			)_
+			),_
+	#ChoiceList(_
+			name(type),_
+			title(New Wildcard Skill: Choose a Skill Type),_
+			text(Choose the type of skill from the list below:),_
+			picksallowed(1),_
+			method(bynumber),_
+			list(_
+				"DX/WC",_
+				"IQ/WC",_
+				"HT/WC",_
+				"QN/WC",_
+				"Will/WC",_
+				"Per/WC"_
+			)_
+			),_
+	#edit _
+	), noresync(yes), parryat(%parryaliaslist%), blockat(%blockaliaslist%)
+
+_New Skill, %typelist%, page(B175), cat(_General, _New Skills), tl(%TL1alias%),_
+	x(#InputToTagReplace("Please enter the name of this Skill:" , name, , "New Skill"),_
+	#ChoiceList(_
+			name(parry),_
+			title(New Skill: Can this skill be used to parry in combat?),_
+			text(Can this skill be used to parry in combat? Choose one:),_
+			picksallowed(1),_
+			method(bynumber),_
+			list(_
+				"_No Parry",_
+				"Normal Parry",_
+				"Knife Parry"=-1,_
+				"Staff Parry"=+2_
+			),_
+			aliaslist(_
+				"",_
+				"@int(%level/2)+3",_
+				"@int(%level/2)+3-1",_
+				"@int(%level/2)+3+2"_
+			)_
+			),_
+	#ChoiceList(_
+			name(block),_
+			title(New Skill: Can this skill be used to Block in combat?),_
+			text(Can this skill be used to block in combat? Choose one:),_
+			picksallowed(1),_
+			method(bynumber),_
+			list(_
+				"_No Block",_
+				"Normal Block"_
+			),_
+			aliaslist(_
+				"",_
+				"@int(%level/2)+3"_
+			)_
+			),_
+	#ChoiceList(_
+			name(TL),_
+			title(New Skill: Is this skill TL based?),_
+			text(Is this skill TL based?),_
+			picksallowed(1),_
+			method(bynumber),_
+			list(_
+				"Not TL based",_
+				"TL based"_
+				),_
+			aliaslist(_
+				"",_
+				"0-12"_
+				)_
+			),_
+	#ChoiceList(_
+			name(type),_
+			title(New Skill: Choose a Skill Type),_
+			text(Choose the type of skill from the list below:),_
+			picksallowed(1),_
+			method(bynumber),_
+			list(_
+				"DX/E",_
+				"DX/A",_
+				"DX/H",_
+				"DX/VH",_
+				"IQ/E",_
+				"IQ/A",_
+				"IQ/H",_
+				"IQ/VH",_
+				"HT/E",_
+				"HT/A",_
+				"HT/H",_
+				"HT/VH",_
+				"QN/E",_
+				"QN/A",_
+				"QN/H",_
+				"QN/VH",_
+				"Will/E",_
+				"Will/A",_
+				"Will/H",_
+				"Will/VH",_
+				"Per/E",_
+				"Per/A",_
+				"Per/H",_
+				"Per/VH"_
+			)_
+			),_
+	#edit _
+	), noresync(yes), parryat(%parryaliaslist%), blockat(%blockaliaslist%)
+
+<_General, Occult/Magical>
+Ritual Magic, QN/VH, default(SK:Religious Ritual - 6), page(B218), cat(_General, Occult/Magical),_
+	x(#InputToTag("You must specialize by tradition:", nameext, , "Ritual Magic"))
+Thaumatology, QN/VH, default(IQ - 7), page(B225), cat(_General, Occult/Magical)
+
+
+
+
+********************************************************************************************************\[STOP]
+[SPELLS]
+*******************************************************************************************************\[START]
+
+<Air:Ai>
+#ReplaceTags in "SP:Purify Air" with type(QN/H)
+#ReplaceTags in "SP:Create Air" with type(QN/H)
+#ReplaceTags in "SP:Shape Air" with type(QN/H)
+#ReplaceTags in "SP:No-Smell" with type(QN/H)
+// Predict Weather - in Weather
+// Breathe Water - in Water
+#ReplaceTags in "SP:Walk on Air" with type(QN/H)
+#ReplaceTags in "SP:Earth to Air" with type(QN/H)
+#ReplaceTags in "SP:Stench" with type(QN/H)
+// Lightning - in Weather
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Seek Air" with type(QN/H)
+	#ReplaceTags in "SP:Destroy Air" with type(QN/H)
+	#ReplaceTags in "SP:Odor" with type(QN/H)
+	#ReplaceTags in "SP:Air Jet" with type(QN/H)
+	#ReplaceTags in "SP:Air Vision" with type(QN/H)
+	#ReplaceTags in "SP:Body of Air" with type(QN/H)
+	#ReplaceTags in "SP:Devitalize Air" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Wind" with type(QN/H)
+	#ReplaceTags in "SP:Windstorm" with type(QN/H)
+	#ReplaceTags in "SP:Concussion" with type(QN/H)
+	#ReplaceTags in "SP:Breathe Air" with type(QN/H)
+	#ReplaceTags in "SP:Essential Air" with type(QN/H)
+	#ReplaceTags in "SP:Air Vortex" with type(QN/H)
+	#ReplaceTags in "SP:Sandstorm" with type(QN/H)
+	#ReplaceTags in "SP:Body of Wind" with type(QN/H)
+	#ReplaceTags in "SP:Summon Air Elemental" with type(QN/H)
+	#ReplaceTags in "SP:Control Air Elemental" with type(QN/H)
+	#ReplaceTags in "SP:Create Air Elemental" with type(QN/H)
+
+#End
+
+<Animal:An>
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+	#ReplaceTags in "SP:Beast-Soother" with type(QN/H)
+	#ReplaceTags in "SP:Beast-Rouser" with type(QN/H)
+	#ReplaceTags in "SP:Vermin Control" with type(QN/H)
+	#ReplaceTags in "SP:Fish Control" with type(QN/H)
+	#ReplaceTags in "SP:Reptile Control" with type(QN/H)
+	#ReplaceTags in "SP:Bird Control" with type(QN/H)
+	#ReplaceTags in "SP:Mammal Control" with type(QN/H)
+	#ReplaceTags in "SP:Hybrid Control" with type(QN/VH)
+	#ReplaceTags in "SP:Beast Summoning" with type(QN/H)
+	#ReplaceTags in "SP:Master" with type(QN/H)
+	#ReplaceTags in "SP:Beast Link" with type(QN/H)
+	#ReplaceTags in "SP:Beast Speech" with type(QN/H)
+	#ReplaceTags in "SP:Repel Vermin" with type(QN/H)
+	#ReplaceTags in "SP:Repel Fish" with type(QN/H)
+	#ReplaceTags in "SP:Repel Reptile" with type(QN/H)
+	#ReplaceTags in "SP:Repel Bird" with type(QN/H)
+	#ReplaceTags in "SP:Repel Mammal" with type(QN/H)
+	#ReplaceTags in "SP:Repel Hybrids" with type(QN/VH)
+	#ReplaceTags in "SP:Rider" with type(QN/H)
+	#ReplaceTags in "SP:Rider Within" with type(QN/H)
+	#ReplaceTags in "SP:Spider Silk" with type(QN/H)
+	#ReplaceTags in "SP:Beast Seeker" with type(QN/H)
+	#ReplaceTags in "SP:Beast Possession" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Beast Possession" with type(QN/VH)
+	#ReplaceTags in "SP:Protect Animal" with type(QN/H)
+	#ReplaceTags in "SP:Shapeshifting ([Animal])" with type(QN/VH)
+	#ReplaceTags in "SP:Shapeshift Others ([Animal])" with type(QN/VH)
+	#ReplaceTags in "SP:Permanent Shapeshifting ([Animal])" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting ([Variation])" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Chameleon Eyes)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Crocodile Jaws)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Elephant Trunk)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Feathered Arms)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Fish Tail)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Mountain Goat Hooves)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Saber Teeth)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Scorpion Tail)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Serpent's Fangs)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Skunk Tail)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Spider Arms)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Tiger Paws)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Toad Tongue)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Turtle Shell)" with type(QN/VH)
+	#ReplaceTags in "SP:Great Shapeshift" with type(QN/VH)
+#End
+
+<Body Control:BC>
+#ReplaceTags in "SP:Itch" with type(QN/H)
+#ReplaceTags in "SP:Spasm" with type(QN/H)
+#ReplaceTags in "SP:Pain" with type(QN/H)
+#ReplaceTags in "SP:Clumsiness" with type(QN/H)
+#ReplaceTags in "SP:Hinder" with type(QN/H)
+#ReplaceTags in "SP:Rooted Feet" with type(QN/H)
+#ReplaceTags in "SP:Paralyze Limb" with type(QN/H)
+#ReplaceTags in "SP:Wither Limb" with type(QN/H)
+#ReplaceTags in "SP:Deathtouch" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Climbing" with type(QN/H)
+	#ReplaceTags in "SP:Touch" with type(QN/H)
+	#ReplaceTags in "SP:Perfume" with type(QN/H)
+	#ReplaceTags in "SP:Stop Spasm" with type(QN/H)
+	#ReplaceTags in "SP:Tickle" with type(QN/H)
+	#ReplaceTags in "SP:Tanglefoot" with type(QN/H)
+	#ReplaceTags in "SP:Roundabout" with type(QN/H)
+	#ReplaceTags in "SP:Debility" with type(QN/H)
+	#ReplaceTags in "SP:Frailty" with type(QN/H)
+	#ReplaceTags in "SP:Might" with type(QN/H)
+	#ReplaceTags in "SP:Grace" with type(QN/H)
+	#ReplaceTags in "SP:Vigor" with type(QN/H)
+	#ReplaceTags in "SP:Boost Dexterity" with type(QN/H)
+	#ReplaceTags in "SP:Boost Health" with type(QN/H)
+	#ReplaceTags in "SP:Boost Strength" with type(QN/H)
+	#ReplaceTags in "SP:Boost Intelligence" with type(QN/H)
+	#ReplaceTags in "SP:Stun" with type(QN/H)
+	#ReplaceTags in "SP:Nauseate" with type(QN/H)
+	#ReplaceTags in "SP:Retch" with type(QN/H)
+	#ReplaceTags in "SP:Fumble" with type(QN/H)
+	#ReplaceTags in "SP:Strike Dumb" with type(QN/H)
+	#ReplaceTags in "SP:Strike Blind" with type(QN/H)
+	#ReplaceTags in "SP:Strike Deaf" with type(QN/H)
+	#ReplaceTags in "SP:Hunger" with type(QN/H)
+	#ReplaceTags in "SP:Thirst" with type(QN/H)
+	#ReplaceTags in "SP:Resist Pain" with type(QN/H)
+	#ReplaceTags in "SP:Hold Breath" with type(QN/H)
+	#ReplaceTags in "SP:Ambidexterity" with type(QN/H)
+	#ReplaceTags in "SP:Balance" with type(QN/H)
+	#ReplaceTags in "SP:Reflexes" with type(QN/H)
+	#ReplaceTags in "SP:Cadence" with type(QN/H)
+	#ReplaceTags in "SP:Hair Growth" with type(QN/H)
+	#ReplaceTags in "SP:Haircut" with type(QN/H)
+	#ReplaceTags in "SP:Sensitize" with type(QN/H)
+	#ReplaceTags in "SP:Agonize" with type(QN/H)
+	#ReplaceTags in "SP:Weaken Blood" with type(QN/H)
+	#ReplaceTags in "SP:Strike Numb" with type(QN/H)
+	#ReplaceTags in "SP:Choke" with type(QN/H)
+	#ReplaceTags in "SP:Control Limb" with type(QN/H)
+	#ReplaceTags in "SP:Total Paralysis" with type(QN/H)
+	#ReplaceTags in "SP:Strike Barren" with type(QN/H)
+	#ReplaceTags in "SP:Alter Voice" with type(QN/H)
+	#ReplaceTags in "SP:Alter Visage" with type(QN/H)
+	#ReplaceTags in "SP:Alter Body" with type(QN/H)
+	#ReplaceTags in "SP:Lengthen Limb" with type(QN/H)
+	#ReplaceTags in "SP:Decapitation" with type(QN/VH)
+	#ReplaceTags in "SP:Shrink" with type(QN/VH)
+	#ReplaceTags in "SP:Shrink Other" with type(QN/VH)
+	#ReplaceTags in "SP:Enlarge" with type(QN/VH)
+	#ReplaceTags in "SP:Enlarge Other" with type(QN/VH)
+	#ReplaceTags in "SP:Corpulence" with type(QN/VH)
+	#ReplaceTags in "SP:Gauntness" with type(QN/VH)
+	#ReplaceTags in "SP:Transform Body ([Race])" with type(QN/H)
+	#ReplaceTags in "SP:Transform Other ([Race])" with type(QN/H)
+	#ReplaceTags in "SP:Transmogrification" with type(QN/H)
+
+#End
+
+<Communication & Empathy:CE>
+
+#ReplaceTags in "SP:Sense Foes" with type(QN/H)
+#ReplaceTags in "SP:Sense Emotion" with type(QN/H)
+#ReplaceTags in "SP:Truthsayer" with type(QN/H)
+#ReplaceTags in "SP:Mind-Reading" with type(QN/H)
+#ReplaceTags in "SP:Hide Thoughts" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Sense Life" with type(QN/H)
+	#ReplaceTags in "SP:Hide Emotion" with type(QN/H)
+	#ReplaceTags in "SP:Persuasion" with type(QN/H)
+	#ReplaceTags in "SP:Vexation" with type(QN/H)
+	#ReplaceTags in "SP:Dream Viewing" with type(QN/H)
+	#ReplaceTags in "SP:Dream Sending" with type(QN/H)
+	#ReplaceTags in "SP:Dream Projection" with type(QN/H)
+	#ReplaceTags in "SP:Lend Language" with type(QN/H)
+	#ReplaceTags in "SP:Borrow Language" with type(QN/H)
+	#ReplaceTags in "SP:Gift of Tongues" with type(QN/VH)
+	#ReplaceTags in "SP:Gift of Letters" with type(QN/VH)
+	#ReplaceTags in "SP:Mind-Search" with type(QN/VH)
+	#ReplaceTags in "SP:Mind-Sending" with type(QN/H)
+	#ReplaceTags in "SP:Telepathy" with type(QN/VH)
+	#ReplaceTags in "SP:Retrogression" with type(QN/H)
+	#ReplaceTags in "SP:Lend Skill" with type(QN/H)
+	#ReplaceTags in "SP:Borrow Skill" with type(QN/H)
+	#ReplaceTags in "SP:Compel Truth" with type(QN/H)
+	#ReplaceTags in "SP:Insignificance" with type(QN/H)
+	#ReplaceTags in "SP:Presence" with type(QN/H)
+	#ReplaceTags in "SP:Communication" with type(QN/VH)
+	#ReplaceTags in "SP:Soul Rider" with type(QN/H)
+	#ReplaceTags in "SP:Control Person" with type(QN/H)
+	#ReplaceTags in "SP:Possession" with type(QN/VH)
+	#ReplaceTags in "SP:Dispel Possession" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Possession" with type(QN/VH)
+	#ReplaceTags in "SP:Exchange Bodies" with type(QN/VH)
+
+#End
+
+
+<Earth:Ea>
+
+#ReplaceTags in "SP:Seek Earth" with type(QN/H)
+#ReplaceTags in "SP:Shape Earth" with type(QN/H)
+#ReplaceTags in "SP:Earth to Stone" with type(QN/H)
+#ReplaceTags in "SP:Create Earth" with type(QN/H)
+#ReplaceTags in "SP:Flesh to Stone" with type(QN/H)
+#ReplaceTags in "SP:Stone to Earth" with type(QN/H)
+#ReplaceTags in "SP:Stone to Flesh" with type(QN/H)
+#ReplaceTags in "SP:Entombment" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Shape Stone" with type(QN/H)
+	#ReplaceTags in "SP:Seek Pass" with type(QN/H)
+	#ReplaceTags in "SP:Earth Vision" with type(QN/H)
+	#ReplaceTags in "SP:Predict Earth Movement" with type(QN/H)
+	#ReplaceTags in "SP:Sand Jet" with type(QN/H)
+	#ReplaceTags in "SP:Mud Jet" with type(QN/H)
+	#ReplaceTags in "SP:Stone Missile" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Earth" with type(QN/H)
+	#ReplaceTags in "SP:Earth to Water" with type(QN/H)
+	#ReplaceTags in "SP:Partial Petrifaction" with type(QN/VH)
+	#ReplaceTags in "SP:Rain of Stones" with type(QN/H)
+	#ReplaceTags in "SP:Essential Earth" with type(QN/H)
+	#ReplaceTags in "SP:Body of Stone" with type(QN/VH)
+	#ReplaceTags in "SP:Steelwraith" with type(QN/H)
+	#ReplaceTags in "SP:Purify Earth" with type(QN/H)
+	#ReplaceTags in "SP:Earthquake" with type(QN/H)
+	#ReplaceTags in "SP:Volcano" with type(QN/H)
+	#ReplaceTags in "SP:Alter Terrain" with type(QN/VH)
+	#ReplaceTags in "SP:Move Terrain" with type(QN/VH)
+	#ReplaceTags in "SP:Summon Earth Elemental" with type(QN/H)
+	#ReplaceTags in "SP:Control Earth Elemental" with type(QN/H)
+	#ReplaceTags in "SP:Create Earth Elemental" with type(QN/H)
+
+#End
+
+<Enchantment:En>
+
+#ReplaceTags in "SP:Accuracy" with type(QN/H)
+#ReplaceTags in "SP:Deflect" with type(QN/H)
+#ReplaceTags in "SP:Enchant" with type(QN/VH)
+#ReplaceTags in "SP:Fortify" with type(QN/H)
+#ReplaceTags in "SP:Power" with type(QN/H)
+#ReplaceTags in "SP:Puissance" with type(QN/H)
+#ReplaceTags in "SP:Staff" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Temporary Enchantment" with type(QN/H)
+	#ReplaceTags in "SP:Scroll" with type(QN/H)
+	#ReplaceTags in "SP:Hex" with type(QN/H)
+	#ReplaceTags in "SP:Speed" with type(QN/H)
+	#ReplaceTags in "SP:Remove Enchantment" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Enchantment" with type(QN/H)
+	#ReplaceTags in "SP:Resist Enchantment" with type(QN/H)
+	#ReplaceTags in "SP:Lesser Wish" with type(QN/VH)
+	#ReplaceTags in "SP:Talisman (%spellslist%)" with type(QN/H)
+	#ReplaceTags in "SP:Amulet (%spellslist%)" with type(QN/H)
+	#ReplaceTags in "SP:Adjustable Clothing" with type(QN/H)
+	#ReplaceTags in "SP:Golem" with type(QN/VH)
+	#ReplaceTags in "SP:Impression Blocker" with type(QN/H)
+	#ReplaceTags in "SP:Malefice" with type(QN/VH)
+	#ReplaceTags in "SP:Ensorcel" with type(QN/VH)
+	#ReplaceTags in "SP:Spell Stone" with type(QN/H)
+	#ReplaceTags in "SP:Wish" with type(QN/VH)
+	#ReplaceTags in "SP:Hideaway" with type(QN/H)
+	#ReplaceTags in "SP:Leak" with type(QN/H)
+	#ReplaceTags in "SP:Simulacrum" with type(QN/VH)
+	#ReplaceTags in "SP:Doppelgänger" with type(QN/VH)
+	#ReplaceTags in "SP:Great Wish" with type(QN/VH)
+
+	* Weapon Enchantments
+	#ReplaceTags in "SP:Bane" with type(QN/H)
+	#ReplaceTags in "SP:Graceful Weapon" with type(QN/H)
+	#ReplaceTags in "SP:Loyal Sword" with type(QN/H)
+	#ReplaceTags in "SP:Quick-Draw" with type(QN/H)
+	#ReplaceTags in "SP:Penetrating Weapon" with type(QN/H)
+	#ReplaceTags in "SP:Dancing Weapon" with type(QN/H)
+	#ReplaceTags in "SP:Defending Weapon" with type(QN/H)
+	#ReplaceTags in "SP:Weapon Spirit" with type(QN/VH)
+	#ReplaceTags in "SP:Cornucopia" with type(QN/H)
+	#ReplaceTags in "SP:Quick-Aim" with type(QN/H)
+	#ReplaceTags in "SP:Ghost Weapon" with type(QN/H)
+	#ReplaceTags in "SP:Spell Arrow" with type(QN/H)
+	#ReplaceTags in "SP:Blank Spell Arrow" with type(QN/VH)
+	#ReplaceTags in "SP:Speed Spell Arrow" with type(QN/H)
+
+	* Armor Enchantments
+	#ReplaceTags in "SP:Lighten" with type(QN/H)
+	#ReplaceTags in "SP:Dancing Shield" with type(QN/H)
+	#ReplaceTags in "SP:Defending Shield" with type(QN/H)
+
+	* Limiting Enchantments
+	#ReplaceTags in "SP:Limit" with type(QN/H)
+	#ReplaceTags in "SP:Name" with type(QN/H)
+	#ReplaceTags in "SP:Password" with type(QN/H)
+	#ReplaceTags in "SP:Attune" with type(QN/H)
+
+	* Wizardly Tools
+	#ReplaceTags in "SP:Powerstone" with type(QN/H)
+	#ReplaceTags in "SP:Manastone" with type(QN/VH)
+	#ReplaceTags in "SP:Homunculus" with type(QN/H)
+	#ReplaceTags in "SP:Effigy" with type(QN/VH)
+	#ReplaceTags in "SP:Soul Stone" with type(QN/VH)
+	#ReplaceTags in "SP:Crystal Ball" with type(QN/H)
+
+#End
+
+<Fire:Fi>
+
+#ReplaceTags in "SP:Ignite Fire" with type(QN/H)
+#ReplaceTags in "SP:Create Fire" with type(QN/H)
+#ReplaceTags in "SP:Shape Fire" with type(QN/H)
+#ReplaceTags in "SP:Deflect Energy" with type(QN/H)
+#ReplaceTags in "SP:Extinguish Fire" with type(QN/H)
+#ReplaceTags in "SP:Heat" with type(QN/H)
+#ReplaceTags in "SP:Cold" with type(QN/H)
+#ReplaceTags in "SP:Resist Cold" with type(QN/H)
+#ReplaceTags in "SP:Resist Fire" with type(QN/H)
+#ReplaceTags in "SP:Fireball" with type(QN/H)
+#ReplaceTags in "SP:Explosive Fireball" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Seek Fire" with type(QN/H)
+	#ReplaceTags in "SP:Phantom Flame" with type(QN/H)
+	#ReplaceTags in "SP:Fireproof" with type(QN/H)
+	#ReplaceTags in "SP:Slow Fire" with type(QN/H)
+	#ReplaceTags in "SP:Fast Fire" with type(QN/H)
+	#ReplaceTags in "SP:Flame Jet" with type(QN/H)
+	#ReplaceTags in "SP:Smoke" with type(QN/H)
+	#ReplaceTags in "SP:Rain of Fire" with type(QN/H)
+	#ReplaceTags in "SP:Warmth" with type(QN/H)
+	#ReplaceTags in "SP:Essential Flame" with type(QN/H)
+	#ReplaceTags in "SP:Flaming Weapon" with type(QN/H)
+	#ReplaceTags in "SP:Flaming Missiles" with type(QN/H)
+	#ReplaceTags in "SP:Flaming Armor" with type(QN/H)
+	#ReplaceTags in "SP:Fire Cloud" with type(QN/H)
+	#ReplaceTags in "SP:Breathe Fire" with type(QN/VH)
+	#ReplaceTags in "SP:Burning Touch" with type(QN/H)
+	#ReplaceTags in "SP:Body of Flames" with type(QN/VH)
+	#ReplaceTags in "SP:Burning Death" with type(QN/VH)
+	#ReplaceTags in "SP:Summon Fire Elemental" with type(QN/H)
+	#ReplaceTags in "SP:Control Fire Elemental" with type(QN/H)
+	#ReplaceTags in "SP:Create Fire Elemental" with type(QN/H)
+
+#End
+
+<Food:Fo>
+#IF fileloaded = "GURPS Magic 4e.gdf"
+	#ReplaceTags in "SP:Seek Food" with type(QN/H)
+	#ReplaceTags in "SP:Test Food" with type(QN/H)
+	#ReplaceTags in "SP:Decay" with type(QN/H)
+	#ReplaceTags in "SP:Season" with type(QN/H)
+	#ReplaceTags in "SP:Far-Tasting" with type(QN/H)
+	#ReplaceTags in "SP:Mature" with type(QN/H)
+	#ReplaceTags in "SP:Purify Food" with type(QN/H)
+	#ReplaceTags in "SP:Cook" with type(QN/H)
+	#ReplaceTags in "SP:Prepare Game" with type(QN/H)
+	#ReplaceTags in "SP:Know Recipe" with type(QN/H)
+	#ReplaceTags in "SP:Poison Food" with type(QN/H)
+	#ReplaceTags in "SP:Preserve Food" with type(QN/H)
+	#ReplaceTags in "SP:Create Food" with type(QN/H)
+	#ReplaceTags in "SP:Essential Food" with type(QN/VH)
+	#ReplaceTags in "SP:Water to Wine" with type(QN/H)
+	#ReplaceTags in "SP:Distill" with type(QN/H)
+	#ReplaceTags in "SP:Fool's Banquet" with type(QN/H)
+	#ReplaceTags in "SP:Monk's Banquet" with type(QN/H)
+#End
+
+<Gate:Ga>
+
+#ReplaceTags in "SP:Planar Summons ([Plane])" with type(QN/H)
+#ReplaceTags in "SP:Plane Shift ([Plane])" with type(QN/VH)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Timeport" with type(QN/VH)
+	#ReplaceTags in "SP:Timeport Other" with type(QN/VH)
+	#ReplaceTags in "SP:Timeslip" with type(QN/H)
+	#ReplaceTags in "SP:Timeslip Other" with type(QN/VH)
+	#ReplaceTags in "SP:Rapid Journey" with type(QN/VH)
+	#ReplaceTags in "SP:Planar Visit ([Plane])" with type(QN/VH)
+	#ReplaceTags in "SP:Plane Shift Other ([Plane])" with type(QN/VH)
+	#ReplaceTags in "SP:Phase" with type(QN/H)
+	#ReplaceTags in "SP:Phase Other" with type(QN/VH)
+	#ReplaceTags in "SP:Beacon" with type(QN/H)
+	#ReplaceTags in "SP:Trace Teleport" with type(QN/H)
+	#ReplaceTags in "SP:Divert Teleport" with type(QN/VH)
+	#ReplaceTags in "SP:Create Door" with type(QN/H)
+	#ReplaceTags in "SP:Seek Gate" with type(QN/H)
+	#ReplaceTags in "SP:Scry Gate" with type(QN/H)
+	#ReplaceTags in "SP:Control Gate" with type(QN/H)
+	#ReplaceTags in "SP:Create Gate" with type(QN/VH)
+	#ReplaceTags in "SP:Slow Time" with type(QN/VH)
+	#ReplaceTags in "SP:Accelerate Time" with type(QN/VH)
+	#ReplaceTags in "SP:Hide Object" with type(QN/H)
+	#ReplaceTags in "SP:Sanctuary" with type(QN/VH)
+	#ReplaceTags in "SP:Suspend Time" with type(QN/VH)
+	#ReplaceTags in "SP:Time Out" with type(QN/VH)
+
+#End
+
+<Healing:He>
+
+#ReplaceTags in "SP:Lend Energy" with type(QN/H)
+#ReplaceTags in "SP:Lend Vitality" with type(QN/H)
+#ReplaceTags in "SP:Recover Energy" with type(QN/H)
+#ReplaceTags in "SP:Awaken" with type(QN/H)
+#ReplaceTags in "SP:Minor Healing" with type(QN/H)
+#ReplaceTags in "SP:Major Healing" with type(QN/VH)
+#ReplaceTags in "SP:Great Healing" with type(QN/VH)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Body-Reading" with type(QN/H)
+	#ReplaceTags in "SP:Final Rest" with type(QN/H)
+	#ReplaceTags in "SP:Share Energy" with type(QN/H)
+	#ReplaceTags in "SP:Remove Contagion" with type(QN/H)
+	#ReplaceTags in "SP:Relieve Sickness" with type(QN/H)
+	#ReplaceTags in "SP:Share Vitality" with type(QN/H)
+	#ReplaceTags in "SP:Resist Disease" with type(QN/H)
+	#ReplaceTags in "SP:Resist Poison" with type(QN/H)
+	#ReplaceTags in "SP:Stop Bleeding" with type(QN/H)
+	#ReplaceTags in "SP:Cure Disease" with type(QN/H)
+	#ReplaceTags in "SP:Neutralize Poison" with type(QN/H)
+	#ReplaceTags in "SP:Instant Neutralize Poison" with type(QN/VH)
+	#ReplaceTags in "SP:Relieve Addiction" with type(QN/H)
+	#ReplaceTags in "SP:Relieve Madness" with type(QN/H)
+	#ReplaceTags in "SP:Restore Sight" with type(QN/H)
+	#ReplaceTags in "SP:Restore Hearing" with type(QN/H)
+	#ReplaceTags in "SP:Restore Memory" with type(QN/H)
+	#ReplaceTags in "SP:Restore Speech" with type(QN/H)
+	#ReplaceTags in "SP:Stop Paralysis" with type(QN/H)
+	#ReplaceTags in "SP:Relieve Paralysis" with type(QN/H)
+	#ReplaceTags in "SP:Restoration" with type(QN/VH)
+	#ReplaceTags in "SP:Instant Restoration" with type(QN/VH)
+	#ReplaceTags in "SP:Regeneration" with type(QN/VH)
+	#ReplaceTags in "SP:Instant Regeneration" with type(QN/VH)
+	#ReplaceTags in "SP:Cleansing" with type(QN/H)
+	#ReplaceTags in "SP:Suspended Animation" with type(QN/H)
+	#ReplaceTags in "SP:Healing Slumber" with type(QN/H)
+	#ReplaceTags in "SP:Halt Aging" with type(QN/VH)
+	#ReplaceTags in "SP:Youth" with type(QN/VH)
+	#ReplaceTags in "SP:Resurrection" with type(QN/VH)
+
+#End
+
+
+<Illusion & Creation:IC>
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+	#ReplaceTags in "SP:Simple Illusion" with type(QN/H)
+	#ReplaceTags in "SP:Complex Illusion" with type(QN/H)
+	#ReplaceTags in "SP:Perfect Illusion" with type(QN/H)
+	#ReplaceTags in "SP:Illusion Shell" with type(QN/H)
+	#ReplaceTags in "SP:Illusion Disguise" with type(QN/H)
+	#ReplaceTags in "SP:Independence" with type(QN/H)
+	#ReplaceTags in "SP:Know Illusion" with type(QN/H)
+	#ReplaceTags in "SP:Control Illusion" with type(QN/H)
+	#ReplaceTags in "SP:Dispel Illusion" with type(QN/H)
+	#ReplaceTags in "SP:Inscribe" with type(QN/H)
+	#ReplaceTags in "SP:Phantom" with type(QN/VH)
+	#ReplaceTags in "SP:Initiative" with type(QN/H)
+	#ReplaceTags in "SP:Create Object" with type(QN/VH)
+	#ReplaceTags in "SP:Duplicate" with type(QN/VH)
+	#ReplaceTags in "SP:Create Servant" with type(QN/H)
+	#ReplaceTags in "SP:Create Warrior" with type(QN/H)
+	#ReplaceTags in "SP:Create Animal" with type(QN/H)
+	#ReplaceTags in "SP:Create Mount" with type(QN/H)
+	#ReplaceTags in "SP:Control Creation" with type(QN/H)
+	#ReplaceTags in "SP:Dispel Creation" with type(QN/H)
+#End
+
+<Knowledge:Kn>
+
+#ReplaceTags in "SP:Detect Magic" with type(QN/H)
+#ReplaceTags in "SP:Aura" with type(QN/H)
+#ReplaceTags in "SP:Seeker" with type(QN/H)
+#ReplaceTags in "SP:Trace" with type(QN/H)
+#ReplaceTags in "SP:Identify Spell" with type(QN/H)
+#ReplaceTags in "SP:Analyze Magic" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Measurement" with type(QN/H)
+	#ReplaceTags in "SP:Tell Time" with type(QN/H)
+	#ReplaceTags in "SP:Alarm" with type(QN/H)
+	#ReplaceTags in "SP:Far-Feeling" with type(QN/H)
+	#ReplaceTags in "SP:Find Direction" with type(QN/H)
+	#ReplaceTags in "SP:Tell Position" with type(QN/H)
+	#ReplaceTags in "SP:Test Load" with type(QN/H)
+	#ReplaceTags in "SP:Sense Mana" with type(QN/H)
+	#ReplaceTags in "SP:Mage Sight" with type(QN/H)
+	#ReplaceTags in "SP:Mage Sense" with type(QN/H)
+	#ReplaceTags in "SP:Seek Magic" with type(QN/H)
+	#ReplaceTags in "SP:Summon Shade" with type(QN/VH)
+	#ReplaceTags in "SP:Glass Wall" with type(QN/H)
+	#ReplaceTags in "SP:Know Location" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Eye" with type(QN/H)
+	#ReplaceTags in "SP:Invisible Wizard Eye" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Mouth" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Nose" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Hand" with type(QN/H)
+	#ReplaceTags in "SP:Astral Vision" with type(QN/VH)
+	#ReplaceTags in "SP:Memorize" with type(QN/H)
+	#ReplaceTags in "SP:Pathfinder" with type(QN/H)
+	#ReplaceTags in "SP:Projection" with type(QN/H)
+	#ReplaceTags in "SP:History" with type(QN/H)
+	#ReplaceTags in "SP:Ancient History" with type(QN/H)
+	#ReplaceTags in "SP:Prehistory" with type(QN/H)
+	#ReplaceTags in "SP:Reconstruct Spell" with type(QN/H)
+	#ReplaceTags in "SP:Know True Shape" with type(QN/H)
+	#ReplaceTags in "SP:Recall" with type(QN/H)
+	#ReplaceTags in "SP:Remember Path" with type(QN/H)
+	#ReplaceTags in "SP:See Secrets" with type(QN/H)
+	#ReplaceTags in "SP:Scents of the Past" with type(QN/H)
+	#ReplaceTags in "SP:Images of the Past" with type(QN/H)
+	#ReplaceTags in "SP:Echoes of the Past" with type(QN/H)
+	#ReplaceTags in "SP:Divination ([Type])" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Astrology)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Augury)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Cartomancy)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Crystal-Gazing)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Dactylomancy)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Extispicy)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Gastromancy)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Geomancy)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Lecanomancy)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Numerology)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Oneiromancy)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Physiognomy)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Pyromancy)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Sortilege)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Symbol-Casting)" with type(QN/H)
+
+#End
+
+<Light & Darkness:LD>
+
+#ReplaceTags in "SP:Light" with type(QN/H)
+#ReplaceTags in "SP:Continual Light" with type(QN/H)
+#ReplaceTags in "SP:Darkness" with type(QN/H)
+#ReplaceTags in "SP:Blur" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Colors" with type(QN/H)
+	#ReplaceTags in "SP:Remove Shadow" with type(QN/H)
+	#ReplaceTags in "SP:Shape Light" with type(QN/H)
+	#ReplaceTags in "SP:Bright Vision" with type(QN/H)
+	#ReplaceTags in "SP:Infravision" with type(QN/H)
+	#ReplaceTags in "SP:Night Vision" with type(QN/H)
+	#ReplaceTags in "SP:Hawk Vision" with type(QN/H)
+	#ReplaceTags in "SP:Small Vision" with type(QN/H)
+	#ReplaceTags in "SP:Dark Vision" with type(QN/H)
+	#ReplaceTags in "SP:Blackout" with type(QN/H)
+	#ReplaceTags in "SP:Glow" with type(QN/H)
+	#ReplaceTags in "SP:Flash" with type(QN/H)
+	#ReplaceTags in "SP:Gloom" with type(QN/H)
+	#ReplaceTags in "SP:Light Jet" with type(QN/H)
+	#ReplaceTags in "SP:Mirror" with type(QN/H)
+	#ReplaceTags in "SP:Remove Reflection" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Light" with type(QN/H)
+	#ReplaceTags in "SP:Shape Darkness" with type(QN/H)
+	#ReplaceTags in "SP:Hide" with type(QN/H)
+	#ReplaceTags in "SP:See Invisible" with type(QN/H)
+	#ReplaceTags in "SP:Mage Light" with type(QN/H)
+	#ReplaceTags in "SP:Continual Mage Light" with type(QN/H)
+	#ReplaceTags in "SP:Sunlight" with type(QN/H)
+	#ReplaceTags in "SP:Continual Sunlight" with type(QN/H)
+	#ReplaceTags in "SP:Invisibility" with type(QN/H)
+	#ReplaceTags in "SP:Body of Shadow" with type(QN/VH)
+	#ReplaceTags in "SP:Sunbolt" with type(QN/H)
+
+#End
+
+<Making & Breaking:MB>
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+	#ReplaceTags in "SP:Inspired Creation" with type(QN/VH)
+	#ReplaceTags in "SP:Awaken Craft Spirit" with type(QN/H)
+	#ReplaceTags in "SP:Find Weakness" with type(QN/H)
+	#ReplaceTags in "SP:Weaken" with type(QN/H)
+	#ReplaceTags in "SP:Restore" with type(QN/H)
+	#ReplaceTags in "SP:Clean" with type(QN/H)
+	#ReplaceTags in "SP:Soilproof" with type(QN/H)
+	#ReplaceTags in "SP:Dye" with type(QN/H)
+	#ReplaceTags in "SP:Copy" with type(QN/H)
+	#ReplaceTags in "SP:Rejoin" with type(QN/H)
+	#ReplaceTags in "SP:Shatter" with type(QN/VH)
+	#ReplaceTags in "SP:Animate Object" with type(QN/VH)
+	#ReplaceTags in "SP:Stiffen" with type(QN/H)
+	#ReplaceTags in "SP:Knot" with type(QN/H)
+	#ReplaceTags in "SP:Reshape" with type(QN/H)
+	#ReplaceTags in "SP:Rive" with type(QN/VH)
+	#ReplaceTags in "SP:Ruin" with type(QN/H)
+	#ReplaceTags in "SP:Explode" with type(QN/VH)
+	#ReplaceTags in "SP:Fasten" with type(QN/H)
+	#ReplaceTags in "SP:Mapmaker" with type(QN/H)
+	#ReplaceTags in "SP:Repair" with type(QN/H)
+	#ReplaceTags in "SP:Shatterproof" with type(QN/H)
+	#ReplaceTags in "SP:Sharpen" with type(QN/H)
+	#ReplaceTags in "SP:Toughen" with type(QN/H)
+	#ReplaceTags in "SP:Transparency" with type(QN/H)
+	#ReplaceTags in "SP:Mystic Mark" with type(QN/H)
+	#ReplaceTags in "SP:Weapon Self" with type(QN/VH)
+	#ReplaceTags in "SP:Transform Object" with type(QN/VH)
+	#ReplaceTags in "SP:Contract Object" with type(QN/VH)
+	#ReplaceTags in "SP:Extend Object" with type(QN/VH)
+	#ReplaceTags in "SP:Shrink Object" with type(QN/VH)
+	#ReplaceTags in "SP:Enlarge Object" with type(QN/VH)
+	#ReplaceTags in "SP:Disintegrate" with type(QN/VH)
+#End
+
+<Meta-Spells:MS>
+
+#ReplaceTags in "SP:Counterspell" with type(QN/H)
+#ReplaceTags in "SP:Dispel Magic" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Scryguard" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Spell" with type(QN/H)
+	#ReplaceTags in "SP:Ward" with type(QN/H)
+	#ReplaceTags in "SP:Conceal Magic" with type(QN/H)
+	#ReplaceTags in "SP:Reflect" with type(QN/H)
+	#ReplaceTags in "SP:Scrywall" with type(QN/H)
+	#ReplaceTags in "SP:Great Ward" with type(QN/H)
+	#ReplaceTags in "SP:False Aura" with type(QN/H)
+	#ReplaceTags in "SP:Magic Resistance" with type(QN/H)
+	#ReplaceTags in "SP:Scryfool" with type(QN/H)
+	#ReplaceTags in "SP:Penetrating Spell" with type(QN/H)
+	#ReplaceTags in "SP:Catch Spell" with type(QN/VH)
+	#ReplaceTags in "SP:Suspend Magic" with type(QN/H)
+	#ReplaceTags in "SP:Displace Spell" with type(QN/H)
+	#ReplaceTags in "SP:Spell Shield" with type(QN/H)
+	#ReplaceTags in "SP:Spell Wall" with type(QN/H)
+	#ReplaceTags in "SP:Pentagram" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Curse" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Mana" with type(QN/VH)
+	#ReplaceTags in "SP:Lend Spell" with type(QN/H)
+	#ReplaceTags in "SP:Remove Curse" with type(QN/H)
+	#ReplaceTags in "SP:Charge Powerstone" with type(QN/VH)
+	#ReplaceTags in "SP:Spellguard" with type(QN/VH)
+	#ReplaceTags in "SP:Remove Aura" with type(QN/H)
+	#ReplaceTags in "SP:Drain Mana" with type(QN/VH)
+	#ReplaceTags in "SP:Restore Mana" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Spell" with type(QN/VH)
+	#ReplaceTags in "SP:Telecast" with type(QN/VH)
+	#ReplaceTags in "SP:Hang Spell" with type(QN/VH)
+	#ReplaceTags in "SP:Maintain Spell" with type(QN/VH)
+	#ReplaceTags in "SP:Throw Spell" with type(QN/VH)
+	#ReplaceTags in "SP:Bless" with type(QN/H)
+	#ReplaceTags in "SP:Curse" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Magery" with type(QN/VH)
+	#ReplaceTags in "SP:Drain Magery" with type(QN/VH)
+
+	* Linking Spells
+	#ReplaceTags in "SP:Delay" with type(QN/H)
+	#ReplaceTags in "SP:Link" with type(QN/H)
+	#ReplaceTags in "SP:Reflex" with type(QN/H)
+
+#End
+
+
+<Mind Control:MC>
+
+#ReplaceTags in "SP:Foolishness" with type(QN/H)
+#ReplaceTags in "SP:Forgetfulness" with type(QN/H)
+#ReplaceTags in "SP:Daze" with type(QN/H)
+#ReplaceTags in "SP:Mass Daze" with type(QN/H)
+#ReplaceTags in "SP:Sleep" with type(QN/H)
+#ReplaceTags in "SP:Mass Sleep" with type(QN/H)
+#ReplaceTags in "SP:Command" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Keen Hearing" with type(QN/H)
+	#ReplaceTags in "SP:Keen Vision" with type(QN/H)
+	#ReplaceTags in "SP:Keen Taste and Smell" with type(QN/H)
+	#ReplaceTags in "SP:Keen [Sense]" with type(QN/H)
+	#ReplaceTags in "SP:Dull Hearing" with type(QN/H)
+	#ReplaceTags in "SP:Dull Vision" with type(QN/H)
+	#ReplaceTags in "SP:Dull Taste and Smell" with type(QN/H)
+	#ReplaceTags in "SP:Dull [Sense]" with type(QN/H)
+	#ReplaceTags in "SP:Alertness" with type(QN/VH)
+	#ReplaceTags in "SP:Dullness" with type(QN/VH)
+	#ReplaceTags in "SP:Fear" with type(QN/H)
+	#ReplaceTags in "SP:Panic" with type(QN/H)
+	#ReplaceTags in "SP:Terror" with type(QN/H)
+	#ReplaceTags in "SP:Bravery" with type(QN/H)
+	#ReplaceTags in "SP:Rear Vision" with type(QN/H)
+	#ReplaceTags in "SP:Berserker" with type(QN/H)
+	#ReplaceTags in "SP:Mental Stun" with type(QN/H)
+	#ReplaceTags in "SP:Disorient" with type(QN/H)
+	#ReplaceTags in "SP:Encrypt" with type(QN/H)
+	#ReplaceTags in "SP:Fascinate" with type(QN/H)
+	#ReplaceTags in "SP:Wisdom" with type(QN/H)
+	#ReplaceTags in "SP:Weaken Will" with type(QN/H)
+	#ReplaceTags in "SP:Strengthen Will" with type(QN/H)
+	#ReplaceTags in "SP:Loyalty" with type(QN/H)
+	#ReplaceTags in "SP:Drunkenness" with type(QN/H)
+	#ReplaceTags in "SP:Madness" with type(QN/H)
+	#ReplaceTags in "SP:Emotion Control" with type(QN/H)
+	#ReplaceTags in "SP:Mindlessness" with type(QN/VH)
+	#ReplaceTags in "SP:Compel Lie" with type(QN/H)
+	#ReplaceTags in "SP:Lure" with type(QN/H)
+	#ReplaceTags in "SP:Peaceful Sleep" with type(QN/H)
+	#ReplaceTags in "SP:Sickness" with type(QN/H)
+	#ReplaceTags in "SP:Will Lock" with type(QN/H)
+	#ReplaceTags in "SP:Oath" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Forgetfulness" with type(QN/VH)
+	#ReplaceTags in "SP:Vigil" with type(QN/VH)
+	#ReplaceTags in "SP:Charm" with type(QN/H)
+	#ReplaceTags in "SP:Ecstasy" with type(QN/VH)
+	#ReplaceTags in "SP:Enthrall" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Madness" with type(QN/VH)
+	#ReplaceTags in "SP:False Memory" with type(QN/H)
+	#ReplaceTags in "SP:Avoid" with type(QN/H)
+	#ReplaceTags in "SP:Nightmare" with type(QN/H)
+	#ReplaceTags in "SP:Hallucination" with type(QN/H)
+	#ReplaceTags in "SP:Lesser Geas" with type(QN/VH)
+	#ReplaceTags in "SP:Suggestion" with type(QN/H)
+	#ReplaceTags in "SP:Mass Suggestion" with type(QN/H)
+	#ReplaceTags in "SP:Glib Tongue" with type(QN/H)
+	#ReplaceTags in "SP:Enslave" with type(QN/VH)
+	#ReplaceTags in "SP:Great Hallucination" with type(QN/VH)
+	#ReplaceTags in "SP:Great Geas" with type(QN/VH)
+
+#End
+
+<Movement:Mo>
+
+#ReplaceTags in "SP:Haste" with type(QN/H)
+#ReplaceTags in "SP:Great Haste" with type(QN/VH)
+#ReplaceTags in "SP:Apportation" with type(QN/H)
+#ReplaceTags in "SP:Lockmaster" with type(QN/H)
+#ReplaceTags in "SP:Deflect Missile" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Glue" with type(QN/H)
+	#ReplaceTags in "SP:Grease" with type(QN/H)
+	#ReplaceTags in "SP:Hold Fast" with type(QN/H)
+	#ReplaceTags in "SP:Increase Burden" with type(QN/H)
+	#ReplaceTags in "SP:Jump" with type(QN/H)
+	#ReplaceTags in "SP:Levitation" with type(QN/H)
+	#ReplaceTags in "SP:Lighten Burden" with type(QN/H)
+	#ReplaceTags in "SP:Locksmith" with type(QN/H)
+	#ReplaceTags in "SP:Long March" with type(QN/H)
+	#ReplaceTags in "SP:Poltergeist" with type(QN/H)
+	#ReplaceTags in "SP:Quick March" with type(QN/H)
+	#ReplaceTags in "SP:Slow Fall" with type(QN/H)
+	#ReplaceTags in "SP:Wallwalker" with type(QN/H)
+	#ReplaceTags in "SP:Dancing Object" with type(QN/H)
+	#ReplaceTags in "SP:Distant Blow" with type(QN/H)
+	#ReplaceTags in "SP:Manipulate" with type(QN/H)
+	#ReplaceTags in "SP:Slow" with type(QN/H)
+	#ReplaceTags in "SP:Undo" with type(QN/H)
+	#ReplaceTags in "SP:Winged Knife" with type(QN/H)
+	#ReplaceTags in "SP:Flight" with type(QN/VH)
+	#ReplaceTags in "SP:Light Tread" with type(QN/H)
+	#ReplaceTags in "SP:Slide" with type(QN/H)
+	#ReplaceTags in "SP:Flying Carpet" with type(QN/VH)
+	#ReplaceTags in "SP:Hawk Flight" with type(QN/VH)
+	#ReplaceTags in "SP:Ethereal Body" with type(QN/VH)
+	#ReplaceTags in "SP:Pull" with type(QN/H)
+	#ReplaceTags in "SP:Repel" with type(QN/H)
+	#ReplaceTags in "SP:Swim" with type(QN/H)
+	#ReplaceTags in "SP:Teleport" with type(QN/VH)
+	#ReplaceTags in "SP:Teleport Other" with type(QN/VH)
+	#ReplaceTags in "SP:Blink" with type(QN/H)
+	#ReplaceTags in "SP:Blink Other" with type(QN/VH)
+	#ReplaceTags in "SP:Freedom" with type(QN/H)
+	#ReplaceTags in "SP:Cloud-Walking" with type(QN/H)
+	#ReplaceTags in "SP:Cloud-Vaulting" with type(QN/VH)
+
+#End
+
+<Necromancy:Ne>
+
+#ReplaceTags in "SP:Death Vision" with type(QN/H)
+#ReplaceTags in "SP:Sense Spirit" with type(QN/H)
+#ReplaceTags in "SP:Summon Spirit" with type(QN/H)
+#ReplaceTags in "SP:Turn Zombie" with type(QN/H)
+#ReplaceTags in "SP:Summon Demon" with type(QN/H)
+#ReplaceTags in "SP:Banish" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Animation" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Energy" with type(QN/H)
+	#ReplaceTags in "SP:Steal Vitality" with type(QN/H)
+	#ReplaceTags in "SP:Materialize" with type(QN/H)
+	#ReplaceTags in "SP:Solidify" with type(QN/H)
+	#ReplaceTags in "SP:Affect Spirits" with type(QN/H)
+	#ReplaceTags in "SP:Skull-Spirit" with type(QN/H)
+	#ReplaceTags in "SP:Turn Spirit" with type(QN/H)
+	#ReplaceTags in "SP:Zombie" with type(QN/H)
+	#ReplaceTags in "SP:Control Zombie" with type(QN/H)
+	#ReplaceTags in "SP:Zombie Summoning" with type(QN/H)
+	#ReplaceTags in "SP:Mass Zombie" with type(QN/VH)
+	#ReplaceTags in "SP:Slow Healing" with type(QN/H)
+	#ReplaceTags in "SP:Stop Healing" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit (Banshees)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit (Specters)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit (Manitous)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit ([Spirit])" with type(QN/H)
+	#ReplaceTags in "SP:Age" with type(QN/VH)
+	#ReplaceTags in "SP:Pestilence" with type(QN/H)
+	#ReplaceTags in "SP:Evisceration" with type(QN/VH)
+	#ReplaceTags in "SP:Animate Shadow" with type(QN/H)
+	#ReplaceTags in "SP:Rotting Death" with type(QN/VH)
+	#ReplaceTags in "SP:Soul Jar" with type(QN/VH)
+	#ReplaceTags in "SP:Entrap Spirit" with type(QN/H)
+	#ReplaceTags in "SP:Repel Spirits" with type(QN/H)
+	#ReplaceTags in "SP:Bind Spirit (Banshees)" with type(QN/VH)
+	#ReplaceTags in "SP:Bind Spirit (Specters)" with type(QN/VH)
+	#ReplaceTags in "SP:Bind Spirit (Manitous)" with type(QN/VH)
+	#ReplaceTags in "SP:Bind Spirit ([Spirit])" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Grace" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Vigor" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Might" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Wisdom" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Skill" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Youth" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Beauty" with type(QN/VH)
+	#ReplaceTags in "SP:Astral Block" with type(QN/H)
+	#ReplaceTags in "SP:Lich" with type(QN/VH)
+	#ReplaceTags in "SP:Wraith" with type(QN/VH)
+
+#End
+
+<Plant:Pl>
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+	#ReplaceTags in "SP:Seek Plant" with type(QN/H)
+	#ReplaceTags in "SP:Identify Plant" with type(QN/H)
+	#ReplaceTags in "SP:Heal Plant" with type(QN/H)
+	#ReplaceTags in "SP:Shape Plant" with type(QN/H)
+	#ReplaceTags in "SP:Bless Plants" with type(QN/H)
+	#ReplaceTags in "SP:Hide Path" with type(QN/H)
+	#ReplaceTags in "SP:Plant Growth" with type(QN/H)
+	#ReplaceTags in "SP:Plant Vision" with type(QN/H)
+	#ReplaceTags in "SP:Pollen Cloud" with type(QN/H)
+	#ReplaceTags in "SP:Blight" with type(QN/H)
+	#ReplaceTags in "SP:Blossom" with type(QN/H)
+	#ReplaceTags in "SP:Conceal" with type(QN/H)
+	#ReplaceTags in "SP:Forest Warning" with type(QN/H)
+	#ReplaceTags in "SP:Tangle Growth" with type(QN/H)
+	#ReplaceTags in "SP:Create Plant" with type(QN/H)
+	#ReplaceTags in "SP:False Tracks" with type(QN/H)
+	#ReplaceTags in "SP:Plant Sense" with type(QN/H)
+	#ReplaceTags in "SP:Rejuvenate Plant" with type(QN/H)
+	#ReplaceTags in "SP:Wither Plant" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Plants" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Wood" with type(QN/H)
+	#ReplaceTags in "SP:Plant Control" with type(QN/H)
+	#ReplaceTags in "SP:Essential Wood" with type(QN/H)
+	#ReplaceTags in "SP:Animate Plant" with type(QN/H)
+	#ReplaceTags in "SP:Plant Form" with type(QN/H)
+	#ReplaceTags in "SP:Plant Speech" with type(QN/H)
+	#ReplaceTags in "SP:Rain of Nuts" with type(QN/H)
+	#ReplaceTags in "SP:Arboreal Immurement" with type(QN/H)
+	#ReplaceTags in "SP:Plant Form Other" with type(QN/VH)
+	#ReplaceTags in "SP:Body of Wood" with type(QN/H)
+	#ReplaceTags in "SP:Body of Slime" with type(QN/H)
+#End
+
+<Protection & Warning:PW>
+
+#ReplaceTags in "SP:Shield" with type(QN/H)
+#ReplaceTags in "SP:Armor" with type(QN/H)
+#ReplaceTags in "SP:Magelock" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Sense Danger" with type(QN/H)
+	#ReplaceTags in "SP:Detect Poison" with type(QN/H)
+	#ReplaceTags in "SP:Block" with type(QN/H)
+	#ReplaceTags in "SP:Hardiness" with type(QN/H)
+	#ReplaceTags in "SP:Watchdog" with type(QN/H)
+	#ReplaceTags in "SP:Nightingale" with type(QN/H)
+	#ReplaceTags in "SP:Sense Observation" with type(QN/H)
+	#ReplaceTags in "SP:Turn Blade" with type(QN/H)
+	#ReplaceTags in "SP:Bladeturning" with type(QN/H)
+	#ReplaceTags in "SP:Missile Shield" with type(QN/H)
+	#ReplaceTags in "SP:Catch Missile" with type(QN/H)
+	#ReplaceTags in "SP:Reverse Missiles" with type(QN/H)
+	#ReplaceTags in "SP:Return Missile" with type(QN/H)
+	#ReplaceTags in "SP:Reflect Gaze" with type(QN/VH)
+	#ReplaceTags in "SP:Mystic Mist" with type(QN/H)
+	#ReplaceTags in "SP:Shade" with type(QN/H)
+	#ReplaceTags in "SP:Iron Arm" with type(QN/H)
+	#ReplaceTags in "SP:Weather Dome" with type(QN/H)
+	#ReplaceTags in "SP:Atmosphere Dome" with type(QN/H)
+	#ReplaceTags in "SP:Resist Pressure" with type(QN/H)
+	#ReplaceTags in "SP:Teleport Shield" with type(QN/H)
+	#ReplaceTags in "SP:Force Dome" with type(QN/H)
+	#ReplaceTags in "SP:Force Wall" with type(QN/H)
+	#ReplaceTags in "SP:Utter Dome" with type(QN/H)
+	#ReplaceTags in "SP:Utter Wall" with type(QN/H)
+
+#End
+
+<Sound:So>
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+	#ReplaceTags in "SP:Sound" with type(QN/H)
+	#ReplaceTags in "SP:Silence" with type(QN/H)
+	#ReplaceTags in "SP:Sound Vision" with type(QN/H)
+	#ReplaceTags in "SP:Thunderclap" with type(QN/H)
+	#ReplaceTags in "SP:Voices" with type(QN/H)
+	#ReplaceTags in "SP:Garble" with type(QN/H)
+	#ReplaceTags in "SP:Imitate Voice" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Silence" with type(QN/H)
+	#ReplaceTags in "SP:Hush" with type(QN/H)
+	#ReplaceTags in "SP:Mage-Stealth" with type(QN/H)
+	#ReplaceTags in "SP:Great Voice" with type(QN/H)
+	#ReplaceTags in "SP:Noise" with type(QN/H)
+	#ReplaceTags in "SP:Delayed Message" with type(QN/H)
+	#ReplaceTags in "SP:Resist Sound" with type(QN/H)
+	#ReplaceTags in "SP:Sound Jet" with type(QN/H)
+	#ReplaceTags in "SP:Converse" with type(QN/H)
+	#ReplaceTags in "SP:Far-Hearing" with type(QN/H)
+	#ReplaceTags in "SP:Scribe" with type(QN/H)
+	#ReplaceTags in "SP:Musical Scribe" with type(QN/H)
+	#ReplaceTags in "SP:Message" with type(QN/H)
+	#ReplaceTags in "SP:Silver Tongue" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Ear" with type(QN/H)
+	#ReplaceTags in "SP:Invisible Wizard Ear" with type(QN/H)
+#End
+
+<Technological:Te>
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+	#ReplaceTags in "SP:Seek Machine" with type(QN/H)
+	#ReplaceTags in "SP:Reveal Function" with type(QN/H)
+	#ReplaceTags in "SP:Machine Control" with type(QN/H)
+	#ReplaceTags in "SP:Machine Summoning" with type(QN/H)
+	#ReplaceTags in "SP:Machine Speech" with type(QN/H)
+	#ReplaceTags in "SP:Glitch" with type(QN/H)
+	#ReplaceTags in "SP:Malfunction" with type(QN/H)
+	#ReplaceTags in "SP:Schematic" with type(QN/VH)
+	#ReplaceTags in "SP:Rebuild" with type(QN/VH)
+	#ReplaceTags in "SP:Animate Machine" with type(QN/VH)
+	#ReplaceTags in "SP:Machine Possession" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Machine Possession" with type(QN/VH)
+	#ReplaceTags in "SP:Awaken Computer" with type(QN/VH)
+
+	* Energy Spells
+	#ReplaceTags in "SP:Seek Power" with type(QN/H)
+	#ReplaceTags in "SP:Seek Fuel" with type(QN/H)
+	#ReplaceTags in "SP:Test Fuel" with type(QN/H)
+	#ReplaceTags in "SP:Preserve Fuel" with type(QN/H)
+	#ReplaceTags in "SP:Purify Fuel" with type(QN/H)
+	#ReplaceTags in "SP:Create Fuel" with type(QN/H)
+	#ReplaceTags in "SP:Essential Fuel" with type(QN/H)
+	#ReplaceTags in "SP:Stop Power" with type(QN/H)
+	#ReplaceTags in "SP:Lend Power" with type(QN/H)
+	#ReplaceTags in "SP:Propel" with type(QN/H)
+	#ReplaceTags in "SP:Conduct Power" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Power" with type(QN/VH)
+	#ReplaceTags in "SP:Draw Power" with type(QN/VH)
+	#ReplaceTags in "SP:Magnetic Vision" with type(QN/H)
+	#ReplaceTags in "SP:Radio Hearing" with type(QN/H)
+	#ReplaceTags in "SP:Spectrum Vision" with type(QN/VH)
+
+	* Radiation Spells
+	#ReplaceTags in "SP:See Radiation" with type(QN/H)
+	#ReplaceTags in "SP:Seek Radiation" with type(QN/H)
+	#ReplaceTags in "SP:Irradiate" with type(QN/H)
+	#ReplaceTags in "SP:Extinguish Radiation" with type(QN/VH)
+	#ReplaceTags in "SP:Resist Radiation" with type(QN/H)
+	#ReplaceTags in "SP:Cure Radiation" with type(QN/VH)
+	#ReplaceTags in "SP:Radiation Jet" with type(QN/H)
+	#ReplaceTags in "SP:Breathe Radiation" with type(QN/VH)
+
+	* Metal & Plastic Spells
+	#ReplaceTags in "SP:Seek Plastic" with type(QN/H)
+	#ReplaceTags in "SP:Identify Metal" with type(QN/H)
+	#ReplaceTags in "SP:Identify Plastic" with type(QN/H)
+	#ReplaceTags in "SP:Shape Metal" with type(QN/H)
+	#ReplaceTags in "SP:Shape Plastic" with type(QN/H)
+	#ReplaceTags in "SP:Metal Vision" with type(QN/H)
+	#ReplaceTags in "SP:Plastic Vision" with type(QN/H)
+	#ReplaceTags in "SP:Body of Metal" with type(QN/VH)
+	#ReplaceTags in "SP:Body of Plastic" with type(QN/VH)
+#End
+
+<Water:Wa>
+
+#ReplaceTags in "SP:Seek Water" with type(QN/H)
+#ReplaceTags in "SP:Purify Water" with type(QN/H)
+#ReplaceTags in "SP:Create Water" with type(QN/H)
+#ReplaceTags in "SP:Destroy Water" with type(QN/H)
+#ReplaceTags in "SP:Shape Water" with type(QN/H)
+// Fog - in Weather
+#ReplaceTags in "SP:Icy Weapon" with type(QN/H)
+#ReplaceTags in "SP:Breathe Water" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Seek Coastline" with type(QN/H)
+	#ReplaceTags in "SP:Umbrella" with type(QN/H)
+	#ReplaceTags in "SP:Body of Water" with type(QN/H)
+	#ReplaceTags in "SP:Foul Water" with type(QN/H)
+	#ReplaceTags in "SP:Freeze" with type(QN/H)
+	#ReplaceTags in "SP:Ice Slick" with type(QN/H)
+	#ReplaceTags in "SP:Ice Sphere" with type(QN/H)
+	#ReplaceTags in "SP:Icy Missiles" with type(QN/H)
+	#ReplaceTags in "SP:Melt Ice" with type(QN/H)
+	#ReplaceTags in "SP:Resist Water" with type(QN/H)
+	#ReplaceTags in "SP:Snow Shoes" with type(QN/H)
+	#ReplaceTags in "SP:Walk on Water" with type(QN/H)
+	#ReplaceTags in "SP:Water Jet" with type(QN/H)
+	#ReplaceTags in "SP:Water Vision" with type(QN/H)
+	#ReplaceTags in "SP:Whirlpool" with type(QN/H)
+	#ReplaceTags in "SP:Coolness" with type(QN/H)
+	#ReplaceTags in "SP:Create Ice" with type(QN/H)
+	#ReplaceTags in "SP:Dehydrate" with type(QN/H)
+	#ReplaceTags in "SP:Ice Dagger" with type(QN/H)
+	#ReplaceTags in "SP:Icy Touch" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Water" with type(QN/H)
+	#ReplaceTags in "SP:Dry Spring" with type(QN/H)
+	#ReplaceTags in "SP:Essential Water" with type(QN/H)
+	#ReplaceTags in "SP:Frostbite" with type(QN/H)
+	#ReplaceTags in "SP:Snow Jet" with type(QN/H)
+	#ReplaceTags in "SP:Body of Ice" with type(QN/VH)
+	#ReplaceTags in "SP:Boil Water" with type(QN/H)
+	#ReplaceTags in "SP:Condense Steam" with type(QN/H)
+	#ReplaceTags in "SP:Create Acid" with type(QN/H)
+	#ReplaceTags in "SP:Create Spring" with type(QN/H)
+	#ReplaceTags in "SP:Flesh to Ice" with type(QN/VH)
+	#ReplaceTags in "SP:Create Steam" with type(QN/H)
+	#ReplaceTags in "SP:Resist Acid" with type(QN/H)
+	#ReplaceTags in "SP:Geyser" with type(QN/VH)
+	#ReplaceTags in "SP:Rain of Acid" with type(QN/H)
+	#ReplaceTags in "SP:Steam Jet" with type(QN/H)
+	#ReplaceTags in "SP:Acid Ball" with type(QN/H)
+	#ReplaceTags in "SP:Acid Jet" with type(QN/H)
+	#ReplaceTags in "SP:Rain of Ice Daggers" with type(QN/H)
+	#ReplaceTags in "SP:Icy Breath" with type(QN/VH)
+	#ReplaceTags in "SP:Breathe Steam" with type(QN/VH)
+	#ReplaceTags in "SP:Spit Acid" with type(QN/VH)
+	#ReplaceTags in "SP:Essential Acid" with type(QN/VH)
+	#ReplaceTags in "SP:Summon Water Elemental" with type(QN/H)
+	#ReplaceTags in "SP:Control Water Elemental" with type(QN/H)
+	#ReplaceTags in "SP:Create Water Elemental" with type(QN/H)
+
+#End
+
+<Weather:We>
+
+#ReplaceTags in "SP:Fog" with type(QN/H)
+#ReplaceTags in "SP:Predict Weather" with type(QN/H)
+#ReplaceTags in "SP:Lightning" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+
+	#ReplaceTags in "SP:Frost" with type(QN/H)
+	#ReplaceTags in "SP:Waves" with type(QN/H)
+	#ReplaceTags in "SP:Clouds" with type(QN/H)
+	#ReplaceTags in "SP:Current" with type(QN/H)
+	#ReplaceTags in "SP:Tide" with type(QN/H)
+	#ReplaceTags in "SP:Wind" with type(QN/H)
+	#ReplaceTags in "SP:Rain" with type(QN/H)
+	#ReplaceTags in "SP:Snow" with type(QN/H)
+	#ReplaceTags in "SP:Hail" with type(QN/H)
+	#ReplaceTags in "SP:Warm" with type(QN/H)
+	#ReplaceTags in "SP:Cool" with type(QN/H)
+	#ReplaceTags in "SP:Storm" with type(QN/H)
+	#ReplaceTags in "SP:Resist Lightning" with type(QN/H)
+	#ReplaceTags in "SP:Explosive Lightning" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Whip" with type(QN/H)
+	#ReplaceTags in "SP:Shocking Touch" with type(QN/H)
+	#ReplaceTags in "SP:Spark Cloud" with type(QN/H)
+	#ReplaceTags in "SP:Spark Storm" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Lightning" with type(QN/H)
+	#ReplaceTags in "SP:Ball of Lightning" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Stare" with type(QN/VH)
+	#ReplaceTags in "SP:Body of Lightning" with type(QN/VH)
+	#ReplaceTags in "SP:Lightning Armor" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Weapon" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Missiles" with type(QN/H)
+	
+#End
+
+<Syntactic:Sy>
+
+#IF fileloaded = "GURPS Magic 4e.gdf"
+	#ReplaceTags in "SP:Communicate (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Control (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Create (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Heal (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Move (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Protect (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Sense (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Strengthen (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Transform (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Weaken (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Air (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Animal (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Body (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Earth (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Fire (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Food (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Image (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Light (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Magic (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Mind (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Plant (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Sound (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Spirit (Syntactic)" with type(QN/VH)
+	#ReplaceTags in "SP:Water (Syntactic)" with type(QN/VH)
+#End
+
+
+// Clerical ***********************************************************************************************************
+
+* <Air:Ai>
+
+#ReplaceTags in "SP:Purify Air (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Create Air (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Shape Air (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:No-Smell (Clerical)" with type(QN/H)
+// Predict Weather - in Weather
+// Breathe Water - in Water
+#ReplaceTags in "SP:Walk on Air (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Earth to Air (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Stench (Clerical)" with type(QN/H)
+// Lightning - in Weather
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Air (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Destroy Air (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Odor (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Air Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Air Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Air (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Devitalize Air (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Wind (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Windstorm (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Concussion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Breathe Air (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Air (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Air Vortex (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sandstorm (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Wind (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Summon Air Elemental (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Control Air Elemental (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Air Elemental (Clerical)" with type(QN/H)
+
+#End
+
+
+* <Animal:An>
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Beast-Soother (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Beast-Rouser (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Vermin Control (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Fish Control (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Reptile Control (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Bird Control (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mammal Control (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hybrid Control (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Beast Summoning (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Master (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Beast Link (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Beast Speech (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Vermin (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Fish (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Reptile (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Bird (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Mammal (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Hybrids (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Rider (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Rider Within (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Spider Silk (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Beast Seeker (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Beast Possession (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Beast Possession (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Protect Animal (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Shapeshifting ([Animal]; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Shapeshift Others ([Animal]; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Permanent Shapeshifting ([Animal]; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting ([Variation]; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Chameleon Eyes; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Crocodile Jaws; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Elephant Trunk; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Feathered Arms; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Fish Tail; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Mountain Goat Hooves; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Saber Teeth; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Scorpion Tail; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Serpent's Fangs; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Skunk Tail; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Spider Arms; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Tiger Paws; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Toad Tongue; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Turtle Shell; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Great Shapeshift (Clerical)" with type(QN/VH)
+
+#End
+
+* <Body Control:BC>
+
+#ReplaceTags in "SP:Itch (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Spasm (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Pain (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Clumsiness (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Hinder (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Rooted Feet (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Paralyze Limb (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Wither Limb (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Deathtouch (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Climbing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Touch (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Perfume (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Stop Spasm (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Tickle (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Tanglefoot (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Roundabout (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Debility (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Frailty (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Might (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Grace (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Vigor (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Boost Dexterity (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Boost Health (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Boost Strength (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Boost Intelligence (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Stun (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Nauseate (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Retch (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Fumble (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Strike Dumb (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Strike Blind (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Strike Deaf (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hunger (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Thirst (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Pain (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hold Breath (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Ambidexterity (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Balance (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Reflexes (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Cadence (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hair Growth (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Haircut (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sensitize (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Agonize (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Weaken Blood (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Strike Numb (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Choke (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Control Limb (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Total Paralysis (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Strike Barren (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Alter Voice (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Alter Visage (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Alter Body (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lengthen Limb (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Decapitation (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Shrink (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Shrink Other (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Enlarge (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Enlarge Other (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Corpulence (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Gauntness (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Transform Body ([Race]; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Transform Other ([Race]; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Transmogrification (Clerical)" with type(QN/H)
+
+#End
+
+* <Communication & Empathy:CE>
+
+#ReplaceTags in "SP:Sense Foes (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Sense Emotion (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Truthsayer (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Mind-Reading (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Hide Thoughts (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Sense Life (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hide Emotion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Persuasion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Vexation (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dream Viewing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dream Sending (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dream Projection (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lend Language (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Borrow Language (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Gift of Tongues (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Gift of Letters (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Mind-Search (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Mind-Sending (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Telepathy (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Retrogression (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lend Skill (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Borrow Skill (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Compel Truth (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Insignificance (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Presence (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Communication (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Soul Rider (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Control Person (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Possession (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Dispel Possession (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Possession (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Exchange Bodies (Clerical)" with type(QN/VH)
+
+#End
+
+* <Earth:Ea>
+
+#ReplaceTags in "SP:Seek Earth (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Shape Earth (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Earth to Stone (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Create Earth (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Flesh to Stone (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Stone to Earth (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Stone to Flesh (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Entombment (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Shape Stone (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Seek Pass (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Earth Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Predict Earth Movement (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sand Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mud Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Stone Missile (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Earth (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Earth to Water (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Partial Petrifaction (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Rain of Stones (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Earth (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Stone (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steelwraith (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Purify Earth (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Earthquake (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Volcano (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Alter Terrain (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Move Terrain (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Summon Earth Elemental (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Control Earth Elemental (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Earth Elemental (Clerical)" with type(QN/H)
+
+#End
+
+* <Enchantment:En>
+
+#ReplaceTags in "SP:Accuracy (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Deflect (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Enchant (Clerical)" with type(QN/VH)
+#ReplaceTags in "SP:Fortify (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Power (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Puissance (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Staff (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Temporary Enchantment (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Scroll (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hex (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Speed (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Remove Enchantment (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Enchantment (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Enchantment (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lesser Wish (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Talisman (%spellslist%; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Amulet (%spellslist%; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Adjustable Clothing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Golem (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Impression Blocker (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Malefice (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Ensorcel (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Spell Stone (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wish (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Hideaway (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Leak (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Simulacrum (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Doppelgänger (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Great Wish (Clerical)" with type(QN/VH)
+
+	* Weapon Enchantments
+	#ReplaceTags in "SP:Bane (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Graceful Weapon (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Loyal Sword (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Quick-Draw (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Penetrating Weapon (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dancing Weapon (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Defending Weapon (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Weapon Spirit (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Cornucopia (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Quick-Aim (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Ghost Weapon (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Spell Arrow (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Blank Spell Arrow (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Speed Spell Arrow (Clerical)" with type(QN/H)
+
+	* Armor Enchantments
+	#ReplaceTags in "SP:Lighten (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dancing Shield (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Defending Shield (Clerical)" with type(QN/H)
+
+	* Limiting Enchantments
+	#ReplaceTags in "SP:Limit (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Name (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Password (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Attune (Clerical)" with type(QN/H)
+
+	* Wizardly Tools
+	#ReplaceTags in "SP:Powerstone (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Manastone (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Homunculus (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Effigy (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Soul Stone (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Crystal Ball (Clerical)" with type(QN/H)
+
+#End
+
+* <Fire:Fi>
+
+#ReplaceTags in "SP:Ignite Fire (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Create Fire (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Shape Fire (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Deflect Energy (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Extinguish Fire (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Heat (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Cold (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Resist Cold (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Resist Fire (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Fireball (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Explosive Fireball (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Fire (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Phantom Flame (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Fireproof (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Slow Fire (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Fast Fire (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Flame Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Smoke (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Rain of Fire (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Warmth (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Flame (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Flaming Weapon (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Flaming Missiles (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Flaming Armor (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Fire Cloud (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Breathe Fire (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Burning Touch (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Flames (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Burning Death (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Summon Fire Elemental (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Control Fire Elemental (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Fire Elemental (Clerical)" with type(QN/H)
+
+#End
+
+* <Food:Fo>
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Food (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Test Food (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Decay (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Season (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Far-Tasting (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mature (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Purify Food (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Cook (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Prepare Game (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Know Recipe (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Poison Food (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Preserve Food (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Food (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Food (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Water to Wine (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Distill (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Fool's Banquet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Monk's Banquet (Clerical)" with type(QN/H)
+
+#End
+
+
+* <Gate:Ga>
+
+#ReplaceTags in "SP:Planar Summons ([Plane]; Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Plane Shift ([Plane]; Clerical)" with type(QN/VH)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Timeport (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Timeport Other (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Timeslip (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Timeslip Other (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Rapid Journey (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Planar Visit ([Plane]; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Plane Shift Other ([Plane]; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Phase (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Phase Other (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Beacon (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Trace Teleport (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divert Teleport (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Create Door (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Seek Gate (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Scry Gate (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Control Gate (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Gate (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Slow Time (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Accelerate Time (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Hide Object (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sanctuary (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Suspend Time (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Time Out (Clerical)" with type(QN/VH)
+
+#End
+
+* <Healing:He>
+
+#ReplaceTags in "SP:Lend Energy (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Lend Vitality (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Recover Energy (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Awaken (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Minor Healing (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Major Healing (Clerical)" with type(QN/VH)
+#ReplaceTags in "SP:Great Healing (Clerical)" with type(QN/VH)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Body-Reading (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Final Rest (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Share Energy (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Remove Contagion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Relieve Sickness (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Share Vitality (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Disease (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Poison (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Stop Bleeding (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Cure Disease (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Neutralize Poison (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Instant Neutralize Poison (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Relieve Addiction (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Relieve Madness (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Restore Sight (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Restore Hearing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Restore Memory (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Restore Speech (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Stop Paralysis (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Relieve Paralysis (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Restoration (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Instant Restoration (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Regeneration (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Instant Regeneration (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Cleansing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Suspended Animation (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Healing Slumber (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Halt Aging (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Youth (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Resurrection (Clerical)" with type(QN/VH)
+
+#End
+
+* <Illusion & Creation:IC>
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Simple Illusion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Complex Illusion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Perfect Illusion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Illusion Shell (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Illusion Disguise (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Independence (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Know Illusion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Control Illusion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dispel Illusion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Inscribe (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Phantom (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Initiative (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Object (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Duplicate (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Create Servant (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Warrior (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Animal (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Mount (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Control Creation (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dispel Creation (Clerical)" with type(QN/H)
+
+#End
+
+* <Knowledge:Kn>
+
+#ReplaceTags in "SP:Detect Magic (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Aura (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Seeker (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Trace (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Identify Spell (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Analyze Magic (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Measurement (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Tell Time (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Alarm (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Far-Feeling (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Find Direction (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Tell Position (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Test Load (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sense Mana (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mage Sight (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mage Sense (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Seek Magic (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Summon Shade (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Glass Wall (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Know Location (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Eye (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Invisible Wizard Eye (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Mouth (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Nose (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Hand (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Astral Vision (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Memorize (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Pathfinder (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Projection (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:History (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Ancient History (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Prehistory (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Reconstruct Spell (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Know True Shape (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Recall (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Remember Path (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:See Secrets (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Scents of the Past (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Images of the Past (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Echoes of the Past (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination ([Type]; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Astrology; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Augury; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Cartomancy; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Crystal-Gazing; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Dactylomancy; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Extispicy; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Gastromancy; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Geomancy; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Lecanomancy; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Numerology; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Oneiromancy; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Physiognomy; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Pyromancy; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Sortilege; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Symbol-Casting; Clerical)" with type(QN/H)
+
+#End
+
+* <Light & Darkness:LD>
+
+#ReplaceTags in "SP:Light (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Continual Light (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Darkness (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Blur (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Colors (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Remove Shadow (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Shape Light (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Bright Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Infravision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Night Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hawk Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Small Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dark Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Blackout (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Glow (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Flash (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Gloom (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Light Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mirror (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Remove Reflection (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Light (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Shape Darkness (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hide (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:See Invisible (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mage Light (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Continual Mage Light (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sunlight (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Continual Sunlight (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Invisibility (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Shadow (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Sunbolt (Clerical)" with type(QN/H)
+
+#End
+
+* <Making & Breaking:MB>
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Inspired Creation (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Awaken Craft Spirit (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Find Weakness (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Weaken (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Restore (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Clean (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Soilproof (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dye (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Copy (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Rejoin (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Shatter (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Animate Object (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Stiffen (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Knot (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Reshape (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Rive (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Ruin (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Explode (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Fasten (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mapmaker (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Repair (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Shatterproof (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sharpen (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Toughen (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Transparency (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mystic Mark (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Weapon Self (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Transform Object (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Contract Object (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Extend Object (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Shrink Object (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Enlarge Object (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Disintegrate (Clerical)" with type(QN/VH)
+
+#End
+
+* <Meta-Spells:MS>
+
+#ReplaceTags in "SP:Counterspell (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Dispel Magic (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Scryguard (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Spell (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Ward (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Conceal Magic (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Reflect (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Scrywall (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Great Ward (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:False Aura (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Magic Resistance (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Scryfool (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Penetrating Spell (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Catch Spell (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Suspend Magic (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Displace Spell (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Spell Shield (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Spell Wall (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Pentagram (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Curse (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Mana (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Lend Spell (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Remove Curse (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Charge Powerstone (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Spellguard (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Remove Aura (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Drain Mana (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Restore Mana (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Spell (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Telecast (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Hang Spell (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Maintain Spell (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Throw Spell (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Bless (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Curse (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Magery (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Drain Magery (Clerical)" with type(QN/VH)
+
+	* Linking Spells
+	#ReplaceTags in "SP:Delay (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Link (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Reflex (Clerical)" with type(QN/H)
+
+#End
+
+* <Mind Control:MC>
+
+#ReplaceTags in "SP:Foolishness (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Forgetfulness (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Daze (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Mass Daze (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Sleep (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Mass Sleep (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Command (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Keen Hearing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Keen Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Keen Taste and Smell (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Keen [Sense] (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dull Hearing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dull Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dull Taste and Smell (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dull [Sense] (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Alertness (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Dullness (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Fear (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Panic (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Terror (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Bravery (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Rear Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Berserker (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mental Stun (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Disorient (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Encrypt (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Fascinate (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wisdom (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Weaken Will (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Strengthen Will (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Loyalty (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Drunkenness (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Madness (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Emotion Control (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mindlessness (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Compel Lie (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lure (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Peaceful Sleep (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sickness (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Will Lock (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Oath (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Forgetfulness (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Vigil (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Charm (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Ecstasy (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Enthrall (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Madness (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:False Memory (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Avoid (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Nightmare (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hallucination (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lesser Geas (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Suggestion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mass Suggestion (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Glib Tongue (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Enslave (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Great Hallucination (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Great Geas (Clerical)" with type(QN/VH)
+
+#End
+
+* <Movement:Mo>
+
+#ReplaceTags in "SP:Haste (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Great Haste (Clerical)" with type(QN/VH)
+#ReplaceTags in "SP:Apportation (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Lockmaster (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Deflect Missile (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Glue (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Grease (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hold Fast (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Increase Burden (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Jump (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Levitation (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lighten Burden (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Locksmith (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Long March (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Poltergeist (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Quick March (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Slow Fall (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wallwalker (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dancing Object (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Distant Blow (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Manipulate (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Slow (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Undo (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Winged Knife (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Flight (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Light Tread (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Slide (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Flying Carpet (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Hawk Flight (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Ethereal Body (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Pull (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Repel (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Swim (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Teleport (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Teleport Other (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Blink (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Blink Other (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Freedom (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Cloud-Walking (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Cloud-Vaulting (Clerical)" with type(QN/VH)
+
+#End
+
+* <Necromancy:Ne>
+
+#ReplaceTags in "SP:Death Vision (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Sense Spirit (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Summon Spirit (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Turn Zombie (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Summon Demon (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Banish (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Animation (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Energy (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Steal Vitality (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Materialize (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Solidify (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Affect Spirits (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Skull-Spirit (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Turn Spirit (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Zombie (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Zombie Summoning (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Control Zombie (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mass Zombie (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Slow Healing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Stop Healing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit (Banshees; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit (Specters; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit (Manitous; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit ([Spirit]; Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Age (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Pestilence (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Evisceration (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Animate Shadow (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Rotting Death (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Soul Jar (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Entrap Spirit (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Spirits (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Bind Spirit (Banshees; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Bind Spirit (Specters; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Bind Spirit (Manitous; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Bind Spirit ([Spirit]; Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Grace (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Vigor (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Might (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Wisdom (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Skill (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Youth (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Beauty (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Astral Block (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lich (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Wraith (Clerical)" with type(QN/VH)
+
+#End
+
+* <Plant:Pl>
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Plant (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Identify Plant (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Heal Plant (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Shape Plant (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Bless Plants (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hide Path (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Growth (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Pollen Cloud (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Blight (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Blossom (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Conceal (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Forest Warning (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Tangle Growth (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Plant (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:False Tracks (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Sense (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Rejuvenate Plant (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wither Plant (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Plants (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Wood (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Control (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Wood (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Animate Plant (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Form (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Speech (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Rain of Nuts (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Arboreal Immurement (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Form Other (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Body of Wood (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Slime (Clerical)" with type(QN/H)
+
+#End
+
+* <Protection & Warning:PW>
+
+#ReplaceTags in "SP:Shield (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Armor (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Magelock (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Sense Danger (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Detect Poison (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Block (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hardiness (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Watchdog (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Nightingale (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sense Observation (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Turn Blade (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Bladeturning (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Missile Shield (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Catch Missile (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Reverse Missiles (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Return Missile (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Reflect Gaze (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Mystic Mist (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Shade (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Iron Arm (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Weather Dome (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Atmosphere Dome (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Pressure (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Teleport Shield (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Force Dome (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Force Wall (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Utter Dome (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Utter Wall (Clerical)" with type(QN/H)
+
+#End
+
+* <Sound:So>
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Sound (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Silence (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sound Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Thunderclap (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Voices (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Garble (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Imitate Voice (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Silence (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hush (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Mage-Stealth (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Great Voice (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Noise (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Delayed Message (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Sound (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Sound Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Converse (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Far-Hearing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Scribe (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Musical Scribe (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Message (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Silver Tongue (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Ear (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Invisible Wizard Ear (Clerical)" with type(QN/H)
+
+#End
+
+* <Technological:Te>
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Machine (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Reveal Function (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Machine Control (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Machine Summoning (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Machine Speech (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Glitch (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Malfunction (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Schematic (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Rebuild (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Animate Machine (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Machine Possession (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Machine Possession (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Awaken Computer (Clerical)" with type(QN/VH)
+
+	* Energy Spells
+	#ReplaceTags in "SP:Seek Power (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Seek Fuel (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Test Fuel (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Preserve Fuel (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Purify Fuel (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Fuel (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Fuel (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Stop Power (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lend Power (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Propel (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Conduct Power (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Power (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Draw Power (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Magnetic Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Radio Hearing (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Spectrum Vision (Clerical)" with type(QN/VH)
+
+	* Radiation Spells
+	#ReplaceTags in "SP:See Radiation (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Seek Radiation (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Irradiate (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Extinguish Radiation (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Resist Radiation (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Cure Radiation (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Radiation Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Breathe Radiation (Clerical)" with type(QN/VH)
+
+	* Metal & Plastic Spells
+	#ReplaceTags in "SP:Seek Plastic (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Identify Metal (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Identify Plastic (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Shape Metal (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Shape Plastic (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Metal Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Plastic Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Metal (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Body of Plastic (Clerical)" with type(QN/VH)
+
+#End
+
+* <Water:Wa>
+
+#ReplaceTags in "SP:Seek Water (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Purify Water (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Create Water (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Destroy Water (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Shape Water (Clerical)" with type(QN/H)
+// Fog - in Weather
+#ReplaceTags in "SP:Icy Weapon (Clerical)" with type(QN/H)
+
+#ReplaceTags in "SP:Breathe Water (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Coastline (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Umbrella (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Water (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Foul Water (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Freeze (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Ice Slick (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Ice Sphere (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Icy Missiles (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Melt Ice (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Water (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Snow Shoes (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Walk on Water (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Water Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Water Vision (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Whirlpool (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Coolness (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Ice (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dehydrate (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Ice Dagger (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Icy Touch (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Water (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Dry Spring (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Water (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Frostbite (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Snow Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Ice (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Boil Water (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Condense Steam (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Acid (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Spring (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Flesh to Ice (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Create Steam (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Acid (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Geyser (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Rain of Acid (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Steam Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Acid Ball (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Acid Jet (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Rain of Ice Daggers (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Icy Breath (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Breathe Steam (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Spit Acid (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Essential Acid (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Summon Water Elemental (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Control Water Elemental (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Create Water Elemental (Clerical)" with type(QN/H)
+
+#End
+
+* <Weather:We>
+
+#ReplaceTags in "SP:Fog (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Predict Weather (Clerical)" with type(QN/H)
+#ReplaceTags in "SP:Lightning (Clerical)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Clerical Magic.gdf"
+
+	#ReplaceTags in "SP:Frost (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Waves (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Clouds (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Current (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Tide (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wind (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Rain (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Snow (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Hail (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Warm (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Cool (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Storm (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Lightning (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Explosive Lightning (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Whip (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Shocking Touch (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Spark Cloud (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Spark Storm (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Lightning (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Ball of Lightning (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Stare (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Body of Lightning (Clerical)" with type(QN/VH)
+	#ReplaceTags in "SP:Lightning Armor (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Weapon (Clerical)" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Missiles (Clerical)" with type(QN/H)
+
+#END
+
+
+// Ritual ***********************************************************************************************************
+
+* <Air:Ai>
+
+#ReplaceTags in "SP:Purify Air (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Create Air (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Shape Air (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:No-Smell (Ritual)" with type(QN/H)
+// Predict Weather - in Weather
+// Breathe Water - in Water
+#ReplaceTags in "SP:Walk on Air (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Earth to Air (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Stench (Ritual)" with type(QN/H)
+// Lightning - in Weather
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Air (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Destroy Air (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Odor (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Air Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Air Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Air (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Devitalize Air (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Wind (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Windstorm (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Concussion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Breathe Air (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Air (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Air Vortex (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sandstorm (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Wind (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Summon Air Elemental (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Control Air Elemental (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Air Elemental (Ritual)" with type(QN/H)
+
+#End
+
+
+* <Animal:An>
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Beast-Soother (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Beast-Rouser (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Vermin Control (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Fish Control (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Reptile Control (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Bird Control (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mammal Control (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hybrid Control (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Beast Summoning (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Master (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Beast Link (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Beast Speech (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Vermin (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Fish (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Reptile (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Bird (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Mammal (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Hybrids (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Rider (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Rider Within (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Spider Silk (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Beast Seeker (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Beast Possession (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Beast Possession (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Protect Animal (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Shapeshifting ([Animal]; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Shapeshift Others ([Animal]; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Permanent Shapeshifting ([Animal]; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting ([Variation]; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Chameleon Eyes; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Crocodile Jaws; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Elephant Trunk; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Feathered Arms; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Fish Tail; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Mountain Goat Hooves; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Saber Teeth; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Scorpion Tail; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Serpent's Fangs; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Skunk Tail; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Spider Arms; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Tiger Paws; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Toad Tongue; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Partial Shapeshifting (Turtle Shell; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Great Shapeshift (Ritual)" with type(QN/VH)
+
+#End
+
+* <Body Control:BC>
+
+#ReplaceTags in "SP:Itch (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Spasm (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Pain (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Clumsiness (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Hinder (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Rooted Feet (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Paralyze Limb (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Wither Limb (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Deathtouch (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Climbing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Touch (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Perfume (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Stop Spasm (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Tickle (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Tanglefoot (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Roundabout (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Debility (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Frailty (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Might (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Grace (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Vigor (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Boost Dexterity (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Boost Health (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Boost Strength (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Boost Intelligence (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Stun (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Nauseate (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Retch (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Fumble (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Strike Dumb (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Strike Blind (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Strike Deaf (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hunger (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Thirst (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Pain (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hold Breath (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Ambidexterity (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Balance (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Reflexes (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Cadence (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hair Growth (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Haircut (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sensitize (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Agonize (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Weaken Blood (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Strike Numb (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Choke (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Control Limb (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Total Paralysis (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Strike Barren (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Alter Voice (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Alter Visage (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Alter Body (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lengthen Limb (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Decapitation (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Shrink (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Shrink Other (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Enlarge (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Enlarge Other (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Corpulence (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Gauntness (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Transform Body ([Race]; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Transform Other ([Race]; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Transmogrification (Ritual)" with type(QN/H)
+
+#End
+
+* <Communication & Empathy:CE>
+
+#ReplaceTags in "SP:Sense Foes (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Sense Emotion (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Truthsayer (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Mind-Reading (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Hide Thoughts (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Sense Life (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hide Emotion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Persuasion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Vexation (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dream Viewing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dream Sending (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dream Projection (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lend Language (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Borrow Language (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Gift of Tongues (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Gift of Letters (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Mind-Search (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Mind-Sending (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Telepathy (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Retrogression (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lend Skill (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Borrow Skill (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Compel Truth (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Insignificance (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Presence (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Communication (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Soul Rider (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Control Person (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Possession (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Dispel Possession (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Possession (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Exchange Bodies (Ritual)" with type(QN/VH)
+
+#End
+
+* <Earth:Ea>
+
+#ReplaceTags in "SP:Seek Earth (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Shape Earth (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Earth to Stone (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Create Earth (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Flesh to Stone (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Stone to Earth (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Stone to Flesh (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Entombment (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Shape Stone (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Seek Pass (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Earth Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Predict Earth Movement (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sand Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mud Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Stone Missile (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Earth (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Earth to Water (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Partial Petrifaction (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Rain of Stones (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Earth (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Stone (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steelwraith (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Purify Earth (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Earthquake (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Volcano (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Alter Terrain (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Move Terrain (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Summon Earth Elemental (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Control Earth Elemental (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Earth Elemental (Ritual)" with type(QN/H)
+
+#End
+
+* <Enchantment:En>
+
+#ReplaceTags in "SP:Accuracy (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Deflect (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Enchant (Ritual)" with type(QN/VH)
+#ReplaceTags in "SP:Fortify (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Power (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Puissance (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Staff (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Temporary Enchantment (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Scroll (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hex (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Speed (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Remove Enchantment (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Enchantment (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Enchantment (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lesser Wish (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Talisman (%spellslist%; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Amulet (%spellslist%; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Adjustable Clothing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Golem (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Impression Blocker (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Malefice (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Ensorcel (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Spell Stone (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wish (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Hideaway (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Leak (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Simulacrum (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Doppelgänger (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Great Wish (Ritual)" with type(QN/VH)
+
+	* Weapon Enchantments
+	#ReplaceTags in "SP:Bane (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Graceful Weapon (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Loyal Sword (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Quick-Draw (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Penetrating Weapon (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dancing Weapon (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Defending Weapon (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Weapon Spirit (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Cornucopia (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Quick-Aim (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Ghost Weapon (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Spell Arrow (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Blank Spell Arrow (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Speed Spell Arrow (Ritual)" with type(QN/H)
+
+	* Armor Enchantments
+	#ReplaceTags in "SP:Lighten (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dancing Shield (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Defending Shield (Ritual)" with type(QN/H)
+
+	* Limiting Enchantments
+	#ReplaceTags in "SP:Limit (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Name (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Password (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Attune (Ritual)" with type(QN/H)
+
+	* Wizardly Tools
+	#ReplaceTags in "SP:Powerstone (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Manastone (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Homunculus (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Effigy (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Soul Stone (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Crystal Ball (Ritual)" with type(QN/H)
+
+#End
+
+* <Fire:Fi>
+
+#ReplaceTags in "SP:Ignite Fire (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Create Fire (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Shape Fire (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Deflect Energy (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Extinguish Fire (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Heat (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Cold (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Resist Cold (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Resist Fire (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Fireball (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Explosive Fireball (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Fire (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Phantom Flame (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Fireproof (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Slow Fire (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Fast Fire (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Flame Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Smoke (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Rain of Fire (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Warmth (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Flame (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Flaming Weapon (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Flaming Missiles (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Flaming Armor (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Fire Cloud (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Breathe Fire (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Burning Touch (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Flames (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Burning Death (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Summon Fire Elemental (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Control Fire Elemental (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Fire Elemental (Ritual)" with type(QN/H)
+
+#End
+
+* <Food:Fo>
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Food (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Test Food (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Decay (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Season (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Far-Tasting (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mature (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Purify Food (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Cook (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Prepare Game (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Know Recipe (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Poison Food (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Preserve Food (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Food (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Food (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Water to Wine (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Distill (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Fool's Banquet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Monk's Banquet (Ritual)" with type(QN/H)
+
+#End
+
+
+* <Gate:Ga>
+
+#ReplaceTags in "SP:Planar Summons ([Plane]; Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Plane Shift ([Plane]; Ritual)" with type(QN/VH)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Timeport (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Timeport Other (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Timeslip (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Timeslip Other (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Rapid Journey (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Planar Visit ([Plane]; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Plane Shift Other ([Plane]; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Phase (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Phase Other (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Beacon (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Trace Teleport (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divert Teleport (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Create Door (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Seek Gate (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Scry Gate (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Control Gate (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Gate (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Slow Time (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Accelerate Time (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Hide Object (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sanctuary (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Suspend Time (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Time Out (Ritual)" with type(QN/VH)
+
+#End
+
+* <Healing:He>
+
+#ReplaceTags in "SP:Lend Energy (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Lend Vitality (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Recover Energy (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Awaken (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Minor Healing (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Major Healing (Ritual)" with type(QN/VH)
+#ReplaceTags in "SP:Great Healing (Ritual)" with type(QN/VH)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Body-Reading (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Final Rest (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Share Energy (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Remove Contagion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Relieve Sickness (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Share Vitality (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Disease (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Poison (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Stop Bleeding (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Cure Disease (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Neutralize Poison (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Instant Neutralize Poison (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Relieve Addiction (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Relieve Madness (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Restore Sight (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Restore Hearing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Restore Memory (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Restore Speech (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Stop Paralysis (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Relieve Paralysis (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Restoration (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Instant Restoration (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Regeneration (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Instant Regeneration (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Cleansing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Suspended Animation (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Healing Slumber (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Halt Aging (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Youth (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Resurrection (Ritual)" with type(QN/VH)
+
+#End
+
+* <Illusion & Creation:IC>
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Simple Illusion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Complex Illusion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Perfect Illusion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Illusion Shell (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Illusion Disguise (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Independence (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Know Illusion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Control Illusion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dispel Illusion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Inscribe (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Phantom (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Initiative (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Object (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Duplicate (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Create Servant (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Warrior (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Animal (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Mount (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Control Creation (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dispel Creation (Ritual)" with type(QN/H)
+
+#End
+
+* <Knowledge:Kn>
+
+#ReplaceTags in "SP:Detect Magic (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Aura (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Seeker (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Trace (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Identify Spell (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Analyze Magic (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Measurement (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Tell Time (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Alarm (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Far-Feeling (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Find Direction (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Tell Position (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Test Load (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sense Mana (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mage Sight (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mage Sense (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Seek Magic (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Summon Shade (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Glass Wall (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Know Location (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Eye (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Invisible Wizard Eye (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Mouth (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Nose (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Hand (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Astral Vision (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Memorize (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Pathfinder (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Projection (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:History (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Ancient History (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Prehistory (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Reconstruct Spell (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Know True Shape (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Recall (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Remember Path (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:See Secrets (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Scents of the Past (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Images of the Past (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Echoes of the Past (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination ([Type]; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Astrology; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Augury; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Cartomancy; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Crystal-Gazing; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Dactylomancy; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Extispicy; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Gastromancy; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Geomancy; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Lecanomancy; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Numerology; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Oneiromancy; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Physiognomy; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Pyromancy; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Sortilege; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Divination (Symbol-Casting; Ritual)" with type(QN/H)
+
+#End
+
+* <Light & Darkness:LD>
+
+#ReplaceTags in "SP:Light (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Continual Light (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Darkness (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Blur (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Colors (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Remove Shadow (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Shape Light (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Bright Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Infravision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Night Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hawk Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Small Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dark Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Blackout (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Glow (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Flash (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Gloom (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Light Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mirror (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Remove Reflection (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Light (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Shape Darkness (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hide (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:See Invisible (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mage Light (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Continual Mage Light (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sunlight (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Continual Sunlight (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Invisibility (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Shadow (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Sunbolt (Ritual)" with type(QN/H)
+
+#End
+
+* <Making & Breaking:MB>
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Inspired Creation (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Awaken Craft Spirit (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Find Weakness (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Weaken (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Restore (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Clean (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Soilproof (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dye (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Copy (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Rejoin (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Shatter (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Animate Object (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Stiffen (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Knot (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Reshape (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Rive (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Ruin (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Explode (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Fasten (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mapmaker (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Repair (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Shatterproof (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sharpen (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Toughen (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Transparency (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mystic Mark (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Weapon Self (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Transform Object (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Contract Object (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Extend Object (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Shrink Object (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Enlarge Object (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Disintegrate (Ritual)" with type(QN/VH)
+
+#End
+
+* <Meta-Spells:MS>
+
+#ReplaceTags in "SP:Counterspell (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Dispel Magic (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Scryguard (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Spell (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Ward (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Conceal Magic (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Reflect (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Scrywall (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Great Ward (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:False Aura (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Magic Resistance (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Scryfool (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Penetrating Spell (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Catch Spell (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Suspend Magic (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Displace Spell (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Spell Shield (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Spell Wall (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Pentagram (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Curse (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Mana (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Lend Spell (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Remove Curse (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Charge Powerstone (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Spellguard (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Remove Aura (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Drain Mana (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Restore Mana (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Spell (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Telecast (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Hang Spell (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Maintain Spell (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Throw Spell (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Bless (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Curse (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Suspend Magery (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Drain Magery (Ritual)" with type(QN/VH)
+
+	* Linking Spells
+	#ReplaceTags in "SP:Delay (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Link (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Reflex (Ritual)" with type(QN/H)
+
+#End
+
+* <Mind Control:MC>
+
+#ReplaceTags in "SP:Foolishness (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Forgetfulness (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Daze (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Mass Daze (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Sleep (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Mass Sleep (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Command (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Keen Hearing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Keen Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Keen Taste and Smell (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Keen [Sense] (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dull Hearing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dull Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dull Taste and Smell (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dull [Sense] (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Alertness (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Dullness (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Fear (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Panic (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Terror (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Bravery (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Rear Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Berserker (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mental Stun (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Disorient (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Encrypt (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Fascinate (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wisdom (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Weaken Will (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Strengthen Will (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Loyalty (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Drunkenness (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Madness (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Emotion Control (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mindlessness (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Compel Lie (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lure (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Peaceful Sleep (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sickness (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Will Lock (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Oath (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Forgetfulness (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Vigil (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Charm (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Ecstasy (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Enthrall (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Madness (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:False Memory (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Avoid (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Nightmare (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hallucination (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lesser Geas (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Suggestion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mass Suggestion (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Glib Tongue (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Enslave (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Great Hallucination (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Great Geas (Ritual)" with type(QN/VH)
+
+#End
+
+* <Movement:Mo>
+
+#ReplaceTags in "SP:Haste (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Great Haste (Ritual)" with type(QN/VH)
+#ReplaceTags in "SP:Apportation (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Lockmaster (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Deflect Missile (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Glue (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Grease (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hold Fast (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Increase Burden (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Jump (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Levitation (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lighten Burden (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Locksmith (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Long March (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Poltergeist (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Quick March (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Slow Fall (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wallwalker (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dancing Object (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Distant Blow (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Manipulate (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Slow (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Undo (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Winged Knife (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Flight (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Light Tread (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Slide (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Flying Carpet (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Hawk Flight (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Ethereal Body (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Pull (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Repel (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Swim (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Teleport (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Teleport Other (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Blink (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Blink Other (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Freedom (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Cloud-Walking (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Cloud-Vaulting (Ritual)" with type(QN/VH)
+
+#End
+
+* <Necromancy:Ne>
+
+#ReplaceTags in "SP:Death Vision (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Sense Spirit (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Summon Spirit (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Turn Zombie (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Summon Demon (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Banish (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Animation (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Energy (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Steal Vitality (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Materialize (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Solidify (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Affect Spirits (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Skull-Spirit (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Turn Spirit (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Zombie (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Zombie Summoning (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Control Zombie (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mass Zombie (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Slow Healing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Stop Healing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit (Banshees; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit (Specters; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit (Manitous; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Command Spirit ([Spirit]; Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Age (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Pestilence (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Evisceration (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Animate Shadow (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Rotting Death (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Soul Jar (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Entrap Spirit (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Repel Spirits (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Bind Spirit (Banshees; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Bind Spirit (Specters; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Bind Spirit (Manitous; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Bind Spirit ([Spirit]; Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Grace (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Vigor (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Might (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Wisdom (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Skill (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Youth (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Beauty (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Astral Block (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lich (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Wraith (Ritual)" with type(QN/VH)
+
+#End
+
+* <Plant:Pl>
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Plant (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Identify Plant (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Heal Plant (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Shape Plant (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Bless Plants (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hide Path (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Growth (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Pollen Cloud (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Blight (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Blossom (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Conceal (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Forest Warning (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Tangle Growth (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Plant (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:False Tracks (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Sense (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Rejuvenate Plant (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wither Plant (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Plants (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Wood (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Control (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Wood (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Animate Plant (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Form (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Speech (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Rain of Nuts (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Arboreal Immurement (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Plant Form Other (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Body of Wood (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Slime (Ritual)" with type(QN/H)
+
+#End
+
+* <Protection & Warning:PW>
+
+#ReplaceTags in "SP:Shield (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Armor (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Magelock (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Sense Danger (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Detect Poison (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Block (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hardiness (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Watchdog (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Nightingale (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sense Observation (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Turn Blade (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Bladeturning (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Missile Shield (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Catch Missile (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Reverse Missiles (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Return Missile (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Reflect Gaze (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Mystic Mist (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Shade (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Iron Arm (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Weather Dome (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Atmosphere Dome (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Pressure (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Teleport Shield (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Force Dome (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Force Wall (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Utter Dome (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Utter Wall (Ritual)" with type(QN/H)
+
+#End
+
+* <Sound:So>
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Sound (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Silence (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sound Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Thunderclap (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Voices (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Garble (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Imitate Voice (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Silence (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hush (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Mage-Stealth (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Great Voice (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Noise (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Delayed Message (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Sound (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Sound Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Converse (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Far-Hearing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Scribe (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Musical Scribe (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Message (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Silver Tongue (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wizard Ear (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Invisible Wizard Ear (Ritual)" with type(QN/H)
+
+#End
+
+* <Technological:Te>
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Machine (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Reveal Function (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Machine Control (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Machine Summoning (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Machine Speech (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Glitch (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Malfunction (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Schematic (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Rebuild (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Animate Machine (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Machine Possession (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Permanent Machine Possession (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Awaken Computer (Ritual)" with type(QN/VH)
+
+	* Energy Spells
+	#ReplaceTags in "SP:Seek Power (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Seek Fuel (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Test Fuel (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Preserve Fuel (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Purify Fuel (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Fuel (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Fuel (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Stop Power (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lend Power (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Propel (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Conduct Power (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Steal Power (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Draw Power (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Magnetic Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Radio Hearing (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Spectrum Vision (Ritual)" with type(QN/VH)
+
+	* Radiation Spells
+	#ReplaceTags in "SP:See Radiation (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Seek Radiation (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Irradiate (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Extinguish Radiation (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Resist Radiation (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Cure Radiation (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Radiation Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Breathe Radiation (Ritual)" with type(QN/VH)
+
+	* Metal & Plastic Spells
+	#ReplaceTags in "SP:Seek Plastic (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Identify Metal (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Identify Plastic (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Shape Metal (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Shape Plastic (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Metal Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Plastic Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Metal (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Body of Plastic (Ritual)" with type(QN/VH)
+
+#End
+
+* <Water:Wa>
+
+#ReplaceTags in "SP:Seek Water (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Purify Water (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Create Water (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Destroy Water (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Shape Water (Ritual)" with type(QN/H)
+// Fog - in Weather
+#ReplaceTags in "SP:Icy Weapon (Ritual)" with type(QN/H)
+
+#ReplaceTags in "SP:Breathe Water (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Seek Coastline (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Umbrella (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Water (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Foul Water (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Freeze (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Ice Slick (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Ice Sphere (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Icy Missiles (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Melt Ice (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Water (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Snow Shoes (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Walk on Water (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Water Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Water Vision (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Whirlpool (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Coolness (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Ice (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dehydrate (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Ice Dagger (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Icy Touch (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Walk Through Water (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Dry Spring (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Essential Water (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Frostbite (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Snow Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Body of Ice (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Boil Water (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Condense Steam (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Acid (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Spring (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Flesh to Ice (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Create Steam (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Acid (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Geyser (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Rain of Acid (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Steam Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Acid Ball (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Acid Jet (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Rain of Ice Daggers (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Icy Breath (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Breathe Steam (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Spit Acid (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Essential Acid (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Summon Water Elemental (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Control Water Elemental (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Create Water Elemental (Ritual)" with type(QN/H)
+
+#End
+
+* <Weather:We>
+
+#ReplaceTags in "SP:Fog (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Predict Weather (Ritual)" with type(QN/H)
+#ReplaceTags in "SP:Lightning (Ritual)" with type(QN/H)
+
+#IF fileloaded = "GURPS Magic 4e - Ritual Magic.gdf"
+
+	#ReplaceTags in "SP:Frost (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Waves (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Clouds (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Current (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Tide (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wind (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Rain (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Snow (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Hail (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Warm (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Cool (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Storm (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Resist Lightning (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Explosive Lightning (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Whip (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Shocking Touch (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Spark Cloud (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Spark Storm (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Wall of Lightning (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Ball of Lightning (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Stare (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Body of Lightning (Ritual)" with type(QN/VH)
+	#ReplaceTags in "SP:Lightning Armor (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Weapon (Ritual)" with type(QN/H)
+	#ReplaceTags in "SP:Lightning Missiles (Ritual)" with type(QN/H)
+
+#END

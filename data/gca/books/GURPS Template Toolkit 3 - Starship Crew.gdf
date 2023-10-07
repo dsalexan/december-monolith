@@ -1,0 +1,2130 @@
+Encoding=UTF-8
+Version=3
+* The version information above MUST be the first line of the data file
+Description=2023 March 15. This file requires that GURPS Power-Ups 3 Talents.gdf be loaded. _
+		This data file contains information taken from the GURPS GURPS Template Toolkit 3: Starship Crew sourcebook. _
+		GURPS Template Toolkit 3: Starship Crew is Copyright© 2020 by Steve Jackson Games _
+		Incorporated. All rights reserved.
+Program=5.0.0
+Incomplete=Yes
+Requires="GURPS Basic Set 4th Ed.--Characters.GDF", "GURPS Power-Ups 3 Talents.gdf"
+
+[AUTHOR]
+********************************************************************************************************\[START]
+//
+// GURPS® Character Assistant
+// Filename: .gdf
+// Created:  8/11/2021
+// Modified: 8/11/2021 
+// Requires GCA v4 or later!
+//
+// This data file contains information taken from the GURPS GURPS Template Toolkit 3: Starship Crew sourcebook.
+// GURPS Template Toolkit 3: Starship Crew is Copyright© 2020 by Steve Jackson Games
+// Incorporated. All rights reserved.
+//
+// Information in this file includes:
+//	Character Templates and Lenses
+//
+********************************************************************************************************
+//
+// Eric B. Smith	- GURPS Data File Coordinator, Major Work
+//
+// If you find any errors or ommissions in this file please contact the Data File Coordinator at:
+// eric.frogkiller@gmail.com
+//
+// Or drop a message at:
+// http://forums.sjgames.com
+// 
+********************************************************************************************************
+//
+// GURPS is a registered trademark of Steve Jackson Games Incorporated, used with GCA by permission of Steve Jackson
+// Games. All rights reserved.
+//
+// The GURPS game is Copyright © 1986-1989, 1991-1994 by Steve Jackson Games Incorporated. This product includes
+// copyrighted material from the GURPS game, which is used by permission of Steve Jackson Games Incorporated. All
+// rights reserved by Steve Jackson Games Incorporated.
+//
+********************************************************************************************************\[STOP]
+//   \par	new paragraph in RTF in description() tag
+//   ~P		new paragraph in the #Message() directive
+*******************************************************************************************************\[START]
+[ATTRIBUTES]
+********************************************************************************************************\[STOP]
+
+
+*******************************************************************************************************\[START]
+[ADVANTAGES]
+********************************************************************************************************\[STOP]
+<Supernatural Mental>
+Higher Purpose (Medic!), 5, page(B59,SC7), cat(Supernatural, Mental)
+Higher Purpose (Save my ship!), 5, page(B59,SC7), cat(Supernatural, Mental)
+
+<Mundane Physical>
+Resistant to Acceleration, 1/2, upto(2), levelnames(+3 to resist,+8 to resist), page(B81), cat(Mundane, Physical)
+Resistant to Space Sickness, 1/2, upto(2), levelnames(+3 to resist,+8 to resist), page(B81), cat(Mundane, Physical)
+Enhanced Dodge (Piloting), 5/10, page(SC5), cat(Mundane, Physical)
+
+<Mundane Social>
+Patron (Starship Owner/Provider), 10/15/20/25/30, mods(Frequency of Appearance, Patron, Favor), page(B72), cat(Mundane, Social), upto(5), levelnames(,,,,), 
+	init(%PatronAliasList%), notes(%PatronAlt1List%),
+	x(#InputToTag("Please describe the person, organization, or nature of the Patron:", nameext, , "Patron"), #ChoiceList(name(Patron), title(Patron Power), text(Select the power level of your Patron:), picksallowed(1), method(bynumber), list("[10] A powerful individual (usually built on at least 150% of the PC's starting points)", "[10] Fairly powerful organization (assets of at least 1,000 times starting wealth for the world)", "[15] An extremely powerful individual (built on at least twice the PC's starting points)", "[15] A powerful organization (assets of at least 10,000 times starting wealth)", "[20] An ultra-powerful individual (based on as many points as the GM wants!)", "[20] A very powerful organization (assets of at least 100,000 times starting wealth)", "[25] An extremely powerful organization (assets of at least 1 million times starting wealth)", "[30] A national government or giant multinational organization (net worth incalculable)", "[30] A true god who appears personally to intervene on your behalf"), aliaslist("1", "1", "2", "2", "3", "3", "4", "5", "5"), alt1list("A powerful individual (usually built on at least 150% of the PC's starting points)", "Fairly powerful organization (assets of at least 1,000 times starting wealth for the world)", "An extremely powerful individual (built on at least twice the PC's starting points)", "A powerful organization (assets of at least 10,000 times starting wealth)", "An ultra-powerful individual (based on as many points as the GM wants!)", "A very powerful organization (assets of at least 100,000 times starting wealth)", "An extremely powerful organization (assets of at least 1 million times starting wealth)", "A national government or giant multinational organization (net worth incalculable)", "A true god who appears personally to intervene on your behalf")), #BuildIt), initmods(Frequency: roll of 9 or less (Fairly often), *1, shortname(9 or less), group(Frequency of Appearance)), description(The cost of a Patron depends on how powerful he/it is: \par [10] POINTS: \tab A powerful individual (usually built on at least 150% of the PC's starting points) or a fairly powerful organization (assets of at least 1,000 times starting wealth for the world). \par [15] POINTS: \tab An extremely powerful individual (built on at least twice the PC's starting points) or a powerful organization (assets of at least 10,000 times starting wealth). \par [20] POINTS: \tab An ultra-powerful individual (based on as many points as the GM wants!) or a very powerful organization (assets of at least 100,000 times starting wealth). \par [25] POINTS: \tab An extremely powerful organization (assets of at least 1 million times starting wealth). \par [30] POINTS: \tab A national government or giant multinational organization (net worth incalculable), or a true god who appears personally to intervene on your behalf.)
+
+*******************************************************************************************************\[START]
+[DISADVANTAGES]
+********************************************************************************************************\[STOP]
+<Mundane Mental>
+Code of Honor (Hacker's), -5, page(B127,S221), cat(Mundane, Mental)
+Code of Honor (Hippocratic Oath), -5, page(B127), cat(Mundane, Mental)
+
+*******************************************************************************************************\[START]
+[PERKS]
+********************************************************************************************************\[STOP]
+<_General>
+License (Pilot's), 1, page(B100)
+License (Medical), 1, page(B100)
+
+*******************************************************************************************************\[START]
+[SKILLS]
+********************************************************************************************************\[STOP]
+<_General>
+#ReplaceTags in "SK:Shiphandling (Starship)" with {needs(SK:Spacer, SK:Leadership, ("SK:Navigation (Hyperspace)" | "SK:Navigation (FTL)"))}
+Engineer (Starships), IQ/H, tl(0-12), default("SK:Mechanic (Starships)" - 6, "SK:Armoury (Starships)" - 6, SK:Engineer - 4), page(B190),_
+	needs($if(me::tl > 4 THEN "SK:Mathematics (Applied) = 1pts")), cat(_General, Design/Invention)
+Navigation (FTL), IQ/A, tl(0-12), default(SK:Astronomy - 4, "SK:Mathematics (Applied)" - 4, "SK:Navigation (Space)" - 5), page(B211), cat(_General, Outdoor/Exploration, Technical, Vehicle)
+
+*******************************************************************************************************\[START]
+[TEMPLATES]
+********************************************************************************************************\[STOP]
+<Character Templates, Character Templates - Starship Crew>
+Commander (Starship Crew), displaycost(150),_
+	description(_
+					You direct and speak for the crew. While not necessarily _
+					smarter or better than them, you have the knack of command. _
+					On a corporate vessel, you're also the manager. If the ship is _
+					neither military nor corporate, you might own it! _
+					Errata: Template over by 4 points; Shiphandling reduced to 4 points to correct. _
+		),_
+	page(SC4),_
+	sets(_
+			ST:ST = 10,_
+			ST:DX = 11,_
+			ST:IQ = 13,_
+			ST:HT = 11,_
+			ST:Hit Points = 10,_
+			ST:Will = 13,_
+			ST:Perception = 13,_
+			ST:Fatigue Points = 11,_
+			ST:Basic Speed = 5.5,_
+			ST:Basic Move = 5 _
+			),_
+	adds(_
+				AD:Charisma,_
+				AD:Intuitive Admiral,_
+				SK:Leadership = 2pts,_
+				SK:Shiphandling (Starship) = 4pts,_
+				SK:Spacer = 2pts,_
+				SK:Administration = 2pts,_
+				SK:Electronics Operation (Communications) = 2pts,_
+				SK:Electronics Operation (Sensors) = 2pts,_
+				SK:Navigation (FTL) = 2pts,_
+				SK:Navigation (Space) = 2pts,_
+				SK:Strategy (Space) = 2pts,_
+				SK:Free Fall = 4pts,_
+				SK:Vacc Suit = 4pts,_
+				SK:Computer Operation = 1pts _
+			),_
+	select1(_
+				#List(Languages) _
+			),_
+	select2(_
+				#List(CulturalFamiliarity) _
+			),_
+	select3(comment(Commander), text(Advantages: Select 30 points from the following:), tagwith(Commander(yes)), pointswanted(30), itemswanted(atleast 1), list(_
+				#newitem(AD:_Increase Charisma, 0, displaycost(+5/+10/+), existing(AD:Charisma)) #codes(upto 7, downto 2),_
+				#newitem(AD:_Increase Intuitive Admiral, 0, displaycost(+10/+20/+), existing(AD:Intuitive Admiral)) #codes(upto 4, downto 2),_
+				AD:Appearance,_
+				AD:Business Acumen,_
+				AD:Courtesy Rank,_
+				#List(GMAdvantages),_
+				#List(StarshipCrewAdvantages),_
+				AD:Explorer,_
+				AD:Higher Purpose (Save my ship!),_
+				AD:Indomitable,_
+				AD:Intuition,_
+				AD:Rapier Wit,_
+				AD:Smooth Operator,_
+				AD:Unfazeable,_
+				AD:Wealth,_
+				PE:Headhunter,_
+				PE:Honest Face,_
+				PE:License (Pilot's),_
+				PE:Penetrating Voice _
+				)_
+			),_
+	select4(comment(Commander), text(Disadvantages: Select -40 points from the following:), tagwith(Commander(yes)), pointswanted(-40), itemswanted(atleast 1), list(_
+				#List(GMDisdvantages),_
+				#List(StarshipCrewDisadvantages),_
+				DI:Debt,_
+				DI:Greed,_
+				DI:Guilt Complex,_
+				DI:Jealousy,_
+				DI:Overconfidence,_
+				DI:Selfish,_
+				DI:Selfless,_
+				DI:Stubbornness,_
+				DI:Trickster _
+				)_
+			),_
+	select5(comment(Commander), text(Primary Skills: Select 2 of the following:), tagwith(Commander(yes)), pointswanted(8), itemswanted(2), list(_
+				SK:Piloting (Aerospace) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Autogyro) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Contragravity) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Flight Pack) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Glider) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Heavy Airplane) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Helicopter) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (High-Performance Airplane) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (High-Performance Spacecraft) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Light Airplane) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Lighter-Than-Air) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Lightsail) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Low-G Wings) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Low-Performance Spacecraft) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Ultralight) #codes(upto 4pts, downto 4pts),_
+				SK:Piloting (Vertol) #codes(upto 4pts, downto 4pts) _
+				)_
+			),_
+	select6(comment(Commander), text(Primary Skills: Select 2 of the following:), tagwith(Commander(yes)), pointswanted(8), itemswanted(2), list(_
+				SK:Diplomacy #codes(upto 4pts, downto 4pts),_
+				SK:Intimidation #codes(upto 4pts, downto 4pts),_
+				SK:Detect Lies #codes(upto 4pts, downto 4pts) _
+				)_
+			),_
+	select7(comment(Commander), text(Background Skills: Select at least 2 of the following:), tagwith(Commander(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+				#BuildList(list(#list(GMPrimarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#BuildList(list(#list(GMSecondarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#BuildList(list(#list(GMBackgroundSkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#List(StarshipCrewEverymanSkills),_
+				SK:Gunner (Beams) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Cannon) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Catapult) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Machine Gun) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Rockets) #codes(upto 8pts, downto 1pts),_
+				SK:Savoir-Faire (Military) #codes(upto 8pts, downto 1pts),_
+				SK:Savoir-Faire (High Society) #codes(upto 8pts, downto 1pts),_
+				SK:Artillery (Guided Missile) #codes(upto 8pts, downto 1pts),_
+				SK:Fast-Talk #codes(upto 8pts, downto 1pts),_
+				SK:Merchant #codes(upto 8pts, downto 1pts),_
+				SK:Expert Skill (Military Science) #codes(upto 8pts, downto 1pts),_
+				SK:Intelligence Analysis #codes(upto 8pts, downto 1pts),_
+				SK:Tactics #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Communications) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Electronic Warfare) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Force Shields) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Matter Transmitters) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Media) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Medical) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Parachronic) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Psychotronics) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Scientific) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Security) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Sensors) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Sonar) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Surveillance) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Temporal) #codes(upto 8pts, downto 1pts) _
+				)_
+			),_
+	select8(#List(QuirkSelection))
+
+Helmsman (Starship Crew), displaycost(150),_
+	description(_
+					You're the ship's best pilot, and possibly second in command. _
+					You plot courses and steer - and dodge debris and _
+					missiles! Although many helmsmen have a fighter jock's independence _
+					and daring, that isn't required. _
+					Errata: Astronomy requires Mathematics (Applied). Changed Astronomy (H) IQ-1 [2]; added Mathematics (Applied) (H) IQ-1 [2]._
+		),_
+	page(SC4-5),_
+	sets(_
+			ST:ST = 10,_
+			ST:DX = 12,_
+			ST:IQ = 12,_
+			ST:HT = 11,_
+			ST:Hit Points = 10,_
+			ST:Will = 12,_
+			ST:Perception = 12,_
+			ST:Fatigue Points = 11,_
+			ST:Basic Speed = 6,_
+			ST:Basic Move = 6 _
+			),_
+	adds(_
+				AD:3D Spatial Sense,_
+				AD:Hot Pilot = 2,_
+				AD:Resistant to Acceleration = 2,_
+				SK:Navigation (FTL) = 4pts,_
+				SK:Navigation (Space) = 1pts,_
+				SK:Area Knowledge ([Area]) = 2pts,_
+				SK:Cartography = 4pts,_
+				SK:Electronics Operation (Sensors) = 4pts,_
+				SK:Astronomy = 2pts,_
+				SK:Mathematics (Applied) = 2pts,_
+				SK:Shiphandling (Starship) = 4pts,_
+				SK:Computer Operation = 1pts,_
+				SK:Free Fall = 1pts,_
+				SK:Leadership = 1pts,_
+				SK:Spacer = 1pts,_
+				SK:Vacc Suit = 2pts _
+			),_
+	select1(_
+				#List(Languages) _
+			),_
+	select2(_
+				#List(CulturalFamiliarity) _
+			),_
+	select3(comment(Helmsman), text(Advantages: Select 30 points from the following:), tagwith(Helmsman(yes)), pointswanted(30), itemswanted(atleast 1), list(_
+				#List(GMAdvantages),_
+				#List(StarshipCrewAdvantages),_
+				AD:Acute Vision,_
+				AD:Combat Reflexes,_
+				AD:Daredevil,_
+				AD:Enhanced Dodge (Piloting),_
+				AD:Explorer,_
+				#newitem(AD:_Increase Hot Pilot, +5/+10, existing(AD:Hot Pilot)) #codes(upto 4, downto 3),_
+				AD:Intuitive Mathematician,_
+				PE:License (Pilot's),_
+				AD:Perfect Balance,_
+				AD:Unfazeable _
+				)_
+			),_
+	select4(comment(Helmsman), text(Disadvantages: Select -40 points from the following:), tagwith(Helmsman(yes)), pointswanted(-40), itemswanted(atleast 1), list(_
+				#List(GMDisdvantages),_
+				#List(StarshipCrewDisadvantages),_
+				DI:Impulsiveness,_
+				DI:Jealousy,_
+				DI:On the Edge,_
+				DI:Overconfidence _
+				)_
+			),_
+	select5(comment(Helmsman), text(Primary Skills: Select 2 of the following:), tagwith(Helmsman(yes)), pointswanted(4), itemswanted(2), list(_
+				SK:Piloting (Aerospace) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Autogyro) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Contragravity) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Flight Pack) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Glider) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Heavy Airplane) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Helicopter) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (High-Performance Airplane) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (High-Performance Spacecraft) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Light Airplane) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Lighter-Than-Air) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Lightsail) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Low-G Wings) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Low-Performance Spacecraft) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Ultralight) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Vertol) #codes(upto 2pts, downto 2pts) _
+				)_
+			),_
+	select6(comment(Helmsman), text(Background Skills: Select at least 2 of the following:), tagwith(Helmsman(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+				#BuildList(list(#list(GMPrimarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#BuildList(list(#list(GMSecondarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#BuildList(list(#list(GMBackgroundSkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#List(StarshipCrewEverymanSkills),_
+				SK:Artillery (Guided Missile) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Beams) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Cannon) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Catapult) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Machine Gun) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Rockets) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Communications) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Electronic Warfare) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Force Shields) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Matter Transmitters) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Media) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Medical) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Parachronic) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Psychotronics) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Scientific) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Security) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Sensors) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Sonar) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Surveillance) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Temporal) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Aerospace) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Autogyro) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Contragravity) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Flight Pack) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Glider) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Heavy Airplane) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Helicopter) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (High-Performance Airplane) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (High-Performance Spacecraft) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Light Airplane) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Lighter-Than-Air) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Lightsail) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Low-G Wings) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Low-Performance Spacecraft) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Ultralight) #codes(upto 8pts, downto 1pts),_
+				SK:Piloting (Vertol) #codes(upto 8pts, downto 1pts),_
+				SK:Strategy (Space) #codes(upto 8pts, downto 1pts),_
+				SK:Tactics #codes(upto 8pts, downto 1pts) _
+				)_
+			),_
+	select7(#List(QuirkSelection))
+
+Operations Officer (Starship Crew), displaycost(150),_
+	description(_
+					You're the bridge officer who handles all systems unrelated _
+					to fighting and piloting - especially communications _
+					(demanding a calm manner, _
+					clear voice, and language skills) and sensors. _
+					You also have a way with the ship's _
+					computers that sometimes strays into _
+					"dorky hacker" territory. _
+		),_
+	page(SC5),_
+	sets(_
+			ST:ST = 10,_
+			ST:DX = 10,_
+			ST:IQ = 13,_
+			ST:HT = 11,_
+			ST:Hit Points = 10,_
+			ST:Will = 13,_
+			ST:Perception = 13,_
+			ST:Fatigue Points = 11,_
+			ST:Basic Speed = 5.25,_
+			ST:Basic Move = 5 _
+			),_
+	adds(_
+				AD:Circuit Sense = 3,_
+				AD:Compartmentalized Mind _
+					with {Multi-Tasking, -50%, page(SC5)},_
+				LA:Language = 3,_
+				SK:Computer Operation = 4pts,_
+				SK:Electronics Operation (Communications) = 1pts,_
+				SK:Electronics Operation (Sensors) = 1pts,_
+				SK:Electronics Repair (Communications) = 1pts,_
+				SK:Electronics Repair (Computers) = 1pts,_
+				SK:Electronics Repair (Sensors) = 1pts,_
+				SK:Research = 2pts,_
+				SK:Computer Programming = 4pts,_
+				SK:Diplomacy = 4pts,_
+				SK:Expert Skill (Computer Security) = 4pts,_
+				SK:Cryptography = 2pts,_
+				SK:Free Fall = 4pts,_
+				SK:Spacer = 1pts,_
+				SK:Vacc Suit = 4pts _
+			),_
+	select1(_
+				#List(Languages) _
+			),_
+	select2(_
+				#List(CulturalFamiliarity) _
+			),_
+	select3(comment(Operations Officer), text(Advantages: Select 30 points from the following:), tagwith(OperationsOfficer(yes)), pointswanted(30), itemswanted(atleast 1), list(_
+				#List(GMAdvantages),_
+				#List(StarshipCrewAdvantages),_
+				#newitem(AD:_Increase Circuit Sense, +5/+10, existing(AD:Circuit Sense)) #codes(upto 4, downto 4),_
+				AD:Acute Hearing,_
+				AD:Born to be Wired,_
+				AD:Computer Wizard,_
+				AD:Eidetic Memory,_
+				AD:Photographic Memory,_
+				AD:Language Talent,_
+				AD:Voice _
+				)_
+			),_
+	select4(comment(Operations Officer), text(Disadvantages: Select -40 points from the following:), tagwith(OperationsOfficer(yes)), pointswanted(-40), itemswanted(atleast 1), list(_
+				#List(GMDisdvantages),_
+				#List(StarshipCrewDisadvantages),_
+				#newitem(DI:Addiction (VR), -5/-10, upto(3), levelnames(Cheap, Expensive, Very Expensive), mods(Addiction), page(B122), cat(Mundane, Mental, Mundane Mental)),_
+				DI:Clueless,_
+				DI:Code of Honor (Hacker's),_
+				DI:Curious,_
+				DI:Oblivious,_
+				DI:Slow Riser,_
+				DI:Squeamish _
+				)_
+			),_
+	select5(comment(Operations Officer), text(Background Skills: at least 1 of the following:), tagwith(OperationsOfficer(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+				#BuildList(list(#list(GMPrimarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#BuildList(list(#list(GMSecondarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#BuildList(list(#list(GMBackgroundSkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#List(StarshipCrewEverymanSkills),_
+				SK:Electronics Operation (Electronic Warfare) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Force Shields) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Matter Transmitters) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Media) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Medical) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Parachronic) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Psychotronics) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Scientific) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Security) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Sonar) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Surveillance) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Temporal) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Electronic Warfare) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Force Shields) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Matter Transmitters) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Media) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Medical) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Parachronic) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Psychotronics) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Scientific) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Security) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Sonar) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Surveillance) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Repair (Temporal) #codes(upto 8pts, downto 1pts),_
+				SK:Electrician #codes(upto 8pts, downto 1pts),_
+				SK:Engineer (Electrical) #codes(upto 8pts, downto 1pts),_
+				SK:Engineer (Electronics) #codes(upto 8pts, downto 1pts),_
+				SK:Linguistics #codes(upto 8pts, downto 1pts),_
+				SK:Mathematics (Applied) #codes(upto 8pts, downto 1pts),_
+				SK:Mathematics (Computer Science) #codes(upto 8pts, downto 1pts),_
+				SK:Mathematics (Cryptology) #codes(upto 8pts, downto 1pts) _
+				)_
+			),_
+	select6(#List(QuirkSelection))
+
+Tactical Officer (Starship Crew), displaycost(150),_
+	description(_
+					You're in charge of the ship's weapons and defenses. You _
+					might be a bloodthirsty warrior who takes charge in combat, _
+					or a geeky military-academy graduate. This is an essential, _
+					senior post on armed vessels, but a nonexistent role on _
+					unarmed ones. _
+		),_
+	page(SC6),_
+	sets(_
+			ST:ST = 10,_
+			ST:DX = 11,_
+			ST:IQ = 12,_
+			ST:HT = 11,_
+			ST:Hit Points = 10,_
+			ST:Will = 12,_
+			ST:Perception = 12,_
+			ST:Fatigue Points = 11,_
+			ST:Basic Speed = 6,_
+			ST:Basic Move = 6 _
+			),_
+	adds(_
+				AD:Born War-Leader = 3,_
+				AD:Combat Reflexes,_
+				SK:Leadership = 1pts,_
+				SK:Intelligence Analysis = 2pts,_
+				SK:Strategy (Space) = 2pts,_
+				SK:Tactics = 2pts,_
+				SK:Electronics Operation (Sensors) = 2pts,_
+				SK:Expert Skill (Military Science) = 4pts,_
+				SK:Spacer = 2pts,_
+				SK:Computer Operation = 1pts,_
+				SK:Free Fall = 2pts,_
+				SK:Vacc Suit = 2pts _
+			),_
+	select1(_
+				#List(Languages) _
+			),_
+	select2(_
+				#List(CulturalFamiliarity) _
+			),_
+	select3(comment(Tactical Officer), text(Advantages: Select 30 points from the following:), tagwith(TacticalOfficer(yes)), pointswanted(30), itemswanted(atleast 1), list(_
+				#List(GMAdvantages),_
+				#List(StarshipCrewAdvantages),_
+				#newitem(AD:_Increase Born War-Leader, +5, existing(AD:Born War-Leader)) #codes(upto 4, downto 4),_
+				AD:Acute Vision,_
+				AD:Danger Sense,_
+				PE:Eye for Distance,_
+				PE:Penetrating Voice,_
+				AD:Resistant to Acceleration #codes(upto 2, downto 2),_
+				AD:Unfazeable _
+				)_
+			),_
+	select4(comment(Tactical Officer), text(Disadvantages: Select -40 points from the following:), tagwith(TacticalOfficer(yes)), pointswanted(-40), itemswanted(atleast 1), list(_
+				#List(GMDisdvantages),_
+				#List(StarshipCrewDisadvantages),_
+				DI:Bloodlust,_
+				DI:Callous,_
+				DI:Overconfidence,_
+				DI:Stubbornness,_
+				DI:Wounded _
+				)_
+			),_
+	select5(comment(Tactical Officer), text(Primary Skills: Select 2 of the following:), tagwith(TacticalOfficer(yes)), pointswanted(16), itemswanted(2), list(_
+				SK:Gunner (Beams) #codes(upto 8pts, downto 8pts),_
+				SK:Gunner (Cannon) #codes(upto 8pts, downto 8pts),_
+				SK:Gunner (Catapult) #codes(upto 8pts, downto 8pts),_
+				SK:Gunner (Machine Gun) #codes(upto 8pts, downto 8pts),_
+				SK:Gunner (Rockets) #codes(upto 8pts, downto 8pts),_
+				SK:Artillery (Beams) #codes(upto 8pts, downto 8pts),_
+				SK:Artillery (Bombs) #codes(upto 8pts, downto 8pts),_
+				SK:Artillery (Cannon) #codes(upto 8pts, downto 8pts),_
+				SK:Artillery (Guided Missile) #codes(upto 8pts, downto 8pts),_
+				SK:Electronics Operation (Force Shields) #codes(upto 8pts, downto 8pts) _
+				)_
+			),_
+	select6(comment(Tactical Officer), text(Secondary Skills: Select 1 of the following:), tagwith(TacticalOfficer(yes)), pointswanted(4), itemswanted(1), list(_
+				SK:Gunner (Beams) #codes(upto 4pts, downto 4pts),_
+				SK:Gunner (Cannon) #codes(upto 4pts, downto 4pts),_
+				SK:Gunner (Catapult) #codes(upto 4pts, downto 4pts),_
+				SK:Gunner (Machine Gun) #codes(upto 4pts, downto 4pts),_
+				SK:Gunner (Rockets) #codes(upto 4pts, downto 4pts),_
+				SK:Artillery (Beams) #codes(upto 4pts, downto 4pts),_
+				SK:Artillery (Bombs) #codes(upto 4pts, downto 4pts),_
+				SK:Artillery (Cannon) #codes(upto 4pts, downto 4pts),_
+				SK:Artillery (Guided Missile) #codes(upto 4pts, downto 4pts),_
+				SK:Electronics Operation (Force Shields) #codes(upto 4pts, downto 4pts) _
+				)_
+			),_
+	select7(comment(Tactical Officer), text(Background Skills: Select at least 2 of the following:), tagwith(TacticalOfficer(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+				#BuildList(list(#list(GMPrimarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#BuildList(list(#list(GMSecondarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#BuildList(list(#list(GMBackgroundSkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#List(StarshipCrewEverymanSkills),_
+				SK:Gunner (Beams) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Cannon) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Catapult) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Machine Gun) #codes(upto 8pts, downto 1pts),_
+				SK:Gunner (Rockets) #codes(upto 8pts, downto 1pts),_
+				SK:Artillery (Beams) #codes(upto 8pts, downto 1pts),_
+				SK:Artillery (Bombs) #codes(upto 8pts, downto 1pts),_
+				SK:Artillery (Cannon) #codes(upto 8pts, downto 1pts),_
+				SK:Artillery (Guided Missile) #codes(upto 8pts, downto 1pts),_
+				SK:Electronics Operation (Force Shields) #codes(upto 8pts, downto 1pts),_
+				SK:Savoir-Faire (Military) #codes(upto 8pts, downto 1pts),_
+				SK:Armoury (Force Shields) #codes(upto 8pts, downto 1pts),_
+				SK:Armoury (Heavy Weapons) #codes(upto 8pts, downto 1pts),_
+				SK:Armoury (Vehicular Armor) #codes(upto 8pts, downto 1pts),_
+				SK:Explosives (Demolition) #codes(upto 8pts, downto 1pts),_
+				SK:Intimidation #codes(upto 8pts, downto 1pts) _
+				)_
+			),_
+	select8(_
+				#List(QuirkSelection) _
+			)
+
+Engineer (Starship Crew), displaycost(150),_
+	description(_
+					You're the ship's mechanic and maintenance person. _
+					Your job is keeping everything in top shape, _
+					although the engines tend to be a priority. Being an _
+					actual engineer, skilled in system design, is somewhat _
+					cinematic but standard in the source material! _
+		),_
+	page(SC6),_
+	sets(_
+			ST:ST = 10,_
+			ST:DX = 11,_
+			ST:IQ = 13,_
+			ST:HT = 11,_
+			ST:Hit Points = 10,_
+			ST:Will = 13,_
+			ST:Perception = 13,_
+			ST:Fatigue Points = 11,_
+			ST:Basic Speed = 5.5,_
+			ST:Basic Move = 5 _
+			),_
+	adds(_
+				AD:Artificer = 3,_
+				AD:Versatile,_
+				SK:Electrician = 1pts,_
+				SK:Electronics Repair (Communications) = 1pts,_
+				SK:Electronics Repair (Sensors) = 1pts,_
+				SK:Computer Operation = 1pts,_
+				SK:Engineer (Starships) = 1pts,_
+				SK:Scrounging = 2pts,_
+				SK:Spacer = 1pts,_
+				SK:Computer Programming = 2pts,_
+				SK:Free Fall = 2pts,_
+				SK:Mathematics (Applied) = 1pts,_
+				SK:Vacc Suit = 2pts _
+			),_
+	select1(_
+				#List(Languages) _
+			),_
+	select2(_
+				#List(CulturalFamiliarity) _
+			),_
+	select3(comment(Engineer), text(Advantages: Select 30 points from the following:), tagwith(Engineer(yes)), pointswanted(30), itemswanted(atleast 1), list(_
+				#List(GMAdvantages),_
+				#List(StarshipCrewAdvantages),_
+				#newitem(AD:_Increase Artificer, +10, existing(AD:Artificer)) #codes(upto 4, downto 4),_
+				AD:Eidetic Memory,_
+				AD:Photographic Memory,_
+				#newitem(PE:Equipment Bond (Tools), 1, page(PU2:9)),_
+				AD:Flexibility,_
+				AD:Double-Jointed,_
+				AD:Gadgeteer,_
+				AD:Gizmo #codes(upto 3, downto 1),_
+				AD:High Manual Dexterity #codes(upto 4, downto 1),_
+				AD:Higher Purpose (Save my ship!),_
+				AD:Single-Minded _
+				)_
+			),_
+	select4(comment(Engineer), text(Disadvantages: Select -40 points from the following:), tagwith(Engineer(yes)), pointswanted(-40), itemswanted(atleast 1), list(_
+				#List(GMDisdvantages),_
+				#List(StarshipCrewDisadvantages),_
+				QU:Attentive,_
+				DI:Bad Temper,_
+				#newitem(DI:Compulsive Behavior (Tinkering), -5, displaycost(-5*), mods(Self-Control), page(B128), cat(Mundane, Mental, Mundane Mental), initmods( You resist on a roll of 12 or less (quite often), *1, shortname(12 or less), group(Self-Control), page(B121) )),_
+				DI:Overconfidence,_
+				DI:Stubbornness _
+				)_
+			),_
+	select5(comment(Engineer), text(Primary Skills: Select 4 appropriate Mechanic specialties; one FTL Motive System Type, one STL Motive Systlem Type, one Power Plant Type, and one Vehicle Type:), tagwith(Engineer(yes)), pointswanted(4), itemswanted(4), list(_
+				#List(CampaignMechanicTypes),_
+				SK:Mechanic (%type%) #codes(upto 1pts, downto 1pts),_
+				SK:Mechanic ([Type]) #codes(upto 1pts, downto 1pts) _
+				)_
+			),_
+	select6(comment(Engineer), text(Secondary Skills: Select 6 of the following:), tagwith(Engineer(yes)), pointswanted(6), itemswanted(6), list(_
+				SK:Armoury (Force Shields) #codes(upto 1pts, downto 1pts),_
+				SK:Armoury (Heavy Weapons) #codes(upto 1pts, downto 1pts),_
+				SK:Armoury (Vehicular Armor) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Computers) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Electronic Warfare) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Force Shields) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Matter Transmitters) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Media) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Medical) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Parachronic) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Psychotronics) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Scientific) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Security) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Sonar) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Surveillance) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Temporal) #codes(upto 1pts, downto 1pts),_
+				SK:Machinist #codes(upto 1pts, downto 1pts),_
+				SK:Mechanic (%type%) #codes(upto 1pts, downto 1pts),_
+				SK:Mechanic ([Type]) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Communications) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Electronic Warfare) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Force Shields) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Matter Transmitters) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Media) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Medical) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Parachronic) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Psychotronics) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Scientific) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Security) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Sensors) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Sonar) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Surveillance) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Operation (Temporal) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (%type%) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer ([Type]) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (Artillery) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (Electrical) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (Electronics) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (Materials) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (Microtechnology) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (Mining) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (Nanotechnology) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (Parachronic) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (Psychotronics) #codes(upto 1pts, downto 1pts),_
+				SK:Engineer (Temporal) #codes(upto 1pts, downto 1pts) _
+				)_
+			),_
+	select7(comment(Engineer), text(Background Skills: Select at least 2 of the following:), tagwith(Engineer(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+				#BuildList(list(#list(GMPrimarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#BuildList(list(#list(GMSecondarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#BuildList(list(#list(GMBackgroundSkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+				#List(StarshipCrewEverymanSkills)_
+				)_
+			),_
+	select8(_
+				#List(QuirkSelection) _
+			)
+
+Medical Officer (Starship Crew), displaycost(150),_
+      description(_
+                    Space is a harsh mistress, especially when it comes _
+                    to collisions and battles. A crew far from civilization _
+                    needs your medical skills. The isolation means you must _
+                    monitor your colleagues' mental health, too. You might _
+                    even be called upon to battle strange alien plagues! _
+          ),_
+      page(SC7),_
+      sets(_
+            ST:ST = 10,_
+            ST:DX = 11,_
+            ST:IQ = 13,_
+            ST:HT = 11,_
+            ST:Hit Points = 10,_
+            ST:Will = 13,_
+            ST:Perception = 13,_
+            ST:Fatigue Points = 11,_
+            ST:Basic Speed = 5.5,_
+            ST:Basic Move = 5 _
+            ),_
+	x(#InputReplace("You must specialize by species - Physiology Modifiers apply (p. B181):", [Race2], "Human", "Medical Skills")),_
+      adds(_
+                AD:Healer = 3,_
+                SK:Diagnosis ([Race]) = 2pts respond "[Race2]",_
+                SK:Physician ([Race]) = 2pts respond "[Race2]",_
+                SK:Psychology ([Race]) = 2pts respond "[Race2]",_
+                SK:First Aid ([Race])==0pts respond "[Race2]",_
+                SK:Surgery ([Race]) = 4pts respond "[Race2]",_
+                SK:Electronics Operation (Medical) = 4pts,_
+                SK:Mechanic ([Type]) = 2pts respond "Life Support",_
+                SK:Pharmacy (Synthetic) = 1pts,_
+                SK:Physiology ([Race]) = 1pts respond "[Race2]",_
+                SK:Computer Operation = 1pts,_
+                SK:Free Fall = 2pts,_
+                SK:Spacer = 1pts,_
+                SK:Vacc Suit = 2pts _
+            ),_
+      select1(_
+                #List(Languages) _
+            ),_
+      select2(_
+                #List(CulturalFamiliarity) _
+            ),_
+      select3(comment(Medical Officer), text(Advantages: Select 30 points from the following:), tagwith(MedicalOfficer(yes)), pointswanted(30), itemswanted(atleast 1), list(_
+                #List(GMAdvantages),_
+                #List(StarshipCrewAdvantages),_
+                #newitem(AD:_Increase Healer, +10, existing(AD:Healer)) #codes(upto 4, downto 4),_
+                AD:Common Sense,_
+                AD:Gizmo #codes(upto 3, downto 1),_
+                AD:High Manual Dexterity #codes(upto 4, downto 1),_
+                AD:Higher Purpose (Medic!),_
+                PE:License (Medical),_
+                AD:Resistant to Disease,_
+                AD:Sensitive,_
+                AD:Empathy _
+                  )_
+            ),_
+      select4(comment(Medical Officer), text(Disadvantages: Select -40 points from the following:), tagwith(MedicalOfficer(yes)), pointswanted(-40), itemswanted(atleast 1), list(_
+                #List(GMDisdvantages),_
+                #List(StarshipCrewDisadvantages),_
+                QU:Attentive,_
+                QU:Careful,_
+                DI:Charitable,_
+                DI:Code of Honor (Hippocratic Oath),_
+                DI:Curious,_
+                DI:Guilt Complex,_
+                DI:Pacifism (Cannot Kill),_
+                #newitem(DI:Phobia (Mysophobia: Dirt), -10, displaycost(-10*), mods(Self-Control), page(B148), cat(Mundane, Mental), initmods( You resist on a roll of 12 or less (quite often), *1, shortname(12 or less), group(Self-Control), page(B121) )),_
+                DI:Post-Combat Shakes,_
+                DI:Selfless,_
+                DI:Social Stigma (License Revoked),_
+                #newitem(DI:Vow (Refuse no request for medical aid), -10, levelnames(Major), page(B160), cat(Mundane, Mental)) _
+                  )_
+            ),_
+      select5(comment(Medical Officer), text(Secondary Skills: Select 3 of the following:), tagwith(MedicalOfficer(yes)), pointswanted(6), itemswanted(3), list(_
+                SK:Bioengineering (Cloning) #codes(upto 2pts, downto 2pts),_
+                SK:Bioengineering (Genetic Engineering) #codes(upto 2pts, downto 2pts),_
+                SK:Bioengineering (Tissue Engineering) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Earthlike) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Gas Giants) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Hostile Terrestrial) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Ice Dwarfs) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Ice Worlds) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Rock Worlds) #codes(upto 2pts, downto 2pts),_
+                SK:Hazardous Materials #codes(upto 2pts, downto 2pts),_
+                SK:Hazardous Materials (Biological) #codes(upto 2pts, downto 2pts),_
+                SK:Hazardous Materials (Chemical) #codes(upto 2pts, downto 2pts),_
+                SK:Hazardous Materials (Radioactive) #codes(upto 2pts, downto 2pts),_
+                SK:NBC Suit #codes(upto 2pts, downto 2pts),_
+                SK:Research #codes(upto 2pts, downto 2pts),_
+                SK:Expert Skill (Epidemiology) #codes(upto 2pts, downto 2pts),_
+                SK:Expert Skill (Xenology) #codes(upto 2pts, downto 2pts),_
+                SK:Poisons #codes(upto 2pts, downto 2pts) _
+                  )_
+            ),_
+      select6(comment(Medical Officer), text(Background Skills: Select at least 2 of the following:), tagwith(MedicalOfficer(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+                #BuildList(list(#list(GMPrimarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #BuildList(list(#list(GMSecondarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #BuildList(list(#list(GMBackgroundSkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #List(StarshipCrewEverymanSkills)_
+                  )_
+            ),_
+      select7(_
+                #List(QuirkSelection) _
+            )
+
+Science Officer (Starship Crew), displaycost(150),_
+      description(_
+                    You're the ship's scientist. Not all vessels need someone like _
+                    you - but even in a realistic setting, space is full of phenomena _
+                    that require an expert to understand. In a cinematic universe _
+                    with wormholes, mysterious radiation, and giant space amoebas, _
+                    you're essential. _
+          ),_
+      page(SC7),_
+      sets(_
+            ST:ST = 10,_
+            ST:DX = 10,_
+            ST:IQ = 14,_
+            ST:HT = 11,_
+            ST:Hit Points = 10,_
+            ST:Will = 14,_
+            ST:Perception = 14,_
+            ST:Fatigue Points = 11,_
+            ST:Basic Speed = 5.25,_
+            ST:Basic Move = 5 _
+            ),_
+      adds(_
+                AD:Natural Scientist = 3,_
+                SK:Electronics Operation (Scientific) = 4pts,_
+                SK:Research = 4pts,_
+                SK:Astronomy = 1pts,_
+                SK:Chemistry = 1pts,_
+                SK:Mathematics (Applied) = 1pts,_
+                SK:Physics = 2pts,_
+                SK:Computer Operation = 1pts,_
+                SK:Electronics Operation (Sensors) = 1pts,_
+                SK:Spacer = 1pts,_
+                SK:Free Fall = 2pts,_
+                SK:NBC Suit = 2pts,_
+                SK:Vacc Suit = 2pts _
+            ),_
+      select1(_
+                #List(Languages) _
+            ),_
+      select2(_
+                #List(CulturalFamiliarity) _
+            ),_
+      select3(comment(Science Officer), text(Advantages: Select 30 points from the following:), tagwith(ScienceOfficer(yes)), pointswanted(30), itemswanted(atleast 1), list(_
+                #List(GMAdvantages),_
+                #List(StarshipCrewAdvantages),_
+                #newitem(AD:_Increase Natural Scientist, +10, existing(AD:Natural Scientist)) #codes(upto 4, downto 4),_
+                AD:Common Sense,_
+                #newitem(PE:Courtesy Title (Professor), 1, page(SC7)),_
+                AD:Eidetic Memory,_
+                AD:Photographic Memory,_
+                AD:Gadgeteer,_
+                AD:Gizmo #codes(upto 3, downto 1),_
+                AD:Intuition,_
+                AD:Lightning Calculator,_
+                AD:Intuitive Mathematician,_
+                AD:Mathematical Ability,_
+                AD:Single-Minded,_
+                AD:Versatile _
+                  )_
+            ),_
+      select4(comment(Science Officer), text(Disadvantages: Select -40 points from the following:), tagwith(ScienceOfficer(yes)), pointswanted(-40), itemswanted(atleast 1), list(_
+                #List(GMDisdvantages),_
+                #List(StarshipCrewDisadvantages),_
+                DI:Absent-Mindedness,_
+                QU:Attentive,_
+                QU:Careful,_
+                DI:Clueless,_
+                DI:Curious,_
+                QU:Dreamer,_
+                DI:Oblivious,_
+                DI:Overconfidence,_
+                DI:Post-Combat Shakes,_
+                DI:Shyness #codes(upto 1, downto 1),_
+                DI:Truthfulness _
+                  )_
+            ),_
+      select5(comment(Science Officer), text(Primary Skills: Select 1 of the following:), tagwith(ScienceOfficer(yes)), pointswanted(1), itemswanted(1), list(_
+                SK:Geology (Earthlike) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Gas Giants) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Hostile Terrestrial) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Ice Dwarfs) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Ice Worlds) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Rock Worlds) #codes(upto 1pts, downto 1pts) _
+                  )_
+            ),_
+      select6(comment(Science Officer), text(Primary Skills: Select 1 of the following:), tagwith(ScienceOfficer(yes)), pointswanted(2), itemswanted(1), list(_
+                SK:Biology (Earthlike) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Gas Giants) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Hostile Terrestrial) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Ice Dwarfs) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Ice Worlds) #codes(upto 2pts, downto 2pts),_
+                SK:Biology (Rock Worlds) #codes(upto 2pts, downto 2pts) _
+                  )_
+            ),_
+      select7(comment(Science Officer), text(Primary Skills: Select 3 of the following:), tagwith(ScienceOfficer(yes)), pointswanted(3), itemswanted(3), list(_
+                SK:Biology (Earthlike) #codes(upto 1pts, downto 1pts),_
+                SK:Biology (Gas Giants) #codes(upto 1pts, downto 1pts),_
+                SK:Biology (Hostile Terrestrial) #codes(upto 1pts, downto 1pts),_
+                SK:Biology (Ice Dwarfs) #codes(upto 1pts, downto 1pts),_
+                SK:Biology (Ice Worlds) #codes(upto 1pts, downto 1pts),_
+                SK:Biology (Rock Worlds) #codes(upto 1pts, downto 1pts),_
+                SK:Meteorology (Earthlike) #codes(upto 1pts, downto 1pts),_
+                SK:Meteorology (Gas Giants) #codes(upto 1pts, downto 1pts),_
+                SK:Meteorology (Hostile Terrestrial) #codes(upto 1pts, downto 1pts),_
+                SK:Meteorology (Ice Dwarfs) #codes(upto 1pts, downto 1pts),_
+                SK:Meteorology (Ice Worlds) #codes(upto 1pts, downto 1pts),_
+                SK:Meteorology (Rock Worlds) #codes(upto 1pts, downto 1pts),_
+                SK:Mathematics (Computer Science) #codes(upto 1pts, downto 1pts),_
+                SK:Mathematics (Cryptology) #codes(upto 1pts, downto 1pts),_
+                SK:Mathematics (Pure) #codes(upto 1pts, downto 1pts),_
+                SK:Mathematics (Statistics) #codes(upto 1pts, downto 1pts),_
+                SK:Mathematics (Surveying) #codes(upto 1pts, downto 1pts),_
+                SK:Paleontology (Micropaleontology) #codes(upto 1pts, downto 1pts),_
+                SK:Paleontology (Paleoanthropology) #codes(upto 1pts, downto 1pts),_
+                SK:Paleontology (Paleobotany) #codes(upto 1pts, downto 1pts),_
+                SK:Paleontology (Paleozoology) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (%type%) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer ([Type]) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Artillery) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Combat) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Electrical) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Electronics) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Materials) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Microtechnology) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Mining) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Nanotechnology) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Parachronic) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Psychotronics) #codes(upto 1pts, downto 1pts),_
+                SK:Engineer (Temporal) #codes(upto 1pts, downto 1pts),_
+                SK:Bioengineering (Cloning) #codes(upto 1pts, downto 1pts),_
+                SK:Bioengineering (Genetic Engineering) #codes(upto 1pts, downto 1pts),_
+                SK:Bioengineering (Tissue Engineering) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Earthlike) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Gas Giants) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Hostile Terrestrial) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Ice Dwarfs) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Ice Worlds) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Rock Worlds) #codes(upto 1pts, downto 1pts),_
+                SK:Expert Skill (Hydrology) #codes(upto 1pts, downto 1pts),_
+                SK:Metallurgy #codes(upto 1pts, downto 1pts),_
+                SK:Computer Programming #codes(upto 1pts, downto 1pts),_
+                SK:Expert Skill (Xenology) #codes(upto 1pts, downto 1pts) _
+                  )_
+            ),_
+      select8(comment(Science Officer), text(Background Skills: Select 2 of the following:), tagwith(ScienceOfficer(yes)), pointswanted(2), itemswanted(2), list(_
+                SK:Electronics Operation (Communications) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Electronic Warfare) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Force Shields) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Matter Transmitters) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Media) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Medical) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Parachronic) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Psychotronics) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Security) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Sensors) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Sonar) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Surveillance) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Temporal) #codes(upto 1pts, downto 1pts),_
+                SK:Hazardous Materials #codes(upto 1pts, downto 1pts),_
+                SK:Hazardous Materials (Biological) #codes(upto 1pts, downto 1pts),_
+                SK:Hazardous Materials (Chemical) #codes(upto 1pts, downto 1pts),_
+                SK:Hazardous Materials (Radioactive) #codes(upto 1pts, downto 1pts),_
+                SK:Teaching #codes(upto 1pts, downto 1pts),_
+                SK:Writing #codes(upto 1pts, downto 1pts) _
+                  )_
+            ),_
+      select9(comment(Science Officer), text(Background Skills: Select at least 2 of the following:), tagwith(ScienceOfficer(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+                #BuildList(list(#list(GMPrimarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #BuildList(list(#list(GMSecondarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #BuildList(list(#list(GMBackgroundSkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #List(StarshipCrewEverymanSkills) _
+                  )_
+            ),_
+      select10(_
+                #List(QuirkSelection) _
+            )
+
+Security Officer (Starship Crew), displaycost(150),_
+      description(_
+                    You protect ship and crew _
+                    from criminals in port - and _
+                    those aboard from each _
+                    other. Although the job might _
+                    include repelling boarders _
+                    and fighting hostile aliens, _
+                    you're an investigator and _
+                    tactician, not "dumb muscle" _
+                    (any goons report to you!). _
+          ),_
+      page(SC8),_
+      sets(_
+            ST:ST = 11,_
+            ST:DX = 12,_
+            ST:IQ = 12,_
+            ST:HT = 11,_
+            ST:Hit Points = 11,_
+            ST:Will = 12,_
+            ST:Perception = 12,_
+            ST:Fatigue Points = 11,_
+            ST:Basic Speed = 6,_
+            ST:Basic Move = 6 _
+            ),_
+      adds(_
+                SK:Criminology = 2pts,_
+                SK:Interrogation = 2pts,_
+                SK:Electronics Operation (Security) = 2pts,_
+                SK:Tactics = 4pts,_
+                SK:Intelligence Analysis = 4pts,_
+                SK:Observation = 2pts,_
+                SK:Search = 2pts,_
+                SK:Forced Entry = 1pts,_
+                SK:Computer Operation = 1pts,_
+                SK:Free Fall = 1pts,_
+                SK:Spacer = 1pts,_
+                SK:Vacc Suit = 1pts _
+            ),_
+      select1(_
+                #List(Languages) _
+            ),_
+      select2(_
+                #List(CulturalFamiliarity) _
+            ),_
+      select3(comment(Security Officer), text(Advantages: Select 30 points from the following:), tagwith(SecurityOfficer(yes)), pointswanted(30), itemswanted(atleast 1), list(_
+                #List(GMAdvantages),_
+                #List(StarshipCrewAdvantages),_
+                AD:Ambidexterity,_
+                AD:Combat Reflexes,_
+                AD:Danger Sense,_
+                AD:Enhanced Dodge #codes(upto 2, downto 1),_
+                AD:Extra Attack #codes(upto 1, downto 1),_
+                AD:Gunslinger,_
+                AD:Hard to Kill,_
+                AD:Hard to Subdue,_
+                AD:High Pain Threshold,_
+                AD:Natural Copper,_
+                AD:Peripheral Vision,_
+                AD:Rapid Healing,_
+                AD:Unfazeable,_
+                AD:Very Fit,_
+                PE:Weapon Bond _
+                  )_
+            ),_
+      select4(comment(Security Officer), text(Disadvantages: Select -40 points from the following:), tagwith(SecurityOfficer(yes)), pointswanted(-40), itemswanted(atleast 1), list(_
+                #List(GMDisdvantages),_
+                #List(StarshipCrewDisadvantages),_
+                DI:Bad Temper,_
+                DI:Bully,_
+                DI:Callous,_
+                QU:Careful,_
+                DI:Hidebound,_
+                DI:Incurious,_
+                DI:Light Sleeper,_
+                DI:No Sense of Humor,_
+                DI:Paranoia,_
+                DI:Stubbornness,_
+                DI:Wounded _
+                  )_
+            ),_
+      select5(comment(Security Officer), text(Primary Skills: Select 1 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(4), itemswanted(1), list(_
+                SK:Beam Weapons (Pistol) #codes(upto 4pts, downto 4pts),_
+                SK:Beam Weapons (Projector) #codes(upto 4pts, downto 4pts),_
+                SK:Beam Weapons (Rifle) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Grenade Launcher) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Gyroc) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Light Anti-Armor Weapon) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Light Machine Gun) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Musket) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Pistol) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Rifle) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Shotgun) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Submachine Gun) #codes(upto 4pts, downto 4pts) _
+                  )_
+            ),_
+      select6(comment(Security Officer), text(Primary Skills: Select 1 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(4), itemswanted(1), list(_
+                SK:Brawling #codes(upto 4pts, downto 4pts),_
+                SK:Boxing #codes(upto 4pts, downto 4pts),_
+                SK:Karate #codes(upto 4pts, downto 4pts) _
+                  )_
+            ),_
+      select7(comment(Security Officer), text(Primary Skills: Select 1 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(4), itemswanted(1), list(_
+                SK:Wrestling #codes(upto 4pts, downto 4pts),_
+                SK:Judo #codes(upto 4pts, downto 4pts) _
+                  )_
+            ),_
+      select8(comment(Security Officer), text(Secondary Skills: Select 1 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(1), itemswanted(1), list(_
+                SK:Fast-Draw (Ammo) #codes(upto 1pts, downto 1pts),_
+                SK:Fast-Draw (Pistol) #codes(upto 1pts, downto 1pts) _
+                  )_
+            ),_
+      select9(comment(Security Officer), text(Secondary Skills: Select 3 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(6), itemswanted(3), list(_
+                SK:Battlesuit #codes(upto 2pts, downto 2pts),_
+                SK:Armoury (Battlesuits) #codes(upto 2pts, downto 2pts),_
+                SK:Armoury (Body Armor) #codes(upto 2pts, downto 2pts),_
+                SK:Armoury (Small Arms) #codes(upto 2pts, downto 2pts),_
+                SK:Explosives (Demolition) #codes(upto 2pts, downto 2pts),_
+                SK:Explosives (Explosive Ordnance Disposal) #codes(upto 2pts, downto 2pts),_
+                SK:Explosives (Nuclear Ordnance Disposal) #codes(upto 2pts, downto 2pts),_
+                SK:Leadership #codes(upto 2pts, downto 2pts),_
+                SK:Shadowing #codes(upto 2pts, downto 2pts),_
+                SK:Streetwise #codes(upto 2pts, downto 2pts),_
+                SK:Diplomacy #codes(upto 2pts, downto 2pts),_
+                SK:Forensics #codes(upto 2pts, downto 2pts),_
+                SK:Intimidation #codes(upto 2pts, downto 2pts),_
+                SK:Body Language #codes(upto 2pts, downto 2pts),_
+                SK:Detect Lies #codes(upto 2pts, downto 2pts) _
+                  )_
+            ),_
+      select10(comment(Security Officer), text(Background Skills: Select 3 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(3), itemswanted(3), list(_
+                SK:Beam Weapons (Pistol) #codes(upto 1pts, downto 1pts),_
+                SK:Beam Weapons (Projector) #codes(upto 1pts, downto 1pts),_
+                SK:Beam Weapons (Rifle) #codes(upto 1pts, downto 1pts),_
+                SK:Guns (Grenade Launcher) #codes(upto 1pts, downto 1pts),_
+                SK:Guns (Gyroc) #codes(upto 1pts, downto 1pts),_
+                SK:Guns (Light Anti-Armor Weapon) #codes(upto 1pts, downto 1pts),_
+                SK:Guns (Light Machine Gun) #codes(upto 1pts, downto 1pts),_
+                SK:Guns (Musket) #codes(upto 1pts, downto 1pts),_
+                SK:Guns (Pistol) #codes(upto 1pts, downto 1pts),_
+                SK:Guns (Rifle) #codes(upto 1pts, downto 1pts),_
+                SK:Guns (Shotgun) #codes(upto 1pts, downto 1pts),_
+                SK:Guns (Submachine Gun) #codes(upto 1pts, downto 1pts),_
+                SK:Fast-Draw #codes(upto 1pts, downto 1pts),_
+                SK:Fast-Draw (Ammo) #codes(upto 1pts, downto 1pts),_
+                SK:Fast-Draw (Long Arm) #codes(upto 1pts, downto 1pts),_
+                SK:Fast-Draw (Pistol) #codes(upto 1pts, downto 1pts),_
+                SK:Gunner (Beams) #codes(upto 1pts, downto 1pts),_
+                SK:Gunner (Cannon) #codes(upto 1pts, downto 1pts),_
+                SK:Gunner (Catapult) #codes(upto 1pts, downto 1pts),_
+                SK:Gunner (Machine Gun) #codes(upto 1pts, downto 1pts),_
+                SK:Gunner (Rockets) #codes(upto 1pts, downto 1pts),_
+                SK:Savoir-Faire (Military) #codes(upto 1pts, downto 1pts),_
+                SK:Savoir-Faire (Police) #codes(upto 1pts, downto 1pts),_
+                SK:Artillery (Guided Missile) #codes(upto 1pts, downto 1pts),_
+                SK:Expert Skill (Military Science) #codes(upto 1pts, downto 1pts) _
+                  )_
+            ),_
+      select11(comment(Security Officer), text(Background Skills: Select at least 2 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+                #BuildList(list(#list(GMPrimarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #BuildList(list(#list(GMSecondarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #BuildList(list(#list(GMBackgroundSkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #List(StarshipCrewEverymanSkills),_
+                SK:Armoury (Battlesuits) #codes(upto 8pts, downto 1pts),_
+                SK:Armoury (Body Armor) #codes(upto 8pts, downto 1pts),_
+                SK:Armoury (Small Arms) #codes(upto 8pts, downto 1pts),_
+                SK:Artillery (Guided Missile) #codes(upto 8pts, downto 1pts),_
+                SK:Battlesuit #codes(upto 8pts, downto 1pts),_
+                SK:Beam Weapons (Pistol) #codes(upto 8pts, downto 1pts),_
+                SK:Beam Weapons (Projector) #codes(upto 8pts, downto 1pts),_
+                SK:Beam Weapons (Rifle) #codes(upto 8pts, downto 1pts),_
+                SK:Body Language #codes(upto 8pts, downto 1pts),_
+                SK:Detect Lies #codes(upto 8pts, downto 1pts),_
+                SK:Diplomacy #codes(upto 8pts, downto 1pts),_
+                SK:Expert Skill (Military Science) #codes(upto 8pts, downto 1pts),_
+                SK:Explosives (Demolition) #codes(upto 8pts, downto 1pts),_
+                SK:Explosives (Explosive Ordnance Disposal) #codes(upto 8pts, downto 1pts),_
+                SK:Explosives (Nuclear Ordnance Disposal) #codes(upto 8pts, downto 1pts),_
+                SK:Fast-Draw #codes(upto 8pts, downto 1pts),_
+                SK:Fast-Draw (Ammo) #codes(upto 8pts, downto 1pts),_
+                SK:Fast-Draw (Force Sword) #codes(upto 8pts, downto 1pts),_
+                SK:Fast-Draw (Knife) #codes(upto 8pts, downto 1pts),_
+                SK:Fast-Draw (Long Arm) #codes(upto 8pts, downto 1pts),_
+                SK:Fast-Draw (Pistol) #codes(upto 8pts, downto 1pts),_
+                SK:Fast-Draw (Sword) #codes(upto 8pts, downto 1pts),_
+                SK:Fast-Draw (Two-Handed Sword) #codes(upto 8pts, downto 1pts),_
+                SK:Forensics #codes(upto 8pts, downto 1pts),_
+                SK:Gunner (Beams) #codes(upto 8pts, downto 1pts),_
+                SK:Gunner (Cannon) #codes(upto 8pts, downto 1pts),_
+                SK:Gunner (Catapult) #codes(upto 8pts, downto 1pts),_
+                SK:Gunner (Machine Gun) #codes(upto 8pts, downto 1pts),_
+                SK:Gunner (Rockets) #codes(upto 8pts, downto 1pts),_
+                SK:Guns (Grenade Launcher) #codes(upto 8pts, downto 1pts),_
+                SK:Guns (Gyroc) #codes(upto 8pts, downto 1pts),_
+                SK:Guns (Light Anti-Armor Weapon) #codes(upto 8pts, downto 1pts),_
+                SK:Guns (Light Machine Gun) #codes(upto 8pts, downto 1pts),_
+                SK:Guns (Musket) #codes(upto 8pts, downto 1pts),_
+                SK:Guns (Pistol) #codes(upto 8pts, downto 1pts),_
+                SK:Guns (Rifle) #codes(upto 8pts, downto 1pts),_
+                SK:Guns (Shotgun) #codes(upto 8pts, downto 1pts),_
+                SK:Guns (Submachine Gun) #codes(upto 8pts, downto 1pts),_
+                SK:Intimidation #codes(upto 8pts, downto 1pts),_
+                SK:Leadership #codes(upto 8pts, downto 1pts),_
+                SK:Savoir-Faire (Military) #codes(upto 8pts, downto 1pts),_
+                SK:Savoir-Faire (Police) #codes(upto 8pts, downto 1pts),_
+                SK:Shadowing #codes(upto 8pts, downto 1pts),_
+                SK:Streetwise #codes(upto 8pts, downto 1pts) _
+                  )_
+            ),_
+      select12(_
+                #List(QuirkSelection) _
+            )
+
+Loadmaster (Starship Crew), displaycost(150),_
+      description(_
+                    All spaceships have airlocks; many have cargo holds, cargo _
+                    loaders (operated with Battlesuit skill), vehicle bays, etc. _
+                    You're in charge of it all. You're the truest astronaut aboard, _
+                    ready to brave a spacewalk to release stuck hatches and mooring _
+                    clamps. While not "sexy," this role is essential - few vessels _
+                    lack someone like you. _
+          ),_
+      page(SC8),_
+      sets(_
+            ST:ST = 11,_
+            ST:DX = 12,_
+            ST:IQ = 11,_
+            ST:HT = 12,_
+            ST:Hit Points = 11,_
+            ST:Will = 11,_
+            ST:Perception = 11,_
+            ST:Fatigue Points = 12,_
+            ST:Basic Speed = 6,_
+            ST:Basic Move = 6 _
+            ),_
+      adds(_
+                AD:Born Spacer = 3,_
+                AD:Resistant to Space Sickness,_
+                SK:Free Fall = 2pts,_
+                SK:Freight Handling = 12pts,_
+                SK:Spacer = 2pts,_
+                SK:Vacc Suit = 2pts,_
+                SK:Forced Entry = 1pts,_
+                SK:Climbing = 2pts,_
+                SK:First Aid = 2pts,_
+                SK:Gesture = 2pts,_
+                SK:Scrounging = 2pts,_
+                SK:Computer Operation = 1pts _
+            ),_
+      select1(_
+                #List(Languages) _
+            ),_
+      select2(_
+                #List(CulturalFamiliarity) _
+            ),_
+      select3(comment(Loadmaster), text(Advantages: Select 30 points from the following:), tagwith(Loadmaster(yes)), pointswanted(30), itemswanted(atleast 1), list(_
+                #List(GMAdvantages),_
+                #List(StarshipCrewAdvantages),_
+                AD:Common Sense,_
+                AD:Gizmo #codes(upto 3, downto 1),_
+                AD:Hard to Kill,_
+                AD:High Pain Threshold,_
+                AD:Night Vision,_
+                AD:Perfect Balance,_
+                AD:Rapid Healing,_
+                AD:Very Rapid Healing,_
+                AD:Temperature Tolerance #codes(upto 2, downto 1),_
+                AD:Unfazeable,_
+                AD:Very Fit _
+                  )_
+            ),_
+      select4(comment(Loadmaster), text(Disadvantages: Select -40 points from the following:), tagwith(Loadmaster(yes)), pointswanted(-40), itemswanted(atleast 1), list(_
+                #List(GMDisdvantages),_
+                #List(StarshipCrewDisadvantages),_
+                QU:Careful,_
+                DI:Hard of Hearing,_
+                DI:No Sense of Humor,_
+                DI:Overconfidence,_
+                DI:Stubbornness _
+                  )_
+            ),_
+      select5(comment(Loadmaster), text(Secondary Skills: Select 4 of the following:), tagwith(Loadmaster(yes)), pointswanted(16), itemswanted(4), list(_
+                SK:Battlesuit #codes(upto 4pts, downto 4pts),_
+                SK:Machinist #codes(upto 4pts, downto 4pts),_
+                #newitem(SK:Mechanic (Life Support), IQ/A, tl(0-12), page(B207), cat(_General, Repair/Maintenance), default(IQ - 5, "SK:Engineer (Life Support)" - 4, SK:Machinist - 5, SK:Mechanic - 4)) #codes(upto 4pts, downto 4pts),_
+                SK:Mechanic (%type%) #codes(upto 4pts, downto 4pts),_
+                SK:Mechanic ([Type]) #codes(upto 4pts, downto 4pts),_
+                SK:Smuggling #codes(upto 4pts, downto 4pts),_
+                SK:Lifting #codes(upto 4pts, downto 4pts),_
+                SK:Body Language #codes(upto 4pts, downto 4pts),_
+                SK:Lip Reading #codes(upto 4pts, downto 4pts),_
+                SK:Search #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Communications) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Electronic Warfare) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Force Shields) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Matter Transmitters) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Media) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Medical) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Parachronic) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Psychotronics) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Scientific) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Security) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Sensors) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Sonar) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Surveillance) #codes(upto 4pts, downto 4pts),_
+                SK:Electronics Operation (Temporal) #codes(upto 4pts, downto 4pts),_
+                SK:Hazardous Materials #codes(upto 4pts, downto 4pts),_
+                SK:Hazardous Materials (Biological) #codes(upto 4pts, downto 4pts),_
+                SK:Hazardous Materials (Chemical) #codes(upto 4pts, downto 4pts),_
+                SK:Hazardous Materials (Radioactive) #codes(upto 4pts, downto 4pts) _
+                  )_
+            ),_
+      select6(comment(Loadmaster), text(Background Skills: Select at least 2 of the following:), tagwith(Loadmaster(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+                #BuildList(list(#list(GMPrimarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #BuildList(list(#list(GMSecondarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #BuildList(list(#list(GMBackgroundSkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #List(StarshipCrewEverymanSkills),_
+                SK:Battlesuit #codes(upto 8pts, downto 1pts),_
+                SK:Machinist #codes(upto 8pts, downto 1pts),_
+                #newitem(SK:Mechanic (Life Support), IQ/A, tl(0-12), page(B207), cat(_General, Repair/Maintenance), default(IQ - 5, "SK:Engineer (Life Support)" - 4, SK:Machinist - 5, SK:Mechanic - 4)) #codes(upto 8pts, downto 1pts),_
+                SK:Mechanic (%type%) #codes(upto 8pts, downto 1pts),_
+                SK:Mechanic ([Type]) #codes(upto 8pts, downto 1pts),_
+                SK:Smuggling #codes(upto 8pts, downto 1pts),_
+                SK:Lifting #codes(upto 8pts, downto 1pts),_
+                SK:Body Language #codes(upto 8pts, downto 1pts),_
+                SK:Lip Reading #codes(upto 8pts, downto 1pts),_
+                SK:Search #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Communications) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Electronic Warfare) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Force Shields) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Matter Transmitters) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Media) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Medical) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Parachronic) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Psychotronics) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Scientific) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Security) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Sensors) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Sonar) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Surveillance) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Temporal) #codes(upto 8pts, downto 1pts),_
+                SK:Hazardous Materials #codes(upto 8pts, downto 1pts),_
+                SK:Hazardous Materials (Biological) #codes(upto 8pts, downto 1pts),_
+                SK:Hazardous Materials (Chemical) #codes(upto 8pts, downto 1pts),_
+                SK:Hazardous Materials (Radioactive) #codes(upto 8pts, downto 1pts) _
+                  )_
+            ),_
+      select7(_
+                #List(QuirkSelection) _
+            )
+
+Steward (Starship Crew), displaycost(150),_
+      description(_
+                    Or "quartermaster," "purser," or possibly "cook." You're _
+                    responsible for supplies and crew comfort. On a commercial _
+                    vessel, you also manage passengers and acquire and sell cargoes. _
+                    On any kind of ship, you're effectively the "morale officer" _
+                    and social center. _
+          ),_
+      page(SC9),_
+      sets(_
+            ST:ST = 10,_
+            ST:DX = 10,_
+            ST:IQ = 13,_
+            ST:HT = 11,_
+            ST:Hit Points = 10,_
+            ST:Will = 13,_
+            ST:Perception = 13,_
+            ST:Fatigue Points = 11,_
+            ST:Basic Speed = 5.25,_
+            ST:Basic Move = 5 _
+            ),_
+      adds(_
+                AD:Smooth Operator = 2,_
+                SK:Diplomacy = 4pts,_
+                SK:Merchant = 8pts,_
+                SK:Savoir-Faire (Servant) = 1pts,_
+                SK:First Aid = 1pts,_
+                SK:Housekeeping = 1pts,_
+                SK:Administration = 1pts,_
+                SK:Freight Handling = 1pts,_
+                SK:Accounting = 2pts,_
+                SK:Scrounging = 1pts,_
+                SK:Computer Operation = 1pts,_
+                SK:Free Fall = 4pts,_
+                SK:Spacer = 1pts,_
+                SK:Vacc Suit = 4pts _
+            ),_
+      select1(_
+                #List(Languages) _
+            ),_
+      select2(_
+                #List(CulturalFamiliarity) _
+            ),_
+      select3(comment(Steward), text(Languages & Cultural Familiarities: Select 10 points from the following:), tagwith(Steward(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+                LA:Language (Spoken),_
+                LA:Language (Written),_
+                LA:Language,_
+                CU:Cultural Familiarity,_
+                CU:Cultural Familiarity (Alien Culture) _
+                  )_
+            ),_
+      select4(comment(Steward), text(Advantages: Select 30 points from the following:), tagwith(Steward(yes)), pointswanted(30), itemswanted(atleast 1), list(_
+                #List(GMAdvantages),_
+                #List(StarshipCrewAdvantages),_
+                #newitem(AD:_Improve Smooth Operator, +15/+30, existing(AD:Smooth Operator)) #codes(upto 4, downto 3),_
+                PE:Alcohol Tolerance,_
+                AD:Appearance,_
+                AD:Business Acumen,_
+                AD:Charisma,_
+                AD:Common Sense,_
+                AD:Contact Group,_
+                AD:Contact,_
+                AD:Cultural Adaptability,_
+                AD:Fashion Sense,_
+                PE:Headhunter,_
+                PE:Honest Face,_
+                AD:Indomitable,_
+                AD:Language Talent,_
+                AD:Lightning Calculator,_
+                AD:Rapier Wit,_
+                AD:Sensitive,_
+                AD:Empathy,_
+                AD:Social Chameleon,_
+                AD:Voice _
+                  )_
+            ),_
+      select5(comment(Steward), text(Disadvantages: Select -40 points from the following:), tagwith(Steward(yes)), pointswanted(-40), itemswanted(atleast 1), list(_
+                #List(GMDisdvantages),_
+                #List(StarshipCrewDisadvantages),_
+                DI:Gluttony,_
+                DI:Greed,_
+                DI:Kleptomania,_
+                DI:Miserliness,_
+                #newitem(DI:Phobia (Mysophobia: Dirt), -10, displaycost(-10*), mods(Self-Control), page(B148), cat(Mundane, Mental), initmods( You resist on a roll of 12 or less (quite often), *1, shortname(12 or less), group(Self-Control), page(B121) )),_
+                DI:Post-Combat Shakes,_
+                DI:Selfless,_
+                DI:Overweight,_
+                DI:Fat,_
+                DI:Very Fat _
+                  )_
+            ),_
+      select6(comment(Steward), text(Primary Skills: Select 3 of the following:), tagwith(Steward(yes)), pointswanted(6), itemswanted(3), list(_
+                SK:Acting #codes(upto 2pts, downto 2pts),_
+                SK:Fast-Talk #codes(upto 2pts, downto 2pts),_
+                SK:Leadership #codes(upto 2pts, downto 2pts),_
+                SK:Public Speaking #codes(upto 2pts, downto 2pts),_
+                SK:Streetwise #codes(upto 2pts, downto 2pts),_
+                SK:Carousing #codes(upto 2pts, downto 2pts),_
+                SK:Sex Appeal #codes(upto 2pts, downto 2pts) _
+                  )_
+            ),_
+      select7(comment(Steward), text(Secondary Skills: Select 4 of the following:), tagwith(Steward(yes)), pointswanted(4), itemswanted(4), list(_
+                SK:Connoisseur #codes(upto 1pts, downto 1pts),_
+                SK:Connoisseur (Dance) #codes(upto 1pts, downto 1pts),_
+                SK:Connoisseur (Literature) #codes(upto 1pts, downto 1pts),_
+                SK:Connoisseur (Music) #codes(upto 1pts, downto 1pts),_
+                SK:Connoisseur (Visual Arts) #codes(upto 1pts, downto 1pts),_
+                SK:Connoisseur (Wine) #codes(upto 1pts, downto 1pts),_
+                SK:Cooking #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Communications) #codes(upto 1pts, downto 1pts),_
+                SK:Electronics Operation (Media) #codes(upto 1pts, downto 1pts),_
+                #newitem(SK:Mechanic (Life Support), IQ/A, tl(0-12), page(B207), cat(_General, Repair/Maintenance), default(IQ - 5, "SK:Engineer (Life Support)" - 4, SK:Machinist - 5, SK:Mechanic - 4)) #codes(upto 1pts, downto 1pts),_
+                SK:Professional Skill ([DX based]) #codes(upto 1pts, downto 1pts),_
+                SK:Professional Skill ([IQ based]) #codes(upto 1pts, downto 1pts),_
+                #newitem(SK:Professional Skill (Bartender), IQ/A, default(IQ - 5), page(B215), cat(_General, Knowledge)) #codes(upto 1pts, downto 1pts),_
+                #newitem(SK:Professional Skill (Hairdresser), IQ/A, default(IQ - 5), page(B215), cat(_General, Knowledge)) #codes(upto 1pts, downto 1pts),_
+                #newitem(SK:Professional Skill (Masseur), IQ/A, default(IQ - 5), page(B215), cat(_General, Knowledge)) #codes(upto 1pts, downto 1pts),_
+                SK:Smuggling #codes(upto 1pts, downto 1pts),_
+                SK:Expert Skill (Xenology) #codes(upto 1pts, downto 1pts),_
+                SK:Psychology #codes(upto 1pts, downto 1pts),_
+                SK:Search #codes(upto 1pts, downto 1pts) _
+                  )_
+            ),_
+      select8(comment(Steward), text(Background Skills: Select at least 2 of the following:), tagwith(Steward(yes)), pointswanted(10), itemswanted(atleast 2), list(_
+                #BuildList(list(#list(GMPrimarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #BuildList(list(#list(GMSecondarySkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #BuildList(list(#list(GMBackgroundSkills)), template(%ListItem% #codes(upto 8pts, downto 1pts))),_
+                #List(StarshipCrewEverymanSkills),_
+                SK:Connoisseur #codes(upto 8pts, downto 1pts),_
+                SK:Connoisseur (Dance) #codes(upto 8pts, downto 1pts),_
+                SK:Connoisseur (Literature) #codes(upto 8pts, downto 1pts),_
+                SK:Connoisseur (Music) #codes(upto 8pts, downto 1pts),_
+                SK:Connoisseur (Visual Arts) #codes(upto 8pts, downto 1pts),_
+                SK:Connoisseur (Wine) #codes(upto 8pts, downto 1pts),_
+                SK:Cooking #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Communications) #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Media) #codes(upto 8pts, downto 1pts),_
+                #newitem(SK:Mechanic (Life Support), IQ/A, tl(0-12), page(B207), cat(_General, Repair/Maintenance), default(IQ - 5, "SK:Engineer (Life Support)" - 4, SK:Machinist - 5, SK:Mechanic - 4)) #codes(upto 8pts, downto 1pts),_
+                SK:Professional Skill ([DX based]) #codes(upto 8pts, downto 1pts),_
+                SK:Professional Skill ([IQ based]) #codes(upto 8pts, downto 1pts),_
+                #newitem(SK:Professional Skill (Bartender), IQ/A, default(IQ - 5), page(B215), cat(_General, Knowledge)) #codes(upto 8pts, downto 1pts),_
+                #newitem(SK:Professional Skill (Hairdresser), IQ/A, default(IQ - 5), page(B215), cat(_General, Knowledge)) #codes(upto 8pts, downto 1pts),_
+                #newitem(SK:Professional Skill (Masseur), IQ/A, default(IQ - 5), page(B215), cat(_General, Knowledge)) #codes(upto 8pts, downto 1pts),_
+                SK:Smuggling #codes(upto 8pts, downto 1pts),_
+                SK:Expert Skill (Xenology) #codes(upto 8pts, downto 1pts),_
+                SK:Psychology #codes(upto 8pts, downto 1pts),_
+                SK:Search #codes(upto 8pts, downto 1pts) _
+                  )_
+            ),_
+      select9(_
+                #List(QuirkSelection) _
+            )
+
+<Character Templates, Character Templates - Starship Crew - Legendary>
+Omnicompetent (Starship Crew), 0, displaycost(+50),_
+	page(SC11),_
+	adds(_
+			AD:Jack of All Trades = 3,_
+			AD:Wild Talent_
+		)
+
+"Commander, Legendary (Starship Crew)", 0, displaycost(+50), 
+	page(SC4),_
+	sets(_
+			ST:DX = ST:DX + 1,_
+			ST:IQ = ST:IQ + 1,_
+			AD:Intuitive Admiral = {AD:Intuitive Admiral::level} + 1_
+		),_
+	replacetags(in {AD:Intuitive Admiral} with {upto(5)})
+
+"Helmsman, Legendary (Starship Crew)", 0, displaycost(+50), 
+	page(SC5),_
+	sets(_
+			ST:DX = ST:DX + 1,_
+			ST:IQ = ST:IQ + 1,_
+			AD:Hot Pilot = {AD:Hot Pilot::level} + 2_
+		),_
+	replacetags(in {AD:Hot Pilot} with {upto(6)})
+
+"Operations Officer, Legendary (Starship Crew)", 0, displaycost(+50), 
+	page(SC6),_
+	sets(_
+			ST:IQ = ST:IQ + 1,_
+			AD:Circuit Sense = {AD:Circuit Sense::level} + 1,_
+			AD:Compartmentalized Mind = {AD:Compartmentalized Mind::level} + 1_
+		),_
+	replacetags(in {AD:Circuit Sense} with {upto(6)})
+
+"Tactical Officer, Legendary (Starship Crew)", 0, displaycost(+50), 
+	page(SC6),_
+	sets(_
+			ST:IQ = ST:IQ + 1,_
+			ST:DX = ST:DX + 1,_
+			AD:Born War-Leader = {AD:Born War-Leader::level} + 1_
+		),_
+	replacetags(in {AD:Born War-Leader} with {upto(6)})
+
+"Engineer, Legendary (Starship Crew)", 0, displaycost(+50), 
+	page(SC6),_
+	sets(_
+			ST:IQ = ST:IQ + 2,_
+			AD:Artificer = {AD:Artificer::level} + 1_
+		),_
+	replacetags(in {AD:Artificer} with {upto(6)})
+
+"Medical Officer, Legendary (Starship Crew)", 0, displaycost(+50), 
+	page(SC7),_
+	sets(_
+			ST:IQ = ST:IQ + 2,_
+			AD:Healer = {AD:Healer::level} + 1_
+		),_
+	replacetags(in {AD:Healer} with {upto(6)})
+
+"Science Officer, Legendary (Starship Crew)", 0, displaycost(+50), 
+	page(SC8),_
+	sets(_
+			ST:IQ = ST:IQ + 2,_
+			AD:Natural Scientist = {AD:Natural Scientist::level} + 1_
+		),_
+	replacetags(in {AD:Natural Scientist} with {upto(6)})
+
+"Security Officer, Legendary (Starship Crew)", 0, displaycost(+50), 
+	page(SC8),_
+	sets(_
+			ST:DX = ST:DX + 1,_
+			ST:Perception = ST:Perception + 2_
+		),_
+      select1(comment(Security Officer), text(Advantages: Select at least 1 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(20), itemswanted(atleast 1), list(_
+				AD:Extra ST,_
+				AD:Extra DX,_
+				AD:Extra HT,_
+				AD:Extra Perception,_
+                AD:Combat Reflexes,_
+                AD:Danger Sense,_
+                AD:Natural Copper,_
+                AD:Peripheral Vision_
+			)_
+		)
+
+"Loadmaster, Legendary (Starship Crew)", 0, displaycost(+50), 
+	page(SC9),_
+	sets(_
+			AD:Born Spacer = {AD:Born Spacer::level} + 2_
+		),_
+	replacetags(in {AD:Born Spacer} with {upto(6)}),_
+      select1(comment(Loadmaster), text(Advantages: Select 40 points from the following:), tagwith(Loadmaster(yes)), pointswanted(40), itemswanted(atleast 1), list(_
+                #List(GMAdvantages),_
+                AD:Extra ST,_
+                AD:Extra DX,_
+                AD:Extra HT,_
+                AD:3D Spatial Sense,_
+                PE:Deep Sleeper,_
+                AD:G-Experience,_
+                AD:Improved G-Tolerance,_
+                AD:Resistant to Acceleration,_
+                AD:Temperature Tolerance #codes(upto 2, downto 1),_
+                AD:Fit,_
+                AD:Very Fit,_
+                #newitem(AD:_Improve Resistant to Acceleration, +1, existing(AD:Resistant to Acceleration)) #codes(upto 2, downto 2) _
+                  )_
+            )
+
+"Steward, Legendary (Starship Crew)", 0, displaycost(+50), 
+	page(SC9),_
+	sets(_
+			ST:IQ = ST:IQ+1,_
+			AD:Smooth Operator = {AD:Smooth Operator::level} + 2_
+		),_
+	replacetags(in {AD:Smooth Operator} with {upto(6)})
+
+<Character Templates, Character Templates - Starship Crew - Multi-Role>
+"Commander, Multi-Role (Starship Crew)", 0, displaycost(+50),_
+	page(SC4),_
+	sets(_
+			ST:IQ = ST:IQ+1_
+			),_
+	adds(_
+				AD:Charisma,_
+				AD:Intuitive Admiral,_
+				SK:Leadership = 1pts,_
+				SK:Administration = 2pts,_
+				SK:Navigation (FTL) = 2pts,_
+				SK:Navigation (Space) = 2pts,_
+				SK:Shiphandling (Starship) = 4pts_
+			),_
+	select1(comment(Commander), text(Primary Skills: Select 2 of the following:), tagwith(Commander(yes)), pointswanted(4), itemswanted(2), list(_
+				SK:Piloting (Aerospace) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Autogyro) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Contragravity) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Flight Pack) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Glider) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Heavy Airplane) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Helicopter) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (High-Performance Airplane) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (High-Performance Spacecraft) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Light Airplane) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Lighter-Than-Air) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Lightsail) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Low-G Wings) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Low-Performance Spacecraft) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Ultralight) #codes(upto 2pts, downto 2pts),_
+				SK:Piloting (Vertol) #codes(upto 2pts, downto 2pts) _
+				)_
+			)
+
+"Helmsman, Multi-Role (Starship Crew)", 0, displaycost(+50),_
+	description(_
+					Errata: Astronomy requires Mathematics (Applied). Changed Astronomy (H) IQ-2 [1]; added Mathematics (Applied) (H) IQ-2 [1]._
+		),_
+	page(SC5),_
+	sets(_
+			ST:DX = ST:DX+1_
+		),_
+	adds(_
+				AD:3D Spatial Sense,_
+				AD:Hot Pilot = 2,_
+				SK:Area Knowledge ([Area]) = 1pts,_
+				SK:Astronomy = 1pts,_
+				SK:Mathematics (Applied) = 1pts,_
+				SK:Cartography = 2pts,_
+				SK:Navigation (FTL) = 2pts,_
+				SK:Navigation (Space) = 1pts_
+			),_
+	select1(comment(Helmsman), text(Primary Skills: Select 2 of the following:), tagwith(Helmsman(yes)), pointswanted(2), itemswanted(2), list(_
+				SK:Piloting (Aerospace) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Autogyro) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Contragravity) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Flight Pack) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Glider) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Heavy Airplane) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Helicopter) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (High-Performance Airplane) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (High-Performance Spacecraft) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Light Airplane) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Lighter-Than-Air) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Lightsail) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Low-G Wings) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Low-Performance Spacecraft) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Ultralight) #codes(upto 1pts, downto 1pts),_
+				SK:Piloting (Vertol) #codes(upto 1pts, downto 1pts) _
+				)_
+			)
+
+"Operation Officer, Multi-Role (Starship Crew)", 0, displaycost(+50),_
+	page(SC6),_
+	sets(_
+			ST:IQ = ST:IQ+1_
+		),_
+	adds(_
+				AD:Circuit Sense = 3,_
+				SK:Electronics Operation (Communications) = 1pts,_
+				SK:Electronics Operation (Sensors) = 1pts,_
+				SK:Electronics Repair (Communications) = 1pts,_
+				SK:Electronics Repair (Computers) = 1pts,_
+				SK:Electronics Repair (Sensors) = 1pts,_
+				SK:Computer Programming = 4pts,_
+				SK:Expert Skill (Computer Security) = 4pts,_
+				SK:Cryptography = 2pts _
+			)
+
+"Tactical Officer, Multi-Role (Starship Crew)", 0, displaycost(+50),_
+	page(SC6),_
+	sets(_
+			ST:%example% = ST:%example%+1_
+		),_
+	adds(_
+				AD:Born War-Leader = 2,_
+				SK:Leadership = 1pts,_
+				SK:Intelligence Analysis = 2pts,_
+				SK:Strategy (Space) = 2pts,_
+				SK:Tactics = 2pts,_
+				SK:Expert Skill (Military Science) = 1pts_
+			),_
+	select1(comment(Tactical Officer), text(Background Skills: Select 3 of the following:), tagwith(TacticalOfficer(yes)), pointswanted(12), itemswanted(3), list(_
+				SK:Gunner (Beams) #codes(upto 4pts, downto 4pts),_
+				SK:Gunner (Cannon) #codes(upto 4pts, downto 4pts),_
+				SK:Gunner (Catapult) #codes(upto 4pts, downto 4pts),_
+				SK:Gunner (Machine Gun) #codes(upto 4pts, downto 4pts),_
+				SK:Gunner (Rockets) #codes(upto 4pts, downto 4pts),_
+				SK:Artillery (Beams) #codes(upto 4pts, downto 4pts),_
+				SK:Artillery (Bombs) #codes(upto 4pts, downto 4pts),_
+				SK:Artillery (Cannon) #codes(upto 4pts, downto 4pts),_
+				SK:Artillery (Guided Missile) #codes(upto 4pts, downto 4pts),_
+				SK:Electronics Operation (Force Shields) #codes(upto 4pts, downto 4pts)_
+				)_
+			),
+	x(#ChoiceList(_
+			name(example),_
+			title(Tactical Officer),_
+			text(You may choose +1 to one of the following:),_
+			picksallowed(1),_
+			method(bynumber),_
+			list(_
+				"DX",_
+				"Basic Speed"_
+			)_
+		)_
+	), noresync(yes)
+
+"Engineer, Multi-Role (Starship Crew)", 0, displaycost(+50),_
+	page(SC6),_
+	sets(_
+			ST:IQ = ST:IQ+1_
+		),_
+	adds(_
+				AD:Artificer = 2,_
+				SK:Electrician = 1pts,_
+				SK:Electronics Repair (Communications) = 1pts,_
+				SK:Electronics Repair (Sensors) = 1pts,_
+
+			),_
+	select1(comment(Engineer), text(Primary Skills: Select 4 appropriate Mechanic specialties; one FTL Motive System Type, one STL Motive Systlem Type, one Power Plant Type, and one Vehicle Type:), tagwith(Engineer(yes)), pointswanted(4), itemswanted(4), list(_
+				#List(CampaignMechanicTypes),_
+				SK:Mechanic (%type%) #codes(upto 1pts, downto 1pts),_
+				SK:Mechanic ([Type]) #codes(upto 1pts, downto 1pts) _
+				)_
+			),_
+	select2(comment(Engineer), text(Secondary Skills: Select 6 of the following:), tagwith(Engineer(yes)), pointswanted(6), itemswanted(6), list(_
+				SK:Armoury (Force Shields) #codes(upto 1pts, downto 1pts),_
+				SK:Armoury (Heavy Weapons) #codes(upto 1pts, downto 1pts),_
+				SK:Armoury (Vehicular Armor) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Computers) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Electronic Warfare) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Force Shields) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Matter Transmitters) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Media) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Medical) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Parachronic) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Psychotronics) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Scientific) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Security) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Sonar) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Surveillance) #codes(upto 1pts, downto 1pts),_
+				SK:Electronics Repair (Temporal) #codes(upto 1pts, downto 1pts),_
+				SK:Machinist #codes(upto 1pts, downto 1pts),_
+				SK:Mechanic (%type%) #codes(upto 1pts, downto 1pts),_
+				SK:Mechanic ([Type]) #codes(upto 1pts, downto 1pts)_
+				)_
+			)
+
+"Medical Officer, Multi-Role (Starship Crew)", 0, displaycost(+50),_
+	page(SC7),_
+	sets(_
+			ST:IQ = ST:IQ+1_
+		),_
+	x(#InputReplace("You must specialize by species - Physiology Modifiers apply (p. B181):", [Race2], "Human", "Medical Skills")),_
+      adds(_
+                AD:Healer = 1,_
+                SK:Electronics Operation (Medical) = 1pts,_
+                SK:Mechanic ([Type]) = 1pts respond "Life Support",_
+                SK:Diagnosis ([Race]) = 4pts respond "[Race2]",_
+                SK:Physician ([Race]) = 4pts respond "[Race2]",_
+                SK:Pharmacy (Synthetic) = 2pts,_
+                SK:Physiology ([Race]) = 2pts respond "[Race2]",_
+                SK:Psychology ([Race]) = 2pts respond "[Race2]",_
+                SK:First Aid ([Race])==0pts respond "[Race2]",_
+                SK:Surgery ([Race]) = 4pts respond "[Race2]"_
+            )
+
+"Science Officer, Multi-Role (Starship Crew)", 0, displaycost(+50),_
+	page(SC8),_
+	sets(_
+			ST:IQ = ST:IQ+1_
+		),_
+      adds(_
+                AD:Natural Scientist = 2,_
+                SK:Electronics Operation (Scientific) = 2pts,_
+                SK:Research = 2pts,_
+                SK:Astronomy = 1pts,_
+                SK:Chemistry = 1pts,_
+                SK:Mathematics (Applied) = 1pts,_
+                SK:Physics = 1pts_
+            ),_
+      select1(comment(Science Officer), text(Primary Skills: Select 1 of the following:), tagwith(ScienceOfficer(yes)), pointswanted(1), itemswanted(1), list(_
+                SK:Geology (Earthlike) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Gas Giants) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Hostile Terrestrial) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Ice Dwarfs) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Ice Worlds) #codes(upto 1pts, downto 1pts),_
+                SK:Geology (Rock Worlds) #codes(upto 1pts, downto 1pts) _
+                  )_
+            ),_
+      select2(comment(Science Officer), text(Primary Skills: Select 1 of the following:), tagwith(ScienceOfficer(yes)), pointswanted(1), itemswanted(1), list(_
+                SK:Biology (Earthlike) #codes(upto 1pts, downto 1pts),_
+                SK:Biology (Gas Giants) #codes(upto 1pts, downto 1pts),_
+                SK:Biology (Hostile Terrestrial) #codes(upto 1pts, downto 1pts),_
+                SK:Biology (Ice Dwarfs) #codes(upto 1pts, downto 1pts),_
+                SK:Biology (Ice Worlds) #codes(upto 1pts, downto 1pts),_
+                SK:Biology (Rock Worlds) #codes(upto 1pts, downto 1pts) _
+                  )_
+            )
+
+"Security Officer, Multi-Role (Starship Crew)", 0, displaycost(+50),_
+	page(SC8),_
+	sets(_
+			ST:DX = ST:DX+1_
+		),_
+      adds(_
+                SK:Criminology = 2pts,_
+                SK:Interrogation = 2pts,_
+                SK:Electronics Operation (Security) = 2pts,_
+                SK:Tactics = 4pts,_
+                SK:Intelligence Analysis = 4pts,_
+                SK:Observation = 2pts,_
+                SK:Search = 2pts_
+            ),_
+      select1(comment(Security Officer), text(Primary Skills: Select 1 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(4), itemswanted(1), list(_
+                SK:Beam Weapons (Pistol) #codes(upto 4pts, downto 4pts),_
+                SK:Beam Weapons (Projector) #codes(upto 4pts, downto 4pts),_
+                SK:Beam Weapons (Rifle) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Grenade Launcher) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Gyroc) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Light Anti-Armor Weapon) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Light Machine Gun) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Musket) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Pistol) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Rifle) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Shotgun) #codes(upto 4pts, downto 4pts),_
+                SK:Guns (Submachine Gun) #codes(upto 4pts, downto 4pts) _
+                  )_
+            ),_
+      select2(comment(Security Officer), text(Primary Skills: Select 1 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(4), itemswanted(1), list(_
+                SK:Brawling #codes(upto 4pts, downto 4pts),_
+                SK:Boxing #codes(upto 4pts, downto 4pts),_
+                SK:Karate #codes(upto 4pts, downto 4pts) _
+                  )_
+            ),_
+      select3(comment(Security Officer), text(Primary Skills: Select 1 of the following:), tagwith(SecurityOfficer(yes)), pointswanted(4), itemswanted(1), list(_
+                SK:Wrestling #codes(upto 4pts, downto 4pts),_
+                SK:Judo #codes(upto 4pts, downto 4pts) _
+                  )_
+            )
+
+"Loadmaster, Multi-Role (Starship Crew)", 0, displaycost(+50),_
+	page(SC9),_
+	sets(_
+			ST:ST = ST:ST+1,_
+			ST:HT = ST:HT+1_
+		),_
+      adds(_
+                AD:Born Spacer = 2,_
+                SK:Freight Handling = 12pts_
+			),_
+      select1(comment(Loadmaster), text(Primary Skills: Select at least 1 of the following:), tagwith(Loadmaster(yes)), pointswanted(8), itemswanted(atleast 1), list(_
+                #newitem(SK:_Improve Free Fall, DX/A, existing(SK:Free Fall)) #codes(upto 8pts, downto 2pts),_
+                #newitem(SK:_Improve Spacer, IQ/E, existing(SK:Spacer)) #codes(upto 8pts, downto 2pts),_
+                #newitem(SK:_Improve Vacc Suit, DX/A, existing(SK:Vacc Suit)) #codes(upto 8pts, downto 2pts),_
+                SK:Forced Entry #codes(upto 8pts, downto 1pts),_
+                SK:Battlesuit #codes(upto 8pts, downto 2pts),_
+                SK:Climbing #codes(upto 8pts, downto 2pts),_
+                SK:First Aid #codes(upto 8pts, downto 1pts),_
+                SK:Gesture #codes(upto 8pts, downto 1pts),_
+                SK:Machinist #codes(upto 8pts, downto 2pts),_
+                SK:Smuggling #codes(upto 8pts, downto 2pts),_
+                SK:Lifting #codes(upto 8pts, downto 2pts),_
+                SK:Scrounging #codes(upto 8pts, downto 2pts),_
+                SK:Body Language #codes(upto 8pts, downto 2pts),_
+                SK:Lip Reading #codes(upto 8pts, downto 2pts),_
+                SK:Search #codes(upto 8pts, downto 2pts),_
+                SK:Free Fall #codes(upto 8pts, downto 1pts),_
+                SK:Spacer #codes(upto 8pts, downto 1pts),_
+                SK:Vacc Suit #codes(upto 8pts, downto 1pts),_
+                SK:Electronics Operation (Communications) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Electronic Warfare) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Force Shields) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Matter Transmitters) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Media) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Medical) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Parachronic) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Psychotronics) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Scientific) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Security) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Sensors) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Sonar) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Surveillance) #codes(upto 8pts, downto 2pts),_
+                SK:Electronics Operation (Temporal) #codes(upto 8pts, downto 2pts),_
+                SK:Hazardous Materials #codes(upto 8pts, downto 2pts),_
+                SK:Hazardous Materials (Biological) #codes(upto 8pts, downto 2pts),_
+                SK:Hazardous Materials (Chemical) #codes(upto 8pts, downto 2pts),_
+                SK:Hazardous Materials (Radioactive) #codes(upto 8pts, downto 2pts),_
+                #newitem(SK:Mechanic (Life Support), IQ/A, tl(0-12), page(B207), cat(_General, Repair/Maintenance), default(IQ - 5, "SK:Engineer (Life Support)" - 4, SK:Machinist - 5, SK:Mechanic - 4)) #codes(upto 8pts, downto 2pts),_
+                SK:Mechanic (%type%) #codes(upto 8pts, downto 2pts),_
+                SK:Mechanic ([Type]) #codes(upto 8pts, downto 2pts) _
+                  )_
+            )
+			
+"Steward, Multi-Role (Starship Crew)", 0, displaycost(+50), 
+	page(SC9),_
+	sets(_
+			ST:IQ = ST:IQ+1_
+		),_
+	adds(_
+                AD:Smooth Operator,_
+                SK:Diplomacy = 4pts,_
+                SK:Merchant = 4pts,_
+                SK:Savoir-Faire (Servant) = 1pts_
+		),_
+      select1(comment(Steward), text(Languages & Cultural Familiarities: Select 10 points from the following:), tagwith(Steward(yes)), pointswanted(6), itemswanted(atleast 1), multitype(yes), list(_
+                LA:Language (Spoken),_
+                LA:Language (Written),_
+                LA:Language,_
+                CU:Cultural Familiarity,_
+                CU:Cultural Familiarity (Alien Culture),_
+                SK:First Aid,_
+                SK:Housekeeping,_
+                SK:Acting,_
+                SK:Fast-Talk,_
+                SK:Leadership,_
+                SK:Public Speaking,_
+                SK:Streetwise,_
+                SK:Administration,_
+                SK:Connoisseur,_
+                SK:Connoisseur (Dance),_
+                SK:Connoisseur (Literature),_
+                SK:Connoisseur (Music),_
+                SK:Connoisseur (Visual Arts),_
+                SK:Connoisseur (Wine),_
+                SK:Cooking,_
+                SK:Electronics Operation (Communications),_
+                SK:Electronics Operation (Media),_
+                SK:Freight Handling,_
+                SK:Professional Skill ([DX based]),_
+                SK:Professional Skill ([IQ based]),_
+                #newitem(SK:Mechanic (Life Support), IQ/A, tl(0-12), page(B207), cat(_General, Repair/Maintenance), default(IQ - 5, "SK:Engineer (Life Support)" - 4, SK:Machinist - 5, SK:Mechanic - 4)) #codes(upto 1pts, downto 1pts),_
+                #newitem(SK:Professional Skill (Bartender), IQ/A, default(IQ - 5), page(B215), cat(_General, Knowledge)) #codes(upto 1pts, downto 1pts),_
+                #newitem(SK:Professional Skill (Hairdresser), IQ/A, default(IQ - 5), page(B215), cat(_General, Knowledge)) #codes(upto 1pts, downto 1pts),_
+                #newitem(SK:Professional Skill (Masseur), IQ/A, default(IQ - 5), page(B215), cat(_General, Knowledge)) #codes(upto 1pts, downto 1pts),_
+                SK:Smuggling,_
+                SK:Accounting,_
+                SK:Psychology,_
+                SK:Carousing,_
+                SK:Sex Appeal,_
+                SK:Scrounging,_
+                SK:Search _
+                  )_
+            )
+
+		
+
+*******************************************************************************************************\[START]
+[LISTS]
+********************************************************************************************************\[STOP]
+<StarshipCrewAdvantages>
+AD:Extra ST,_
+AD:Extra DX,_
+AD:Extra IQ,_
+AD:Extra HT,_
+AD:Extra Will,_
+AD:Extra Perception,_
+AD:Extra Hit Points,_
+AD:Extra Fatigue Points,_
+AD:Extra Basic Move,_
+AD:Extra Basic Speed,_
+AD:3D Spatial Sense,_
+AD:Alien Friend,_
+AD:Born Spacer,_
+CU:Cultural Familiarity,_
+PE:Deep Sleeper,_
+AD:Fearlessness,_
+AD:Fit,_
+AD:G-Experience,_
+AD:Gizmo,_
+AD:Improved G-Tolerance,_
+LA:Language,_
+LA:Language (Spoken),_
+LA:Language (Written),_
+AD:Less Sleep #codes(upto 2, downto 1),_
+AD:Luck #codes(upto 2, downto 1),_
+AD:Patron (Starship Owner/Provider),_
+AD:Merchant Rank,_
+AD:Military Rank,_
+AD:Reputation,_
+AD:Resistant to Acceleration #codes(upto 1, downto l),_
+#newitem(AD:Resistant to Space Sickness (+3 to resist), 1, page(B81), cat(Mundane, Physical)),_
+#newitem(AD:Resistant to Space Sickness (+8 to resist), 2, page(B81), cat(Mundane, Physical)),_
+#newitem(PE:Suit Familiarity (Vacc Suit), 1, page(SC3)),_
+AD:Serendipity
+
+<StarshipCrewDisadvantages>
+DI:Chummy,_
+DI:Gregarious,_
+DI:Code of Honor (Mercenary's),_
+DI:Code of Honor (Soldier's),_
+DI:Code of Honor (Pirate's),_
+DI:Compulsive Carousing,_
+DI:Compulsive Gambling,_
+#newitem(DI:Duty (Ship Owner), -10/-15, displaycost(-10/-15), upto(2), mods(Duty), page(B134), cat(Mundane Social, Mundane, Social), levelnames("12 or less (quite often)", "15 or less (almost always)")),_
+DI:Enemy (Formidable group),_
+DI:Enemy (Less powerful group),_
+DI:Enemy (One Person),_
+DI:Honesty,_
+DI:Intolerance,_
+DI:Xenophilia,_
+DI:Lecherousness,_
+DI:Pacifism (Reluctant Killer),_
+DI:Pacifism (Cannot Harm Innocents),_
+DI:Pacifism (Self-Defense Only),_
+#newitem(DI:Phobia (Agoraphobia: Open Spaces), -10, displaycost(-10*), mods(Self-Control), page(B148), cat(Mundane, Mental), levelnames(,,,), initmods( You resist on a roll of 12 or less (quite often), *1, shortname(12 or less), group(Self-Control), page(B121) )),_
+#newitem(DI:Phobia (Demophobia: Crowds), -15, displaycost(-15*), mods(Self-Control), page(B148), cat(Mundane, Mental), levelnames(,,,), initmods( You resist on a roll of 12 or less (quite often), *1, shortname(12 or less), group(Self-Control), page(B121) )),_
+#newitem(DI:Sense of Duty (Crew), -5, levelnames(Small Group), page(B153), cat(Mundane Mental, Mundane, Mental), conditional(=+2 to ST:Reaction when "in dangerous situations if Sense of Duty is known")),_
+DI:Social Stigma (Criminal Record),_
+DI:Workaholic
+
+<StarshipCrewEverymanSkills>
+SK:Area Knowledge ([Area]) #codes(upto 8pts, downto 1pts),_
+SK:Beam Weapons (Pistol) #codes(upto 8pts, downto 1pts),_
+SK:Beam Weapons (Projector) #codes(upto 8pts, downto 1pts),_
+SK:Beam Weapons (Rifle) #codes(upto 8pts, downto 1pts),_
+SK:Body Language #codes(upto 8pts, downto 1pts),_
+SK:Body Sense #codes(upto 8pts, downto 1pts),_
+SK:Brawling #codes(upto 8pts, downto 1pts),_
+SK:Carousing #codes(upto 8pts, downto 1pts),_
+SK:Current Affairs ([Regional]) #codes(upto 8pts, downto 1pts),_
+SK:Current Affairs (Business) #codes(upto 8pts, downto 1pts),_
+SK:Current Affairs (Headline News) #codes(upto 8pts, downto 1pts),_
+SK:Current Affairs (High Culture) #codes(upto 8pts, downto 1pts),_
+SK:Current Affairs (People) #codes(upto 8pts, downto 1pts),_
+SK:Current Affairs (Politics) #codes(upto 8pts, downto 1pts),_
+SK:Current Affairs (Popular Culture) #codes(upto 8pts, downto 1pts),_
+SK:Current Affairs (Science & Technology) #codes(upto 8pts, downto 1pts),_
+SK:Current Affairs (Sports) #codes(upto 8pts, downto 1pts),_
+SK:Current Affairs (Travel) #codes(upto 8pts, downto 1pts),_
+SK:First Aid #codes(upto 8pts, downto 1pts),_
+SK:Gambling #codes(upto 8pts, downto 1pts),_
+SK:Games #codes(upto 8pts, downto 1pts),_
+SK:Gesture #codes(upto 8pts, downto 1pts),_
+SK:Guns (Grenade Launcher) #codes(upto 8pts, downto 1pts),_
+SK:Guns (Gyroc) #codes(upto 8pts, downto 1pts),_
+SK:Guns (Light Anti-Armor Weapon) #codes(upto 8pts, downto 1pts),_
+SK:Guns (Light Machine Gun) #codes(upto 8pts, downto 1pts),_
+SK:Guns (Musket) #codes(upto 8pts, downto 1pts),_
+SK:Guns (Pistol) #codes(upto 8pts, downto 1pts),_
+SK:Guns (Rifle) #codes(upto 8pts, downto 1pts),_
+SK:Guns (Shotgun) #codes(upto 8pts, downto 1pts),_
+SK:Guns (Submachine Gun) #codes(upto 8pts, downto 1pts),_
+SK:Hobby Skill ([DX-based]) #codes(upto 8pts, downto 1pts),_
+SK:Hobby Skill ([IQ-based]) #codes(upto 8pts, downto 1pts),_
+SK:Housekeeping #codes(upto 8pts, downto 1pts),_
+SK:Lip Reading #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill ([DX based]) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill ([IQ based]) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Air Traffic Controller) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Barber) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Brewer) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Cooper) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Distiller) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Dyer) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Florist) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Game Designer) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Glassblower) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Journalist) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Prostitute) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Tailor) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Tanner) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Vinter) #codes(upto 8pts, downto 1pts),_
+SK:Professional Skill (Weaver) #codes(upto 8pts, downto 1pts),_
+SK:Sports #codes(upto 8pts, downto 1pts),_
+SK:Streetwise #codes(upto 8pts, downto 1pts)
+

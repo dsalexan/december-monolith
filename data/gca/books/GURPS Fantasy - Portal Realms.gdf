@@ -1,0 +1,1029 @@
+Encoding=UTF-8
+Version=3
+Description=Templates and sundry for GURPS Fantasy: Portal Realms
+Requires="GURPS Basic Set 4th Ed.--Characters.gdf"
+
+[AUTHOR]
+
+***********************************************************************\[START]
+//  GURPS Fantasy: Portal Realms templates and sundry data file for
+//  GURPS Character Assistant 5 by David Trimboli.
+//  Version 1.0
+//  Last modified 2022-11-22
+//
+//  GURPS Fantasy: Portal Realms is copyright © 2017 by Steve Jackson Games
+//  Incorporated.
+// 
+//  GURPS is a registered trademark of Steve Jackson Games Incorporated, used
+//  with GCA by permission of Steve Jackson Games. All rights reserved.
+// 
+//  The GURPS game is Copyright © 1986-1989, 1991-1994 by Steve Jackson Games
+//  Incorporated. This product includes copyrighted material from the GURPS
+//  game, which is used by permission of Steve Jackson Games Incorporated. All
+//  rights reserved by Steve Jackson Games Incorporated.
+// 
+************************************************************************\[STOP]
+
+[ADVANTAGES]
+
+#REPLACETAGS IN AD:High TL with upto(12)
+
+<Portal Realms, Supernatural Mental, Supernatural, Mental>
+
+Blessed (The King's Two Bodies), 10,
+page(B40, FPR14)
+
+Destiny (Heritage), 5/10/15,
+levelnames(Minor, Major, Great), page(B48, FPR15), upto(3)
+
+[PERKS]
+
+Advanced Learning, 1,
+page(FPR15),
+x(_
+    #INPUTTOTAG(_
+        What skill is the character able to learn despite having Social _
+        Stigma (Uneducated)?,
+        nameext_
+    )_
+)
+
+Weapon Adaptation, 1,
+page(MA52, FPR15), cat(Style Perks - Realistic),
+x(_
+    #INPUTTOTAG(_
+        You must specialize in a particular skill and the weapon it can _
+        now be used with:,
+        nameext,
+        skill to weapon,
+        Weapon Adaptation_
+    )_
+)
+
+[FEATURES]
+
+<Portal Realms, Exotic, Mental, Exotic Mental>
+
+Possession (One Host), 0,
+page(B75, FPR15)
+
+[DISADVANTAGES]
+
+Destiny (Heritage), -5/-10/-15,
+levelnames(Minor, Major, Great), page(B48, FPR17), upto(3)
+
+[SKILLS]
+
+<Portal Realms, Arts/Entertainment, Knowledge, Social>
+
+Connoisseur (Arms and Armor), IQ/A,
+page(B185, FPR18),
+default(_
+    ST:IQ - 5,
+    SK:Armoury (Body Armor) - 3,
+    SK:Armoury (Melee Weapons) - 3,
+    SK:Armoury (Missile Weapons) - 3_
+)
+
+Connoisseur (Clothing), IQ/A,
+page(B185, FPR18), default(ST:IQ - 5, SK:Sewing - 3)
+
+Connoisseur (Cuisine), IQ/A,
+page(B185, FPR18), default(ST:IQ - 5, SK:Cooking - 3)
+
+Connoisseur (Horses), IQ/A,
+page(B185, FPR18),
+default(_
+    ST:IQ - 5,
+    SK:Animal Handling (Equines) - 3,
+    SK:Animal Handling (Horse) - 3_
+)
+
+Connoisseur (Jewelry), IQ/A,
+page(B185, FPR18), default(ST:IQ - 5, SK:Jeweler - 3)
+
+Connoisseur (Rare Books), IQ/A,
+page(B185, FPR18),
+default(_
+    ST:IQ - 5,
+    SK:Artist (Calligraphy) - 3,
+    SK:Artist (Graphic Design) - 3,
+    SK:Artist (Illumination) - 3,
+    SK:Leatherworking - 3_
+)
+
+Connoisseur (Slaves), IQ/A,
+page(B185, FPR18),
+default(_
+    ST:IQ - 5,
+    SK:Artist(Body Art) - 3,
+    SK:Artist(Sculpting) - 3,
+    SK:Teaching - 3_
+)
+
+<Portal Realms, Business, Police, Social Sciences/Humanities>
+
+Law (Comparative), IQ/H,
+page(B204, FPR18), default(ST:IQ - 6, SK:Detective!)
+
+[TEMPLATES]
+
+<Portal Realms, Meta-Traits, Meta-Traits - Portal Realms>
+
+Transmundane,
+displaycost(20), page(FPR18), owns(yes), hides(yes),
+description(Cost assumes character has High TL 5.),
+adds(_
+    AD:Charisma = 1,
+    DI:Mundane Background,
+    %TLDifferenceAlias%_
+),
+x(_
+    #CHOICELIST(_
+        name(TLDifference),
+        title(Tech Level Difference),
+        text(_
+            Pick one trait to represent the difference between the _
+            character's Tech Level and the reference society's Tech Level._
+        ),
+        default(8),
+        picksallowed(1),
+        method(bynumber),
+        list(_
+            High TL 12,
+            High TL 11,
+            High TL 10,
+            High TL 9,
+            High TL 8,
+            High TL 7,
+            High TL 6,
+            High TL 5,
+            High TL 4,
+            High TL 3,
+            High TL 2,
+            High TL 1,
+            No TL difference,
+            Low TL 1,
+            Low TL 2,
+            Low TL 3,
+            Low TL 4,
+            Low TL 5,
+            Low TL 6,
+            Low TL 7,
+            Low TL 8,
+            Low TL 9,
+            Low TL 10,
+            Low TL 11,
+            Low TL 12_
+        ),
+        aliaslist(_
+            AD:High TL = 12,
+            AD:High TL = 11,
+            AD:High TL = 10,
+            AD:High TL = 9,
+            AD:High TL = 8,
+            AD:High TL = 7,
+            AD:High TL = 6,
+            AD:High TL = 5,
+            AD:High TL = 4,
+            AD:High TL = 3,
+            AD:High TL = 2,
+            AD:High TL = 1,
+            ,
+            DI:Low TL = 1,
+            DI:Low TL = 2,
+            DI:Low TL = 3,
+            DI:Low TL = 4,
+            DI:Low TL = 5,
+            DI:Low TL = 6,
+            DI:Low TL = 7,
+            DI:Low TL = 8,
+            DI:Low TL = 9,
+            DI:Low TL = 10,
+            DI:Low TL = 11,
+            DI:Low TL = 12_
+        ),
+    )_
+)
+
+<Portal Realms, Character Templates, Character Templates - Portal Realms>
+
+Child,
+displaycost(0), page(FPR18),
+description(_
+    You never completely stopped believing in magic, and it turns out you _
+    were right! You've crossed into a new world where legends and fairy _
+    tales are real, and sometimes frightening. But it also gives you more _
+    freedom and more responsibility than children have on Earth, forcing _
+    you and your companions to grow._
+),
+sets(ST:ST = 9, ST:DX = 9, ST:IQ = 9, ST:HT = 11, ST:Will = 11),
+adds(_
+    TE:Transmundane,
+    LA:Language - Native == 2,
+    DI:Pacifism (Reluctant Killer),
+    DI: Social Stigma (Uneducated)_
+),
+creates(_
+    {AD:No Mundane Background, 10},
+    {DI:Math-Shy, -1, gives(=-1 to SK:Mathematics)}_
+),
+select1(_
+    text(Select 20 points of advantages from among these.),
+    multitype(yes),
+    itemswanted(atleast 1),
+    pointswanted(exactly 20),
+    list(_
+        ST:ST #CODES(upto %score+1, downto %score+1),
+        ST:HT #CODES(upto %score+1, downto %score+1),
+        ST:Perception #CODES(upto %score+1, downto %score+1),
+        ST:Basic Move #CODES(upto %score+1, downto %score+1),
+        PE:Advanced Learning,
+        AD:Animal Empathy,
+        AD:Appearance #CODES(upto 3, downto 1)_
+        AD:Daredevil,
+        AD:Fit,
+        AD:Gizmo,
+        AD:Higher Purpose,
+        AD:Magery 0,
+        AD:True Faith,
+        AD:Voice,
+        AD:Charisma_
+    )_
+),
+select2(_
+    text(Select -10 points of disadvantages from among these.),
+    itemswanted(atleast 1),
+    pointswanted(exactly -10),
+    list(_
+        DI:Bad Sight (Nearsighted),
+        DI:Bad Sight (Farsighted),
+        DI:Gluttony,
+        DI:Impulsiveness,
+        DI:Oblivious,
+        DI:Overconfidence,
+        DI:Post-Combat Shakes,
+        DI:Short Attention Span,
+        DI:Shyness #CODES(upto 2, downto 1),
+        DI:Stubbornness,
+        DI:Truthfulness,
+        DI:Xenophilia_
+    )_
+),
+select3(_
+    text(Select three of the following skills.),
+    itemswanted(exactly 3),
+    pointswanted(exactly 3),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Brawling, Hobby Skill ([DX-based]),
+                Hobby Skill ([IQ-based]),
+                Liquid Projector (Squirt Gun), Sewing, Boating (Sailboat),
+                Boating (Unpowered), Climbing, Dancing, Riding (Equines),
+                Sports, Stealth, Throwing, Wrestling, Sleight of Hand,
+                First Aid, Games, Gardening, Housekeeping,
+                Animal Handling, Astronomy (Observational), Fast-Talk,
+                Navigation (Land), Navigation (Sea), Leadership,
+                Public Speaking, Artist (Drawing), Artist (Painting),
+                Musical Instrument, Naturalist, Singing, Swimming,
+                Hiking, Running, Intimidation, Fishing, Scrounging,
+                Mimicry (Animal Sounds), Mimicry (Bird Calls)_
+            ),
+            template(SK:%ListItem% #CODES(upto 1pts, downto 1pts))_
+        )_
+    )_
+)
+
+Explorer,
+displaycost(100), page(FPR19),
+description(_
+    You have skills that let you make your way in a strange land. Exploring _
+    can be a profession, but you may also have gained these skills while _
+    traveling for other reasons — from personal curiosity to a holy _
+    pilgrimage._
+),
+sets(ST:DX = 11, ST:IQ = 11, ST:HT = 11),
+adds(_
+    TE:Transmundane,
+    SK:Gesture = 2pts,
+    SK:Observation = 4pts,
+    SK:First Aid = 1pts,
+    SK:Leadership = 1pts_
+),
+select1(_
+    text(Choose 15 points from among these advantages.),
+    multitype(yes),
+    itemswanted(atleast 1),
+    pointswanted(exactly 15),
+    list(_
+        ST:Perception #CODES(upto 14, downto 12),
+        AD:Absolute Direction #CODES(upto 1, downto 1),
+        AD:Danger Sense,
+        AD:Fearlessness,
+        AD:Fit,
+        AD:Very Fit,
+        AD:Gizmo,
+        AD:Hard to Kill,
+        AD:Language Talent,
+        AD:Sensitive,
+        AD:Empathy_
+    )_
+),
+select2(_
+    text(Choose -10 points from among these disadvantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly -10),
+    list(_
+        DI:Callous,
+        DI:Code of Honor (Gentleman's),
+        DI:Code of Honor (Soldier's),
+        DI:Curious,
+        DI:Honesty,
+        DI:Loner,
+        DI:Overconfidence,
+        DI:Pacifism (Cannot Harm Innocents),
+        DI:Social Stigma (Minority Group),
+        DI:Stubbornness,
+        DI:Xenophilia,
+        #NEWITEM(_
+            DI:Sense of Duty (Fellow Explorers),
+            -5,
+            page(B153),
+            cat(Mundane, Mental)_
+        )_
+    )_
+),
+select3(_
+    text(Choose one Survival specialty.),
+    itemwanted(exactly 1),
+    pointswanted(exactly 8),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Arctic, Desert, Island/Beach, Jungle, Mountain, Plains,
+                Swampland, Woodlands_
+            ),
+            template(SK:Survival (%ListItem%) #CODES(upto 8pts, downto 8pts))_
+        )_
+    )_
+),
+select4(_
+    text(Choose one specialty of Navigation.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 2),
+    list(_
+        SK:Navigation (Land) #CODES(upto 2pts, downto 2pts),
+        SK:Navigation (Sea) #CODES(upto 2pts, downto 2pts)_
+    )_
+),
+select5(_
+    text(Select one secondary skill.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 4),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Anthropology, Diplomacy, Geography (Earthlike),
+                Geography (Political), Linguistics, Mathematics (Surveying),
+                Naturalist, Psychology, Sociology, Body Language_
+            ),
+            template(SK:%ListItem% #CODES(upto 4pts, downto 4pts))_
+        ),
+        #NEWITEM(_
+            SK:Surgery (Field-Expedient), IQ/VH, tl(0-12), page(B223),
+            cat(_General, Medical),
+            needs(SK:First Aid = 1pts | SK:Physician = 1pts),
+            default(_
+                SK:First Aid - 12, SK:Physician - 5, SK:Physiology - 8,
+                SK:Veterinary - 5_
+            )_
+        ) #CODES(upto 4pts, downto 4pts)_
+    )_
+),
+select6(_
+    text(Select one of these background skills.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 1),
+    list(_
+        SK:Cartography #CODES(upto 1pts, downto 1pts),
+        SK:Writing #CODES(upto 1pts, downto 1pts)_
+    )_
+),
+select7(_
+    text(Select one of these background skills.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 1),
+    list(_
+        SK:Boating (Sailboat) #CODES(upto 1pts, downto 1pts),
+        SK:Boating (Unpowered) #CODES(upto 1pts, downto 1pts),
+        SK:Riding (%beast%) #CODES(upto 1pts, downto 1pts),
+        SK:Stealth #CODES(upto 1pts, downto 1pts),
+    )_
+),
+select8(_
+    text(Select one of these background skills.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 1),
+    list(_
+        SK:Leatherworking #CODES(upto 1pts, downto 1pts),
+        SK:Sewing #CODES(upto 1pts, downto 1pts),
+        SK:Carpentry #CODES(upto 1pts, downto 1pts),
+        SK:Masonry #CODES(upto 1pts, downto 1pts),
+    )_
+)
+
+Mage-To-Be,
+displaycost(90), page(FPR20), sets(ST:IQ = 12),
+description(_
+    At the start of the campaign, you're unaware of your magical capabilities _
+    — life on Earth hasn't given them a chance to manifest themselves._
+),
+adds(AD:Magery 0, TE:Transmundane, SK:Research = 4pts),
+select1(_
+    text(Select 30 points from the following advantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly 30),
+    multitype(yes),
+    list(_
+        ST:IQ #CODES(upto 13, downto 13),
+        AD:Eidetic Memory #CODES(upto 1, downto 1),
+        AD:Language Talent,
+        AD:Magery,
+        AD:Single-Minded,
+        AD:Visualization,
+        AD:Wild Talent_
+    )_
+),
+select2(_
+    text(Select -15 points from the following disadvantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly -15),
+    list(_
+        DI:Absent-Mindedness,
+        DI:Clueless,
+        DI:Code of Honor (Professional),
+        DI:Nightmares,
+        DI:Oblivious,
+        DI:Overconfidence,
+        DI:Pacifism (Reluctant Killer),
+        DI:Post-Combat Shakes,
+        DI:Weirdness Magnet,
+        DI:Workaholic,
+        DI:Xenophilia_
+    )_
+),
+select3(_
+    text(Select one primary/secondary skill.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 4),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Anthropology, Archaeology, Computer Programming,
+                Mathematics (Pure), Philosophy, Theology_
+            ),
+            template(SK:%ListItem% #CODES(upto 4pts, downto 4pts))_
+        )_
+    )_
+),
+select4(_
+    text(Select one background skill.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 2),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Sleight of Hand, Occultism, Poetry, Fortune-Telling,
+                Artist, Cryptography, Religious Ritual, Dreaming,
+                Meditation, Esoteric Medicine_
+            ),
+            template(SK:%ListItem% #CODES(upto 2pts, downto 2pts))_
+        )_
+    )_
+)
+
+Outcast,
+displaycost(100), page(FPR20), sets(ST:DX = 11, ST:IQ = 11),
+description(_
+    You left Earth because you had to: powerful enemies were closing in on _
+    you, and flight to an unknown world was less daunting than what they _
+    intended if they caught you. You have a variety of skills suited to _
+    hiding, fleeing, acquiring resources, and protecting yourself _
+    inconspicuously._
+),
+adds(_
+    TE:Transmundane,
+    SK:Holdout = 4pts,
+    SK:Stealth = 4pts,
+    SK:Acting = 2pts,
+    SK:Observation = 2pts,
+    SK:Scrounging = 1pts_
+),
+select1(_
+    text(Choose a detection ability.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 15),
+    multitype(yes),
+    list(_
+        ST:Perception #CODES(upto 14, downto 14),
+        AD:Danger Sense,
+        AD:Empathy_
+    )_
+),
+select2(_
+    text(Select 15 points from the following advantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly 15),
+    multitype(yes),
+    list(_
+        ST:Perception #CODES(upto 14, downto 14),
+        AD:Danger Sense,
+        AD:Empathy,
+        AD:Absolute Direction #CODES(upto 1, downto 1),
+        AD:Combat Reflexes,
+        AD:Fearlessness,
+        AD:Fit,
+        AD:Very Fit,
+        AD:Flexibility #CODES(upto 1, downto 1),
+        AD:Hard to Subdue,
+        AD:Language Talent,
+        AD:Indomitable,
+        #NEWITEM(_
+            AD:Resistant to Influence Skills, 15,
+            mods(Resistant), page(B80),
+            cat(Mundane, Physical, Mundane Physical),
+            initmods(#REF Degree: +3 to HT rolls to resist from Resistant)_
+        )_
+    )_
+),
+select3(_
+    text(Select -15 points from among these disadvantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly -15),
+    list(_
+        DI:Bloodlust,
+        DI:Charitable,
+        DI:Code of Honor (Pirate's),
+        DI:Code of Honor (Gentleman's),
+        DI:Code of Honor (Soldier's),
+        DI:Flashbacks,
+        DI:Nightmares,
+        DI:One Eye,
+        DI:Pacifism (Cannot Harm Innocents),
+        DI:Pacifism (Self-Defense Only),
+        #NEWITEM(_
+            DI:Chronic Pain (Old Wound), -5/-10/-15, upto(3),
+            mods(Chronic Pain), levelnames(Mild, Severe, Agonizing),
+            page(B126), cat(Mundane, Physical, Mundane Physical),
+            initmods(#REF Interval: 2 hours from Chronic Pain)_
+        )_
+    )_
+),
+select4(_
+    text(Select one primary combat skill.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 4),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Brawling, Garrote, Guns (Pistol), Knife,
+                Liquid Projector (Sprayer), Thrown Weapon (Knife),
+                Thrown Weapon (Shuriken), Thrown Weapon (Stick), Shortsword,
+                Throwing, Blowpipe, Sling_
+            ),
+            template(SK:%ListItem% #CODES(upto 4pts, downto 4pts))_
+        )_
+    )_
+),
+select5(_
+    text(Select one travel skill.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 2),
+    list(_
+        SK:Hiking #CODES(upto 2pts, downto 2pts),
+        SK:Running #CODES(upto 2pts, downto 2pts)_
+    )_
+),
+select6(_
+    text(Select one secondary skill.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 2),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Fast-Talk, Soldier, Streetwise, Diplomacy, Forgery,
+                Intelligence Analysis, Psychology_
+            ),
+            template(SK:%ListItem% #CODES(upto 2pts, downto 2pts))_
+        )_
+    )_
+),
+select7(_
+    text(Select one additional combat skill.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 2),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Brawling, Garrote, Guns (Pistol), Knife,
+                Liquid Projector (Sprayer), Thrown Weapon (Knife),
+                Thrown Weapon (Shuriken), Thrown Weapon (Stick), Shortsword,
+                Throwing, Blowpipe, Sling, Fast-Draw (Knife),
+                Fast-Draw (Pistol), Fast-Draw (Sword), Wrestling, Judo,
+                Karate_
+            ),
+            template(SK:%ListItem% #CODES(upto 2pts, downto 2pts))_
+        )_
+    )_
+),
+select8(_
+    text(Select two background skills.),
+    itemswanted(exactly 2),
+    pointswanted(exactly 2),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Escape, First Aid, Administration, Disguise, Merchant,
+                Research, Traps, Expert Skill (Military Science),
+                Expert Skill (Political Science), Body Language,
+                Survival (Radioactive Wasteland), Survival (Arctic),
+                Survival (Desert), Survival (Island/Beach), Survival (Jungle),
+                Survival (Mountain), Survival (Plains), Survival (Swampland),
+                Survival (Woodlands), Survival (Bank),
+                Survival (Deep Ocean Vent), Survival (Fresh-Water Lake),
+                Survival (Open Ocean), Survival (Reef),
+                Survival (River/Stream), Survival (Salt-Water Sea),
+                Survival (Tropical Lagoon)_
+            ),
+            template(SK:%ListItem% #CODES(upto 1pts, downto 1pts))_
+        ),
+        #NEWITEM(_
+            SK:Expert Skill (Conspiracy Theory), IQ/H, page(B193),
+            cat(Knowledge)_
+        )_
+    )_
+)
+
+Savior,
+displaycost(175), page(FPR21),
+description(_
+    Your journey brought you to a world in peril, which you chose to help. _
+    More than just an adventurer, you're a leader, able to bring people _
+    together in a time of struggle. To those you lead, it seems that you were _
+    sent to them by some higher power._
+),
+sets(ST:DX = 12, ST:IQ = 12, ST:HT = 12),
+adds(_
+    AD:Destiny = 1,
+    TE:Transmundane,
+    SK:Diplomacy = 8pts,
+    SK:Leadership = 4pts_
+),
+select1(_
+    text(Select 20 points of additional attribute levels or talents.),
+    itemswanted(atleast 1),
+    pointswanted(exactly 20),
+    multitype(yes),
+    list(_
+        ST:ST #CODES(upto 12, downto 12),
+        ST:DX #CODES(upto 13, downto 13),
+        ST:IQ #CODES(upto 13, downto 13),
+        ST:Will #CODES(upto 16, downto 16),
+        #BUILDLIST(_
+            list(_
+                Animal Friend, Artificer, Business Acumen, Gifted Artist,
+                Green Thumb, Healer, Mathematical Ability, Musical Ability,
+                Outdoorsman, Smooth Operator, _New Talent_
+            ),
+            template(AD:%ListItem%)_
+        )_
+    )_
+),
+select2(_
+    text(Select 25 points from among these advantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly 25),
+    list(_
+        AD:Blessed (The King's Two Bodies),
+        AD:Combat Reflexes,
+        AD:Fearlessness,
+        AD:Higher Purpose,
+        AD:Language Talent,
+        AD:Patron,
+        AD:Reawakened,
+        AD:Indomitable,
+        AD:Sensitive,
+        AD:Empathy,
+        AD:True Faith,
+        AD:Voice,
+        AD:Weapon Master #CODES(upto 1, downto 1),
+        AD:Charisma,
+        AD:Destiny #CODES(upto 3, downto 2),
+        #NEWITEM(_
+            AD:Resistant to Influence Skills, 15,
+            mods(Resistant), page(B80),
+            cat(Mundane, Physical, Mundane Physical),
+            initmods(#REF Degree: +3 to HT rolls to resist from Resistant)_
+        )_
+    )_
+),
+select3(_
+    text(Choose a primary disadvantage.),
+    itemswanted(exactly 1),
+    pointswanted(exactly -15),
+    list(_
+        DI:Charitable,
+        DI:Fanaticism,
+        #NEWITEM(_
+            DI:Sense of Duty (Humanity), -15, page(B153),
+            cat(Mundane, Mental, Mundane Mental),
+            conditional(_
+                =+2 to ST:Reaction when "in dangerous situations if Sense of _
+                Duty is known"_
+            )_
+        )_
+    )_
+),
+select4(_
+    text(Select -15 points from these disadvantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly -15),
+    list(_
+        DI:Code of Honor (Professional),
+        DI:Code of Honor (Gentleman's),
+        DI:Code of Honor (Soldier's),
+        DI:Compulsive Generosity,
+        DI:Overconfidence,
+        DI:Pacifism (Cannot Harm Innocents),
+        DI:Pacifism (Self-Defense Only),
+        DI:Post-Combat Shakes,
+        DI:Workaholic,
+        #NEWITEM(_
+            DI:Chronic Pain (Old Wound), -5/-10/-15, upto(3),
+            mods(Chronic Pain), levelnames(Mild, Severe, Agonizing),
+            page(B126), cat(Mundane, Physical, Mundane Physical),
+            initmods(#REF Interval: 2 hours from Chronic Pain)_
+        )_
+    )_
+),
+select5(_
+    text(Select two primary skills.),
+    itemswanted(exactly 2),
+    pointswanted(exactly 8),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Administration, Politics, Propaganda, Teaching,
+                Law (Comparative), Religious Ritual, Shiphandling (Ship),
+                Strategy (Air), Strategy (Interstellar), Strategy (Land),
+                Strategy (Naval), Strategy (Space)_
+            ),
+            template(SK:%ListItem% #CODES(upto 4pts, downto 4pts))_
+        )_
+    )_
+),
+select6(_
+    text(Select two secondary skills.),
+    itemswanted(exactly 2),
+    pointswanted(exactly 8),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Economics, Expert Skill (Military Science),
+                Expert Skill (Political Science), Finance,
+                Intelligence Analysis, Mathematics (Surveying),
+                Philosophy, Psychology, Tactics, Theology, Detect Lies_
+            ),
+            template(SK:%ListItem% #CODES(upto 4pts, downto 4pts))_
+        )_
+    )_
+),
+select7(_
+    text(Select five background skills.),
+    itemswanted(exactly 5),
+    pointswanted(exactly 5),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Riding (%beast%), First Aid, Masonry, Seamanship,
+                Navigation (Sea), Soldier, Carousing, Hiking_
+            ),
+            template(SK:%ListItem% #CODES(upto 1pts, downto 1pts))_
+        ),
+        #GROUPLIST(_
+            GR:Melee Weapon Skill, append(#CODES(upto 1pts, downto 1pts))_
+        ),
+        #GROUPLIST(_
+            GR:ShieldSkill, append(#CODES(upto 1pts, downto 1pts))_
+        ),
+        #GROUPLIST(_
+            GR:Ranged Weapon Skill, append(#CODES(upto 1pts, downto 1pts))_
+        )_
+    )_
+)
+
+Trader,
+displaycost(125), page(FPR21),
+description(_
+    You have access to a portal that lets you make repeated journeys between _
+    Earth and a portal realm, and you exploit this to carry goods back and _
+    forth to earn a profit. You've done this often enough that you're _
+    knowledgeable about the portal realm: you know the geography, the _
+    culture, and a language of one of its societies, and you fully accept _
+    the supernatural as real. Your ventures have earned you a measure of _
+    wealth, and you display enough of it to be treated with respect._
+),
+sets(ST:IQ = 11, ST:HT = 12),
+adds(_
+    AD:Business Acumen = 1,
+    CU:Cultural Familiarity,
+    LA:Language = 2,
+    TE:Transmundane,
+    AD:Wealth = 2,
+    SK:Administration = 2pts,
+    SK:Merchant = 4pts,
+    SK:Diplomacy = 4pts,
+    SK:Finance = 2pts,
+    SK:Accounting = 1pts,
+    SK:Area Knowledge ([Area])_
+),
+creates({AD:No Mundane Background, 10}),
+select1(_
+    text(Select 15 points from these advantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly 15),
+    list(_
+        AD:Absolute Direction #CODES(upto 1, downto 1),
+        AD:Business Acumen #CODES(upto 2, downto 2),
+        AD:Fashion Sense,
+        AD:Gizmo,
+        AD:Language Talent,
+        AD:Voice,
+        AD:Status,
+        AD:Wealth #CODES(upto 3, downto 3),
+        #NEWITEM(_
+            AD:Claim to Hospitality (Portal-realm trade partners), 5,
+            page(B41), cat(Mundane, Social, Mundane Social),
+            conditional(_
+                =+3 to ST:Reaction when "among portal-realm trade partners"_
+            )_
+        ),
+        #NEWITEM(_
+            AD:Reputation (Pay your debts), 5/10, mods(Reputation Advantage),
+            page(B27), upto(4),
+            cat(Mundane, Social, Influence, Mundane Social),
+            initmods(_
+                #REF People affected: Almost everyone in your game world _
+                from Reputation Advantage_
+            ),
+            conditional(_
+                +1 to ST:Reaction,
+                +1 to SK:Intimidation when "your reputation counts",
+                -1 to SK:Intimidation when "your reputation works against you"_
+            )_
+        ),
+        #NEWITEM(_
+            AD:Resistant to Influence Skills, 15,
+            mods(Resistant), page(B80),
+            cat(Mundane, Physical, Mundane Physical),
+            initmods(#REF Degree: +3 to HT rolls to resist from Resistant)_
+        ),
+        #NEWITEM(_
+            AD:Unusual Background (Exotic Goods), 5,
+            page(B96), cat(Mundane, Mental, Mundane Mental)_
+        )_
+    )_
+),
+select2(_
+    text(Select -15 points from these disadvantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly -15),
+    list(_
+        DI:Code of Honor (Professional),
+        DI:Discipline of Faith (Ritualism),
+        DI:Gluttony,
+        DI:Greed,
+        DI:Honesty,
+        DI:Miserliness,
+        DI:Obsession,
+        DI:Overconfidence,
+        DI:Pacifism (Reluctant Killer),
+        DI:Pacifism (Cannot Harm Innocents),
+        DI:Pacifism (Cannot Kill),
+        DI:Pacifism (Self-Defense Only),
+        DI:Post-Combat Shakes,
+        DI:Selfish,
+        DI:Workaholic,
+        #NEWITEM(_
+            DI:Secret (Trade Route), -5, page(B152),
+            levelnames(Serious Embarrassment)_
+        ),
+        #NEWITEM(_
+            DI:Sense of Duty (Employees), -5, page(B153),
+            conditional(_
+                =+2 to ST:Reaction when "in dangerous situations if Sense of _
+                Duty is known"_
+            )_
+        )_
+    )_
+),
+select3(_
+    text(Select one goods-related skill.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 2),
+    list(_
+        SK:Freight Handling #CODES(upto 2pts, downto 2pts),
+        SK:Packing #CODES(upto 2pts, downto 2pts)_
+    )_
+),
+select4(_
+    text(Select one secondary skill.),
+    itemswanted(exactly 1),
+    pointswanted(exactly 2),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Riding (%beast%), Connoisseur, Fast-Talk, Holdout,
+                Navigation (Land), Navigation (Sea), Smuggling, Leadership,
+                Public Speaking, Propaganda, Body Language_
+            ),
+            template(SK:%ListItem% #CODES(upto 2pts, downto 2pts))_
+        ),
+        #NEWITEM(SK:Law (Commercial), IQ/H, page(B204)) _
+            #CODES(upto 2pts, downto 2pts)_
+    )_
+),
+select5(_
+    text(Select two background skills.),
+    itemswanted(exactly 2),
+    pointswanted(exactly 2),
+    list(_
+        #BUILDLIST(_
+            list(_
+                Current Affairs (Business), First Aid,
+                Savoir-Faire (High Society), Savoir-Faire (Servant),
+                Cartography, Speed-Reading, Teaching, Weather Sense,
+                Writing, Psychology, Economics, Carousing_
+            ),
+            template(SK:%ListItem% #CODES(upto 1pts, downto 1pts))_
+        ),
+        #NEWITEM(_
+            SK:Heraldry (Makers' Marks), IQ/A, page(B199),
+            default(IQ - 5, SK:Savoir-Faire (High Society) - 3)_
+        )_
+    )_
+)
+
+<Portal Realms, Lenses - Portal Realms>
+
+Returnee,
+displaycost(0), page(FPR20), adds(AD:Charisma = 1),
+description(_
+    If it's possible to travel to a portal realm, it may be possible to _
+    come back. This lens may be applied to many different character types._
+),
+select1(_
+    text(Select 15 points from these advantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly 15),
+    list(_
+        AD:Fit,
+        AD:Higher Purpose,
+        AD:Reawakened,
+        AD:Unusual Background,
+        AD:Zeroed,
+        AD:Charisma_
+    )_
+),
+select2(_
+    text(Do others know about your experiences?),
+    itemswanted(exactly 1),
+    pointswanted(exactly -5),
+    list(_
+        DI:Delusion #CODES(upto 1, downto 1),
+        DI:Secret #CODES(upto 1, downto 1)_
+    )_
+),
+select3(_
+    text(Choose -15 points from these disadvantages.),
+    itemswanted(atleast 1),
+    pointswanted(exactly -15),
+    list(_
+        DI:Low TL,
+        DI:Nightmares,
+        DI:Vow,
+        DI:Weirdness Magnet,
+        DI:Secret #CODES(upto 3, downto 2),
+        #NEWITEM(_
+            DI:Obsession (Return to portal realm), -5/-10,
+            page(B164, FPR20), mods(Self-Control),
+            levelnames(Short-Term Goal, Long-Term Goal), upto(2),
+            cat(Mundane, Mental, Mundane Mental),
+            initmods(_
+                #REF You resist on a roll of 12 or less (quite often) _
+                from Self-Control_
+            )_
+        ) #CODES(upto 2, downto 2)_
+    )_
+)

@@ -1,0 +1,74 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "GCA",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -- ${workspaceFolder}\\apps\\gca\\src\\index.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "GCA (Zod Type Generation)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -- ${workspaceFolder}\\apps\\gca\\src\\trait\\sections\\_generate.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "GCA (Trait Parser)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -- ${workspaceFolder}\\apps\\gca\\src\\trait\\parser\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "churchill",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -- ${workspaceFolder}\\packages\\churchill\\src\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "churchill/color",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -- ${workspaceFolder}\\packages\\churchill\\src\\color\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "utils",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -- ${workspaceFolder}\\packages\\utils\\src\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    }
+  ]
+}
