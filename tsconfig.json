@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Default",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "inlineSources": false,
+    "isolatedModules": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "preserveWatchOutput": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmitOnError": false,
+    "target": "ESNext",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    
+    "baseUrl": ".",
+    "paths": {
+      "@december/utils": ["./packages/utils/src"],
+      "@december/utils/*": ["./packages/utils/src/*"],
+      "@december/logger": ["./packages/logger/src"],
+      "@december/logger/*": ["./packages/logger/src/*"]
+    }
+  },
+  "exclude": ["node_modules"],
+  "include": ["packages/*/src/**/*", "apps/*/src/**/*"]
+}

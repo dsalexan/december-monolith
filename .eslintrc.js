@@ -38,7 +38,7 @@ module.exports = {
     JQuery: true,
   },
 
-  extends: [`eslint:recommended`, `plugin:prettier/recommended`, `plugin:@typescript-eslint/recommended`, `@typhonjs-fvtt/eslint-config-foundry.js`],
+  extends: [`eslint:recommended`, `plugin:prettier/recommended`, `plugin:@typescript-eslint/recommended`, `plugin:import/typescript`, `@typhonjs-fvtt/eslint-config-foundry.js`],
 
   parser: `@typescript-eslint/parser`,
 
@@ -82,5 +82,11 @@ module.exports = {
     "@typescript-eslint/require-await": [`off`],
     "@typescript-eslint/restrict-template-expressions": [`off`],
     "@typescript-eslint/no-unused-vars": [`warn`],
+  },
+
+  settings: {
+    "import/resolver": {
+      typescript: true,
+    },
   },
 }
