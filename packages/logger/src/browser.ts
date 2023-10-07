@@ -1,7 +1,7 @@
 import ILogger from "./interface"
-import { LEVEL_COLOR, LEVEL_PRIORITY, LogLevel } from "./level"
+import { LEVEL_COLOR, LEVEL_COLOR_BROWSER, LEVEL_PRIORITY, LOG_LEVELS, LogLevel } from "./level"
 import Builder, { BuilderOptions } from "./builder"
-import { format } from "date-fns"
+import { formatTimestamp } from "./utils"
 
 export default class BrowserLogger implements ILogger {
   name: string
@@ -17,7 +17,7 @@ export default class BrowserLogger implements ILogger {
   }
 
   builder(options: Partial<BuilderOptions> = {}): Builder {
-    return new Builder(this, { ...options, isBrowser: true })
+    return new Builder(this, { ...options, isBrowser: true, noTimestamp: true })
   }
 
   _level(level: LogLevel) {
@@ -32,10 +32,17 @@ export default class BrowserLogger implements ILogger {
 
   _prefix(level: LogLevel) {
     const timestamp = new Date()
-    const formattedTimestamp = format(timestamp, `yyyy/MM/dd HH:mm:ss`)
+    const formattedTimestamp = formatTimestamp(timestamp, `nice`)
 
-    const prefixText = [`[${formattedTimestamp}]`, `[${this.name}]`, `${level.toLocaleUpperCase()}`]
-    const prefixStyles = [`color: gray`, ``, `color: ${LEVEL_COLOR[level]}`]
+    // const prefixText = [`[${formattedTimestamp}]`, `[${this.name}]`, `${level.toLocaleUpperCase()}`]
+    // const prefixStyles = [`color: gray`, ``, `color: ${LEVEL_COLOR[level]}`]
+
+    const levelColor = LEVEL_COLOR_BROWSER[level]
+
+    const namePadding = Math.max(...LOG_LEVELS.map(level => level.length))
+
+    const prefixText = [`[${this.name}]`, `${level.toLocaleUpperCase().padEnd(namePadding + 0)}`]
+    const prefixStyles = [`color: darkgray;`, `font-weight: bold; color: ${levelColor}`]
 
     return { text: prefixText, style: prefixStyles }
   }
@@ -53,6 +60,16 @@ export default class BrowserLogger implements ILogger {
 
     const prefix = this._prefix(level)
 
-    console[consoleLevel](...prefix.text, ...texts, ...prefix.style, ...styles)
+    const _text = [...prefix.text, ...texts]
+    const _styles = [...prefix.style, ...styles]
+
+    const pText = _text.map(text => `%c${text}`).join(` `)
+
+    let logTab = [`%c`, ``]
+    if (consoleLevel !== `error` && consoleLevel !== `warn`) {
+      logTab = [`%c `, `margin-left: 3.5px; background-color: transparent;`]
+    }
+
+    console[consoleLevel](logTab[0] + pText, ...[logTab[1], ..._styles])
   }
 }

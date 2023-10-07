@@ -4,6 +4,13 @@
   "main": "src/index.ts",
   "author": "dsalexan",
   "license": "MIT",
+  "scripts": {
+    "icons": "node apps/gurps-mobile/scripts/icons.mjs",
+    "start": "node apps/gurps-mobile/server/start.mjs",
+    "build": "node apps/gurps-mobile/server/build.mjs",
+    "foundry": "gulp --gulpfile ./gulpfile.mjs link",
+    "sheet": "node apps/gurps-mobile/server/sheet.mjs"
+  },
   "dependencies": {
     "ansi-styles": "^6.2.1",
     "chalk": "^4.0.0",
@@ -21,6 +28,7 @@
     "zod-to-ts": "^1.2.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.23.0",
     "@league-of-foundry-developers/foundry-vtt-types": "^9.280.0",
     "@types/lodash": "^4.14.197",
     "@types/node": "^17.0.12",

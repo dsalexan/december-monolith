@@ -4,7 +4,7 @@ import path from "node:path"
 
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
-import { MODULE_ID } from "./config/index.js"
+import { MODULE_ID } from "./apps/gurps-mobile/config/index.js"
 import { globSync } from "glob"
 
 import gulp from "gulp"
@@ -16,8 +16,8 @@ import run from "gulp-run"
 /********************/
 
 const name = MODULE_ID
-const sourceDirectory = `./src`
-const distDirectory = `./dist`
+const sourceDirectory = `./apps/${MODULE_ID}/src`
+const distDirectory = `./apps/${MODULE_ID}/dist`
 
 /***************************/
 /*       BUNDLE       */

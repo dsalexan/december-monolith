@@ -10,6 +10,15 @@ export const LEVEL_COLOR = {
   debug: `blue`,
   silly: `magenta`,
 }
+export const LEVEL_COLOR_BROWSER = {
+  error: `#ab1111`,
+  warn: `#8f7111`,
+  info: `black`,
+  data: `green`, // replacing http for npm
+  verbose: `grey`,
+  debug: `blue`,
+  silly: `magenta`,
+}
 
 export const LEVEL_PRIORITY = {
   error: 0,

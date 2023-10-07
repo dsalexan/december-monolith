@@ -1,0 +1,14 @@
+build/
+node_modules/
+package-lock.json
+yarn.lock
+
+src/packages
+
+src/lib/gca/data.js
+src/lib/gca/names.js
+
+apps/**/static/*
+
+apps/**/dist/*
+packages/**/dist/*

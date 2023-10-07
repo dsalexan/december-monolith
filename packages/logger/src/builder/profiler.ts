@@ -10,7 +10,7 @@ function genRandonString(length: number) {
   return result
 }
 
-export class Profiler {
+export default class Profiler {
   builder: Builder
   name: string // identifier to recall profiler later
 

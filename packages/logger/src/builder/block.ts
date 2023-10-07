@@ -11,6 +11,7 @@ export type BlockBuildOptions = {
   style: string[]
   ignoreStyle: boolean
   isBrowser: boolean
+  noTimestamp: boolean
 }
 
 export default class Block {

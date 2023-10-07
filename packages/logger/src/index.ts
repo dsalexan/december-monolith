@@ -1,7 +1,7 @@
 // export { default as WinstonLogger } from "./winston"
-// export { default as BrowserLogger } from "./browser"
+export { default as BrowserLogger } from "./browser"
 
-export { default as Builder } from "./builder"
+export { default as Builder } from "./builder/index"
 export type { BuilderOptions as BuilderOptions } from "./builder"
 
 export { default as paint } from "./paint"

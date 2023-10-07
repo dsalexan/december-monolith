@@ -8,7 +8,6 @@ import { isNil, isNilOrEmpty, isString } from "../utils"
 
 export type BuilderOptions = {
   isBrowser: boolean
-  noTimestamp: boolean
   colorize: boolean
   separator: string
   tab: {
@@ -49,7 +48,6 @@ export default class Builder {
   getDefaultOptions(options: Partial<BuilderOptions> = {}): BuilderOptions {
     return {
       isBrowser: options.isBrowser ?? false,
-      noTimestamp: options.noTimestamp ?? false,
       colorize: options.colorize ?? true,
       separator: options.separator ?? ` `,
       tab: {
@@ -194,7 +192,7 @@ export default class Builder {
     const string = [] as string[]
     const css = [] as string[]
     for (const block of blocks) {
-      const { text, style } = block._buildForBrowser({ ignoreStyle: !this.options.colorize, noTimestamp: this.options.noTimestamp })
+      const { text, style } = block._buildForBrowser({ ignoreStyle: !this.options.colorize })
 
       if (isNilOrEmpty(text) && isNilOrEmpty(style)) continue
 
