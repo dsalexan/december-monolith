@@ -56,7 +56,7 @@ export default class Mobile extends Module {
   // #region FOUNDRY
 
   onInit() {
-    logger.add(`Initializing module...`).info()
+    logger.add(`Initializing module `, paint.bold(MODULE_ID), ` ...`).info()
 
     // Assign custom classes and constants here
 
@@ -75,7 +75,7 @@ export default class Mobile extends Module {
   }
 
   onReady() {
-    if (!this.isScreenMobile()) return logger.add(paint.bold(`Skipping`), `Mobile wrapping (screen > mobile)`).info()
+    if (!this.isScreenMobile()) return logger.add(paint.bold(`Skipping`), ` Mobile wrapping (screen > mobile)`).info()
     if (!this.isAllowed()) return logger.add(`Mobile wrapping `, paint.bold.hex(`#e00000`)(`not allowed`), ` on settings`).info()
 
     logger.add(`Mobile `, paint.green.bold(`ready`), `!`).info()

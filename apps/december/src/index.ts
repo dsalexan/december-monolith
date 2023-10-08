@@ -3,7 +3,7 @@ import { get as lodashGet } from "lodash"
 import { Module, Actor } from "@december/foundry"
 import { isNilOrEmpty } from "@december/utils"
 
-import logger from "./logger"
+import logger, { paint } from "./logger"
 import { MODULE_ID } from "../config"
 import { TemplatePreloader } from "./handlebars"
 import { Toolbox } from "./toolbox"
@@ -57,7 +57,7 @@ export default class December extends Module {
   // #region FOUNDRY
 
   onInit() {
-    logger.add(`Initializing module...`).info()
+    logger.add(`Initializing module `, paint.bold(MODULE_ID), ` ...`).info()
 
     // Assign custom classes and constants here
 

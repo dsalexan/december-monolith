@@ -1,7 +1,8 @@
 import { Module } from "@december/foundry"
 
-import loggerFactory from "../logger"
+import loggerFactory, { paint } from "../logger"
 import December from ".."
+import { MODULE_ID } from "../../config"
 
 const logger = loggerFactory.child(`toolbox`)
 
@@ -46,7 +47,7 @@ export class Toolbox extends Module {
 
   // FOUNDRY EVENTS
   onInit() {
-    logger.add(`Initializing module...`).info()
+    logger.add(`Initializing module `, paint.bold(`${MODULE_ID}/toolbox`), ` ...`).info()
   }
 
   onReady() {

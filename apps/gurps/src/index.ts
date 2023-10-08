@@ -1,11 +1,16 @@
+import "./styles/index.scss"
+
 import { set, get } from "local-storage"
+import { isString } from "lodash"
 
 import { Module, Types } from "@december/foundry"
 
-import logger from "./logger"
+import logger, { paint } from "./logger"
 import { MODULE_ID } from "../config"
+
+import { ExtendManeuvers } from "./maneuvers"
+
 import { GurpsActor } from "gurps/module/actor"
-import { isString } from "lodash"
 
 export default class GURPS4eGameAid extends Module {
   HOST_MODULE_ID: string
@@ -33,7 +38,7 @@ export default class GURPS4eGameAid extends Module {
   }
 
   onInit() {
-    logger.add(`Initializing module...`).info()
+    logger.add(`Initializing module extension `, paint.bold(MODULE_ID), ` ...`).info()
     // here is executed AFTER onGurpsInit, so it wouldnt be much of a initialization
     //    since "gurps" run before "gurps-mobile", which is just interestings
   }
@@ -59,8 +64,8 @@ export default class GURPS4eGameAid extends Module {
     // GURPS.ICONS = GURPSIcons as Record<string, string>
     GURPS._cache = {}
 
-    // if (this.HOST_MODULE_ID === undefined) throw new Error(`[${MODULE_ID}] GURPS 4e Game Aid (Extension) needs a host module to attach itself (HOST_MODULE_ID is empty)`)
-    // else ExtendManeuvers(this.HOST_MODULE_ID)
+    if (this.HOST_MODULE_ID === undefined) throw new Error(`[${MODULE_ID}] GURPS 4e Game Aid (Extension) needs a host module to attach itself (HOST_MODULE_ID is empty)`)
+    else ExtendManeuvers(this.HOST_MODULE_ID)
 
     this.remap()
   }

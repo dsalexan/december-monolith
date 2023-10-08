@@ -1,87 +1,19 @@
-import logger from "../logger"
+export const GENERAL_MANEUVERS = [`do_nothing`, `move`, `ready`, `wait`, `concentrate`, `change_posture`] as const
+export type GeneralManeuver = (typeof GENERAL_MANEUVERS)[number]
 
-// import Icons from "./icons.mjs"
-const Icons = {} as any
+export const AGGRESSIVE_MANEUVERS = [`evaluate`, `aim`, `feint`, `attack`, `move_and_attack`] as const
+export type AggressiveManeuver = (typeof AGGRESSIVE_MANEUVERS)[number]
 
-/**
- *
- */
-function remakeManeuvers(moduleID: string) {
-  const filepath = `modules/${moduleID}/icons/maneuvers/`
+export const ALLOUT_ATTACK_MANEUVERS = [`allout_attack`, `aoa_determined`, `aoa_double`, `aoa_feint`, `aoa_strong`, `aoa_suppress`] as const
+export type AllOutAttackManeuver = (typeof ALLOUT_ATTACK_MANEUVERS)[number]
 
-  const maneuvers = GURPS.Maneuvers._maneuvers
-  for (const [name, maneuver] of Object.entries(maneuvers)) {
-    const _icons = Icons[name]
-    const iconArray = Array.isArray(_icons) ? _icons : [_icons]
+export const ALLOUT_DEFENSE_MANEUVERS = [`allout_defense`, `aod_block`, `aod_dodge`, `aod_parry`, `aod_double`, `aod_mental`] as const
+export type AllOutDefenseManeuver = (typeof ALLOUT_DEFENSE_MANEUVERS)[number]
 
-    let iconName = undefined as string | undefined
-    if (name === `do_nothing`) iconName = `man-do-nothing`
-    else if (name === `move`) iconName = `man-move`
-    else if (name === `aim`) iconName = `man-aim`
-    // all out attack
-    else if (name === `allout_attack`) iconName = `man-allout-attack`
-    else if (name === `aoa_determined`) iconName = `man-aoa-determined`
-    else if (name === `aoa_double`) iconName = `man-aoa-double`
-    else if (name === `aoa_feint`) iconName = `man-aoa-feint`
-    else if (name === `aoa_strong`) iconName = `man-aoa-strong`
-    // all out defense
-    else if (name === `allout_defense`) iconName = `man-allout-defense`
-    else if (name === `aod_block`) iconName = `man-aod-block`
-    else if (name === `aod_dodge`) iconName = `man-aod-dodge`
-    else if (name === `aod_parry`) iconName = `man-aod-parry`
-    else if (name === `aod_double`) iconName = `man-aod-double`
-    else if (name === `aod_mental`) iconName = `man-aod-mental`
-    //
-    else if (name === `attack`) iconName = `man-attack`
-    else if (name === `concentrate`) iconName = `man-concentrate`
-    else if (name === `evaluate`) iconName = `man-evaluate`
-    else if (name === `feint`) iconName = `man-feint`
-    else if (name === `move_and_attack`) iconName = `man-move-and-attack`
-    else if (name === `ready`) iconName = `man-ready`
-    else if (name === `wait`) iconName = `man-wait`
+export const ALLOUT_MANEUVERS = [`allout_concentrate`, ...ALLOUT_ATTACK_MANEUVERS, ...ALLOUT_DEFENSE_MANEUVERS] as const
+export type AllOutManeuvers = (typeof ALLOUT_MANEUVERS)[number]
 
-    if (iconName === undefined) {
-      logger.add(`No icon name provided for "${name}" override, skipping...`).warn()
-    } else {
-      // @ts-ignore
-      maneuver._data.icon = `${filepath}${iconName}.png`
-      // maneuver._data.icons = iconArray.map((_, index) => `${filepath}${iconName}${index === 0 ? `` : `-` + index.toString()}.png`)
-    }
-  }
-}
+export const MANEUVERS = [...GENERAL_MANEUVERS, AGGRESSIVE_MANEUVERS] as const
+export type Maneuver = GeneralManeuver | AggressiveManeuver | AllOutManeuvers
 
-/**
- *
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-function hijackManeuvers() {}
-
-/**
- *
- */
-export default function (moduleID: string) {
-  remakeManeuvers(moduleID)
-
-  // hijack "Maneuvers" class exported from actor/maneuvers.js in gurps
-  // token.js
-  // Hooks.on(`hooks:before:createToken`, function (...args) {
-  //   console.log(`a hook for create token is to be registered`, Hooks._hooks.createToken, `x`, ...args)
-  // })
-
-  // Hooks.on(`hooks:on:createToken`, function (hook, fn) {
-  //   if (fn.includes(`async _createToken(`) && fn.includes(`/** @type {GurpsActor} */ (token.actor)`)) {
-  //     const index = Hooks._hooks.createToken.indexOf(fn => fn === fn)
-  //     const method = Hooks._hooks.createToken[index]
-
-  //     console.log(`a hook for create token was registered`, Hooks._hooks.createToken, `x`, fn, `@`, fn)
-  //   }
-  // })
-
-  // const GurpsToken = CONFIG.Token.objectClass
-  // const original_drawEffects = GurpsToken.drawEffects
-
-  // GurpsToken.drawEffects = (...args) => original_drawEffects.call({ Maneuvers: `kkkk` }, ...args)
-
-  // const hooks = Hooks._hooks.createToken
-  // for (let f of Hooks._hooks.createToken.filter(f => f.toString().includes(`createEmbeddedDocuments("Drawing"`))) Hooks.off(`preUpdateToken`, f)
-}
+export { default as ExtendManeuvers } from "./extend"

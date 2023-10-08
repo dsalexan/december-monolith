@@ -1,6 +1,7 @@
 import { Module } from "@december/foundry"
-import logger from "../logger"
+import logger, { paint } from "../logger"
 import { TemplatePreloader } from "./handlebars"
+import { MODULE_ID } from "../../config"
 
 /**
  * This is the core of the module. A static class responsible for registering events and shit
@@ -26,7 +27,7 @@ export default class GurpsMobileCore extends Module {
   }
 
   onInit() {
-    logger.add(`Initializing core...`).info()
+    logger.add(`Initializing core `, paint.bold(MODULE_ID), ` ...`).info()
 
     // Assign custom classes and constants here
 

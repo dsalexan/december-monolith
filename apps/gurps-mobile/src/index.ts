@@ -2,11 +2,6 @@
 import "./styles/index.scss"
 
 import { MODULE_ID } from "../config"
-
-import { get } from "lodash"
-
-console.log(`get dsalexan`, get({ a: { b: true } }, `a.b`))
-
 import logger from "./logger"
 
 import December from "@december/december"
@@ -54,7 +49,7 @@ GURPS_MOBILE.onLoad()
 // #region FOUNDRY EVENTS
 Hooks.once(`init`, () => {
   // Initializing modules
-  logger.add(`Module integration initialized`).info()
+  logger.add(`Hooks:once(init) for module integration root`).info()
 })
 
 // #endregion

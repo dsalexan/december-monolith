@@ -3,6 +3,7 @@
 import type { GurpsActor as GURPSActor } from "gurps/module/actor"
 import type { Types } from "@december/foundry"
 import type GURPS4eGameAid from "../../src"
+import { Maneuver } from "./actor/maneuver"
 
 declare global {
   namespace GURPS {
@@ -12,7 +13,7 @@ declare global {
     // let GurpsToken: typeof GURPSToken
 
     // Expose Maneuvers to make them easier to use in modules
-    let Maneuvers: typeof Maneuvers
+    let Maneuvers: typeof Maneuver
 
     // Hack to remember the last Actor sheet that was accessed... for the Modifier Bucket to work
     let LastActor: GURPSActor | null
