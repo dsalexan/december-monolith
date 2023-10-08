@@ -4,8 +4,8 @@ export class TemplatePreloader {
   /**
    * Preload a set of templates to compile and cache them for fast access during rendering
    */
-  static preloadHandlebarsTemplates() {
-    const paths = [`__WEBPACK__ALL_TEMPLATES__`]
+  static preloadHandlebarsTemplates(paths: string[]) {
+    // const paths = [`__WEBPACK__ALL_TEMPLATES__`]
     const templatePaths = paths.filter(path => !path.includes(`partials`))
     const partialPaths = paths.filter(path => path.includes(`partials`))
 

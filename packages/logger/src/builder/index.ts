@@ -36,6 +36,10 @@ export default class Builder {
     this.options = this.getDefaultOptions(options)
   }
 
+  child(name: string, level?: LogLevel): Builder {
+    return this.logger.child(name, level).builder()
+  }
+
   clone() {
     const clone = new Builder(this.logger, this.options)
 

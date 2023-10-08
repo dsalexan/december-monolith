@@ -1,22 +1,31 @@
+import { Module } from "@december/foundry"
 import logger from "../logger"
 import { TemplatePreloader } from "./handlebars"
 
 /**
  * This is the core of the module. A static class responsible for registering events and shit
  */
-export default class GurpsMobileCore {
-  // #region DOM
+export default class GurpsMobileCore extends Module {
+  constructor() {
+    super()
+  }
 
-  static onLoad() {
+  override listen() {
+    super.listen()
+
+    Hooks.on(`init`, this.onInit.bind(this))
+    Hooks.on(`renderTokenHUD`, this.onRenderTokenHUD.bind(this))
+  }
+
+  onLoad() {
+    this.listen()
+
     // window.FeatureFactory = new FeatureFactory()
     // window.GCA = new GCAManager()
     // GurpsMobileToken.onLoad()
   }
 
-  // #endregion
-
-  // #region FOUNDRY
-  static onInit() {
+  onInit() {
     logger.add(`Initializing core...`).info()
 
     // Assign custom classes and constants here
@@ -25,6 +34,7 @@ export default class GurpsMobileCore {
 
     // Preload Handlebars templates
     TemplatePreloader.preloadHandlebarsHelpers()
+    TemplatePreloader.preloadHandlebarsTemplates()
 
     // Define custom Entity classes
     // @ts-ignore
@@ -40,7 +50,7 @@ export default class GurpsMobileCore {
   }
 
   // eslint-disable-next-line no-undef
-  static onRenderTokenHUD(hud: TokenHUD<ApplicationOptions>, html: JQuery<HTMLElement>, token: Token) {
+  onRenderTokenHUD(hud: TokenHUD<ApplicationOptions>, html: JQuery<HTMLElement>, token: Token) {
     // ManeuverHUDButton.replaceOriginalGURPSHUD(hud, html, token)
   }
   // #endregion
@@ -49,5 +59,9 @@ export default class GurpsMobileCore {
   // #endregion
 
   // #region METHODS
+  // #endregion
+
+  // #region DOM
+
   // #endregion
 }

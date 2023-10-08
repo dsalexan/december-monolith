@@ -12,6 +12,7 @@
     "sheet": "node apps/gurps-mobile/server/sheet.mjs"
   },
   "dependencies": {
+    "@billjs/event-emitter": "^1.0.3",
     "ansi-styles": "^6.2.1",
     "chalk": "^4.0.0",
     "crypto-browserify": "^3.12.0",

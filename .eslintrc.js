@@ -36,6 +36,7 @@ module.exports = {
   globals: {
     GURPS: true,
     JQuery: true,
+    $: true,
   },
 
   extends: [`eslint:recommended`, `plugin:prettier/recommended`, `plugin:@typescript-eslint/recommended`, `plugin:import/typescript`, `@typhonjs-fvtt/eslint-config-foundry.js`],

@@ -1,11 +1,17 @@
+import * as Foundry from "@december/foundry"
+
 // import GURPSIcons from "gurps-extension/icons.mjs"
 // import * as CustomIcons from "../assets/icons"
 
 // Through here we register handlebars helpers and snippets SPECIFIC to the module
 
 export class TemplatePreloader {
+  static preloadHandlebarsTemplates() {
+    Foundry.Handlebars.TemplatePreloader.preloadHandlebarsTemplates([`__WEBPACK__ALL_TEMPLATES__`])
+  }
+
   static preloadHandlebarsHelpers() {
-    const a = true
+    Foundry.Handlebars.TemplatePreloader.preloadHandlebarsHelpers()
 
     // Handlebars.registerHelper(`isCustomIcon`, value => !!CustomIcons.SVGS[value])
 

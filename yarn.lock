@@ -201,6 +201,11 @@
     "@babel/helper-validator-identifier" "^7.22.20"
     to-fast-properties "^2.0.0"
 
+"@billjs/event-emitter@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@billjs/event-emitter/-/event-emitter-1.0.3.tgz#60109b8c09b69bf7530bc9f3278ed865a23f2142"
+  integrity sha512-ZvzKYD/Gk9HSq42jCHFlTXb3oJztspH7WTdlVU6WdW3MKk6Jja/wWhxRSpT07aDkU69pqdUl9zx6lpG6/qxO6g==
+
 "@colors/colors@1.5.0":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
