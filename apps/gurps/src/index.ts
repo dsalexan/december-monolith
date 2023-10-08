@@ -108,3 +108,5 @@ export default class GURPS4eGameAid extends Module {
 
   // #endregion
 }
+
+export type { ExtendedGURPSStatic } from "./type"

@@ -1,6 +1,19 @@
-declare namespace GURPS {
-  let __remaped_functions: Record<string, (...args: any[]) => any> | undefined
+import { GURPSStatic } from "gurps"
 
-  let ICONS: Record<string, string>
-  let _cache: Record<string, any>
+import GURPS4eGameAid from "."
+import { ExtendedGURPSStatic } from "./type"
+
+// // eslint-disable-next-line quotes
+// declare module "gurps/actor/maneuver" {
+//   interface Maneuvers {
+//     createManeuver(data: boolean): string
+//   }
+// }
+
+declare global {
+  let GURPS: ExtendedGURPSStatic
+
+  interface Window {
+    GURPS: ExtendedGURPSStatic
+  }
 }

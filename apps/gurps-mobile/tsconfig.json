@@ -5,7 +5,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "module": "commonjs",
-    "typeRoots": ["../../node_modules/@league-of-foundry-developers", "../gurps/types"],
-    "types": ["foundry-vtt-types/index-lenient.d.ts", "cnormand"],
+    "typeRoots": ["../../node_modules/@league-of-foundry-developers", "../../packages/@types"],
+    "types": ["foundry-vtt-types/index-lenient.d.ts", "gurps"],
   }
 }

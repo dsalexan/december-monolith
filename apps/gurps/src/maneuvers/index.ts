@@ -1,3 +1,5 @@
+import { ManeuverName } from "gurps/actor/maneuver"
+
 export const GENERAL_MANEUVERS = [`do_nothing`, `move`, `ready`, `wait`, `concentrate`, `change_posture`] as const
 export type GeneralManeuver = (typeof GENERAL_MANEUVERS)[number]
 
@@ -14,6 +16,6 @@ export const ALLOUT_MANEUVERS = [`allout_concentrate`, ...ALLOUT_ATTACK_MANEUVER
 export type AllOutManeuvers = (typeof ALLOUT_MANEUVERS)[number]
 
 export const MANEUVERS = [...GENERAL_MANEUVERS, AGGRESSIVE_MANEUVERS] as const
-export type Maneuver = GeneralManeuver | AggressiveManeuver | AllOutManeuvers
+export type Maneuver = GeneralManeuver | AggressiveManeuver | AllOutManeuvers | ManeuverName
 
 export { default as ExtendManeuvers } from "./extend"

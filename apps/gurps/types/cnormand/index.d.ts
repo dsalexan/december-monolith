@@ -5,9 +5,13 @@ import type { Types } from "@december/foundry"
 import type GURPS4eGameAid from "../../src"
 import { Maneuver } from "./actor/maneuver"
 
+import _ManeuverHUDButton from "gurps/module/actor/maneuver-button"
+
 declare global {
   namespace GURPS {
     let EXTENSION: GURPS4eGameAid
+
+    let ManeuverHUDButton = _ManeuverHUDButton
 
     let GurpsActor: typeof GURPSActor
     // let GurpsToken: typeof GURPSToken

@@ -2,6 +2,7 @@ import { Module } from "@december/foundry"
 import logger, { paint } from "../logger"
 import { TemplatePreloader } from "./handlebars"
 import { MODULE_ID } from "../../config"
+import ManeuverHUDButton from "../actor/maneuver-button"
 
 /**
  * This is the core of the module. A static class responsible for registering events and shit
@@ -52,7 +53,7 @@ export default class GurpsMobileCore extends Module {
 
   // eslint-disable-next-line no-undef
   onRenderTokenHUD(hud: TokenHUD<ApplicationOptions>, html: JQuery<HTMLElement>, token: Token) {
-    // ManeuverHUDButton.replaceOriginalGURPSHUD(hud, html, token)
+    ManeuverHUDButton.replaceOriginalGURPSHUD(hud, html, token)
   }
   // #endregion
 

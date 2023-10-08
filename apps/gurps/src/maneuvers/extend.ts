@@ -1,9 +1,10 @@
 import logger from "../logger"
 
 import Icons from "../../icons"
-import { Maneuver } from "."
+
 import { MOVE_DISPLAY } from "../move"
 import { PNG } from "../../icons/maneuvers"
+import { ManeuverName } from "gurps/module/actor/maneuver"
 
 function keys<T extends string | number | symbol>(obj: Record<T, unknown>): T[] {
   return Object.keys(obj) as T[]
@@ -20,21 +21,21 @@ function injectManeuvers(moduleID: string) {
    */
 
   const allout_concentration = GURPS.Maneuvers.createManeuver({
-    name: `allout_concentrate` as Maneuver,
+    name: `allout_concentrate`,
     move: MOVE_DISPLAY[`move_half`],
     icon: `no-icon-originally.png`,
     label: `All-out Concentrate`, // TODO: Inject label GURPS.maneuverAllOutConcentrate
   })
 
   const aod_mental = GURPS.Maneuvers.createManeuver({
-    name: `aod_mental` as Maneuver,
+    name: `aod_mental`,
     move: MOVE_DISPLAY[`move_half`],
     icon: `no-icon-originally.png`,
     label: `All-out Defense (Mental)`, // TODO: Inject label GURPS.maneuverAllOutDefenseMental
   })
 
-  maneuvers[`allout_concentrate`] = allout_concentration
-  maneuvers[`aod_mental`] = aod_mental
+  maneuvers[`allout_concentrate` as ManeuverName] = allout_concentration
+  maneuvers[`aod_mental` as ManeuverName] = aod_mental
 }
 
 /**
@@ -45,7 +46,7 @@ function updateIcons(moduleID: string) {
 
   const maneuvers = GURPS.Maneuvers.getAll()
 
-  for (const name of keys(maneuvers) as Maneuver[]) {
+  for (const name of keys(maneuvers)) {
     const maneuver = maneuvers[name]
     const _icons = Icons[name]
 
@@ -54,7 +55,6 @@ function updateIcons(moduleID: string) {
     let iconName = PNG[name]
 
     if (iconName === undefined) {
-      debugger
       logger.add(`No icon name provided for "${name}" override, skipping...`).warn()
     } else {
       maneuver._data.icon = `${filepath}${iconName}.png`
