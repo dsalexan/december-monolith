@@ -59,10 +59,14 @@ export default class BrowserLogger implements ILogger {
   }
 
   log(level: LogLevel, ...message: string[]) {
+    if (LEVEL_PRIORITY[level] > LEVEL_PRIORITY[this.level]) return
+
     console[this._level(level)](...message)
   }
 
   logWithStyles(level: LogLevel, texts: string[], styles: string[]) {
+    if (LEVEL_PRIORITY[level] > LEVEL_PRIORITY[this.level]) return
+
     const consoleLevel = this._level(level)
 
     const prefix = this._prefix(level)
@@ -81,11 +85,13 @@ export default class BrowserLogger implements ILogger {
   }
 
   logObjects(level: LogLevel, objects: any[]) {
+    if (LEVEL_PRIORITY[level] > LEVEL_PRIORITY[this.level]) return
+
     const consoleLevel = this._level(level)
 
     const { text: prefix } = this._prefix(level)
     const _prefix = prefix.join(``)
 
-    console[consoleLevel](` `, _prefix.slice(0, -2), ...objects)
+    console[consoleLevel](`  ` + _prefix.slice(0, -2), ...objects)
   }
 }

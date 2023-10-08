@@ -34,11 +34,11 @@ export default class Mobile {
     if (hostModuleID === undefined) throw new Error(`[${MODULE_ID}] Mobile needs a host module to attach settings (HOST_MODULE_ID is empty)`)
     Mobile.HOST_MODULE_ID = hostModuleID
 
-    // document.addEventListener(`fullscreenchange`, () => setTimeout(Mobile.onResize, 100))
-    // window.addEventListener(`resize`, Mobile.onResize)
-    // window.addEventListener(`scroll`, Mobile.onResize)
+    document.addEventListener(`fullscreenchange`, () => setTimeout(Mobile.onResize, 100))
+    window.addEventListener(`resize`, Mobile.onResize)
+    window.addEventListener(`scroll`, Mobile.onResize)
 
-    // this.onResize()
+    this.onResize()
   }
 
   static onResize(this: void) {
