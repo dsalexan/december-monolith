@@ -4,7 +4,7 @@ import Icons from "../../icons"
 
 import { MOVE_DISPLAY } from "../move"
 import { PNG } from "../../icons/maneuvers"
-import { ManeuverName } from "gurps/module/actor/maneuver"
+import type { ManeuverName } from "gurps/module/actor/maneuver"
 
 function keys<T extends string | number | symbol>(obj: Record<T, unknown>): T[] {
   return Object.keys(obj) as T[]
@@ -13,21 +13,21 @@ function keys<T extends string | number | symbol>(obj: Record<T, unknown>): T[] 
 /**
  * Inject custom maneuvers into original cnormand's gurps
  */
-function injectManeuvers(moduleID: string) {
+function injectManeuvers() {
   const maneuvers = GURPS.Maneuvers.getAll()
 
   /**
    * gurps uses a string value (what I call MOVE_DISPLAY) to reference a "move speed" for maneuvers
    */
 
-  const allout_concentration = GURPS.Maneuvers.createManeuver({
+  const allout_concentration = new GURPS.Maneuver({
     name: `allout_concentrate`,
     move: MOVE_DISPLAY[`move_half`],
     icon: `no-icon-originally.png`,
     label: `All-out Concentrate`, // TODO: Inject label GURPS.maneuverAllOutConcentrate
   })
 
-  const aod_mental = GURPS.Maneuvers.createManeuver({
+  const aod_mental = new GURPS.Maneuver({
     name: `aod_mental`,
     move: MOVE_DISPLAY[`move_half`],
     icon: `no-icon-originally.png`,
@@ -75,7 +75,7 @@ function hijackManeuvers() {}
 export default function (moduleID: string) {
   logger.add(`Extending maneuvers...`).verbose()
 
-  injectManeuvers(moduleID)
+  injectManeuvers()
   updateIcons(moduleID)
 
   // hijack "Maneuvers" class exported from actor/maneuvers.js in gurps

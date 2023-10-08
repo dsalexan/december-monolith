@@ -224,10 +224,22 @@ module.exports = _env => {
             { search: /__WEBPACK__MODULE_ID__/g, replace: config.MODULE_ID },
             { search: /__WEBPACK__MODULE_NAME__/g, replace: config.MODULE_NAME },
             { search: /__WEBPACK__MODULE_VERSION__/g, replace: config.VERSION },
-            { search: /"?__WEBPACK__BUNDLE_FILES__"?,?/, replace: [`js/lodash.bundle.js`].map(path => `"${path}"`).join(`,\n`) },
+            { search: /"?__WEBPACK__BUNDLE_FILES__"?,?/, replace: [`js/lodash.bundle.js`, `js/gurps.bundle.js`].map(path => `"${path}"`).join(`,\n`) },
           ].filter(Boolean),
         },
       ]),
+      // new ReplaceInFileWebpackPlugin([
+      //   {
+      //     dir: path.join(__dirname, `dist`),
+      //     files: [`module.json`],
+      //     rules: [
+      //       { search: /__WEBPACK__MODULE_ID__/g, replace: config.MODULE_ID },
+      //       { search: /__WEBPACK__MODULE_NAME__/g, replace: config.MODULE_NAME },
+      //       { search: /__WEBPACK__MODULE_VERSION__/g, replace: config.VERSION },
+      //       { search: /"?__WEBPACK__BUNDLE_FILES__"?,?/, replace: [`js/lodash.bundle.js`].map(path => `"${path}"`).join(`,\n`) },
+      //     ].filter(Boolean),
+      //   },
+      // ]),
       isProduction && new VisualizerPlugin(),
     ].filter(Boolean),
     optimization: {
@@ -260,6 +272,14 @@ module.exports = _env => {
             chunks: `all`,
             test: /[\\/]node_modules[\\/](lodash|lodash-es)[\\/]/,
             name: `lodash`,
+            minSize: 1,
+            filename: `js/[name].bundle.js`,
+            reuseExistingChunk: true,
+          },
+          gurps: {
+            chunks: `all`,
+            test: /[\\/]gurps[\\/]module[\\/]/,
+            name: `gurps`,
             minSize: 1,
             filename: `js/[name].bundle.js`,
             reuseExistingChunk: true,

@@ -1,14 +1,23 @@
-import { Maneuvers } from "./module/actor/maneuver.d"
+import { GurpsActorSheet } from "gurps/module/actor/actor-sheet"
+import { GurpsActor } from "gurps/module/actor/actor"
+import { Maneuver, Maneuvers } from "gurps/module/actor/maneuver"
+
+import ManeuverHUDButton from "gurps/module/actor/maneuver-button"
 
 // eslint-disable-next-line quotes
 declare module "gurps" {
   // tslint:disable-next-line no-empty-interface (This will be augmented)
   export interface GURPSStatic {
-    // let GurpsActor: typeof GURPSActor
+    GurpsActor: typeof GurpsActor
     // let GurpsToken: typeof GURPSToken
 
     // Expose Maneuvers to make them easier to use in modules
     Maneuvers: typeof Maneuvers
+    // 		do the same for this root Hooks fellas
+    Maneuver: typeof Maneuver
+    GurpsActor: typeof GurpsActor
+    ManeuverHUDButton: typeof ManeuverHUDButton
+    GurpsActorSheet: typeof GurpsActorSheet
 
     // Hack to remember the last Actor sheet that was accessed... for the Modifier Bucket to work
     LastActor: Actor | null

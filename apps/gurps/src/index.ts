@@ -10,7 +10,7 @@ import { MODULE_ID } from "../config"
 
 import { ExtendManeuvers } from "./maneuvers"
 
-import { GurpsActor } from "gurps/module/actor"
+import type { GurpsActor } from "gurps/module/actor"
 
 export default class GURPS4eGameAid extends Module {
   HOST_MODULE_ID: string

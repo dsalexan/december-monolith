@@ -59,6 +59,7 @@
     "gulp": "^4.0.2",
     "gulp-replace": "^1.1.4",
     "gulp-run": "^1.7.1",
+    "gurps": "link:D:\\Code\\foundry\\december\\monorep-attempts\\mk3\\gurps",
     "mini-css-extract-plugin": "^2.7.6",
     "node-sass-glob-importer": "^5.3.3",
     "prettier": "^3.0.2",

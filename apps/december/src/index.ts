@@ -1,3 +1,5 @@
+import "./styles/index.scss"
+
 import { get as lodashGet } from "lodash"
 
 import { Module, Actor } from "@december/foundry"

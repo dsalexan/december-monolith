@@ -3,6 +3,8 @@ import logger, { paint } from "../logger"
 import { TemplatePreloader } from "./handlebars"
 import { MODULE_ID } from "../../config"
 import ManeuverHUDButton from "../actor/maneuver-button"
+import GurpsMobileActor from "../actor/actor"
+import { GurpsMobileActorSheet } from "../actor/actor-sheet"
 
 /**
  * This is the core of the module. A static class responsible for registering events and shit
@@ -39,16 +41,14 @@ export default class GurpsMobileCore extends Module {
     TemplatePreloader.preloadHandlebarsTemplates()
 
     // Define custom Entity classes
-    // @ts-ignore
-    // CONFIG.Actor.documentClass = GurpsMobileActor
+    CONFIG.Actor.documentClass = GurpsMobileActor
 
     // Register Sheet Classes
-    // @ts-ignore
-    // Actors.registerSheet(`gurps`, GurpsMobileActorSheet, {
-    //   // Add this sheet last
-    //   label: `Mobile`,
-    //   makeDefault: false,
-    // })
+    Actors.registerSheet(`gurps`, GurpsMobileActorSheet as any, {
+      // Add this sheet last
+      label: `Mobile`,
+      makeDefault: false,
+    })
   }
 
   // eslint-disable-next-line no-undef

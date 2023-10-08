@@ -1,9 +1,6 @@
 import { MODULE_ID } from "../../config"
 
-import { ManeuverHUDButton as ManeuverHUDButton_ } from "gurps/module/actor/maneuver-button"
-
-// @ts-ignore
-export default class ManeuverHUDButton extends ManeuverHUDButton_ {
+export default class ManeuverHUDButton extends GURPS.ManeuverHUDButton {
   static existentButton: Element | null
 
   static async getInnerHtml(effects: ActiveEffect[]) {

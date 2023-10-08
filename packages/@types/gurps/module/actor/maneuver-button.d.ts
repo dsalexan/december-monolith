@@ -6,7 +6,7 @@ declare module "gurps/module/actor/maneuver-button" {
    *
    * @namespace ManeuverHUDButton
    */
-  export class ManeuverHUDButton {
+  export default class ManeuverHUDButton {
     static getInnerHtml(effects: ActiveEffect[]): Promise<string>
 
     /**
