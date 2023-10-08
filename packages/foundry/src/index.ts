@@ -7,3 +7,5 @@ export { i18n as i18n } from "./i18n"
 
 export { default as Module } from "./module"
 export type { ModuleOptions as ModuleOptions } from "./module"
+
+export * as Types from "./types"

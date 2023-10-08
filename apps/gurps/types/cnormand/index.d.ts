@@ -1,7 +1,13 @@
+// import type { StoredDocument } from "@league-of-foundry-developers/foundry-vtt-types/src/types/utils"
+
 import type { GurpsActor as GURPSActor } from "gurps/module/actor"
+import type { Types } from "@december/foundry"
+import type GURPS4eGameAid from "../../src"
 
 declare global {
   namespace GURPS {
+    let EXTENSION: GURPS4eGameAid
+
     let GurpsActor: typeof GURPSActor
     // let GurpsToken: typeof GURPSToken
 
@@ -11,7 +17,7 @@ declare global {
     // Hack to remember the last Actor sheet that was accessed... for the Modifier Bucket to work
     let LastActor: GURPSActor | null
 
-    function SetLastActor(actor: GURPSActor, tokenDocument: Token): void
+    function SetLastActor(actor: Types.StoredDocument<GURPSActor>, tokenDocument: Token): void
     function ClearLastActor(actor: GURPSActor): void
 
     let GurpsMobileActorSheet_rendered: boolean
@@ -24,6 +30,6 @@ declare global {
     // rangeObject: typeof GURPSRan
 
     // remembers last acessed actor, but value is not used com modifier bucket
-    let LastAccessedActor: GURPSActor | null
+    let LastAccessedActor: Types.StoredDocument<GURPSActor> | null
   }
 }

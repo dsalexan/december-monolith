@@ -32,7 +32,9 @@
       "@december/december": ["./apps/december/src"],
       "@december/december/*": ["./apps/december/src/*"],
       "@december/mobile": ["./apps/mobile/src"],
-      "@december/mobile/*": ["./apps/mobile/src/*"]
+      "@december/mobile/*": ["./apps/mobile/src/*"],
+      "@december/gurps": ["./apps/gurps/src"],
+      "@december/gurps/*": ["./apps/gurps/src/*"]
     }
   },
   "exclude": ["node_modules"],

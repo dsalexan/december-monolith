@@ -81,6 +81,7 @@ module.exports = _env => {
         "@december/foundry": path.join(DIRECTORY, `packages/foundry/src`),
         "@december/december": path.join(DIRECTORY, `apps/december/src`),
         "@december/mobile": path.join(DIRECTORY, `apps/mobile/src`),
+        "@december/gurps": path.join(DIRECTORY, `apps/gurps/src`),
       },
     },
     output: {
