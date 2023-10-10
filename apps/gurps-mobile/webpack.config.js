@@ -17,6 +17,7 @@ const SpeedMeasurePlugin = require(`speed-measure-webpack-plugin`)
 
 const globImporter = require(`node-sass-glob-importer`)
 const { create } = require(`sass-alias`)
+const aliasImporter = require(`node-sass-alias-importer`)
 
 const config = require(`./config`)
 
@@ -61,6 +62,10 @@ module.exports = _env => {
   const webpackConfig = {
     entry: {
       [config.MODULE_ID]: path.resolve(__dirname, `./src/index.ts`),
+      // Runtime code for hot module replacement
+      hot: `webpack/hot/dev-server.js`,
+      // Dev server client for web socket transport, hot and live reload logic
+      client: `webpack-dev-server/client/index.js?hot=true&live-reload=false&http://0.0.0.0:30003`,
     },
     watch: env.watch,
     devtool: isProduction ? (shouldUseSourceMap ? `source-map` : false) : isDevelopment && `cheap-module-source-map`,
@@ -128,7 +133,7 @@ module.exports = _env => {
           options: {
             search: `("|'|\`)__WEBPACK__ALL_TEMPLATES__("|'|\`)`,
             replace(match) {
-              return globSync(`**/*.hbs`, { cwd: path.join(process.cwd(), `static/templates`) })
+              return globSync(`**/*.hbs`, { cwd: path.join(__dirname, `static/templates`) })
                 .map(file => `"modules/${config.MODULE_ID}/templates/${file}"`.replaceAll(/\\/g, `/`))
                 .join(`, `)
             },
@@ -197,10 +202,13 @@ module.exports = _env => {
               options: {
                 sourceMap: isDevelopment,
                 sassOptions: {
-                  // importer: globImporter(),
-                  importer: new create({
-                    "@utils": path.join(__dirname, `lib/utils`),
+                  importer: aliasImporter({
+                    "@utils": path.join(DIRECTORY, `packages/utils/src/styles`),
                   }),
+                  // importer: globImporter(),
+                  // importer: create({
+                  //   "@utils": path.join(DIRECTORY, `packages/utils/src/styles`),
+                  // }),
                 },
               },
             },
@@ -224,7 +232,7 @@ module.exports = _env => {
             { search: /__WEBPACK__MODULE_ID__/g, replace: config.MODULE_ID },
             { search: /__WEBPACK__MODULE_NAME__/g, replace: config.MODULE_NAME },
             { search: /__WEBPACK__MODULE_VERSION__/g, replace: config.VERSION },
-            { search: /"?__WEBPACK__BUNDLE_FILES__"?,?/, replace: [`js/lodash.bundle.js`, `js/gurps.bundle.js`].map(path => `"${path}"`).join(`,\n`) },
+            { search: /"?__WEBPACK__BUNDLE_FILES__"?,?/, replace: [`client.js`, `hot.js`, `js/lodash.bundle.js`].map(path => `"${path}"`).join(`,\n`) },
           ].filter(Boolean),
         },
       ]),

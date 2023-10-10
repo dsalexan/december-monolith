@@ -16,8 +16,13 @@
     "strict": true,
     "noEmitOnError": false,
     "target": "ESNext",
-    "module": "commonjs",
+    "module": "NodeNext",
     "moduleResolution": "node",
+    "lib": [
+        "esnext",
+        "dom",
+        "dom.iterable"
+    ],
     "resolveJsonModule": true,
     "allowJs": true,
     

@@ -37,6 +37,8 @@ module.exports = {
     GURPS: true,
     JQuery: true,
     $: true,
+    TEMPLATES: true,
+    BUILD_MODE: true,
   },
 
   extends: [`eslint:recommended`, `plugin:prettier/recommended`, `plugin:@typescript-eslint/recommended`, `plugin:import/typescript`, `@typhonjs-fvtt/eslint-config-foundry.js`],

@@ -1,46 +1,53 @@
 import * as Foundry from "@december/foundry"
 
-// import GURPSIcons from "gurps-extension/icons.mjs"
+import GURPSIcons from "@december/gurps/../icons"
+import IconsManager from "./icons"
 // import * as CustomIcons from "../assets/icons"
 
 // Through here we register handlebars helpers and snippets SPECIFIC to the module
 
 export class TemplatePreloader {
   static preloadHandlebarsTemplates() {
-    Foundry.Handlebars.TemplatePreloader.preloadHandlebarsTemplates([`__WEBPACK__ALL_TEMPLATES__`])
+    Foundry.Handlebars.TemplatePreloader.preloadHandlebarsTemplates(TEMPLATES)
   }
 
   static preloadHandlebarsHelpers() {
     Foundry.Handlebars.TemplatePreloader.preloadHandlebarsHelpers()
 
-    // Handlebars.registerHelper(`isCustomIcon`, value => !!CustomIcons.SVGS[value])
+    Handlebars.registerHelper(`isCustomIcon`, value => !!IconsManager.get(value))
 
-    // Handlebars.registerHelper(`customIcon`, function (value: string) {
-    //   const icon = CustomIcons.SVGS[value]
+    Handlebars.registerHelper(`customIcon`, function (value: string) {
+      // if icon is custom, get custom icon from manager (will search in one of the pre-compiled jsons) and send it
+      const icon = IconsManager.get(value)
+      if (icon) return new Handlebars.SafeString(icon)
 
-    //   if (!icon) return `<div>custom icon "${value}" not found</div>`
+      // if no icon was found, send a string informing as html
+      return `<div>custom icon "${value}" not found</div>`
+    })
 
-    //   return new Handlebars.SafeString(icon)
-    // })
+    Handlebars.registerHelper(`gurpsIcon`, function (value: string) {
+      // no-op
+      if (!value) return ``
 
-    // Handlebars.registerHelper(`gurpsIcon`, function (value: string) {
-    //   if (!value) return ``
+      // if value is MDI (which means it is not a gurps icon), default to sending a mdi icon
+      if (value.includes(`mdi-`)) return new Handlebars.SafeString(`<i class="icon mdi ${value}"></i>`)
 
-    //   if (value.includes(`mdi-`)) return new Handlebars.SafeString(`<i class="icon mdi ${value}"></i>`)
+      // get icon name from value (in a gurps context)
+      const icon = GURPSIcons[value] as string
 
-    //   const icon = GURPSIcons[value] as string
+      // if icon is mdi, send a mdi icon
+      if (icon?.includes(`mdi-`)) return new Handlebars.SafeString(`<i class="icon mdi ${icon}"></i>`)
 
-    //   if (icon?.includes(`mdi-`)) return new Handlebars.SafeString(`<i class="icon mdi ${icon}"></i>`)
+      // if icon is custom, get custom icon from manager (will search in one of the pre-compiled jsons) and send it
+      const node = IconsManager.get(icon)
+      if (node) return new Handlebars.SafeString(node)
 
-    //   const node = CustomIcons.SVGS[icon]
+      // if no icon was found, send a string informing as html
+      return `<div>${icon ? `custom` : `gurps`} icon "${icon ? icon : value}" not found</div>`
+    })
 
-    //   if (node) return new Handlebars.SafeString(node)
-
-    //   return `<div>${icon ? `custom` : `gurps`} icon "${icon ? icon : value}" not found</div>`
-    // })
-
-    // Handlebars.registerHelper(`gurpsLabel`, function (value: string) {
-    //   return HandlebarsHelpers.localize(GURPS.Maneuvers.get(value)?.label ?? `unknown`, {} as HandlebarsHelpers.LocalizeOptions)
-    // })
+    Handlebars.registerHelper(`gurpsLabel`, function (value: string) {
+      return HandlebarsHelpers.localize(GURPS.Maneuvers.get(value)?.label ?? `unknown`, {} as HandlebarsHelpers.LocalizeOptions)
+    })
   }
 }

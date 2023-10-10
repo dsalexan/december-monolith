@@ -1,8 +1,8 @@
 {
-  "name": "__WEBPACK__MODULE_ID__",
-  "title": "__WEBPACK__MODULE_NAME__",
+  "name": "gurps-mobile",
+  "title": "GURPS 4th Companion APP",
   "description": "",
-  "version": "__WEBPACK__MODULE_VERSION__",
+  "version": "0.4.0",
   "compatibility": {
     "minimum": 10,
     "verified": "11",
@@ -28,13 +28,13 @@
 
   ],
   "esmodules": [
-    "__WEBPACK__MODULE_ID__.js"
+    "gurps-mobile.mjs"
   ],
   "scripts": [
-    "__WEBPACK__BUNDLE_FILES__"
+    
   ],
   "styles": [
-    "__WEBPACK__MODULE_ID__.css"
+    "gurps-mobile.css"
   ],
   "languages": [
     {

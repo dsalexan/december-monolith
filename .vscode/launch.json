@@ -7,6 +7,39 @@
     {
       "type": "node-terminal",
       "request": "launch",
+      "name": "gurps-mobile/foundry",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "yarn foundry",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "gurps-mobile/serve",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "yarn start",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "gurps-mobile/icons",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\apps\\gurps-mobile\\scripts\\icons.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
       "name": "GCA",
       "skipFiles": [
         "<node_internals>/**"

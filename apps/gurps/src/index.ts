@@ -1,14 +1,15 @@
 import "./styles/index.scss"
 
-import { set, get } from "local-storage"
+// import { set, get } from "local-storage"
 import { isString } from "lodash"
 
 import { Module, Types } from "@december/foundry"
+import { storage } from "@december/utils"
 
 import logger, { paint } from "./logger"
 import { MODULE_ID } from "../config"
 
-import { ExtendManeuvers } from "./maneuvers"
+import ExtendManeuvers from "./maneuvers/extend"
 
 import type { GurpsActor } from "gurps/module/actor"
 
@@ -44,8 +45,8 @@ export default class GURPS4eGameAid extends Module {
   }
 
   onReady() {
-    const lastAcessedActorId = get<string>(`GURPS.LastAccessedActor`)
-    this.setLastAccessedActor(lastAcessedActorId)
+    const lastAcessedActorId = storage.get<string>(`GURPS.LastAccessedActor`)
+    if (lastAcessedActorId) this.setLastAccessedActor(lastAcessedActorId)
   }
 
   // #region GURPS (cnormand)
@@ -102,7 +103,7 @@ export default class GURPS4eGameAid extends Module {
     if (isString(actor)) _actor = (game.actors?.find(a => a.id === actor) || null) as Types.StoredDocument<GurpsActor> | null
 
     GURPS.LastAccessedActor = _actor
-    set(`GURPS.LastAccessedActor`, _actor?.id) // local storage
+    storage.set(`GURPS.LastAccessedActor`, _actor?.id) // local storage
     if (GURPS.LastAccessedActor) Hooks.call(`${MODULE_ID}:set-last-accessed-actor`, GURPS.LastAccessedActor)
   }
 

@@ -21,26 +21,37 @@ const BUILD_PATH = resolve(DIRECTORY, `dist`)
 const PACKAGE_JSON_PATH = resolve(DIRECTORY, `package.json`)
 
 const config = webpackConfig({
-  watch: true,
+  watch: false,
   mode: `development`,
 })
 const compiler = webpack(config)
 
 const server = new WebpackDevServer(
   {
+    // port: 30003,
+    // host: `127.0.0.1`, // <-- this
     hot: true,
-    liveReload: true,
+    // liveReload: true,
     // open: [`http://localhost:30000/game`],
     devMiddleware: {
       writeToDisk: true,
     },
-    client: {
-      logging: `verbose`,
-      overlay: {
-        warnings: false,
-        errors: false,
+    proxy: [
+      {
+        context: pathname => {
+          return !pathname.match(`^/ws`)
+        },
+        target: `http://localhost:30000`,
+        ws: true,
       },
-    },
+    ],
+    // client: {
+    //   logging: `verbose`,
+    //   overlay: {
+    //     warnings: false,
+    //     errors: false,
+    //   },
+    // },
   },
   compiler,
 )

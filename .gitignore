@@ -41,3 +41,10 @@ logs/
 foundryconfig.json
 
 apps/*/dist
+
+# vite dev server
+*.mjs
+index.html
+styles/
+dist/
+*.css

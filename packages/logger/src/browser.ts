@@ -78,7 +78,7 @@ export default class BrowserLogger implements ILogger {
 
     let logTab = [`%c`, ``]
     if (consoleLevel !== `error` && consoleLevel !== `warn`) {
-      logTab = [`%c `, `margin-left: 3.5px; background-color: transparent;`]
+      logTab = [`%c  `, `margin-left: 1px; background-color: transparent;`]
     }
 
     console[consoleLevel](logTab[0] + pText, ...[logTab[1], ..._styles])

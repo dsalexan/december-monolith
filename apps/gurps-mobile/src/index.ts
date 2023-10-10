@@ -70,3 +70,38 @@ Hooks.on(`gurps:set-last-accessed-actor`, (actor: Types.StoredDocument<Actor> | 
 //    #endregion
 
 // #endregion
+
+// HMR for template files
+// @ts-ignore
+if (import.meta.hot && !window._hot_ready) {
+  console.log(`Listening to HMR events...`)
+
+  // @ts-ignore
+  import.meta.hot.on(`template-update`, async function ({ path }: { path: string }): Promise<void> {
+    // eslint-disable-next-line prefer-rest-params
+    console.log(`Template "${path}" updated`)
+
+    const isPartial = path.match(/templates[\/\\]partials/)
+    if (isPartial) {
+      const partialPath = path.substring(isPartial[0].length + isPartial.index! + 1).replace(`.hbs`, ``)
+
+      const content = await fetch(path)
+      const text = await content.text()
+      Handlebars.registerPartial(partialPath, text)
+    } else {
+      // eslint-disable-next-line no-undef
+      delete _templateCache[path]
+
+      await getTemplate(path)
+    }
+
+    const apps = [...Object.values(ui.windows)] //, ui.sidebar]
+    for (const app of apps) {
+      console.log(`Re-rendering app ${app.constructor.name}...`)
+      app.render()
+    }
+    // if (path.includes(`effects-panel`)) game.pf2e.effectPanel.render()
+  })
+
+  window._hot_ready = true
+}

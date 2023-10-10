@@ -5,6 +5,9 @@ import { ExtendedGURPSStatic } from "@december/gurps"
 import type GurpsMobileCore from "./core"
 
 declare global {
+  const BUILD_MODE: `development` | `production`
+  const TEMPLATES: string[]
+
   let DECEMBER: December
   let MOBILE: Mobile
   let GURPS_MOBILE: GurpsMobileCore
@@ -17,5 +20,16 @@ declare global {
     GURPS_MOBILE: GurpsMobileCore
 
     GURPS: ExtendedGURPSStatic
+
+    // hmr
+    _hot_ready: boolean
   }
+
+  /* -------------------------------------------- */
+  /*  HTML Template Loading                       */
+  /* -------------------------------------------- */
+
+  // Global template cache
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  const _templateCache: Record<string, Function>
 }
