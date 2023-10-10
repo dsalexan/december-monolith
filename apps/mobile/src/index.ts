@@ -124,7 +124,7 @@ export default class Mobile extends Module {
       const match = lowResolution.replace(regex, ``)
 
       if (message === match) {
-        logger.add(`Mobile suppresing notification`, notification).info()
+        logger.add(`Mobile suppresing notification `, notification).info()
         return false
       }
     }

@@ -24,11 +24,7 @@ document.querySelector(`head`)?.appendChild($(`<link rel="stylesheet" href="http
 
 document
   .querySelector(`head`)
-  ?.appendChild(
-    $(
-      `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.css" integrity="sha384-YiVwk+MBV52+yIvvplLwDxm3iGDI7dYb731lqsN9ASGBpIpJ/dte35lBIuR5oGFU" crossorigin="anonymous">`,
-    )[0],
-  )
+  ?.appendChild($(`<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.css" integrity="sha384-YiVwk+MBV52+yIvvplLwDxm3iGDI7dYb731lqsN9ASGBpIpJ/dte35lBIuR5oGFU" crossorigin="anonymous">`)[0])
 
 // inject globals
 const DECEMBER = (window.DECEMBER = new December(MODULE_ID, true))
@@ -98,7 +94,7 @@ if (import.meta.hot && !window._hot_ready) {
     const apps = [...Object.values(ui.windows)] //, ui.sidebar]
     for (const app of apps) {
       console.log(`Re-rendering app ${app.constructor.name}...`)
-      app.render()
+      app.render(true, { action: `hmr` })
     }
     // if (path.includes(`effects-panel`)) game.pf2e.effectPanel.render()
   })

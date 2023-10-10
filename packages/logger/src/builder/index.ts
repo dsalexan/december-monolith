@@ -1,11 +1,17 @@
+/* eslint-disable no-debugger */
 import ILogger from "../interface"
 import paint, { Paint } from "../paint"
 import { LogLevel } from "../level"
 
-import Block, { DURATION_BLOCK } from "./block"
+import Block, { DURATION_BLOCK, PAD_FROZEN_BLOCK } from "./block"
 import Profiler from "./profiler"
 import { isNil, isNilOrEmpty, isString } from "../utils"
-import { isBoolean, isNumber } from "lodash"
+import { difference, identity, intersection, isBoolean, isNumber, range } from "lodash"
+import { typing } from "@december/utils"
+import { isPrimitive } from "../../../utils/src/typing"
+
+export const BREAK_LINE = Symbol.for(`__DECEMBER_LOGGER_BREAK_LINE`)
+export const BLOCK_SYMBOLS = [BREAK_LINE] as const
 
 export type BuilderOptions = {
   isBrowser: boolean
@@ -18,6 +24,11 @@ export type BuilderOptions = {
   }
 }
 
+export type TableOptions = {
+  gapSize: number
+  skip: (row: unknown[]) => boolean
+}
+
 export default class Builder {
   logger: ILogger
 
@@ -26,8 +37,13 @@ export default class Builder {
   lastTimestamp: number = 0
 
   profilers: { [name: string]: Profiler } = {}
+  frozenBlocks: Block[] = []
   blocks: Block[] = []
   // styles: ValidStyle[] = [] // TODO: There should be "global" styles for builder?
+
+  get BREAK_LINE() {
+    return BREAK_LINE
+  }
 
   constructor(logger: ILogger, options?: Partial<BuilderOptions>) {
     this.logger = logger
@@ -40,11 +56,16 @@ export default class Builder {
     return this.logger.child(name, level).builder()
   }
 
-  clone() {
+  clone(frozeBlocks = false) {
     const clone = new Builder(this.logger, this.options)
 
     clone.profilers = {} // profilers are not kept
-    clone.blocks = this.blocks.map(block => block._clone())
+    clone.frozenBlocks = [...this.frozenBlocks.map(block => block._clone())]
+
+    if (!frozeBlocks) clone.blocks = this.blocks.map(block => block._clone())
+    else clone.frozenBlocks.push(...this.blocks.map(block => block._clone()))
+
+    if (frozeBlocks) this.cleanAfterLog()
 
     return clone
   }
@@ -98,9 +119,9 @@ export default class Builder {
     return this
   }
 
-  add(...strings: string[]): this
-  add(...blocks: (Block | string)[]): this
-  add(...args: (Block | string)[]) {
+  add(...args: unknown[]): this
+  add(...blocks: (Block | string | number)[]): this
+  add(...args: (Block | unknown)[]) {
     let style = undefined as string[] | undefined
     let block: Block
 
@@ -129,6 +150,90 @@ export default class Builder {
 
   get t() {
     return this.space(1, this.options.tab.character)
+  }
+
+  /** Transforms frozend blocks into padding */
+  pad(character = ` `) {
+    const pad = this.createBlock(character)
+    pad._flags.push(PAD_FROZEN_BLOCK)
+
+    return this.addBlock(pad)
+  }
+
+  table(table: (unknown[] | symbol)[], styles: (Paint | undefined)[] = [], options: Partial<TableOptions> = {}) {
+    const firstValidRow = table.find(row => row !== BREAK_LINE) as unknown[]
+    if (!firstValidRow) debugger
+
+    const COLUMNS = firstValidRow.length
+    const ROWS = table.length
+
+    const GAP_SIZE = options.gapSize ?? 2
+
+    const skipRow = options.skip ?? false
+
+    // if no styles are provided, use default
+    const _styles = (styles.length === COLUMNS ? styles : range(0, COLUMNS).map(i => styles[i] ?? undefined)).map(style => (style === undefined ? paint.identity : style))
+
+    const tableLogger = this.clone(true)
+
+    const columnPaddings = [] as number[]
+    // calculate paddings
+    for (let i = 0; i < ROWS; i++) {
+      const row = table[i] as unknown[]
+
+      if ((row as any) === BREAK_LINE) continue
+      if (skipRow && skipRow(row)) continue
+
+      for (let j = 0; j < COLUMNS; j++) {
+        let cell = row[j]
+        while (cell instanceof Block) cell = cell._data
+
+        let text: string
+        if (!isPrimitive(cell)) text = ` `.repeat(20)
+        else text = String(cell)
+
+        if (text.length > (columnPaddings[j] ?? 0)) columnPaddings[j] = text.length
+      }
+    }
+
+    // print table
+    for (let i = 0; i < ROWS; i++) {
+      const row = table[i] as unknown[]
+
+      const isSymbol = BLOCK_SYMBOLS.includes(row as any)
+      if (isSymbol) {
+        const symbol = row as any as symbol
+
+        if (symbol === BREAK_LINE) tableLogger.add(` `).info()
+
+        continue
+      } else if (skipRow && skipRow(row)) continue
+
+      for (let j = 0; j < COLUMNS; j++) {
+        const cell = row[j]
+        const style = _styles[j]
+
+        // if (!isPrimitive(cell)) debugger
+        const padding = columnPaddings[j] - String(cell).length + GAP_SIZE
+
+        tableLogger.add(style(cell))
+
+        if (j === COLUMNS - 1) continue
+        if (padding > 0) tableLogger.space(padding, ` `)
+      }
+
+      tableLogger.info()
+    }
+
+    // logger.pad().add(paint.italic.grey(`context`)).t.add(context).info()
+    // logger.pad().add(paint.italic.grey(`state`)).t.add(this._state).info()
+    // logger.pad().add(paint.italic.grey(`element`)).t.add(this.element).info()
+    // logger.pad().add(paint.italic.grey(`_element`)).t.add(this._element).info()
+
+    // clean up
+    this.cleanAfterLog()
+
+    return this
   }
 
   // #endregion
@@ -163,58 +268,116 @@ export default class Builder {
 
   // #endregion
 
+  // #region GROUPS
+
+  group(collapsed?: boolean): this {
+    this.logger.group(collapsed)
+    return this
+  }
+
+  openGroup(collapsed?: boolean): this {
+    this.logger.openGroup(collapsed)
+
+    return this
+  }
+
+  closeGroup(): this {
+    this.logger.closeGroup()
+    return this
+  }
+
+  // #endregion
+
   postProcessedBlocks() {
     const blocks = [] as Block[]
 
-    const suffixes = [] as Block[]
-    for (const block of this.blocks) {
-      if (block._flags.includes(DURATION_BLOCK)) {
-        const profiler = this.profiler(block._data as string)!
-        // eslint-disable-next-line no-debugger
-        if (!profiler) debugger
+    const IMPLEMENTED_FLAGS = [DURATION_BLOCK, PAD_FROZEN_BLOCK] as const
+    const _blocks = [...this.frozenBlocks, ...this.blocks]
 
-        const duration = profiler.stop()
-        profiler.destroy()
+    // detect flags
+    const durationSuffixes = _blocks.filter(block => block._flags.includes(DURATION_BLOCK))
+    const frozenBlocksAsPadding = _blocks.some(block => block._flags.includes(PAD_FROZEN_BLOCK))
 
-        let color: Paint = paint.green
+    // inject frozen blocks
+    for (const block of this.frozenBlocks) {
+      const unimplementedFlags = difference(block._flags, IMPLEMENTED_FLAGS) // all flags that are yet to be implemented
 
-        if (duration > 10000) color = paint.red.bold
-        else if (duration > 2000) color = paint.hex(`#FF8800`).bold
-        else if (duration > 1000) color = paint.yellow
-        else if (duration > 100) color = paint.blue
+      // if the block has flags, all all of them are implemented just skip its printing
+      if (unimplementedFlags.length === 0 && block._flags.length > 0) continue
 
-        color = color.italic
+      if (frozenBlocksAsPadding) {
+        const clone = block._clone()
+        clone.addStyle(`post:opacity: 0.1`)
 
-        const sign = duration < 0 ? `-` : `+`
-        suffixes.push(color(`${sign}${Math.abs(duration)}ms`))
+        blocks.push(clone)
 
+        // // ERROR: How to pad non primitive values?
+        // if (!typing.isPrimitive(block._data)) debugger
+
+        // const text = String(block._data)
+
+        // blocks.push(new Block(` `.repeat(text.length)))
         continue
       }
 
       blocks.push(block)
     }
 
-    return [...blocks, ...suffixes]
+    // inject ephemeral blocks
+    for (const block of this.blocks) {
+      const unimplementedFlags = difference(block._flags, IMPLEMENTED_FLAGS) // all flags that are yet to be implemented
+
+      // if the block has flags, all all of them are implemented just skip its printing
+      if (unimplementedFlags.length === 0 && block._flags.length > 0) continue
+
+      blocks.push(block)
+    }
+
+    // inject suffixes
+    for (const block of durationSuffixes) {
+      // DURATION_BLOCK
+
+      const profiler = this.profiler(block._data as string)!
+      // eslint-disable-next-line no-debugger
+      if (!profiler) debugger
+
+      const duration = profiler.stop()
+      profiler.destroy()
+
+      let color: Paint = paint.green
+
+      if (duration > 10000) color = paint.red.bold
+      else if (duration > 2000) color = paint.hex(`#FF8800`).bold
+      else if (duration > 1000) color = paint.yellow
+      else if (duration > 100) color = paint.blue
+
+      color = color.italic
+
+      const sign = duration < 0 ? `-` : `+`
+      blocks.push(color(` ${sign}${Math.abs(duration)}ms`))
+    }
+
+    return blocks
   }
 
   buildForBrowser() {
     const blocks = this.postProcessedBlocks()
 
     const objects = [] as any[]
-    const string = [] as string[]
+    // const string = [] as string[]
     const css = [] as string[]
     for (const block of blocks) {
-      const { data, text, style } = block._buildForBrowser({ ignoreStyle: !this.options.colorize, noTimestamp: this.options.noTimestamp })
+      const { data, style } = block._buildForBrowser({ ignoreStyle: !this.options.colorize, noTimestamp: this.options.noTimestamp })
 
-      if (data) objects.push(data)
+      // if (data) objects.push(data)
 
-      if (isNilOrEmpty(text) && isNilOrEmpty(style)) continue
+      if ((isNil(data) || (isString(data) && isNilOrEmpty(data))) && isNilOrEmpty(style)) continue
 
-      string.push(text as string)
+      objects.push(data)
       css.push(style ?? ``)
     }
 
-    return [string, css, objects]
+    return [objects, css] //, logObjects]
   }
 
   buildForTerminal() {
@@ -227,20 +390,24 @@ export default class Builder {
 
   // #region PROXY
 
+  cleanAfterLog() {
+    this.blocks = []
+  }
+
   log(level: LogLevel): this {
     this.lastTimestamp = Date.now()
 
     const tab = this.options.tab.size === 0 ? `` : this.options.tab.character.repeat(this.options.tab.size)
 
     if (this.options.isBrowser) {
-      const [message, style, objects] = this.buildForBrowser()
+      const [objects, style] = this.buildForBrowser()
 
-      message.splice(0, 0, tab)
+      objects.splice(0, 0, tab)
       style.splice(0, 0, ``)
 
-      this.logger.logWithStyles(level, message, style)
+      this.logger.logWithStyles(level, objects, style)
 
-      if (objects.length > 0) this.logger.logObjects(level, objects)
+      // if (objects.length > 0) this.logger.logObjects(level, objects)
     } else {
       let message = this.buildForTerminal()
 
@@ -249,7 +416,7 @@ export default class Builder {
       this.logger.log(level, message)
     }
 
-    this.blocks = []
+    this.cleanAfterLog()
 
     return this
   }

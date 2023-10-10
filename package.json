@@ -9,8 +9,8 @@
     "sheet": "node apps/gurps-mobile/server/sheet.mjs",
     "clean": "esno ./apps/gurps-mobile/scripts/clean.ts",
     "watch": "npm run clean && vite build --watch --mode development",
-    "start": "vite serve -d -c \"./apps/gurps-mobile/vite.config.ts\"",
-    "build": "vite build -d -c \"./apps/gurps-mobile/vite.config.ts\"",
+    "start": "vite serve -c \"./apps/gurps-mobile/vite.config.ts\"",
+    "build": "vite build -c \"./apps/gurps-mobile/vite.config.ts\"",
     "foundry": "esno ./apps/gurps-mobile/scripts/foundry.ts"
   },
   "dependencies": {
@@ -26,6 +26,7 @@
     "mathjs": "^11.11.1",
     "mout": "^1.2.4",
     "supports-color": "^9.4.0",
+    "util": "^0.12.5",
     "winston": "^3.10.0",
     "winston-transport-browserconsole": "^1.0.5",
     "zod": "^3.22.2",
@@ -78,6 +79,7 @@
     "react-dev-utils": "^12.0.1",
     "replace-in-file-webpack-plugin": "^1.0.6",
     "resolve": "^1.22.6",
+    "rollup-plugin-node-polyfills": "^0.2.1",
     "sass": "^1.69.0",
     "sass-alias": "^2.0.1",
     "sass-loader": "^13.3.2",

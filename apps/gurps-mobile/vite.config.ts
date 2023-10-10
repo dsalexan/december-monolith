@@ -13,6 +13,8 @@ import tsconfigPaths from "vite-tsconfig-paths"
 import { replaceCodePlugin } from "vite-plugin-replace"
 import { globSync } from "glob"
 
+import rollupNodePolyFill from "rollup-plugin-node-polyfills"
+
 const TEMPLATES = globSync(`**/*.hbs`, { cwd: path.join(__dirname, `static/templates`) }).map(file => `modules/${MODULE_ID}/templates/${file}`.replaceAll(/\\/g, `/`))
 
 const config = Vite.defineConfig(({ command, mode }): Vite.UserConfig => {
@@ -141,7 +143,10 @@ const config = Vite.defineConfig(({ command, mode }): Vite.UserConfig => {
     esbuild: { keepNames: true },
 
     resolve: {
-      alias: [{ find: `@utils`, replacement: path.join(process.cwd(), `packages/utils/src/styles`) }],
+      alias: [
+        { find: `@utils`, replacement: path.join(process.cwd(), `packages/utils/src/styles`) },
+        { find: `util`, replacement: `rollup-plugin-node-polyfills/polyfills/util` },
+      ],
     },
 
     build: {

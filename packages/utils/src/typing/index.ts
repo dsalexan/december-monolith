@@ -1,4 +1,4 @@
-import { isArray, isBoolean, isFunction, isNumber, isObjectLike, isString, isSymbol } from "lodash"
+import { isArray, isBoolean, isFunction, isNil, isNumber, isObjectLike, isString, isSymbol } from "lodash"
 import { VariableType } from "./types"
 
 // export type VariableType = `string` | `number` | `bigint` | `boolean` | `symbol` | `undefined` | `object` | `function`
@@ -45,4 +45,8 @@ export function guessType(value: unknown): VariableType | undefined {
   if (!isNaN(_number)) return `number`
 
   return `string`
+}
+
+export function isPrimitive(value: unknown): value is string | number | boolean | symbol | null | undefined {
+  return isString(value) || isNumber(value) || isBoolean(value) || isSymbol(value) || isNil(value)
 }

@@ -1,6 +1,7 @@
 import "./styles/index.scss"
 
 import { get as lodashGet } from "lodash"
+import { inspect, format } from "util"
 
 import { Module, Actor } from "@december/foundry"
 import { isNilOrEmpty } from "@december/utils"
@@ -52,6 +53,10 @@ export default class December extends Module {
     this.listen()
 
     window.get = lodashGet
+    // @ts-ignore
+    window.inspect = inspect
+    // @ts-ignore
+    window.format = format
   }
 
   // #endregion

@@ -11,7 +11,7 @@
 // };
 
 const prettierOptions = {
-  printWidth: 180,
+  printWidth: 240,
   tabWidth: 2,
   useTabs: false,
   semi: false,

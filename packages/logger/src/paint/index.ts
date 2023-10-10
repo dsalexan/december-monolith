@@ -9,6 +9,7 @@ interface ChainableFunction {
 }
 
 export interface Paint extends ChainableFunction {
+  identity: Paint
   web(color: string): Paint
 
   readonly number: Paint
@@ -29,11 +30,22 @@ export interface Paint extends ChainableFunction {
   ```
   */
   hex(color: string): Paint
+  opacity(a: number): Paint
+
+  rgb(rgb: [number, number, number]): Paint
+  rgb(rgba: [number, number, number, number]): Paint
+  rgb(r: number, g: number, b: number, a?: number): Paint
+
+  bgRgb(rgb: [number, number, number]): Paint
+  bgRgb(rgba: [number, number, number, number]): Paint
+  bgRgb(r: number, g: number, b: number, a?: number): Paint
 
   /**
   Modifier: Resets the current color chain.
   */
   readonly reset: Paint
+
+  readonly regular: Paint
 
   /**
   Modifier: Make text bold.

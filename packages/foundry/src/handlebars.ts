@@ -29,6 +29,15 @@ export class TemplatePreloader {
       console.log(...args)
     })
 
+    Handlebars.registerHelper(`group`, function (collapsed, message, ...styles) {
+      if (collapsed) console.groupCollapsed(message, ...styles.slice(0, -1))
+      else console.group(message, ...styles.slice(0, -1))
+    })
+
+    Handlebars.registerHelper(`groupend`, function () {
+      console.groupEnd()
+    })
+
     Handlebars.registerHelper(`prop`, ({ hash }: { hash: { name: string; value: string } }) => {
       const { name, value } = hash
       if (value === undefined) return ``

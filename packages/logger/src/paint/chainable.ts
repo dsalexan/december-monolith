@@ -1,8 +1,14 @@
 import chalk from "chalk"
 import Block from "../builder/block"
+import { isArray as _isArray } from "lodash"
 
-function createBlock(blockFactory: any, string: string) {
-  const block = new Block(string)
+function isArray<TValue = unknown>(value: unknown): value is TValue[] {
+  return _isArray(value)
+}
+
+function createBlock(blockFactory: any, unknownOrBlock: unknown) {
+  const block = new Block(unknownOrBlock)
+  if (unknownOrBlock instanceof Block) block._data = unknownOrBlock._data
 
   const styles = [] as string[]
 
@@ -18,12 +24,18 @@ function createBlock(blockFactory: any, string: string) {
   // console.log(chalk.bold(`text:`), string)
   // console.log(chalk.bold(`style:`), styles.join(`, `))
 
+  if (unknownOrBlock instanceof Block) {
+    block._style.push(...unknownOrBlock._style)
+    block._flags.push(...unknownOrBlock._flags)
+  }
+
   return block
 }
 
 const ANSI_STYLES = [
   `reset`,
 
+  `regular`,
   `bold`,
 
   `dim`,
@@ -86,12 +98,12 @@ const ANSI_STYLES = [
 ]
 
 const CONSOLE_STYLES = [
-  { name: `number`, hex: `#00008b` },
-  { name: `n`, hex: `#00008b` },
-  { name: `boolean`, letter: `b`, hex: `#006400` },
-  { name: `v`, hex: `#006400` },
-  { name: `string`, hex: `#AA1111` },
-  { name: `s`, hex: `#AA1111` },
+  { name: `number`, hex: `#1A1AA6` },
+  { name: `n`, hex: `#1A1AA6` },
+  { name: `boolean`, letter: `b`, hex: `#007a00` },
+  { name: `b`, hex: `#007a00` },
+  { name: `string`, hex: `#C80000` },
+  { name: `s`, hex: `#C80000` },
 ]
 
 // Build a prototype with all chainable functions
@@ -111,11 +123,57 @@ chainingGetters[`hex`] = {
   get() {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
-    return function (color: string) {
+    const generator = function (color: string) {
       const chainableFunction = chainableFunctionFactory(self, `ansi:hex:${color}`)
-      Object.defineProperty(self, `hex`, { value: chainableFunction })
+      // Object.defineProperty(self, `hex`, { value: chainableFunction })
       return chainableFunction
     }
+    Object.defineProperty(self, `hex`, { value: generator })
+    return generator
+  },
+}
+
+// rgb(r: number, g: number, b: number, a?: number): Paint
+chainingGetters[`rgb`] = {
+  get() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    const generator = function (r: number | [number, number, number, number], g: number, b: number, a: number = 1) {
+      if (isArray(r)) {
+        g = r[1]
+        b = r[2]
+        a = r[3] ?? 1
+        r = r[0]
+      }
+
+      const chainableFunction = chainableFunctionFactory(self, `ansi:rgb:${[r, g, b, a].join(`,`)}`)
+      // Object.defineProperty(self, `rgb`, { value: chainableFunction })
+      return chainableFunction
+    }
+    Object.defineProperty(self, `rgb`, { value: generator })
+    return generator
+  },
+}
+
+// rgb(r: number, g: number, b: number, a?: number): Paint
+chainingGetters[`bgRgb`] = {
+  get() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    const generator = function (r: number | [number, number, number, number], g: number, b: number, a: number = 1) {
+      if (isArray(r)) {
+        g = r[1]
+        b = r[2]
+        a = r[3] ?? 1
+        r = r[0]
+      }
+
+      const chainableFunction = chainableFunctionFactory(self, `ansi:bgRgb:${[r, g, b, a].join(`,`)}`)
+      // Object.defineProperty(self, `bgRgb`, { value: chainableFunction })
+      return chainableFunction
+    }
+    Object.defineProperty(self, `bgRgb`, { value: generator })
+    return generator
   },
 }
 
@@ -123,11 +181,34 @@ chainingGetters[`web`] = {
   get() {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
-    return function (color: string) {
+    const generator = function (color: string) {
       const chainableFunction = chainableFunctionFactory(self, `web:${color}`)
-      Object.defineProperty(self, `web`, { value: chainableFunction })
+      // Object.defineProperty(self, `web`, { value: chainableFunction })
       return chainableFunction
     }
+    Object.defineProperty(self, `web`, { value: generator })
+    return generator
+  },
+}
+
+chainingGetters[`opacity`] = {
+  get() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    const generator = function (a: number) {
+      const chainableFunction = chainableFunctionFactory(self, `post:opacity:${a}`)
+      return chainableFunction
+    }
+    Object.defineProperty(self, `opacity`, { value: generator })
+    return generator
+  },
+}
+
+chainingGetters[`identity`] = {
+  get() {
+    const chainableFunction = chainableFunctionFactory(this, `identity`)
+    Object.defineProperty(this, `identity`, { value: chainableFunction })
+    return chainableFunction
   },
 }
 
@@ -145,7 +226,9 @@ const chainingPrototype = Object.defineProperties(() => {}, chainingGetters)
 
 export default function chainableFunctionFactory(parent?: unknown, style?: string) {
   const blockFactory = (...args: unknown[]) => {
-    return createBlock(blockFactory, args.length === 1 ? `` + args[0] : args.join(` `))
+    const argument = args.length === 1 ? args[0] : args.join(` `)
+
+    return createBlock(blockFactory, argument)
   }
 
   Object.setPrototypeOf(blockFactory, chainingPrototype)

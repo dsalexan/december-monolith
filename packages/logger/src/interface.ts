@@ -11,7 +11,11 @@ export default interface ILogger {
 
   log(level: LogLevel, ...message: string[]): void
 
-  logWithStyles(level: LogLevel, text: string[], style: string[]): void
+  logWithStyles(level: LogLevel, objects: any[], style: string[]): void
 
   logObjects(level: LogLevel, objects: any[]): void
+
+  group(collapsed?: boolean): void
+  openGroup(collapsed?: boolean): void
+  closeGroup(): void
 }
