@@ -1,18 +1,14 @@
 <div class="header">
   <div class="wrapper portrait">
-    <div class="portrait">
-      <div class='img-display'>
-        <img class='profile-img' src='{{actor.img}}' title='{{actor.name}}' />
-      </div>
-    </div>
-    <div class="portrait-overlay">
+    <img class='image' src='{{actor.img}}' title='{{actor.name}}' />
+    <div class="overlay">
       <div class="icons">
       </div>
       <div class="name">{{actor.name}}</div>
     </div>
   </div>
   <div class="wrapper details">
-    <div class="header-bar">
+    <div class="controls">
         <i class="icon mdi mdi-cog settings" aria-hidden="true"></i>
         <i class="icon mdi mdi-newspaper-variant-outline fullgcs" aria-hidden="true"></i>
         <i class="icon mdi mdi-import import" aria-hidden="true"></i>
@@ -20,27 +16,27 @@
         <div class="spacer"></div>
         <i class="icon mdi mdi-close-thick close" aria-hidden="true"></i>
     </div>
-    {{!-- <div class="pools">
-      <div class="resource-pools">
-        <div class="resource-pool hp">
-          <div class="current-value" style="width: {{percentage data.HP.value data.HP.max}}%">{{'data.HP.value'}}</div>
-          <div class="full">{{'data.HP.max'}}</div>
+    <div class="middle">
+      <div class="pools">
+        <div class="pool hp">
+          <div class="current-value" style="width: {{percentage 2 data.HP.max}}%">{{data.HP.value}}</div>
+          <div class="full">{{data.HP.max}}</div>
         </div>
-        <div class="resource-pool fp">
-          <div class="current-value" style="width: {{percentage data.FP.value data.FP.max}}%">{{'data.FP.value'}}</div>
-          <div class="full">{{'data.FP.max'}}</div>
+        <div class="pool fp">
+          <div class="current-value" style="width: {{percentage 4 data.FP.max}}%">{{data.FP.value}}</div>
+          <div class="full">{{data.FP.max}}</div>
         </div>
       </div>
-      <div class="extra">
+      {{!-- <div class="extra">
         {{#> generic/interactible label=data.traits.sizemod path="data.traits.sizemod"}}<b>SIZE</b>{{/generic/interactible}}
         {{#> generic/interactible label="HIT"}}{{gurpsIcon 'hit_location'}}{{/generic/interactible}}
-      </div>
+      </div> --}}
     </div>
-    <div class="primary-attributes">
-      <div class="attribute">{{#> generic/interactible label="ST" path="data.attributes.ST.value"}}{{'data.attributes.ST.value'}}{{/generic/interactible}}</div>
-      <div class="attribute">{{#> generic/interactible label="DX" path="data.attributes.DX.value"}}{{'data.attributes.DX.value'}}{{/generic/interactible}}</div>
-      <div class="attribute">{{#> generic/interactible label="IQ" path="data.attributes.IQ.value"}}{{'data.attributes.IQ.value'}}{{/generic/interactible}}</div>
-      <div class="attribute">{{#> generic/interactible label="HT" path="data.attributes.HT.value"}}{{'data.attributes.HT.value'}}{{/generic/interactible}}</div>
-    </div> --}}
+    <div class="attributes">
+      <div class="attribute">{{#> generic/interactible label="ST" path="data.attributes.ST.value"}}{{data.attributes.ST.value}}{{/generic/interactible}}</div>
+      <div class="attribute">{{#> generic/interactible label="DX" path="data.attributes.DX.value"}}{{data.attributes.DX.value}}{{/generic/interactible}}</div>
+      <div class="attribute">{{#> generic/interactible label="IQ" path="data.attributes.IQ.value"}}{{data.attributes.IQ.value}}{{/generic/interactible}}</div>
+      <div class="attribute">{{#> generic/interactible label="HT" path="data.attributes.HT.value"}}{{data.attributes.HT.value}}{{/generic/interactible}}</div>
+    </div>
   </div>
 </div>

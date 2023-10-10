@@ -1,0 +1,31 @@
+<div class="stack combat dark">
+  <div class="tray">
+    <div class="chevron up"><i class="icon mdi mdi-chevron-up"></i></div>
+
+    <div class="divider"></div>
+
+    <div style="color: white;">COMBAT</div>
+    {{#each status}}
+        {{#if this.spacer}}
+          <div class="spacer"><svg viewBox="0 0 2 2" fill="currentColor"><circle cx="1" cy="1" r="1" /></svg></div>
+        {{else}}
+        <div class="header">
+          <div class="label">{{this.header}}</div>
+          <div class="children">
+            {{#each this.children}}
+              <div class="status {{equals true this.main 'main'}} {{equals true this.tray 'tray'}} {{equals undefined this.value 'no-value'}}">
+                <i class="icon-wrapper">{{gurpsIcon icon}}</i>
+                <div class="label">{{this.label}}</div>
+                <div class="value">{{{this.value}}}</div>
+              </div>
+            {{/each}}
+          </div>
+        </div>
+        {{/if}}
+    {{/each}}
+
+    <div class="divider"></div>
+    <div class="chevron down"><i class="icon mdi mdi-chevron-down"></i></div>
+  </div>
+
+</div>
