@@ -1,3 +1,4 @@
+/* eslint-disable no-debugger */
 import loggerFactory, { MARKER_BLACK, MARKER_GREEN, MARKER_YELLOW, paint } from "../../logger"
 import { MODULE_ID } from "../../../config"
 import GurpsMobileActor from "../actor"
@@ -11,7 +12,10 @@ export interface Options extends ActorSheet.Options {
 
 export interface Data extends ActorSheet.Data<Options> {}
 
+const SHEET_NAME = `MobileGurpsActorSheet`
+
 export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
+  static sheet_name = `MobileGurpsActorSheet`
   html: HTMLManager
 
   constructor(data: any, context: any) {
@@ -19,6 +23,24 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
 
     this.html = new HTMLManager(this)
   }
+
+  // #region LOCAL STORAGE
+  getLocalStorage<T>(key: string, defaultValue: T) {
+    const _key = `${MODULE_ID}.${this.actor.uuid}.${SHEET_NAME}.${key}`
+    const value = window.localStorage.getItem(_key)
+    return value === null ? defaultValue : (JSON.parse(value) as T)
+  }
+
+  setLocalStorage<T>(key: string, value: T) {
+    const _key = `${MODULE_ID}.${this.actor.uuid}.${SHEET_NAME}.${key}`
+    window.localStorage.setItem(_key, JSON.stringify(value))
+  }
+
+  removeLocalStorage(key: string) {
+    const _key = `${MODULE_ID}.${this.actor.uuid}.${SHEET_NAME}.${key}`
+    window.localStorage.removeItem(_key)
+  }
+  // #endregion
 
   // #region FOUNDRY OVERRIDES
 
@@ -182,7 +204,7 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
         .info()
       await super._render(force, context)
 
-      this._applyState(this.element.find(`.window-content`).children(0))
+      this._applyState(this.element.find(`.window-content`).children(0 as any))
     } else {
       logger.add(paint.bold.bgRed(` _updateHtml (unimplemented)... `)).duration(`_render`).info()
       // this._updateHtml(...)

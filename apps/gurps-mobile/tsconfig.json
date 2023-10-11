@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["."],
+  "include": [".", "../../packages/foundry/src/components/component.ts", "../../packages/foundry/src/components/tabs.ts"],
   "exclude": ["./dist", "dist", "build", "node_modules", "webpack.config.js", "gulpfile.mjs"],
   "compilerOptions": {
     "outDir": "./dist",

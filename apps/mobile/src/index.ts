@@ -127,6 +127,11 @@ export default class Mobile extends Module {
         logger.add(`Mobile suppresing notification `, notification).info()
         return false
       }
+
+      if (message.includes(`Foundry Virtual Tabletop uses modern JavaScript features which are unsupported on Chromium version less than `)) {
+        logger.add(`Mobile suppresing notification `, notification).info()
+        return false
+      }
     }
   }
 

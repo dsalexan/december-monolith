@@ -85,6 +85,7 @@ module.exports = {
     "@typescript-eslint/require-await": [`off`],
     "@typescript-eslint/restrict-template-expressions": [`off`],
     "@typescript-eslint/no-unused-vars": [`warn`],
+    "@typescript-eslint/no-this-alias": [`off`],
   },
 
   settings: {

@@ -34,6 +34,7 @@
       "@december/logger/*": ["./packages/logger/src/*"],
       "@december/foundry": ["./packages/foundry/src"],
       "@december/foundry/*": ["./packages/foundry/src/*"],
+      "@december/foundry/components": ["./packages/foundry/src/components"],
       "@december/december": ["./apps/december/src"],
       "@december/december/*": ["./apps/december/src/*"],
       "@december/mobile": ["./apps/mobile/src"],

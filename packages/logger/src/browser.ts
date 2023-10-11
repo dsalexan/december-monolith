@@ -69,7 +69,7 @@ export default class BrowserLogger implements ILogger {
     const levelPadding = Math.max(...LOG_LEVELS.map(level => level.length))
 
     const prefixText = [`[${this.name}] `.padEnd(namePadding + 3), `${level.toLocaleUpperCase().padEnd(levelPadding + 0)} `]
-    const prefixStyles = [`color: darkgray;`, `font-weight: bold; color: ${levelColor}`]
+    const prefixStyles = [`color: darkgray; font-weight: 400;`, `font-weight: bold; color: ${levelColor}`]
 
     return { text: prefixText, style: prefixStyles }
   }
