@@ -1,0 +1,34 @@
+{{!-- TODO: Choose between list, group and card --}}
+<div class="card-list">
+  <div class="header">
+    <div class="label">
+      <!-- chevron is here to centralize text -->
+      <div class="chevron invisible"><i class="icon mdi mdi-chevron-up"></i></div>
+
+      <span class="text">{{> @partial-block }}</span>
+
+      <div class="chevron up hidden"><i class="icon mdi mdi-chevron-up"></i></div>
+      <div class="chevron down"><i class="icon mdi mdi-chevron-down"></i></div>
+    </div>
+
+    <div class="buttons">
+        {{#> components/button icon="mdi-chevron-double-down" alternativeIcon="mdi-chevron-double-up"}}
+          <b>10</b> Hidden Features
+        {{/components/button}}
+        
+        <div class="spacer"></div>
+        
+        {{#> components/button icon="mdi-eye-off" label="Hide All"}}{{/components/button}}
+        {{#> components/button icon="mdi-eye" label="Show All"}}{{/components/button}}
+    </div>
+  </div>
+  <div class="body collapsed">
+    {{!-- {{#> components/cards/group}}{{/components/cards/group}}
+    {{#> components/cards/group}}{{/components/cards/group}} --}}
+  </div>
+  <div class="body">
+    {{#> components/cards/group}}{{/components/cards/group}}
+    {{!-- {{#> components/cards/group}}{{/components/cards/group}} --}}
+    {{!-- {{#> components/cards/group}}{{/components/cards/group}} --}}
+  </div>
+</div>

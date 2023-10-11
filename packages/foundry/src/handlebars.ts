@@ -59,6 +59,7 @@ export class TemplatePreloader {
     })
 
     Handlebars.registerHelper(`some`, function (array: any[], value, ifTrue, ifFalse = ``) {
+      if (ifFalse.name === `some`) ifFalse = ``
       if (isNil(array)) return ifFalse
       return array.some(item => item === value) ? ifTrue : ifFalse
     })
@@ -84,7 +85,10 @@ export class TemplatePreloader {
 
     Handlebars.registerHelper(`isTrue`, (a, b) => (a ? b : ``))
     Handlebars.registerHelper(`isArray`, a => isArray(a))
-    Handlebars.registerHelper(`nullishCoalescing`, (a, b = ``) => a ?? b)
+    Handlebars.registerHelper(`nullishCoalescing`, (a, b = ``) => {
+      if (b.name === `nullishCoalescing`) return a ?? ``
+      return a ?? b
+    })
 
     Handlebars.registerHelper(`percentage`, (value, max) => (value / max) * 100)
     Handlebars.registerHelper(`join`, array => (array === undefined ? `` : array.join(` `)))
@@ -96,9 +100,11 @@ export class TemplatePreloader {
     Handlebars.registerHelper(`isArray`, a => isArray(a))
 
     Handlebars.registerHelper(`isNil`, function (a, b, c = ``) {
+      if (c.name === `isNil`) return isNil(a) ? b : ``
       return isNil(a) ? b : c
     })
     Handlebars.registerHelper(`isNilOrEmpty`, function (a, b, c = ``) {
+      if (c.name === `isNilOrEmpty`) c = ``
       return isNil(a) || isEmpty(a) || (isArray(a) && a.length === 0) ? b : c
     })
 

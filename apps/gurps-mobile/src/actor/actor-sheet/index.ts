@@ -2,7 +2,7 @@
 import loggerFactory, { MARKER_BLACK, MARKER_GREEN, MARKER_YELLOW, paint } from "../../logger"
 import { MODULE_ID } from "../../../config"
 import GurpsMobileActor from "../actor"
-import HTMLManager from "./hydration/manager"
+import { SheetHTMLHydrationManager } from "./hydration"
 
 const logger_ = loggerFactory.child(`actor-sheet`, `silly`)
 
@@ -16,12 +16,12 @@ const SHEET_NAME = `MobileGurpsActorSheet`
 
 export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
   static sheet_name = `MobileGurpsActorSheet`
-  html: HTMLManager
+  hydration: SheetHTMLHydrationManager
 
   constructor(data: any, context: any) {
     super(data, context)
 
-    this.html = new HTMLManager(this)
+    this.hydration = new SheetHTMLHydrationManager(this)
   }
 
   // #region LOCAL STORAGE
@@ -110,7 +110,7 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
       .t.add(inner)
       .info()
 
-    this.html.activateListeners(inner)
+    this.hydration.activateListeners(inner)
   }
 
   _applyState(inner: JQuery<HTMLElement>) {

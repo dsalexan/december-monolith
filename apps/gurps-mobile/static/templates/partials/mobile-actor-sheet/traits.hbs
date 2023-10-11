@@ -13,7 +13,10 @@
   
   <div class="panels">
     {{#> components/tabs/panel value="attribute"}}
-      <div>PANEL 1</div>
+        {{#> components/cards/list}}Button Label{{/components/cards/list}}
+        {{!-- {{#> components/cards/list}}Button Label{{/components/cards/list}}
+        {{#> components/cards/list}}Button Label{{/components/cards/list}}
+        {{#> components/cards/list}}Button Label{{/components/cards/list}} --}}
     {{/components/tabs/panel}}
     {{#> components/tabs/panel value="advantage"}}
       <div>PANEL 2</div>

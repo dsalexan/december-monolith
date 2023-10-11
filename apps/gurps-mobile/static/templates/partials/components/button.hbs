@@ -1,0 +1,14 @@
+<div class="button {{nullishCoalescing classes}}">
+  {{#if icon}}
+    <div class="icon-wrapper">{{gurpsIcon icon}}</div>
+  {{/if}}
+  {{#if alternativeIcon}}
+    <div class="icon-wrapper alternative">{{gurpsIcon alternativeIcon}}</div>
+  {{/if}}
+
+  {{#if label}}
+    <div class="label">{{label}}</div>
+  {{else}}
+    <div class="label">{{> @partial-block}}</div>
+  {{/if}}
+</div>
