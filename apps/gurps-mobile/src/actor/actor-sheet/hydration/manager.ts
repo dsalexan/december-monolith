@@ -1,10 +1,12 @@
 import { GurpsMobileActorSheet } from ".."
-import { Components } from "@december/foundry"
+
+import { HTMLHydrationManager } from "@december/foundry/hydration"
+
 import Header from "./header"
 import Stack from "./stack"
 import { MODULE_ID } from "../../../../config"
 
-export default class SheetHTMLManager extends Components.HTMLManager {
+export default class SheetHTMLHydrationManager extends HTMLHydrationManager {
   sheet: GurpsMobileActorSheet
 
   // components

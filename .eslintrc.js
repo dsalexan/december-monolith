@@ -34,7 +34,10 @@ module.exports = {
   },
 
   globals: {
+    DECEMBER: true,
+    MOBILE: true,
     GURPS: true,
+    GURPS_MOBILE: true,
     JQuery: true,
     $: true,
     TEMPLATES: true,

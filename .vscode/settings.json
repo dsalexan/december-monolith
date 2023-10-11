@@ -11,5 +11,15 @@
   "files.eol": "\n",
   "editor.tabSize": 2,
   "typescript.preferences.importModuleSpecifier": "relative",
-  "stylelint.validate": ["scss"]
+  "stylelint.validate": ["scss"],
+  // https://stackoverflow.com/questions/71235277/vscode-intellisense-how-to-resolve-path-aliases-in-scss-module-imports
+
+  "alias-tool.mappings": {
+    "@utils": "${folder}/packages/utils/src/styles",
+    "@components": "${folder}/apps/gurps-mobile/src/styles/components",
+  },
+  "path-autocomplete.pathMappings": {
+    "@utils": "${folder}/packages/utils/src/styles",
+    "@components": "${folder}/apps/gurps-mobile/src/styles/components",
+  }
 }

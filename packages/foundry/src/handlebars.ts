@@ -25,6 +25,8 @@ export class TemplatePreloader {
    * Preload generic handlebars helpers
    */
   static preloadHandlebarsHelpers() {
+    // #region LOGGING
+
     Handlebars.registerHelper(`info`, function (...args) {
       console.log(...args)
     })
@@ -37,6 +39,12 @@ export class TemplatePreloader {
     Handlebars.registerHelper(`groupend`, function () {
       console.groupEnd()
     })
+
+    // #endregion
+
+    // #region STYLING
+
+    // #endregion
 
     Handlebars.registerHelper(`prop`, ({ hash }: { hash: { name: string; value: string } }) => {
       const { name, value } = hash

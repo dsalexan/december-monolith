@@ -1,19 +1,23 @@
 import { EventEmitter } from "@billjs/event-emitter"
-import HTMLManager from "./htmlManager"
+import HTMLHydrationManager from "./manager"
 
 import logger from "../logger"
 
-export type ComponentProperties = Record<string, unknown>
+export type HydratorProperties = Record<string, unknown>
 
-export default class Component<TProperties extends Record<string, unknown> = Record<string, never>> extends EventEmitter {
-  protected manager: HTMLManager
+export default class Hydrator<TProperties extends HydratorProperties = Record<string, never>> extends EventEmitter {
+  protected _manager: HTMLHydrationManager
   protected html!: JQuery<HTMLElement>
   protected properties!: TProperties
 
-  constructor(manager: HTMLManager, properties: TProperties) {
+  get manager() {
+    return this._manager
+  }
+
+  constructor(manager: HTMLHydrationManager, properties: TProperties) {
     super()
 
-    this.manager = manager
+    this._manager = manager
 
     if (properties) this.properties = properties
   }
@@ -42,7 +46,7 @@ export default class Component<TProperties extends Record<string, unknown> = Rec
     // throw new Error(`_hydrate() not implemented`)
     // @ts-ignore
     const name = this.__proto__.constructor.name
-    logger.add(`_hydrate() not implemented in component "${name}"`).warn()
+    logger.add(`_hydrate() not implemented in hydrator "${name}"`).warn()
   }
 
   /**

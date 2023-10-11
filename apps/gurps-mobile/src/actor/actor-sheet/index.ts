@@ -2,7 +2,7 @@
 import loggerFactory, { MARKER_BLACK, MARKER_GREEN, MARKER_YELLOW, paint } from "../../logger"
 import { MODULE_ID } from "../../../config"
 import GurpsMobileActor from "../actor"
-import HTMLManager from "./html"
+import HTMLManager from "./hydration/manager"
 
 const logger_ = loggerFactory.child(`actor-sheet`, `silly`)
 
@@ -70,6 +70,14 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
   /** @override */
   _forceRender() {
     return
+  }
+
+  // #endregion
+
+  // #region GURPS
+
+  openDesktopSheet() {
+    this.actor.openSheet(`gurps.GurpsActorSheet`)
   }
 
   // #endregion

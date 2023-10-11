@@ -1,4 +1,4 @@
-export default class HTMLManager {
+export default class HTMLHydrationManager {
   storageKey: string
 
   // child components

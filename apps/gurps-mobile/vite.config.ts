@@ -104,9 +104,13 @@ const config = Vite.defineConfig(({ command, mode }): Vite.UserConfig => {
 
           if (isHandlebars && !isDist) {
             const basePath = context.file.slice(context.file.indexOf(`templates/`))
-
             console.log(chalk.grey(`  Updating template at ${chalk.white(basePath)}`))
 
+            // create directory tree if it doesn't exist
+            const { dir } = path.parse(`${outDir}/${basePath}`)
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+
+            // copy from static to dist
             fs.promises.copyFile(context.file, `${outDir}/${basePath}`).then(() => {
               context.server.ws.send({
                 type: `custom`,
@@ -145,6 +149,7 @@ const config = Vite.defineConfig(({ command, mode }): Vite.UserConfig => {
     resolve: {
       alias: [
         { find: `@utils`, replacement: path.join(process.cwd(), `packages/utils/src/styles`) },
+        { find: `@components`, replacement: path.join(process.cwd(), `apps/gurps-mobile/src/styles/components`) },
         { find: `util`, replacement: `rollup-plugin-node-polyfills/polyfills/util` },
       ],
     },

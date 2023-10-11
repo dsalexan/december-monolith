@@ -16,7 +16,7 @@
     "strict": true,
     "noEmitOnError": false,
     "target": "ESNext",
-    "module": "NodeNext",
+    "module": "ESNext",
     "moduleResolution": "node",
     "lib": [
         "esnext",
@@ -34,7 +34,7 @@
       "@december/logger/*": ["./packages/logger/src/*"],
       "@december/foundry": ["./packages/foundry/src"],
       "@december/foundry/*": ["./packages/foundry/src/*"],
-      "@december/foundry/components": ["./packages/foundry/src/components"],
+      "@december/foundry/hydration": ["./packages/foundry/src/hydration"],
       "@december/december": ["./apps/december/src"],
       "@december/december/*": ["./apps/december/src/*"],
       "@december/mobile": ["./apps/mobile/src"],

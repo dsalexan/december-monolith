@@ -1,11 +1,11 @@
-import HTMLManager from ".."
-import { Components } from "@december/foundry"
+import SheetHydrator, { SheetHTMLHydrationManager } from "../hydrator"
+
 import HeaderDetails from "./details"
 
-export default class Header extends Components.Component {
+export default class Header extends SheetHydrator {
   details: HeaderDetails
 
-  constructor(manager: HTMLManager) {
+  constructor(manager: SheetHTMLHydrationManager) {
     super(manager, {})
 
     this.details = new HeaderDetails(manager, {})

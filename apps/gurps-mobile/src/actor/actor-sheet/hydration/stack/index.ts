@@ -1,11 +1,11 @@
-import HTMLManager from ".."
-import StackTraits from "./traits"
-import { Components } from "@december/foundry"
+import SheetHydrator, { SheetHTMLHydrationManager } from "../hydrator"
 
-export default class Stack extends Components.Component {
+import StackTraits from "./traits"
+
+export default class Stack extends SheetHydrator {
   traits: StackTraits
 
-  constructor(manager: HTMLManager) {
+  constructor(manager: SheetHTMLHydrationManager) {
     super(manager, {})
 
     this.traits = new StackTraits(manager)

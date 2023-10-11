@@ -1,14 +1,15 @@
-import HTMLManager from ".."
-import { Component, Tabs } from "@december/foundry/components"
+import { TabsHydrator } from "@december/foundry/hydration"
+import SheetHydrator, { SheetHTMLHydrationManager } from "../hydrator"
 
-export default class StackTraits extends Component {
-  tabs: Tabs
+export default class StackTraits extends SheetHydrator {
+  tabs: TabsHydrator
 
-  constructor(manager: HTMLManager) {
+  constructor(manager: SheetHTMLHydrationManager) {
     super(manager, {})
 
-    this.tabs = new Tabs(manager, {
+    this.tabs = new TabsHydrator(manager, {
       storageKey: `traits`,
+      defaultTab: `attributes`,
     })
   }
 

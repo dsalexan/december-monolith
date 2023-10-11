@@ -1,5 +1,5 @@
 export * as Handlebars from "./handlebars"
-export * as Components from "./components"
+export * as Hydration from "./hydration"
 export * as Settings from "./settings"
 export * as Actor from "./actor"
 
