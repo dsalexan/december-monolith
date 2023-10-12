@@ -22,6 +22,10 @@ document.querySelector(`head`)?.appendChild($(`<link rel="stylesheet" href="http
 document.querySelector(`head`)?.appendChild($(`<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,600,700&display=swap"/>`)[0])
 document.querySelector(`head`)?.appendChild($(`<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">`)[0])
 
+document.querySelector(`head`)?.appendChild($(`<link rel="preconnect" href="https://fonts.googleapis.com">`)[0])
+document.querySelector(`head`)?.appendChild($(`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`)[0])
+document.querySelector(`head`)?.appendChild($(`<link href="https://fonts.googleapis.com/css2?family=Alata&family=Molengo&display=swap" rel="stylesheet">`)[0])
+
 document
   .querySelector(`head`)
   ?.appendChild($(`<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.css" integrity="sha384-YiVwk+MBV52+yIvvplLwDxm3iGDI7dYb731lqsN9ASGBpIpJ/dte35lBIuR5oGFU" crossorigin="anonymous">`)[0])

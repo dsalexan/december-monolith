@@ -46,51 +46,7 @@
           </div>
           {{!-- {{/if}} --}}
           <!-- WHEEL -->
-            {{#> components/cards/wheel}}{{/components/cards/wheel}}
-          <!-- STATS -->
-          {{!-- {{#if stats}}
-            <div class="stats {{isNilOrEmpty stats 'hidden'}}">
-              {{#each stats}}
-                <div class="row">
-                  {{#each this}}
-                    <div class="stat {{join classes}} {{isNilOrEmpty roll 'non-interactible'}}" data-roll-step="{{roll}}">
-                      <div class="icon-wrapper {{isNilOrEmpty this.icon 'hidden'}}">
-                        {{#each this.icon}}
-                          {{gurpsIcon this}}
-                        {{/each}}
-                      </div>
-                      <div class="label {{isNilOrEmpty this.label 'hidden'}}">{{this.label}}</div>
-                      <div class="value">{{this.value}}</div>
-                    </div>
-                  {{/each}}
-                </div>
-              {{/each}}
-            </div>
-          {{/if}} --}}
-          <!-- ROLLS -->
-          {{!-- {{#if rolls}}
-            <div class="rolls {{#if (gt rolls.length 0)}}at-first{{/if}} {{#if (eq rolls.length 1)}}at-last{{/if}} {{isNilOrEmpty stats 'hidden'}}" data-selected="0">
-              <div class="background"></div>
-              <div class="previous"><div class="icon"><i class="mdi mdi-circle-medium"></i></div></div>
-              <div class="wrapper">
-                {{#each rolls}}
-                  <div class="roll {{join classes}} roll-wrapper interactible" data-step="{{step}}">
-                    <div class="content-wrapper">
-                      {{#each content}}
-                        <div class="content">
-                          <div class="primary {{isNilOrEmpty primary 'hidden'}}">{{primary}}</div>
-                          <div class="secondary {{isNilOrEmpty secondary 'hidden'}}">{{secondary}}</div>
-                          <div class="tertiary {{isNilOrEmpty tertiary 'hidden'}}">{{tertiary}}</div>
-                        </div>
-                      {{/each}}
-                    </div>
-                    {{> gurps/feature_roll this}}
-                  </div>
-                {{/each}}
-              </div>
-              <div class="next"><div class="icon"><i class="mdi mdi-circle-medium"></i></div></div>
-            </div>
-          {{/if}} --}}
+          {{#> components/cards/wheel}}{{/components/cards/wheel}}
           <!-- NOTES -->
           <div class="notes"> 
             {{!-- {{#each notes}}<p>{{this}}</p>{{/each}} --}}
@@ -99,13 +55,13 @@
             <p>Lorem Ipsum Dolor sit amet consectetur adipscit elit</p>
           </div>
           <!-- TAGS -->
-          {{!-- <div class="tags">
+          <div class="tags">
             <div class="children">
-              <div class="tag">TAG</div>
-              <div class="tag">TAG</div>
-              <div class="tag">TAG</div>
+              {{#> components/cards/tag}}{{/components/cards/tag}}
+              {{#> components/cards/tag}}{{/components/cards/tag}}
+              {{#> components/cards/tag}}{{/components/cards/tag}}
             </div>
-          </div> --}}
+          </div>
         </div>
       </div>
 
