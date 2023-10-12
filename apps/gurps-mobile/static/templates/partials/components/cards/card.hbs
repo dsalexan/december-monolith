@@ -2,15 +2,20 @@
   {{!-- {{#> components/cards/action classes="left"}}{{/components/cards/action}} --}}
 
   <div class="variants">
-    <div class="card-variant">
+    <div class="card-variant has-icon has-value">
       {{!-- <div class="chevron prev"><i class="icon mdi mdi-chevron-left"></i></div> --}}
 
       <div class="content-wrapper">
         <div class="content">
           <!-- ICON -->
-          {{!-- {{#if icon}}
-            {{> gurps/feature_icon icon}}
-          {{/if}} --}}
+          {{!-- {{#if icon}} --}}
+            <div class="icon">
+              <div class="wrapper">
+                <div class="icon main">{{gurpsIcon 'skill'}}</div>
+                <div class="icon secondary">{{gurpsIcon 'advantage'}}</div>
+              </div>  
+            </div>
+          {{!-- {{/if}} --}}
           <!-- TITLE -->
           <div class="title">
             <!-- TITLE.TRAY -->
@@ -36,7 +41,9 @@
           <div class="label roll compact" data-roll-step="0">
             Label
           </div>
-          <div class="value roll compact">VALUE</div>
+          <div class="value roll-wrapper compact">
+            {{#> components/cards/roll}}{{/components/cards/roll}}
+          </div>
           {{!-- {{/if}} --}}
           <!-- STATS -->
           {{!-- {{#if stats}}
