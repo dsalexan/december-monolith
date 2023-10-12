@@ -1,0 +1,65 @@
+<div class="wheel">
+  <div class="header">
+    <div class="row">
+      <div class="stat focusable" data-roll-step="0">
+        <div class="icon-wrapper">{{gurpsIcon 'attribute'}}</div>
+        <div class="value">+10</div>
+      </div>
+      
+      <div class="stat focusable focus" data-roll-step="0">
+        <div class="icon-wrapper">{{gurpsIcon 'attribute'}}</div>
+        <div class="value">+10</div>
+      </div>
+      
+      <div class="stat" data-roll-step="0">
+        <div class="icon-wrapper">{{gurpsIcon 'attribute'}}</div>
+        <div class="value">+10</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="stat" data-roll-step="0">
+        <div class="icon-wrapper">{{gurpsIcon 'attribute'}}</div>
+        <div class="value">+10</div>
+      </div>
+      
+      <div class="stat" data-roll-step="0">
+        <div class="icon-wrapper">{{gurpsIcon 'attribute'}}</div>
+        <div class="value">+10</div>
+      </div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="background"></div>
+    <div class="previous"><i class="icon mdi mdi-circle-medium"></i></div>
+
+    <div class="wrapper">
+
+      <div class="panel">
+        <div class="label">
+          <div class="primary">Primary</div>
+          <div class="secondary">Secondary</div>
+          <div class="tertiary">Tertiary</div>
+        </div>
+        <div class="roll-wrapper interactible">
+          {{#> components/cards/roll}}{{/components/cards/roll}}
+        </div> 
+      </div>
+      
+
+      <div class="panel">
+        <div class="label">
+          <div class="primary">Primary</div>
+          <div class="secondary">Secondary</div>
+          <div class="tertiary">Tertiary</div>
+        </div>
+        <div class="roll-wrapper interactible">
+          {{#> components/cards/roll}}{{/components/cards/roll}}
+        </div>          
+      </div>
+
+    </div>
+    
+    <div class="next"><i class="icon mdi mdi-circle-medium"></i></div>
+  </div>
+</div>
