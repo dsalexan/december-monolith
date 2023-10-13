@@ -1,11 +1,26 @@
 <div class="stack combat dark"> <!-- collapsed -->
   {{!-- <div class="label">Traits</div>
   <div class="holder"></div> --}}
-  <div class="tray expanded">
+  <div class="tray">
     <div class="chevron stub"><i class="icon mdi mdi-chevron-up"></i></div>
     <div class="divider"></div>
 
-    <div style="color: white;">COMBAT</div>
+    {{!-- <div style="color: white;">COMBAT</div> --}}
+
+    <div class="header">
+      <div class="section">
+        <div class="label">Maneuver</div>
+        <div class="children">
+          {{#> mobile-actor-sheet/status}}{{/mobile-actor-sheet/status}}
+          {{#> mobile-actor-sheet/status}}{{/mobile-actor-sheet/status}}
+          {{#> mobile-actor-sheet/status}}{{/mobile-actor-sheet/status}}
+          {{#> mobile-actor-sheet/status}}{{/mobile-actor-sheet/status}}
+        </div>
+      </div>
+    </div>
+
+
+
     {{#each status}}
         {{#if this.spacer}}
           <div class="spacer"><svg viewBox="0 0 2 2" fill="currentColor"><circle cx="1" cy="1" r="1" /></svg></div>
