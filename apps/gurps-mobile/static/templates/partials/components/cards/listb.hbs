@@ -1,5 +1,5 @@
 {{!-- TODO: Choose between list, group and card --}}
-<div class="card-list">
+<div class="card-list closed">
   <div class="header">
     <div class="label">
       <!-- chevron is here to centralize text -->
@@ -24,11 +24,8 @@
   </div>
   <div class="body hidden-list">
     {{#> components/cards/group}}{{/components/cards/group}}
-    {{#> components/cards/group}}{{/components/cards/group}}
   </div>
   <div class="body">
-    {{#> components/cards/listb}}Lista B{{/components/cards/listb}}
-    {{#> components/cards/group}}{{/components/cards/group}}
     {{#> components/cards/wrapper}}{{/components/cards/wrapper}}
   </div>
 </div>

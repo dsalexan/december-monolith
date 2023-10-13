@@ -2,8 +2,8 @@
   {{!-- {{#> components/cards/action classes="left"}}{{/components/cards/action}} --}}
 
   <div class="variants">
-    <div class="card-variant has-icon has-value">
-      {{!-- <div class="chevron prev"><i class="icon mdi mdi-chevron-left"></i></div> --}}
+    <div class="card-variant has-icon has-value reversed">
+      <div class="chevron prev"><i class="icon mdi mdi-chevron-left"></i></div>
 
       <div class="content-wrapper">
         <div class="content">
@@ -65,7 +65,139 @@
         </div>
       </div>
 
-      {{!-- <div class="chevron next"><i class="icon mdi mdi-chevron-right"></i></div> --}}
+      <div class="chevron next"><i class="icon mdi mdi-chevron-right"></i></div>
+    </div>
+    
+    <div class="card-variant has-icon has-value reversed">
+      <div class="chevron prev"><i class="icon mdi mdi-chevron-left"></i></div>
+
+      <div class="content-wrapper">
+        <div class="content">
+          <!-- ICON -->
+          {{!-- {{#if icon}} --}}
+            <div class="icon">
+              <div class="wrapper">
+                <div class="icon main">{{gurpsIcon 'skill'}}</div>
+                <div class="icon secondary">{{gurpsIcon 'advantage'}}</div>
+              </div>  
+            </div>
+          {{!-- {{/if}} --}}
+          <!-- TITLE -->
+          <div class="title">
+            <!-- TITLE.TRAY -->
+            <div class="tray">
+              <div class="children">
+                <div class="icon-wrapper pin"><i class="icon mdi mdi-pin"></i></div>
+              </div>
+            </div>
+            <!-- TITLE.MAIN -->
+            <span>Trait Main Title</span>
+          </div>
+          <!-- SUBTITLE -->
+          <div class="subtitle">
+            Trait Subtitle
+          </div>
+          <!-- EXPAND -->
+          <div class="expand">
+            <i class="expand icon mdi mdi-chevron-down"></i>
+            <i class="collapse icon mdi mdi-chevron-up"></i>
+          </div>
+          <!-- VALUE -->
+          {{!-- {{#if value}} --}}
+          <div class="label roll compact" data-roll-step="0">
+            Label
+          </div>
+          <div class="value roll-wrapper compact">
+            {{#> components/cards/roll}}{{/components/cards/roll}}
+          </div>
+          {{!-- {{/if}} --}}
+          <!-- WHEEL -->
+          {{#> components/cards/wheel}}{{/components/cards/wheel}}
+          <!-- NOTES -->
+          <div class="notes"> 
+            {{!-- {{#each notes}}<p>{{this}}</p>{{/each}} --}}
+            <p>Lorem Ipsum Dolor sit amet consectetur adipscit elit</p>
+            <p>Lorem Ipsum Dolor sit amet consectetur adipscit elit</p>
+            <p>Lorem Ipsum Dolor sit amet consectetur adipscit elit</p>
+          </div>
+          <!-- TAGS -->
+          <div class="tags">
+            <div class="children">
+              {{#> components/cards/tag}}{{/components/cards/tag}}
+              {{#> components/cards/tag}}{{/components/cards/tag}}
+              {{#> components/cards/tag}}{{/components/cards/tag}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chevron next"><i class="icon mdi mdi-chevron-right"></i></div>
+    </div>
+    
+    <div class="card-variant has-icon has-value reversed">
+      <div class="chevron prev"><i class="icon mdi mdi-chevron-left"></i></div>
+
+      <div class="content-wrapper">
+        <div class="content">
+          <!-- ICON -->
+          {{!-- {{#if icon}} --}}
+            <div class="icon">
+              <div class="wrapper">
+                <div class="icon main">{{gurpsIcon 'skill'}}</div>
+                <div class="icon secondary">{{gurpsIcon 'advantage'}}</div>
+              </div>  
+            </div>
+          {{!-- {{/if}} --}}
+          <!-- TITLE -->
+          <div class="title">
+            <!-- TITLE.TRAY -->
+            <div class="tray">
+              <div class="children">
+                <div class="icon-wrapper pin"><i class="icon mdi mdi-pin"></i></div>
+              </div>
+            </div>
+            <!-- TITLE.MAIN -->
+            <span>Trait Main Title</span>
+          </div>
+          <!-- SUBTITLE -->
+          <div class="subtitle">
+            Trait Subtitle
+          </div>
+          <!-- EXPAND -->
+          <div class="expand">
+            <i class="expand icon mdi mdi-chevron-down"></i>
+            <i class="collapse icon mdi mdi-chevron-up"></i>
+          </div>
+          <!-- VALUE -->
+          {{!-- {{#if value}} --}}
+          <div class="label roll compact" data-roll-step="0">
+            Label
+          </div>
+          <div class="value roll-wrapper compact">
+            {{#> components/cards/roll}}{{/components/cards/roll}}
+          </div>
+          {{!-- {{/if}} --}}
+          <!-- WHEEL -->
+          {{#> components/cards/wheel}}{{/components/cards/wheel}}
+          <!-- NOTES -->
+          <div class="notes"> 
+            {{!-- {{#each notes}}<p>{{this}}</p>{{/each}} --}}
+            <p>Lorem Ipsum Dolor sit amet consectetur adipscit elit</p>
+            <p>Lorem Ipsum Dolor sit amet consectetur adipscit elit</p>
+            <p>Lorem Ipsum Dolor sit amet consectetur adipscit elit</p>
+          </div>
+          <!-- TAGS -->
+          <div class="tags">
+            <div class="children">
+              {{#> components/cards/tag}}{{/components/cards/tag}}
+              {{#> components/cards/tag}}{{/components/cards/tag}}
+              {{#> components/cards/tag}}{{/components/cards/tag}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chevron next"><i class="icon mdi mdi-chevron-right"></i></div>
     </div>
   </div>
 
