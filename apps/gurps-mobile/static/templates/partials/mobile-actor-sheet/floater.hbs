@@ -1,0 +1,8 @@
+<div class="floater {{isTrue disabled 'disabled'}}">
+  {{#if label}}
+    <div class="label">{{label}}</div>
+  {{/if}}
+  <div class="wrapper">
+    {{> @partial-block}}
+  </div>
+</div>
