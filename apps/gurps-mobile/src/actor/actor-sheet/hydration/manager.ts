@@ -6,6 +6,7 @@ import Header from "./header"
 import StackWrapper from "./stack"
 import { MODULE_ID } from "../../../../config"
 import Floating from "./floating"
+import TraitCardList from "./trait/list"
 
 export default class SheetHTMLHydrationManager extends HTMLHydrationManager {
   sheet: GurpsMobileActorSheet
@@ -15,6 +16,10 @@ export default class SheetHTMLHydrationManager extends HTMLHydrationManager {
   stack: StackWrapper
   floating: Floating
 
+  traits: {
+    list: TraitCardList
+  }
+
   constructor(sheet: GurpsMobileActorSheet) {
     super(`${MODULE_ID}.${sheet.actor.uuid}.${GurpsMobileActorSheet.sheet_name}`)
 
@@ -23,29 +28,19 @@ export default class SheetHTMLHydrationManager extends HTMLHydrationManager {
     this.header = new Header(this)
     this.stack = new StackWrapper(this)
     this.floating = new Floating(this)
+
+    this.traits = {
+      list: new TraitCardList(this),
+    }
   }
 
   activateListeners(html: JQuery<HTMLElement>) {
     // TODO: Should i reset the listeners?
 
-    this.header._attach(html)
-    this.stack._attach(html)
-    this.floating._attach(html)
-
-    this.header._persist()
-    this.stack._persist()
-    this.floating._persist()
-
-    this.header._hydrate()
-    this.stack._hydrate()
-    this.floating._hydrate()
-
-    this.header._recall()
-    this.stack._recall()
-    this.floating._recall()
-  }
-
-  inject() {
-    debugger
+    const zeroth = [this.header, this.stack, this.floating, this.traits.list]
+    for (const hydrator of zeroth) hydrator._attach(html)
+    for (const hydrator of zeroth) hydrator._persist()
+    for (const hydrator of zeroth) hydrator._hydrate()
+    for (const hydrator of zeroth) hydrator._recall()
   }
 }

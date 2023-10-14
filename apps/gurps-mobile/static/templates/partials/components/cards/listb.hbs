@@ -12,18 +12,18 @@
     </div>
 
     <div class="buttons">
-        {{#> components/button icon="mdi-chevron-double-down" alternativeIcon="mdi-chevron-double-up"}}
-          <b>10</b> Hidden Features
+        {{#> components/button class="expand" icon="mdi-chevron-double-down" alternativeIcon="mdi-chevron-double-up"}}
+          <b>10</b> <i class="icon mdi mdi-eye-off" style="opacity: 0.75; margin-right: var(--s0-25); margin-top: 2px;"></i>
         {{/components/button}}
         
         <div class="spacer"></div>
         
-        {{#> components/button icon="mdi-eye-off" label="Hide All"}}{{/components/button}}
-        {{#> components/button icon="mdi-eye" label="Show All"}}{{/components/button}}
+        {{#> components/button class="hide-all" icon="mdi-eye-off" label="Hide All"}}{{/components/button}}
+        {{#> components/button class="show-all" icon="mdi-eye" label="Show All"}}{{/components/button}}
     </div>
   </div>
   <div class="body hidden-list">
-    {{#> components/cards/group}}{{/components/cards/group}}
+    {{#> components/cards/card}}{{/components/cards/card}}
   </div>
   <div class="body">
     {{#> components/cards/wrapper}}{{/components/cards/wrapper}}

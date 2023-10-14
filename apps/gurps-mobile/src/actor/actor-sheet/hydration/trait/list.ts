@@ -11,12 +11,15 @@ export default class TraitCardList extends SheetHydrator {
   }
 
   _attach(html: JQuery<HTMLElement>) {
-    const list = this._find(html, `> .card-list, > .card-list .card-list`)
+    const panel = this._find(html, `> .stack-wrapper > .stack > .panels > .panel`)
+    const list = this._find(panel, `> .card-list, > .card-list .card-list`)
 
     return super._attach(list)
   }
 
   _persist() {
+    // TODO: PERSIST closed
+    // TODO: PERSIST expanded
     // this.on(`select`, ({ data: { value, state } }) => {
     //   if (state) this.manager.storage.set(this.STORAGE.SELECTED, value)
     //   else this.manager.storage.remove(this.STORAGE.SELECTED)
@@ -29,14 +32,20 @@ export default class TraitCardList extends SheetHydrator {
     const self = this
     const list = $(element)
 
-    const label = list.find(` > .label`)
+    const header = list.find(` > .header`)
+
+    const label = header.find(` > .label`)
+    const buttons = header.find(`> .buttons`)
+
+    const expand = buttons.find(`> .button.expand`)
+    const hideAll = buttons.find(`> .button.hide-all`)
+    const showAll = buttons.find(`> .button.show-all`)
 
     // const maneuver = this.html.find(` > .row > .maneuver`)
 
-    // // wire events
-    // maneuver.on(`click`, function (event) {
-    //   self.select($(this).data(`value`))
-    // })
+    // wire events
+    label.on(`click`, () => this.close($(element)))
+    expand.on(`click`, () => this.expand($(element)))
 
     return super._hydrateElement(element, index)
   }
@@ -53,21 +62,22 @@ export default class TraitCardList extends SheetHydrator {
   }
 
   // API
-  // select(value: string, state?: boolean) {
-  //   const maneuver = this.html.find(` > .row > .maneuver[data-value="${value}"]`)
+  close(list: JQuery<HTMLElement>, state?: boolean) {
+    const isClosed = list.hasClass(`closed`)
+    const _state = state === undefined ? !isClosed : state
 
-  //   const isSelected = maneuver.hasClass(`selected`)
-  //   const _state = state === undefined ? !isSelected : state
+    list.toggleClass(`closed`, _state)
 
-  //   this.html.find(` > .row:not(:first-child)`).addClass(`hidden`)
-  //   this.html.find(` > .row > .maneuver.selected`).removeClass(`selected`)
-  //   if (_state) {
-  //     maneuver.addClass(`selected`)
-  //     // show up to next row
-  //     const index = maneuver.parent().index() + 1
-  //     for (let i = 2; i <= index + 1; i++) this.html.find(` > .row:nth-child(${i})`).removeClass(`hidden`)
-  //   }
+    this.fire(`close`, { list, state: _state })
+  }
 
-  //   this.fire(`select`, { value, state: _state })
-  // }
+  expand(list: JQuery<HTMLElement>, state?: boolean) {
+    const isExpanded = list.hasClass(`expanded`)
+    const _state = state === undefined ? !isExpanded : state
+
+    list.toggleClass(`expanded`, _state)
+    list.find(`> .header > .buttons > .button.expand`).toggleClass(`active alternative`, _state)
+
+    this.fire(`expand`, { list, state: _state })
+  }
 }
