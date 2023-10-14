@@ -1,32 +1,16 @@
 <div class="maneuvers">
   <div class="row">
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-  </div>
-  {{!-- <div class="row">
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
+    {{#each (range 0 3)}}
+      {{#> mobile-actor-sheet/maneuvers/maneuver value=this}}{{/mobile-actor-sheet/maneuvers/maneuver}}
+    {{/each}}
+  </div><div class="row">
+    {{#each (range 3 10)}}
+      {{#> mobile-actor-sheet/maneuvers/maneuver value=this}}{{/mobile-actor-sheet/maneuvers/maneuver}}
+    {{/each}}
   </div>
   <div class="row">
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-    {{#> mobile-actor-sheet/maneuvers/maneuver}}{{/mobile-actor-sheet/maneuvers/maneuver}}
-  </div> --}}
+    {{#each (range 10 15)}}
+      {{#> mobile-actor-sheet/maneuvers/maneuver value=this}}{{/mobile-actor-sheet/maneuvers/maneuver}}
+    {{/each}}
+  </div>
 </div>

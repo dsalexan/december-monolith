@@ -1,29 +1,20 @@
-import { TabsHydrator } from "@december/foundry/hydration"
-import SheetHydrator, { SheetHTMLHydrationManager } from "../hydrator"
+import { SheetHTMLHydrationManager } from "../hydrator"
+import Stack from "./stack"
 
-export default class StackTraits extends SheetHydrator {
-  tabs: TabsHydrator
-
+export default class StackTraits extends Stack {
   constructor(manager: SheetHTMLHydrationManager) {
-    super(manager, {})
-
-    this.tabs = new TabsHydrator(manager, {
+    super(manager, {
+      hideOnCollapse: true,
+      defaultCollapsed: false,
+      name: `traits`,
       storageKey: `traits`,
       defaultTab: `attributes`,
     })
   }
 
-  hydrate(html: JQuery<HTMLElement>): void {
+  _attach(html: JQuery<HTMLElement>) {
     const traits = this._find(html, `> .stack.traits`)
 
-    super.hydrate(traits)
-
-    this.tabs.hydrate(traits)
-    // TODO: hydrate panels component
-  }
-
-  _hydrate(): void {
-    // TODO: wire holder drag down event
-    // TODO: do drag down animation
+    return super._attach(traits)
   }
 }

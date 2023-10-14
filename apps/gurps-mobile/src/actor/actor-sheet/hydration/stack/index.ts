@@ -1,21 +1,36 @@
 import SheetHydrator, { SheetHTMLHydrationManager } from "../hydrator"
+import StackCombat from "./combat"
 
 import StackTraits from "./traits"
 
-export default class Stack extends SheetHydrator {
+export default class StackWrapper extends SheetHydrator {
   traits: StackTraits
+  combat: StackCombat
 
   constructor(manager: SheetHTMLHydrationManager) {
     super(manager, {})
 
     this.traits = new StackTraits(manager)
+    this.combat = new StackCombat(manager)
+
+    this._add(this.traits, this.combat)
   }
 
-  hydrate(html: JQuery<HTMLElement>): void {
+  _attach(html: JQuery<HTMLElement>) {
     const stackWrapper = this._find(html, `> .stack-wrapper`)
 
-    super.hydrate(stackWrapper)
+    this.traits._attach(stackWrapper)
+    this.combat._attach(stackWrapper)
 
-    this.traits.hydrate(stackWrapper)
+    return super._attach(stackWrapper)
+  }
+
+  _hydrate(): this {
+    this.traits.on(`expand`, ({ data }) => {
+      if (data) this.combat.expand(false)
+      else this.combat.expand(true)
+    })
+
+    return super._hydrate()
   }
 }

@@ -9,6 +9,7 @@ export default class Hydrator<TProperties extends HydratorProperties = Record<st
   protected _manager: HTMLHydrationManager
   protected html!: JQuery<HTMLElement>
   protected properties!: TProperties
+  protected childHydrators: Hydrator<any>[] = []
 
   get manager() {
     return this._manager
@@ -18,8 +19,11 @@ export default class Hydrator<TProperties extends HydratorProperties = Record<st
     super()
 
     this._manager = manager
-
     if (properties) this.properties = properties
+  }
+
+  _add(...hydrators: Hydrator<any>[]) {
+    this.childHydrators.push(...hydrators)
   }
 
   _find(html: JQuery<HTMLElement>, selector: string) {
@@ -32,28 +36,56 @@ export default class Hydrator<TProperties extends HydratorProperties = Record<st
     return element
   }
 
-  hydrate(html: JQuery<HTMLElement>) {
+  /**
+   * attach the html to the hydrator, the only hydration method that should be overriden ALWAYS
+   */
+  _attach(html: JQuery<HTMLElement>) {
     this.html = html
 
-    this._hydrate()
-    this._persist()
+    return this
+  }
+  /**
+   * Subscribe to events to keep data persistent between sources/layers
+   */
+  _persist() {
+    if (this.childHydrators.length === 0) {
+      // @ts-ignore
+      const name = this.__proto__.constructor.name
+      logger.add(`_persist() not implemented in hydrator "${name}"`).warn()
+    }
+
+    this.childHydrators.map(hydrator => hydrator._persist())
+
+    return this
   }
 
   /**
    * Hydrate static html from handlebars with javascript funcionality
    */
   _hydrate() {
-    // throw new Error(`_hydrate() not implemented`)
-    // @ts-ignore
-    const name = this.__proto__.constructor.name
-    logger.add(`_hydrate() not implemented in hydrator "${name}"`).warn()
+    if (this.childHydrators.length === 0) {
+      // @ts-ignore
+      const name = this.__proto__.constructor.name
+      logger.add(`_hydrate() not implemented in hydrator "${name}"`).warn()
+    }
+
+    this.childHydrators.map(hydrator => hydrator._hydrate())
+
+    return this
   }
 
   /**
-   * Subscribe to events to keep data persistent between sources/layers
+   * Recall information from storage and inject it into the html
    */
-  _persist() {
-    // TODO: Maybe all data syncing should be done here? Not half here, half in the sheet like before?
-    // noop
+  _recall() {
+    if (this.childHydrators.length === 0) {
+      // @ts-ignore
+      const name = this.__proto__.constructor.name
+      logger.add(`_recall() not implemented in hydrator "${name}"`).warn()
+    }
+
+    this.childHydrators.map(hydrator => hydrator._recall())
+
+    return this
   }
 }

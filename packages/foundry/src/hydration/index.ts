@@ -8,3 +8,4 @@ export * as Hydrators from "./hydrators"
 
 // individual hydrators
 export { default as TabsHydrator } from "./hydrators/tabs"
+export type { TabsHydratorProperties } from "./hydrators/tabs"

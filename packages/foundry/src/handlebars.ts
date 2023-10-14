@@ -1,4 +1,4 @@
-import { get, intersection, isArray, isEmpty, isNil, isObjectLike, isString } from "lodash-es"
+import { get, intersection, isArray, isEmpty, isNil, isObjectLike, isString, range } from "lodash-es"
 
 export class TemplatePreloader {
   /**
@@ -109,5 +109,7 @@ export class TemplatePreloader {
     })
 
     Handlebars.registerHelper(`sum`, (a, b) => a + b)
+
+    Handlebars.registerHelper(`range`, (a, b) => range(a, b))
   }
 }

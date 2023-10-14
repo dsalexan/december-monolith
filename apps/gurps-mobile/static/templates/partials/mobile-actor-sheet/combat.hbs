@@ -26,20 +26,20 @@
   {{#> mobile-actor-sheet/maneuvers/slider}}{{/mobile-actor-sheet/maneuvers/slider}}
 
   <div class="tabs" data-value="{{oocTab}}">
-    {{> components/tabs/tab value="attribute" icon="attribute"}}
-    {{> components/tabs/tab value="advantage" icon="advantage"}}
+    {{> components/tabs/tab value="offensive" icon="attack"}}
+    {{> components/tabs/tab value="defensive" icon="defense"}}
     {{> components/tabs/tab value="skill" icon="skill"}}
     {{> components/tabs/tab value="spell" icon="spell"}}
     {{> components/tabs/tab value="equipment" icon="equipment"}}
   </div>   
   <div class="panels">
-    {{#> components/tabs/panel value="attribute"}}
+    {{#> components/tabs/panel value="offensive"}}
         {{#> components/cards/list}}Button Label{{/components/cards/list}}
         {{!-- {{#> components/cards/list}}Button Label{{/components/cards/list}}
         {{#> components/cards/list}}Button Label{{/components/cards/list}}
         {{#> components/cards/list}}Button Label{{/components/cards/list}} --}}
     {{/components/tabs/panel}}
-    {{#> components/tabs/panel value="advantage"}}
+    {{#> components/tabs/panel value="defensive"}}
       <div>PANEL 2</div>
     {{/components/tabs/panel}}
     {{#> components/tabs/panel value="skill"}}

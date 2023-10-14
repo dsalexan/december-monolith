@@ -15,18 +15,20 @@ export default class TabsHydrator extends Hydrator<TabsHydratorProperties> {
     return `${this.properties.storageKey}.selected-tab`
   }
 
-  hydrate(html: JQuery<HTMLElement>): void {
+  _attach(html: JQuery<HTMLElement>) {
     this.tabs = this._find(html, `> .tabs`)
     this.panels = this._find(html, `> .panels`)
 
-    super.hydrate(html)
+    return super._attach(html)
   }
 
   _persist() {
     this.on(`select`, ({ data }) => this.manager.storage.set(this.__selected_tab, data))
+
+    return super._persist()
   }
 
-  _hydrate(): void {
+  _hydrate() {
     const self = this
 
     const tab = this.tabs.find(`> .tab`)
@@ -37,11 +39,18 @@ export default class TabsHydrator extends Hydrator<TabsHydratorProperties> {
       self.select($(this).data(`value`))
     })
 
+    return super._hydrate()
+  }
+
+  _recall() {
     // set selected tab (forced to render what is missing)
     const selectedTab = this.manager.storage.get<string>(this.__selected_tab, this.properties.defaultTab)
     if (!isNil(selectedTab)) this.select(selectedTab, true)
+
+    return super._recall()
   }
 
+  // API
   select(value: string, force = false) {
     const currentValue = this.tabs.data(`value`)
 

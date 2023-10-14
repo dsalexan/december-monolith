@@ -9,13 +9,15 @@ export default class Header extends SheetHydrator {
     super(manager, {})
 
     this.details = new HeaderDetails(manager, {})
+
+    this._add(this.details)
   }
 
-  hydrate(html: JQuery<HTMLElement>): void {
+  _attach(html: JQuery<HTMLElement>) {
     const header = this._find(html, `> .header`)
 
-    super.hydrate(header)
+    this.details._attach(header)
 
-    this.details.hydrate(header)
+    return super._attach(header)
   }
 }

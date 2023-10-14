@@ -1,3 +1,5 @@
+import { isNil } from "lodash"
+
 export default class HTMLHydrationManager {
   storageKey: string
 
@@ -15,7 +17,7 @@ export default class HTMLHydrationManager {
       get<T>(key: string, defaultValue?: T) {
         const _key = `${self.storageKey}.${key}`
         const value = window.localStorage.getItem(_key)
-        return value === null ? defaultValue : (JSON.parse(value) as T)
+        return isNil(value) || value === `undefined` ? defaultValue : (JSON.parse(value) as T)
       },
 
       set<T>(key: string, value: T) {
