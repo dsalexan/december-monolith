@@ -1,0 +1,104 @@
+/*
+
+.card-list
+  .body
+    .card-group
+      .children
+        .card-wrapper <------------- JUST HERE BELOW
+          .children
+            .card
+              .action
+              .variants
+                .card-variant  -----------
+                  .chevron
+                  .content-wrapper
+                    .content
+
+*/
+
+
+& > .card-wrapper {
+  & > .children > .card > .variants > .card-variant {
+    
+    // grid-template-areas: 
+    // "icon1 title title expand"
+    // "icon2 subtitle value value"
+    // "icon3 subtitle value value"
+    // "icon4 label value value"
+    // "wheel wheel wheel wheel"
+    // "slot1 slot1 slot1 slot1"
+    // "slot2 slot2 slot2 slot2";
+  
+    // &:not(.has-xxx) {
+    //   & > .content-wrapper > .content {}
+    // }
+  
+    // #region ICON
+
+    // without icon
+    &:not(.has-icon) {
+      & > .content-wrapper > .content {
+        & > .icon { display: none; }
+
+        & > .title {
+          margin-left: 0px;
+          grid-area: icon1 / icon1 / icon3 / title;
+        }
+        
+        & > .subtitle { grid-area: icon4 / icon4 / icon4 / subtitle; }
+        
+        & > .label { grid-area: icon4 / icon4 / label / label; }
+      }
+    }
+
+    &.small-icon {
+      & > .wrapper > .content {
+        --icon-width: calc(1 * var(--s2));
+        --icon-height: calc(2 * var(--s2));
+        
+        & > .icon {
+          background-color: transparent !important;
+          align-items: flex-start !important;
+
+          & > .wrapper {
+            --icon-size: var(--s2);
+            margin-top: -1px;
+
+            & > .icon {
+              &.secondary {
+                margin-top: -3px;
+                margin-left: 0px;
+                margin-right: 0px;
+                text-align: center;
+                //
+                font-size: unset;
+                color: #BBBBBB;
+
+                & > svg.icon {
+                  height: auto;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+    // #endregion
+
+    // #region VALUE
+
+    // without value
+    &:not(.has-value) {
+      & > .content-wrapper > .content {
+        & > .value { display: none; }
+        & > .stats { margin-top: 0; }
+      }
+    }
+
+    // #endregion
+
+  }
+
+}

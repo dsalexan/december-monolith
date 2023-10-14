@@ -1,0 +1,15 @@
+
+body.mobile {
+  // sheet apps
+  .app.window-app.actor.sheet {
+    // specifically gurps-mobile sheets (be they actor, npcs, items, etc...)
+    &.gurps-mobile {
+
+      // hiding the header
+      & > header.window-header {
+        display: none;
+        background: rosybrown; 
+      }
+    }
+  }
+}

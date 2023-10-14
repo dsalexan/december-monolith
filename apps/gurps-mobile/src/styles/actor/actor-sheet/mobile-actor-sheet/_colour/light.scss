@@ -1,0 +1,54 @@
+// STACK
+& > .stack-wrapper {
+  & > .stack.light {
+    --content-background-color: 238, 238, 238;
+    --background-color: var(--light-primary-color);
+    --color: 119, 119, 119;
+    --selected-color: var(--dark-primary-color);
+  }
+}
+
+& > .stack-wrapper > .stack.light > .panels > .panel {
+  /*
+  .card-list
+    .body
+      .card-group
+        .children
+          .card-wrapper <------------- JUST HERE BELOW
+            .children
+              .card
+                .action
+                .variants
+                  .card-variant  -----------
+                    .chevron
+                    .content-wrapper
+                      .content
+  */
+
+  & .card-list {
+    --dark-highlight-color: var(--dark-primary-color);
+    --highlight-color: var(--primary-color);
+    --lighter-highlight-color: var(--lighter-primary-color);
+    --very-lighter-highlight-color: var(--very-lighter-primary-color);
+  }
+
+  & .card-list > .body > .card-wrapper,
+  & .card-list > .body > .card-group > .children > .card-wrapper {
+    --border-color: 217, 217, 217;
+    // --border-color: 255, 0, 0;
+    --background-color: 251, 251, 251;
+    --value-color: 51, 51, 51;
+    --contrast-value-color: 238, 238, 238;
+    --label-color: 102, 102, 102;
+    --contrast-label-color: 119, 119, 119;
+    //
+    --dark-highlight-color: var(--dark-primary-color);
+    --highlight-color: var(--primary-color);
+    --lighter-highlight-color: var(--lighter-primary-color);
+    --very-lighter-highlight-color: var(--very-lighter-primary-color);
+    // color: #333;
+
+    
+    // TODO: Do pinned
+  }
+}

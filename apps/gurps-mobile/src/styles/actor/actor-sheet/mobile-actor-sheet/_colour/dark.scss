@@ -1,0 +1,9 @@
+// CONTENT
+& > .stack-wrapper {
+  & > .stack.dark {
+    --content-background-color: 51, 51, 51;
+    --background-color: var(--dark-primary-color);
+    --color: 221, 221, 221;
+    --selected-color: var(--primary-color);
+  }
+}

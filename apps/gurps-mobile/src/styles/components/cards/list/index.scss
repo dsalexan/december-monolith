@@ -1,0 +1,40 @@
+& .card-list {
+  --highlight-color: 68, 68, 68;
+  --lighter-highlight-color: 119, 119, 119;
+  --very-lighter-highlight-color: 180, 180, 180;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  //
+  margin-bottom: var(--s1);
+  max-width: 100%;
+
+  @import "./header";
+  @import "./body";
+
+  // cards in hidden-list are hidden
+  &:not(.expanded) > .body.hidden-list { display: none; }
+  
+  // open list, cards visible
+  &:not(.closed) {
+    & > .header > .label > .chevron.down { display: none; }
+  }
+
+  // closed list, only label visible
+  &.closed {
+    & > .header {
+      & > .label { 
+        background-color: rgb(0 0 0 / 8%); 
+        & > .chevron.up { display: none; }
+      }
+      & > .buttons { display: none; }
+    }
+    
+    & > .body { display: none; }
+  }
+
+  // expanded list, even those cards in hidden-list are visible
+  &.expanded {}
+}

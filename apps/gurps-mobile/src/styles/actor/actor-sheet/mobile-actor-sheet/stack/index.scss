@@ -1,0 +1,116 @@
+& > .stack-wrapper {
+  & > .stack {
+    //.dark
+    --content-background-color: 51, 51, 51;
+    --background-color: var(--dark-primary-color);
+    --color: 221, 221, 221;
+    --selected-color: var(--primary-color);
+
+    --border-radius: var(--s2);
+
+    background-color: rgb(var(--content-background-color));
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    flex-grow: 1;
+    max-width: 100vw;
+    overflow: hidden;
+    position: relative;
+    //
+    padding-bottom: calc(3 * var(--s2));
+
+    &:nth-of-type(4) { z-index: 6; }
+    &:nth-of-type(3) { z-index: 5; }
+    &:nth-of-type(2) { z-index: 4; }
+    &:nth-of-type(1) { z-index: 3; }
+    
+    // CHILDREN
+    & > .label {
+      display: none;
+      text-align: center;
+      //
+      font-family: Roboto;
+      font-style: italic;
+      font-weight: 600;
+      font-size: 13px;
+      line-height: 12px;
+      //
+      color: #555;
+    }
+
+    & > .holder {
+      touch-action: none;
+      user-select: none;
+      //
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+
+      &::before {
+        --width: 9px;
+        //
+        content: " ";
+        display: block;
+        //
+        border-radius: 8px;
+        width: calc(var(--width) * 5);
+        height: 4px;
+        //
+        margin: var(--s1-5) 0;
+        background-color: #ccc;
+      }
+    }
+
+    @import "./tray";
+    @import "./maneuvers";
+    @import "@components/tabs";
+
+    & > .holder + .tabs { padding-top: 0; }
+
+    & > .panels > .panel {
+      @import "@components/cards";
+    }
+
+    // VARIANTS
+    &.collapsed {
+      padding: var(--s0-5) 0;
+      flex-grow: 0;
+
+      padding-bottom: calc(var(--s0-5) + var(--border-radius));
+      margin-bottom: calc(-1 * var(--border-radius));
+
+      & > .tray > .chevron,
+      & > .maneuvers,
+      & > .tabs,
+      & > .panels { display: none; }
+      
+      & > .holder::before {
+        margin-top: var(--s1);
+        margin-bottom: var(--s1);
+      }
+
+      & > .tray {
+        padding-top: var(--s1);
+        padding-bottom: var(--s1);
+      }
+    }
+    
+    // COLOUR
+    & > .tabs {
+      & > .tab {
+        & > .wrapper-icon > .icon {
+          color: rgb(var(--color));
+        }
+
+        &.selected {
+          & > .wrapper-icon {
+            background-color: rgb(var(--background-color), 0.6);
+            
+            & > .icon {
+              color: rgb(var(--selected-color), 1);
+            }
+          }
+        }
+      }
+    }
+  }
+}

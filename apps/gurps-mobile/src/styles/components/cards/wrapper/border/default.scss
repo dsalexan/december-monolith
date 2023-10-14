@@ -1,0 +1,131 @@
+/*
+
+.card-list
+  .body
+    .card-group
+      .children
+        .card-wrapper <------------- JUST HERE BELOW
+          .children
+            .card
+              .action
+              .variants
+                .card-variant  -----------
+                  .chevron
+                  .content-wrapper
+                    .content
+
+*/
+
+// BORDER-RADIUS
+& > .card-wrapper {
+  // & > .children > .card {
+  //   // TOP LEFT
+  //   // TOP RIGHT
+  //   &:first-of-type {
+  //     & > .variants > .card-variant:first-of-type > .content-wrapper {}
+  //   }
+    
+  //   // TOP LEFT
+  //   // TOP RIGHT
+  //   &:last-of-type {
+  //     & > .variants > .card-variant:last-of-type > .content-wrapper {}
+  //   }
+  // }
+  
+  & > .children > .card {
+    // TOP LEFT
+    // TOP RIGHT
+    &:first-of-type {
+      // border: 1px solid red;
+      border-top-left-radius: var(--border-radius-size);
+      border-top-right-radius: var(--border-radius-size);
+      
+      & > .variants > .card-variant {
+        &:first-of-type {
+          & > .content-wrapper { border-top-left-radius: var(--border-radius-size); }
+          &:not(:last-of-type) > .chevron.next { border-top-right-radius: var(--border-radius-size); }
+        }
+
+        &:last-of-type {
+          & > .content-wrapper { border-top-right-radius: var(--border-radius-size); }
+          &:not(:first-of-type) > .chevron.prev { border-top-left-radius: var(--border-radius-size); }
+        }
+        
+        &:first-of-type:last-of-type > .content-wrapper { border-top-right-radius: var(--border-radius-size); }
+      }
+    }
+
+    // BOTTOM LEFT
+    // BOTOM RIGHT
+    &:last-of-type {
+      // border: 1px solid blue;
+      border-bottom-left-radius: var(--border-radius-size);
+      border-bottom-right-radius: var(--border-radius-size);
+      
+      & > .variants > .card-variant {
+        &:first-of-type {
+          & > .content-wrapper { border-bottom-left-radius: var(--border-radius-size); }
+          &:not(:last-of-type) > .chevron.next { border-bottom-right-radius: var(--border-radius-size); }
+        }
+
+        &:last-of-type {
+          & > .content-wrapper { border-bottom-right-radius: var(--border-radius-size); }
+          &:not(:first-of-type) > .chevron.prev { border-bottom-left-radius: var(--border-radius-size); }
+        }
+        
+        &:first-of-type:last-of-type > .content-wrapper { border-bottom-right-radius: var(--border-radius-size); }
+      }
+    }
+
+    // INNER (horizontal scroll) CHEVRON
+    //    TOP
+    &:first-child > .variants > .card-variant {
+      &:not(:first-child):not(:last-child) > .chevron {
+        &.prev { border-top-left-radius: var(--border-radius-size); }
+        &.next { border-top-right-radius: var(--border-radius-size); }
+      }
+    }
+
+    // BOTTOM
+    &:last-child > .variants > .card-variant {
+      &:not(:first-child):not(:last-child) > .chevron {
+        &.prev { border-bottom-left-radius: var(--border-radius-size); }
+        &.next { border-bottom-right-radius: var(--border-radius-size); }
+      }
+    }
+  }
+}
+
+// BORDER
+& > .card-wrapper {
+  & > .children > .card {
+    // TOP
+    &:first-of-type > .variants {
+      // horizontal scroll variants
+      & .card-variant > .content-wrapper  { border-top-width: var(--border-size); }
+    }
+
+    // LEFT
+    // RIGHT
+    // MID
+    & > .variants > .card-variant > .content-wrapper  {
+      border-left-width: var(--border-size);
+      border-right-width: var(--border-size);
+      border-top-width: var(--border-size);
+      
+    }
+    // MID
+    & > .variants > .card-variant > .chevron {
+      border-top-color: transparent;
+      border-bottom-color: transparent;      
+    }
+    &:first-of-type > .variants > .card-variant > .chevron { border-top-color: rgb(var(--highlight-color)); }
+    &:last-of-type > .variants > .card-variant > .chevron { border-bottom-color: rgb(var(--highlight-color)); }
+
+    // BOTTOM
+    &:last-of-type > .variants {
+      // horizontal scroll variants
+      & .card-variant > .content-wrapper  { border-bottom-width: var(--border-size); }
+    }
+  }
+}

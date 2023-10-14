@@ -1,0 +1,97 @@
+& > .card-variant {
+  flex: 1 0 100%;
+  //
+  display: grid;
+  grid-template-areas: "prev wrapper next";
+  grid-template-columns: auto 1fr auto;
+  /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
+  grid-template-rows: 1fr;
+
+  & > .mark {
+    --font-size: var(--s1-5);
+
+    grid-area: mark;
+    padding: var(--padding-size) calc(var(--spacing) * 0.4);
+    //
+    background-color: rgb(var(--lighter-highlight-color), 1);
+    border: var(--border-size) solid rgb(var(--highlight-color), 1);
+    color: rgb(var(--highlight-color), 0.85);
+    //
+    text-align: center;
+    font-style: italic;
+    //
+    // display: none;
+    align-items: center;
+    justify-content: center;
+
+    & > div {
+      font-size: var(--font-size);
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+  }
+  
+  & > .chevron {
+    display: flex;
+    // display: none;
+    justify-content: center;
+    align-items: center;
+    //
+    background-color: rgb(var(--lighter-primary-color), 1);
+    border: 1px solid rgb(var(--highlight-color));
+    transition: border-radius 0.1s ease-in-out;
+
+    & > i.icon {
+      font-size: var(--s3);
+      color: rgb(var(--dark-highlight-color));
+      position: relative;
+      left: auto;
+      right: auto;
+    }
+
+    &.prev {
+      grid-area: prev;
+      //
+      margin-right: calc(-1 * var(--border-radius-size) - 1px);
+      padding-right: calc(1px + var(--border-radius-size));
+    }
+
+    &.next {
+      grid-area: next;
+      //
+      margin-left: calc(-1 * var(--border-radius-size) - 1px);
+      padding-left: calc(1px + var(--border-radius-size));
+    }
+  }
+
+  & > .content-wrapper {
+    grid-area: wrapper;
+    z-index: 2;
+    //
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
+    //
+    background: rgb(var(--background-color), 1);
+    border: 0 solid rgb(var(--border-color), 1);
+
+    & > .background-icon {
+      position: absolute;
+      left: calc(var(--spacing) * -3);
+      bottom: calc(var(--spacing) * 1);
+      z-index: 0;
+      //
+      width: 100%;
+      height: 100%;
+      color: rgb(0 0 0 / 10%);
+
+      & > svg {
+        height: calc(100% + (var(--spacing) * 4));
+      }
+    }
+
+    @import "./content";
+  }
+}

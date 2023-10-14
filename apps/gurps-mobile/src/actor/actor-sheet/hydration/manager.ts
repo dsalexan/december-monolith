@@ -44,4 +44,8 @@ export default class SheetHTMLHydrationManager extends HTMLHydrationManager {
     this.stack._recall()
     this.floating._recall()
   }
+
+  inject() {
+    debugger
+  }
 }

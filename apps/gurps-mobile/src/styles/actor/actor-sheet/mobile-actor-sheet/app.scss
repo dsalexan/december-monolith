@@ -1,0 +1,31 @@
+@use "@utils/scroll.scss" as scroll;
+
+// actor sheet apps
+.app.window-app.actor.sheet {
+  // specifically gurps-mobile actor sheets
+  &.gurps-mobile {
+    & > section.window-content {
+      @include scroll.no-scroll;
+      padding: 0px;
+
+      & > form {
+        background: rgb(var(--lighter-secondary-color));
+        display: flex;
+        flex-direction: column;
+        position: relative;
+
+        --form-padding: var(--spacing);
+
+        @import "../../../components/roll";
+
+        @import "./header";
+        @import "./stack";
+        @import "./floating";
+        
+        @import "./_colour/light.scss";
+        @import "./_colour/dark.scss";
+        
+      }
+    }
+  }
+}

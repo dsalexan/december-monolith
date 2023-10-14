@@ -1,0 +1,106 @@
+@use "@utils" as utils;
+
+& > .tag {
+  --font-size: calc(var(--s1) * 1.3333);
+  --icon-size: var(--s1-5);
+  --background-color: var(--contrast-value-color);
+  --border-color: 217, 217, 217;
+
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  //
+
+  & > .label {
+    font-family: Roboto;
+    font-size: var(--font-size);
+    line-height: calc(var(--font-size) * 0.5);
+    //
+    color: rgb(var(--label-color), 0.7);
+    //
+    margin-left: var(--s0-75);
+    &:first-child { margin-left: 0px; }
+
+    & > * { margin-left: var(--s0-25); }
+    & > *:first-child { margin-left: 0px; }
+
+    & > .icon { 
+      font-size: var(--icon-size);
+      width: var(--icon-size);
+      line-height: calc(var(--icon-size) * 1);
+      margin-top: 1px;
+    }
+  }
+  
+  // VARIANTS
+  //    default (non-box), just a whole row
+  &:not(.box) {
+    margin-left: var(--s0-5);
+    margin-top: var(--s0-75);
+    //
+    flex-grow: 1;
+    width: calc(85% - var(--s0-5)); // "supposed" to fill the entire line
+  }
+
+  //    box
+  &.box {
+    --border-radius: var(--s0-5);
+    --gap: var(--s0-5); // between tags, not labels
+    --padding: var(--s1);
+    
+    // all tags have this gap around
+    // a negative gap is used in .tags parent to account for any unbalance this may cause
+    margin: var(--gap);
+
+    // multilabeled tagboxes have no internal spacing between them
+    & > .label {
+      //
+      align-items: center;
+      display: flex;
+      justify-content: center;
+      flex-direction: row;
+      //
+      color: rgb(var(--label-color), 0.85);
+      background-color: rgb(var(--background-color), 0.95); // 228
+
+      border: 1px solid transparent; // 217
+      //
+      padding: var(--padding); // calc(var(--padding) * 2);
+      margin-left: 0px; // no internal spacing for boxes
+      
+      &:first-child {
+        border-top-left-radius: var(--border-radius);
+        border-bottom-left-radius: var(--border-radius);
+      }
+
+      &:last-child {
+        border-top-right-radius: var(--border-radius);
+        border-bottom-right-radius: var(--border-radius);
+      }
+    }
+
+    // VARIANTS
+    & > .label {
+      // button
+      &:not(.button) { pointer-events: none; }
+      &.button {
+        border-color: rgb(var(--highlight-color), 1);
+        color: rgb(var(--dark-highlight-color), 1);
+        background-color: rgb(var(--lighter-highlight-color), 1);
+        //        
+        font-weight: 500;
+      }
+
+      // inner borders
+      &:not(.button):not(:last-child) { border-right-color: transparent; }
+      &:not(.button) + :not(.button) { border-left-color: rgb(var(--border-color), 0.85); }
+      &.button + :not(.button) { border-left-color: transparent; }
+      &.button + .button { border-left-color: transparent; }
+
+      &.italic { font-style: italic; }
+      &.bold { font-weight: 600; }
+      &.regular { font-weight: 400; }
+      &.strikethrough { text-decoration: line-through; }
+    }
+  }
+}

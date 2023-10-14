@@ -1,0 +1,70 @@
+/*
+.card-list
+  .body
+    .card-group
+      .children
+        .card-wrapper <------------- JUST HERE BELOW
+          .children
+            .card
+              .action
+              .variants
+                .card-variant
+                  .chevron
+                  .content-wrapper
+                    .content
+*/
+
+    // grid-template-areas: 
+    // "icon1 title title expand"
+    // "icon2 subtitle value value"
+    // "icon3 subtitle value value"
+    // "icon4 label value value"
+    // "wheel wheel wheel wheel"
+    // "slot1 slot1 slot1 slot1"
+    // "slot2 slot2 slot2 slot2";
+
+& > .card-wrapper {
+  &:not(.collapsed) {
+    & > .children > .card > .variants > .card-variant > .content-wrapper > .content{
+      & > .expand {
+        & > .expand { display: none; }
+      }
+    }
+  }
+
+  &.collapsed {
+    flex-grow: 1;
+
+    & > .children > .card {
+      &:not(:first-child) { display: none; }
+
+      & > .variants > .card-variant {
+        &:not(:first-child) { display: none; }
+        & > .chevron { display: none; }
+        
+        & > .content-wrapper > .content {
+          & > .icon,
+          & > .expand,
+          & > .wheel,
+          & > .notes,
+          & > .tags {
+            display: none;
+          }
+  
+          & > .title {
+            margin-left: 0px;
+            grid-area: icon1 / icon1 / icon3 / title;
+          }
+    
+          & > .value {
+            grid-area: icon1 / expand / value / value;
+          }
+          
+          & > .subtitle { grid-area: icon4 / icon4 / icon4 / subtitle; }
+          
+          & > .label { grid-area: icon4 / icon4 / label / label; }
+        }
+      }
+    }
+  }
+}

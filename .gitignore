@@ -45,6 +45,6 @@ apps/*/dist
 # vite dev server
 *.mjs
 index.html
-styles/
+./styles/
 dist/
 *.css

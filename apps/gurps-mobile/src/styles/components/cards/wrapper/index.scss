@@ -1,0 +1,52 @@
+& > .card-wrapper {
+  --border-size: 1px; // feature border
+  --border-color: 68, 68, 68; // feature border
+  //
+  --background-color: 43, 43, 43; // feature background
+  //
+  --value-color: 238, 238, 238; // value color
+  --contrast-value-color: 51, 51, 51; // contrast value color
+  //   (background) tag box 0.95
+
+  --label-color: 119, 119, 119; // general label color
+  //    asterisk 0.75
+  //    main label 0.9
+  //    tag 0.75
+  //    tag box 0.85
+  --contrast-label-color: 102, 102, 102; // tag box border
+  //    (border) tag box 1
+
+  --highlight-color: 68, 68, 68;
+  --lighter-highlight-color: 119, 119, 119;
+  --very-lighter-highlight-color: 180, 180, 180;
+  //
+  --padding-size: 0;
+  //
+  --border-radius-size: 7px;
+  --border-top-left-radius-size: var(--border-radius-size);
+  --border-top-right-radius-size: var(--border-radius-size);
+  --border-bottom-right-radius-size: var(--border-radius-size);
+  --border-bottom-left-radius-size: var(--border-radius-size);
+
+  position: relative;
+  filter: drop-shadow(0 0 4px rgb(0 0 0 / 5%));
+  max-width: 100%;
+  
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+
+  & > .children {
+    grid-area: children;
+    //
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    @import "./card";
+  }
+}
+
+@import "./border";
+@import "./variants";

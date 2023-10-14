@@ -1,0 +1,52 @@
+@use "@utils" as utils;
+
+& > .maneuvers {
+  --background-color: 42, 42, 42;
+  --padding: var(--s1-5);
+  --margin: var(--s0-5);
+
+  // padding: var(--s2) 0;
+  background: rgb(var(--background-color), 1);
+  //
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  //
+  max-width: 100%;
+
+  & > .row {
+    display: flex;
+    flex-direction: row;
+    //
+    // &:first-child > .maneuver { padding-top: 0px; }
+    // &:last-child > .maneuver { padding-bottom: 0px; }
+    //
+    max-width: 100%;
+    overflow-x: scroll;
+    @include utils.no-scroll;
+
+    @import "./maneuver";
+
+    --2-background-color: 34, 34, 34;
+    --3-background-color: 21, 21, 21;
+
+    &:nth-child(1) > .maneuver.selected:before {
+      background: rgb(var(--2-background-color), 1);
+    }
+
+    &:nth-child(2) {
+      background: rgb(var(--2-background-color), 1);
+      & > .maneuver.selected:before {
+        background: rgb(var(--3-background-color), 1);
+      }
+    }
+
+    &:nth-child(3) {
+      background: rgb(var(--3-background-color), 1);
+      & > .maneuver.selected:before {
+        background: rgb(var(--3-background-color), 1);
+      }
+    }
+  }
+}

@@ -1,0 +1,116 @@
+& .roll,
+& .roll-wrapper > .roll {
+  white-space: nowrap;
+  //
+  // display: flex;
+  // flex-direction: column;
+  // justify-content: center;
+  // align-items: center;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas: 
+    "icon value asterisk"
+    "icon label asterisk";
+
+  & > .icon-wrapper,
+  & > .value {
+    color: #303030;
+
+    font-size: calc(var(--font-size) * 1);
+    line-height: calc(var(--font-size) * 0.8);
+    text-align: center;
+  }
+    
+  & > .icon-wrapper {
+    --font-size: var(--s2);
+
+    grid-area: icon;
+    //
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    & > .icon {
+      display: flex;
+      align-items: center;
+      //
+      height: calc(var(--font-size) * 1);
+    }
+  }
+
+  & > .value {
+    --font-size: var(--s3);
+
+    grid-area: value;
+    //
+    font-family: Alatsi;
+    font-weight: 500;
+  }
+
+  & > .label {
+    --font-size: var(--s1-5);
+    --color: 88, 88, 88;
+    --light-color: 129, 129, 129;
+
+    grid-area: label;
+    //
+    color: rgb(var(--color), 1);
+    font-size: var(--font-size);
+    font-family: Roboto;
+    max-width: calc(var(--font-size) * 8);
+    //
+    margin-bottom: calc(var(--font-size) * -0.1);
+    display: flex;
+    justify-content: center;
+  }
+
+  & > .asterisk {
+    --font-size: var(--s1-25);
+    --dark-color: 47, 47, 47;
+
+    grid-area: asterisk;
+    //
+    display: flex;
+    align-items: flex-end;
+    
+    & > .mdi-asterisk {
+      color: rgb(var(--dark-color), 1);    
+      //
+      line-height: calc(var(--font-size) * 0.5);
+      height: calc(var(--font-size) * 1);
+      font-size: calc(var(--font-size) * 1);      
+    }
+  }
+  
+  // GAPS
+  & > .value + .label,
+  & > .value + .label + .mdi-asterisk { margin-top: var(--s0-5); }
+}
+
+// WRAPPERS
+& .roll-wrapper {
+  &.compact > .roll {
+    & > .label {
+      display: inline-flex;
+    }
+  }
+
+  &.interactible > .roll {
+    border-radius: 3px;
+    padding: calc(1.5 * var(--s1));
+    //
+    border: 1px solid rgb(255, 0, 0, 1);
+    background-color: rgb(255, 183, 183);
+
+    // & > .label {
+    //   & > .variable:not([data-type="me"]) {
+    //     font-weight: 400;
+    //   }
+
+    //   & > .operator {
+    //     margin: 0 0;
+    //   }
+    // }
+  }
+}

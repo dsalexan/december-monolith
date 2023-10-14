@@ -1,0 +1,9 @@
+.spacer { flex-grow: 1; }
+
+.invisible {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hidden { display: none !important; }
+

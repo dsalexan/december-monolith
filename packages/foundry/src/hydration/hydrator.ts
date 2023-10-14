@@ -44,6 +44,25 @@ export default class Hydrator<TProperties extends HydratorProperties = Record<st
 
     return this
   }
+
+  /**
+   * Attach new elements to hydrator, an then call hydrate for that specific element (not every hydrator has a individual implementation for _hydrate)
+   */
+  _update(newHtml: JQuery<HTMLElement>) {
+    const length = this.html.length
+    const elements = newHtml.toArray()
+
+    this.html.pushStack(elements)
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i]
+      const index = length + i
+
+      this._hydrateElement(element, index)
+    }
+
+    return this
+  }
+
   /**
    * Subscribe to events to keep data persistent between sources/layers
    */
@@ -64,13 +83,26 @@ export default class Hydrator<TProperties extends HydratorProperties = Record<st
    */
   _hydrate() {
     if (this.childHydrators.length === 0) {
-      // @ts-ignore
+      // @ts-ignore1
       const name = this.__proto__.constructor.name
       logger.add(`_hydrate() not implemented in hydrator "${name}"`).warn()
     }
 
+    if (this.html.length) {
+      const elements = this.html.toArray()
+      for (let i = 0; i < elements.length; i++) {
+        const element = elements[i]
+        this._hydrateElement(element, i)
+      }
+    }
+
     this.childHydrators.map(hydrator => hydrator._hydrate())
 
+    return this
+  }
+
+  _hydrateElement(element: HTMLElement, index: number) {
+    // NOOP
     return this
   }
 

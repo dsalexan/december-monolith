@@ -1,0 +1,44 @@
+/*
+.card-list
+  .body
+    .card-group
+      .children
+        .card-wrapper <------------- JUST HERE BELOW
+          .children
+            .card
+              .action
+              .variants
+                .card-variant
+                  .chevron
+                  .content-wrapper
+                    .content
+*/
+
+    // grid-template-areas: 
+    // "icon1 title title expand"
+    // "icon2 subtitle value value"
+    // "icon3 subtitle value value"
+    // "icon4 label value value"
+    // "wheel wheel wheel wheel"
+    // "slot1 slot1 slot1 slot1"
+    // "slot2 slot2 slot2 slot2";
+
+// BORDER-RADIUS
+    & > .card-wrapper {
+      &.collapsed {
+
+        & > .children > .card {
+          border-radius: var(--border-radius-size);
+          & > .variants > .card-variant > .content-wrapper { border-radius: var(--border-radius-size); }
+        }
+      }
+    }
+
+    // BORDER
+    & > .card-wrapper {
+      &.collapsed {
+
+        & > .children > .card > .variants > .card-variant > .content-wrapper { border-bottom-width: var(--border-size); }
+      }
+    }
+    

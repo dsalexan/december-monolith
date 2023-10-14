@@ -1,0 +1,62 @@
+/*
+
+.card-list
+  .body
+    .card-group
+      .children
+        .card-wrapper <------------- JUST HERE BELOW
+          .children
+            .card
+              .action
+              .variants
+                .card-variant  -----------
+                  .chevron
+                  .content-wrapper
+                    .content
+
+*/
+
+
+& > .card-wrapper {
+  & > .children > .card > .variants > .card-variant {
+    
+    &.reversed {
+      & > .content-wrapper > .content {
+        // grid-template-areas: 
+        //   "icon1 title title expand"
+        //   "icon2 subtitle value value"
+        //   "icon3 subtitle value value"
+        //   "icon4 label value value"
+        //   "wheel wheel wheel wheel"
+        //   "slot1 slot1 slot1 slot1"
+        //   "slot2 slot2 slot2 slot2";
+        // grid-template-columns: min-content auto auto min-content;
+
+        // & > .icon,
+        // & > .expand,
+        // & > .wheel,
+        // & > .notes,
+        // & > .tags {
+        //   display: none;
+        // }
+
+        // & > .value {
+        //   grid-area: icon1;
+        // }
+
+        // & > .label {
+        //   grid-area: icon2;
+        // }
+
+        // & > .title {
+        //   grid-area: title;
+        // }
+
+        // & > .subtitle {
+        //   grid-area: subtitle / subtitle / value/ value;
+        // }
+      }
+    }
+    
+  }
+}

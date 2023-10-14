@@ -1,0 +1,99 @@
+@use 'sass:color';
+
+& > .actions {
+  --background-color: var(--primary-color);
+
+  --action-size: var(--s2);
+  --action-padding: var(--s1);
+  --max-action-width: calc(2 * (var(--action-size) + 2 * var(--action-padding) + 0px));
+  --padded-max-action-width: calc(var(--max-action-width) + 2 * var(--action-padding));
+
+  // scroll-snap-align: end; // this is set by javascript on a 100% swipe
+  background-color: lightgray;
+  position: relative;
+
+  background: linear-gradient(
+    90deg,
+    rgb(var(--background-color), 0) 0%,
+    rgb(var(--background-color), 0) calc(100% - var(--padded-max-action-width)),
+    rgb(var(--background-color), 1) calc(100% - var(--padded-max-action-width)),
+    rgb(var(--background-color), 1) 100%
+  );
+
+  &::after {
+    content: " ";
+    display: block;
+    width: var(--border-radius);
+    height: 100%;
+    background-color: rgb(var(--background-color), 1);
+    // background: red;
+
+    position: absolute;
+    top: 0;
+  }
+
+  &.left::after { right: calc(-1 * var(--border-radius)); }
+  &.right::after { left: calc(-1 * var(--border-radius)); }
+
+  & > .children {
+    height: 100%;
+    max-width: 100%;
+    padding: var(--action-padding);
+    //
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+
+    & > .divider {
+      margin: var(--s0-5) 0;
+      width: var(--icon-size);
+      height: 1px;
+      border-radius: 50%;
+      background-color: rgb(var(--very-lighter-primary-color), 1);
+      opacity: 0.6666;
+    }
+
+    & > .wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      
+      width: var(--max-action-width);
+      
+      &.horizontal { flex-direction: row; }
+
+      & > .action {        
+        max-width: var(--icon-size);
+        padding: var(--action-padding);
+        border-radius: var(--border-radius-size);
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        &:hover,
+        &:target,
+        &:focus,
+        &:active {
+          background-color: rgb(var(--semi-dark-primary-color), 0.333);
+        }
+
+        & > .icon {
+          font-size: var(--action-size);
+          color: rgb(var(--very-lighter-primary-color), 1);
+
+          &.mdi-google-circles {
+            font-size: var(--action-size);
+          }
+          &.mdi-bag-carry-on-off,
+          &.mdi-bag-carry-on {
+            font-size: calc(var(--action-size) + var(--s0-5));
+          }
+        }
+      }
+    }
+  }
+}

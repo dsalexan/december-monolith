@@ -1,0 +1,201 @@
+@use "@utils" as utils;
+
+& > .wheel{
+  grid-area: wheel;
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  
+  margin-top: var(--s1-5);
+  margin-bottom: var(--s0-5);
+  // margin-bottom: var(--s1);
+  
+  & > .header {
+    //
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-end;
+    // flex-grow: 1;
+    //
+
+    & > .row {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+      align-items: center;
+      // flex-grow: 1;
+      
+      & ~ .row { margin-top: var(--s0-25); }
+
+      & > .stat {
+        --color: 121, 121, 121;
+        --size: var(--s1-75);
+
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        //
+        margin-left: var(--s1);
+        
+        & > .icon-wrapper {
+          font-size: calc(var(--size) * 1);
+          line-height: calc(var(--size) * 0.8);
+          color: rgb(var(--color), 1);
+          opacity: 0.5;
+          //
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+
+          & > .icon {
+            display: flex;
+            align-items: center;
+            //
+            height: calc(var(--size) * 1);
+            margin-top: 1px;
+
+            &[class*="mdi-alpha-"] + .icon[class*="mdi-alpha-"] {
+              margin-left: calc(-1 * 9px);
+              margin-right: calc(-0.5 * 9px);
+            }
+          }
+        }
+
+        & > .value {
+          font-size: var(--size);
+          line-height: calc(var(--size) * 0.8);
+          font-weight: 400;
+          font-family: Alatsi;
+          color: rgb(var(--color), 1);
+          //
+          margin-left: 1px;
+        }
+
+        // VARIANTS
+        //    when a stat has something to show on the wheel
+        &.focusable {
+          --color: 34, 34, 34;
+          
+          & > .icon-wrapper { opacity: 0.66667; }
+        }
+
+        //    when wheel is focusing this stat
+        &.focus {
+          --color: var(--semi-dark-primary-color);
+          
+          & > .icon-wrapper { opacity: 0.8; }
+        }
+      }
+    }
+  }
+
+  & > .body {
+    position: relative;
+    //
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    //
+    margin-top: var(--s1);
+    margin-bottom: var(--s1);
+    margin-left: calc(-2 * var(--s1));
+    margin-right: calc(-2 * var(--s1));
+    max-width: calc(100% + 4 * var(--s1));
+    
+    & > * { z-index: 2; }
+
+    & > .background {
+      z-index: 1;
+      position: absolute;
+      background: linear-gradient(272.62deg, rgba(30, 30, 30, 0.55) -0.45%, rgba(24, 24, 24, 0.4) 84.66%, rgba(30, 30, 30, 0.25) 100.42%);
+      opacity: 0.075;
+      width: 100%;
+      height: calc(100% - 2 * 5px);
+    }
+
+    & > .next, & > .previous {
+      color: #BBBBBB;
+      // color: transparent;
+      margin-left: var(--s0-5);
+      margin-right: var(--s0-5);
+    }
+
+    & > .wrapper {
+      margin-left: calc(-2 * var(--s1));
+      margin-right: calc(-2 * var(--s1));
+      //
+      flex-grow: 1;
+      display: flex;
+      //
+      overflow-x: scroll;
+      scroll-snap-type: x mandatory;
+      @include utils.no-scroll;
+      
+      & > .panel {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        //
+        padding-left: calc(2 * var(--s1));
+        padding-right: calc(2 * var(--s1));
+        //
+        min-width: 100%;
+        scroll-snap-align: end;
+
+        & > .label {
+          text-align: right;
+          margin-right: var(--s1-25);
+          
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+
+          & > .primary {
+            color: #666666;
+            font-family: 'Roboto';
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 14px;
+          }
+
+          & > .secondary, & > .tertiary {
+            color: #999999;
+            font-family: 'Roboto';
+            font-weight: 400;
+            font-size: 12px;
+            line-height: 12px;
+          }
+        }
+
+        & > .roll-wrapper {
+          & > .roll {
+            background-color: rgb(var(--lighter-primary-color), 1);
+            border-color: rgb(var(--primary-color), 1);
+
+            & > .icon-wrapper {
+              color: rgb(var(--darker-primary-color), 0.95);
+            }
+
+            & > .value {
+              color: rgb(var(--darker-primary-color), 0.95);
+            }
+
+            & > .label {
+              --color: var(--dark-primary-color);
+              --light-color: var(--semi-dark-primary-color);
+              // color: rgb(var(--dark-primary-color), 1);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  &.at-first > .body > .previous { opacity: 0; }
+  &.at-last > .body > .next { opacity: 0; }
+}

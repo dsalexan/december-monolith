@@ -1,0 +1,44 @@
+/*
+.card-list
+  .body
+    .card-group
+      .children
+        .card-wrapper <------------- JUST HERE BELOW
+          .children
+            .card
+              .action
+              .variants
+                .card-variant
+                  .chevron
+                  .content-wrapper
+                    .content
+*/
+
+& > .card-group {
+  max-width: 100%;
+  
+  & > .children {
+    display: flex;
+    flex-direction: column;
+
+    @import "../wrapper";
+  }
+  
+
+  &.horizontal { 
+    & > .children {
+      flex-direction: row;
+
+      & > .card-wrapper {
+        --gap: var(--s1);
+        &:not(:first-child) { margin-left: calc(var(--gap) * 0.5); }
+        &:not(:last-child) { margin-right: calc(var(--gap) * 0.5); }
+        &:first-child:last-child { margin-right: 0px; }
+
+        & > .children > .card > .variants > .card-variant {
+          // & > .chevron { display: none; }
+        }
+      }
+    }
+  }
+}

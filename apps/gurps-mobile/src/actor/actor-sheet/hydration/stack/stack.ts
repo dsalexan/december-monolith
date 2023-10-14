@@ -15,9 +15,10 @@ export default class Stack extends SheetHydrator<StackHydratorProperties> {
     }
   }
 
-  tabs: TabsHydrator
   // @ts-ignore
   declare properties: StackHydratorProperties
+
+  tabs: TabsHydrator
 
   constructor(manager: SheetHTMLHydrationManager, properties: StackHydratorProperties & TabsHydratorProperties) {
     super(manager, properties)

@@ -1,0 +1,177 @@
+& > .floating {
+  --spacing: var(--s1);
+  --icon-size: var(--s2);
+  --font-size: var(--s1-5);
+  --floater-padding: var(--s1);
+  --height: calc(var(--icon-size) + 2 * var(--floater-padding));
+
+  --background-color: 254, 254, 254;
+  --dark-background-color: 51, 51, 51;
+
+  --margin: var(--s1);
+
+  z-index: 100;
+  position: fixed;
+  bottom: var(--margin);
+  left: 0;
+  // height: 100%;
+  // width: 100%;
+  display: flex;
+
+  & > *:not(:first-child) { margin-left: calc(0.5 * var(--spacing)); }
+  & > *:not(:last-child) { margin-right: calc(0.5 * var(--spacing)); }
+
+  // FLOATER
+  & > .floater {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: center;
+    //
+    border-radius: var(--floater-padding);
+
+    &:not(:last-child) { margin-bottom: var(--s1); }
+
+    & > .label {
+      z-index: 99;
+      //
+      border-top-left-radius: var(--floater-padding);
+      border-top-right-radius: var(--floater-padding);
+      padding: calc(var(--floater-padding) * 0.5) 0px;
+      //
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      //
+      font-family: Roboto;
+      color: #DDD;
+      background-color: rgb(var(--dark-background-color), 1);
+
+      &::after {
+        content: " ";
+        z-index: 98;
+        position: absolute;
+        left: 0;
+        bottom: calc(-1 * var(--floater-padding));
+        //
+        width: 100%;
+        height: var(--floater-padding);
+        background-color: rgb(var(--dark-background-color), 1);
+      }
+    }
+
+    & > .wrapper {
+      z-index: 100;
+      position: relative;
+      background-color: rgb(var(--background-color), 1);
+      //
+      border-radius: var(--floater-padding);
+      padding: var(--floater-padding);
+      //
+      min-height: var(--height);
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+    
+      // icon child
+      & > .icon {
+        color: rgb(var(--dark-background-color), 1);
+        font-size: var(--icon-size);
+        max-height: var(--icon-size);
+        max-width: var(--icon-size);
+        line-height: var(--icon-size);
+        display: block;
+        margin-top: -2px;
+      }
+
+      // span (probably text) child
+      & > span {
+        height: var(--icon-size);
+        max-height: var(--icon-size);
+        padding: 0 calc(var(--spacing) * 0.5);
+        //
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        //
+        font-size: var(--font-size);
+        line-height: calc(var(--font-size) * 0.8);
+
+        & > .icon {
+          margin-top: 1px;
+          margin-left: var(--s0-5);
+          margin-right: var(--s0-5);
+
+          &:first-child { margin-left: 0px; }
+        }
+      }
+    }
+
+    // VARIANTS
+    &.disabled {
+      --background-color: 181, 181, 181;
+      opacity: 0.75;
+      & > .wrapper > .icon { opacity: 0.6667; }
+      pointer-events: none;
+    }
+    
+  }
+
+  // generic positioning
+  &.side {
+    left: var(--margin);
+    &.right { right: var(--margin); left: auto; }
+    //
+    flex-direction: column;
+    align-items: center;
+    //
+    // background: green;
+    width: var(--height);
+    max-width: var(--height);
+
+    & > .floater { 
+      margin-left: 0px;
+      margin-right: 0px;
+      align-items: stretch;
+    }
+  }
+
+  &.center {
+    --lateral-distance: calc(var(--height) + var(--margin) + var(--margin));
+
+    left: var(--lateral-distance);
+    right: var(--lateral-distance);
+    //
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-end;
+    flex-grow: 1;
+    //
+    // background: red;
+    height: var(--height);
+    max-height: var(--height);
+    //
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+
+    & > .floater {
+      align-items: stretch;
+      flex-grow: 1;
+
+      &:not(:last-child) > .wrapper { 
+        border-right: 1px solid rgb(0, 0, 0, 0.1);
+        border-top-right-radius: 0px;
+        border-bottom-right-radius: 0px;
+      }
+      &:not(:first-child) > .wrapper {
+        border-top-left-radius: 0px;
+        border-bottom-left-radius: 0px;
+      }
+      &:not(:last-child):not(:first-child) > .wrapper { border-radius: 0px; }
+    }
+  }
+}
