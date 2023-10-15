@@ -184,7 +184,7 @@
     }
 
     & > input[type="range"] {
-      --percentage: 30%;
+      --percentage: 0%;
       --color: var(--primary-color);
 
       grid-area: slider;

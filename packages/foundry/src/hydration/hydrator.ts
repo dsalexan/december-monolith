@@ -30,6 +30,7 @@ export default class Hydrator<TProperties extends HydratorProperties = Record<st
     const element = html.find(selector)
     if (!element.length) {
       logger.add(`Could not find "${selector}"`).add(html).error()
+      debugger
       throw new Error(`Could not find "${selector}"`)
     }
 
