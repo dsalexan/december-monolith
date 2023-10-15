@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@billjs/event-emitter": "^1.0.3",
+    "@tarekraafat/autocomplete.js": "^10.2.7",
     "ansi-styles": "^6.2.1",
     "chalk": "^4.0.0",
     "crypto-browserify": "^3.12.0",

@@ -3,6 +3,8 @@
   --lighter-highlight-color: 119, 119, 119;
   --very-lighter-highlight-color: 180, 180, 180;
 
+  --list-padding: var(--s1);
+
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -37,4 +39,11 @@
 
   // expanded list, even those cards in hidden-list are visible
   &.expanded {}
+
+  &.no-label, &.no-header {
+    --list-padding: 0px;
+
+    & > .header > .label { display: none; }
+    &.no-header > .header { display: none; } 
+  }
 }

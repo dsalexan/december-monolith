@@ -23,6 +23,8 @@
         @import "./stack";
         @import "./floating";
 
+        // modals
+        @import "./modals/trait/search";
         
         @import "./_colour/light.scss";
         @import "./_colour/dark.scss";

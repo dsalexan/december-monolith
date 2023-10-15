@@ -1,11 +1,11 @@
 {{!-- TODO: Choose between list, group and card --}}
-<div class="card-list">
+<div class="card-list {{isTrue (isNilOrEmpty label) 'no-label' ''}} {{nullishCoalescing class}}">
   <div class="header">
     <div class="label">
       <!-- chevron is here to centralize text -->
       <div class="chevron invisible"><i class="icon mdi mdi-chevron-up"></i></div>
 
-      <span class="text">{{> @partial-block }}</span>
+      <span class="text">{{label}}</span>
 
       <div class="chevron up"><i class="icon mdi mdi-chevron-up"></i></div>
       <div class="chevron down"><i class="icon mdi mdi-chevron-down"></i></div>
@@ -27,7 +27,7 @@
     {{#> components/cards/group}}{{/components/cards/group}}
   </div>
   <div class="body">
-    {{#> components/cards/listb}}Lista B{{/components/cards/listb}}
+    {{#> components/cards/listb label="ListaB"}}Lista B{{/components/cards/listb}}
     {{#> components/cards/group}}{{/components/cards/group}}
     {{#> components/cards/wrapper}}{{/components/cards/wrapper}}
   </div>

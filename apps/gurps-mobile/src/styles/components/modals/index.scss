@@ -16,9 +16,19 @@
   & > .wrapper {
     --background-color: 238, 238, 238;
     
-    overflow-y: scroll;
-    @include utils.no-scroll;
-    
+    overflow-y: scroll;    
+    &::-webkit-scrollbar, &::-webkit-scrollbar-track {
+      box-shadow: none;
+      width: var(--s0-5);
+    }
+    &::-webkit-scrollbar-thumb {
+      outline: none;
+      box-shadow: none;
+      border: none;
+      background-color: rgb(var(--primary-color), 1);
+      width: var(--s0-5);
+    }
+    //
     position: absolute;
     z-index: 4;
     left: var(--s2-5);
@@ -35,7 +45,7 @@
     align-items: center;
     background-color: rgb(var(--background-color), 1);
     filter: drop-shadow(0 0 5px rgb(16 16 16 / 20%));
-    padding: var(--s1-5);
+    padding: var(--s2);
 
     & > .header {
       width: 100%;

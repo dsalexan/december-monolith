@@ -8,7 +8,8 @@
   }
 }
 
-& > .stack-wrapper > .stack.light > .panels > .panel {
+& > .stack-wrapper > .stack.light > .panels > .panel,
+& > .modal.trait-search > .wrapper > .content {
   /*
   .card-list
     .body

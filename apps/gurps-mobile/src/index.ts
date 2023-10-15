@@ -26,6 +26,8 @@ document.querySelector(`head`)?.appendChild($(`<link rel="preconnect" href="http
 document.querySelector(`head`)?.appendChild($(`<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`)[0])
 document.querySelector(`head`)?.appendChild($(`<link href="https://fonts.googleapis.com/css2?family=Alata&family=Molengo&display=swap" rel="stylesheet">`)[0])
 
+document.querySelector(`head`)?.appendChild($(`<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/css/autoComplete.min.css">`)[0])
+
 document
   .querySelector(`head`)
   ?.appendChild($(`<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.css" integrity="sha384-YiVwk+MBV52+yIvvplLwDxm3iGDI7dYb731lqsN9ASGBpIpJ/dte35lBIuR5oGFU" crossorigin="anonymous">`)[0])

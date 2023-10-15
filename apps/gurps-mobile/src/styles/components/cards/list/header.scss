@@ -1,7 +1,6 @@
 & > .header {
   --font-size: calc(var(--spacing) * 1.4);
   
-  
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -46,7 +45,7 @@
     align-items: stretch;
     //
     margin-top: var(--s1);
-    padding: 0 var(--s1);
+    padding: 0 var(--list-padding);
 
     @import "@components/button";
   }
