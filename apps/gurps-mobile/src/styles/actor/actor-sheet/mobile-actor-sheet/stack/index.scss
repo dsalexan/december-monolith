@@ -68,6 +68,10 @@
 
     & > .panels > .panel {
       @import "@components/cards";
+      
+      & > .header {
+        @import "./treasure/index";
+      }
     }
 
     // VARIANTS

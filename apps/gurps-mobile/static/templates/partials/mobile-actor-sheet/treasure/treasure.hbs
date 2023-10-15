@@ -1,0 +1,23 @@
+<div class="treasure">
+  <div class="header">
+    <div class="title">Coin Purse</div>
+    <div class="label">$100</div>
+
+    <div class="spacer"></div>
+    
+      <div class="chevron"><i class="icon mdi mdi-chevron-up"></i></div>
+  </div>
+  <div class="coins">
+    {{#> mobile-actor-sheet/treasure/coin icon="pp" color="238, 238, 238" secondaryColor="160, 160, 160"}}{{/mobile-actor-sheet/treasure/coin}}
+    {{#> mobile-actor-sheet/treasure/coin icon="gp" color="238, 238, 238" secondaryColor="160, 160, 160"}}{{/mobile-actor-sheet/treasure/coin}}
+    {{#> mobile-actor-sheet/treasure/coin icon="ep" color="238, 238, 238" secondaryColor="160, 160, 160"}}{{/mobile-actor-sheet/treasure/coin}}
+    {{#> mobile-actor-sheet/treasure/coin icon="sp" color="238, 238, 238" secondaryColor="160, 160, 160"}}{{/mobile-actor-sheet/treasure/coin}}
+    {{#> mobile-actor-sheet/treasure/coin icon="cp" color="238, 238, 238" secondaryColor="160, 160, 160"}}{{/mobile-actor-sheet/treasure/coin}}
+  </div>
+  <div class="inputs">
+    <div class="button subtract"><i class="icon mdi mdi-minus"></i></div>
+    <input type="number" />
+    <div class="button add"><i class="icon mdi mdi-plus"></i></div>
+    <input type="range" min="0" max="100" value="90" />
+  </div>
+</div>

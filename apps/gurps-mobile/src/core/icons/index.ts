@@ -1,4 +1,5 @@
 import custom from "./custom.json"
+import manual from "./manual.json"
 
 type SVGDefinition = {
   name: string
@@ -20,6 +21,7 @@ export default class IconsManager {
 
     // this.fetch(path.join(__dirname, `./custom.json`))
     this.index(custom)
+    this.index(manual)
   }
 
   /**

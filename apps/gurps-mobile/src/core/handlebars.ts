@@ -38,12 +38,13 @@ export class TemplatePreloader {
       // if icon is mdi, send a mdi icon
       if (icon?.includes(`mdi-`)) return new Handlebars.SafeString(`<i class="icon mdi ${icon}"></i>`)
 
+      const _icon = icon ?? value
       // if icon is custom, get custom icon from manager (will search in one of the pre-compiled jsons) and send it
-      const node = IconsManager.get(icon)
+      const node = IconsManager.get(_icon)
       if (node) return new Handlebars.SafeString(node)
 
       // if no icon was found, send a string informing as html
-      return `<div>${icon ? `custom` : `gurps`} icon "${icon ? icon : value}" not found</div>`
+      return `<div>${!value ? `custom` : `gurps`} icon "${_icon ? _icon : value}" not found</div>`
     })
 
     Handlebars.registerHelper(`gurpsLabel`, function (value: string) {
