@@ -16,11 +16,13 @@
 
         --form-padding: var(--spacing);
 
+        @import "../../../components/modals";
         @import "../../../components/roll";
 
         @import "./header";
         @import "./stack";
         @import "./floating";
+
         
         @import "./_colour/light.scss";
         @import "./_colour/dark.scss";

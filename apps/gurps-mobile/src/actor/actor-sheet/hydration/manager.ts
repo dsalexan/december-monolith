@@ -7,6 +7,7 @@ import StackWrapper from "./stack"
 import { MODULE_ID } from "../../../../config"
 import Floating from "./floating"
 import TraitCardList from "./trait/list"
+import TraitSearch from "./modals/traitSearch"
 
 export default class SheetHTMLHydrationManager extends HTMLHydrationManager {
   sheet: GurpsMobileActorSheet
@@ -18,6 +19,10 @@ export default class SheetHTMLHydrationManager extends HTMLHydrationManager {
 
   traits: {
     list: TraitCardList
+  }
+
+  modals: {
+    search: TraitSearch
   }
 
   constructor(sheet: GurpsMobileActorSheet) {
@@ -32,12 +37,16 @@ export default class SheetHTMLHydrationManager extends HTMLHydrationManager {
     this.traits = {
       list: new TraitCardList(this),
     }
+
+    this.modals = {
+      search: new TraitSearch(this),
+    }
   }
 
   activateListeners(html: JQuery<HTMLElement>) {
     // TODO: Should i reset the listeners?
 
-    const zeroth = [this.header, this.stack, this.floating, this.traits.list]
+    const zeroth = [this.header, this.stack, this.floating, this.modals.search, this.traits.list]
     for (const hydrator of zeroth) hydrator._attach(html)
     for (const hydrator of zeroth) hydrator._persist()
     for (const hydrator of zeroth) hydrator._hydrate()

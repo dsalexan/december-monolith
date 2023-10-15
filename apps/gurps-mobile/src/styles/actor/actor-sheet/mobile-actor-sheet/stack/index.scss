@@ -67,10 +67,12 @@
     & > .holder + .tabs { padding-top: 0; }
 
     & > .panels > .panel {
+      @import "./header.scss";
       @import "@components/cards";
       
       & > .header {
-        @import "./treasure/index";
+        @import "./treasure";
+        @import "./trait/search";
       }
     }
 

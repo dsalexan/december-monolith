@@ -1,0 +1,16 @@
+<div class="modal {{name}} {{nullishCoalescing class}}">
+  <div class="backdrop"></div>
+
+  <div class="wrapper">
+    <div class="header">
+      <div class="title">{{title}}</div>
+
+      <div class="spacer"></div>
+      
+      <div class="close"><i class="icon mdi mdi-close-thick"></i></div>
+    </div>
+    <div class="content">
+      {{>@partial-block}}
+    </div>
+  </div>
+</div>

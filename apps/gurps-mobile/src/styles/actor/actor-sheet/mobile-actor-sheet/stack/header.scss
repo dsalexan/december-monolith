@@ -1,0 +1,30 @@
+& > .header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  //
+  margin-bottom: var(--s1-5);
+
+  & > .button {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    //
+    align-self: flex-end;
+    padding: var(--s1) var(--s1-5);
+    //
+    background-color: #DDD;
+    border-radius: var(--s1);
+    cursor: pointer;
+
+    & > .icon-wrapper {
+      margin-right: var(--s0-5);
+    }
+
+    & > .label {
+      font-weight: 500;
+    }
+  }
+}

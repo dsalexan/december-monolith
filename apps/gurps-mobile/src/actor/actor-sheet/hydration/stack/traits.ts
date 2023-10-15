@@ -26,4 +26,12 @@ export default class StackTraits extends Stack {
 
     return super._attach(traits)
   }
+
+  _hydrate(): this {
+    const skillSearch = this.html.find(` > .panels > .panel[data-value="skill"] > .header > .button.search`)
+
+    skillSearch.on(`click`, () => this.manager.modals.search.open(true))
+
+    return super._hydrate()
+  }
 }
