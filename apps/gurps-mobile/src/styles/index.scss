@@ -4,5 +4,7 @@
 
 @import "./partials";
 
-@import "./integrations/index.scss";
-@import "./actor/actor-sheet/mobile-actor-sheet/index.scss";
+@import "./integrations";
+@import "./actor/actor-sheet/mobile-actor-sheet";
+@import "./maneuver-hud";
+@import "./modifier-bucket";

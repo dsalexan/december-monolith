@@ -40,8 +40,8 @@ export default class Mobile extends Module {
     this.listen()
 
     document.addEventListener(`fullscreenchange`, () => setTimeout(this.onResize, 100))
-    window.addEventListener(`resize`, this.onResize)
-    window.addEventListener(`scroll`, this.onResize)
+    window.addEventListener(`resize`, this.onResize.bind(this))
+    window.addEventListener(`scroll`, this.onResize.bind(this))
 
     this.onResize()
   }

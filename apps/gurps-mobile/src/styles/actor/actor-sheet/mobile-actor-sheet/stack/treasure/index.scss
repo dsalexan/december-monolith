@@ -148,6 +148,7 @@
       line-height: calc(var(--s1-5) * 0.9);
       color: #EEE;
       cursor: pointer;
+      & > .icon { cursor: pointer; }
 
       &.subtract { 
         grid-area: subtract;

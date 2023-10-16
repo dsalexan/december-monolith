@@ -1,9 +1,11 @@
 
 body.mobile {
   // sheet apps
-  .app.window-app.actor.sheet {
-    // specifically gurps-mobile sheets (be they actor, npcs, items, etc...)
-    &.gurps-mobile {
+  .app.window-app {
+    // gurps-mobile sheets (be they actor, npcs, items, etc...)
+    // modifier-bucket from gurps
+    &.actor.sheet.gurps-mobile,
+    &.modifier-bucket.mobile {
 
       // hiding the header
       & > header.window-header {

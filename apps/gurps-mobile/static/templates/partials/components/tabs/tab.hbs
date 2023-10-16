@@ -1,6 +1,9 @@
 <div class="tab" data-value="{{value}}">
-  <div class="wrapper-icon">
-    {{gurpsIcon icon}}
-  </div>
+  {{#if icon}}
+    <div class="wrapper-icon">{{gurpsIcon icon}}</div>
+  {{/if}}
+  {{#if label}}
+    <div class="label">{{{label}}}</div>
+  {{/if}}
   <svg class="tag" viewBox="0 0 2 2" fill="currentColor"><circle cx="1" cy="1" r="1" /></svg>
 </div>

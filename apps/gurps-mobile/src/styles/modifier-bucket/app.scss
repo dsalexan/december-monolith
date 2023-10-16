@@ -1,0 +1,32 @@
+@use "@utils" as utils;
+
+// actor sheet apps
+.app.window-app.modifier-bucket {
+  &.mobile {
+    --padding: var(--s2);
+    --margin: var(--s1-5);
+    --border-radius: var(--s1-5);
+
+    z-index: 205 !important;
+    background-color: transparent;
+    
+    padding: var(--margin);
+
+    & > section.window-content {
+      background: #DDDDDD;
+      border-radius: var(--border-radius);
+      padding: 0px;
+      
+      overflow-x: scroll;
+      @include utils.no-scroll;
+
+      & > form {
+        padding: var(--padding);
+
+        @import "./header";
+        @import "./body";
+        @import "./floating";
+      }
+    }
+  }
+}

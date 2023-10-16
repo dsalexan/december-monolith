@@ -1,0 +1,68 @@
+& > .floating {
+  --light-color: 235, 235, 235;
+  --dark-color: 68, 68, 68;
+
+  position: absolute;
+  bottom: var(--margin);
+  left: var(--margin);
+  right: var(--margin);
+
+  border-bottom-left-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
+
+  box-shadow: 0px -5px 5px -3px rgba(0, 0, 0, 0.118);
+  padding-top: calc(var(--padding) * 0.75);
+  padding-bottom: var(--padding);
+  padding-left: var(--padding);
+  padding-right: var(--padding);
+  background-color: #DDD;
+
+  display: flex;
+  flex-direction: row;
+
+  & > .button {
+    cursor: pointer;
+    //
+    padding: var(--s1-5);
+    background-color: rgb(var(--light-color), 1);;
+    border-radius: var(--s0-75);
+    //
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:not(:first-child) { margin-left: var(--s0-75); }
+
+    &.icon {
+      padding: var(--s1);
+      & > .icon { font-size: var(--s2-5); }
+    }
+
+    & > .character {
+      font-size: var(--s1-5);
+      margin-right: var(--s1);
+      font-style: italic;
+      font-weight: 500;
+      color: #444;
+
+      &.none {
+        font-weight: 400;
+        color: #777;
+      }
+    }
+
+    & > .modifier {
+      font-family: Alatsi;
+      font-size: var(--s1-5);
+      font-weight: bold;
+      color: rgb(var(--dark-color), 1);
+      &.green { color: rgb(93, 156, 89, 1); }
+      &.red { color: rgb(223, 46, 56, 1); }
+    }
+
+    &.inverted {
+      color: rgb(var(--light-color), 1);
+      background-color: rgb(var(--dark-color), 1);
+    }
+  }
+}

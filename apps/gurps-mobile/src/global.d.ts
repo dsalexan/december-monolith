@@ -4,6 +4,10 @@ import { ExtendedGURPSStatic } from "@december/gurps"
 
 import type GurpsMobileCore from "./core"
 
+interface GurpsMobileExtendedGURPSStatic extends ExtendedGURPSStatic {
+  // ModifierBucket: GurpsMobileModifierBucket
+}
+
 declare global {
   const BUILD_MODE: `development` | `production`
   const TEMPLATES: string[]
@@ -12,14 +16,14 @@ declare global {
   let MOBILE: Mobile
   let GURPS_MOBILE: GurpsMobileCore
 
-  let GURPS: ExtendedGURPSStatic
+  let GURPS: GurpsMobileExtendedGURPSStatic
 
   interface Window {
     DECEMBER: December
     MOBILE: Mobile
     GURPS_MOBILE: GurpsMobileCore
 
-    GURPS: ExtendedGURPSStatic
+    GURPS: GurpsMobileExtendedGURPSStatic
 
     // hmr
     _hot_ready: boolean

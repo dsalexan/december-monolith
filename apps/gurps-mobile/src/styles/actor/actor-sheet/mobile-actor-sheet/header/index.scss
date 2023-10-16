@@ -8,9 +8,9 @@
   // flex-direction: row;
   
   display: grid;
-  grid-template-columns: var(--portrait-size) 1fr;
+  grid-template-columns: min(var(--portrait-size), var(--max-portrait-size)) 1fr;
   grid-template-rows: auto;
-  grid-template-areas: "portrait name";
+  grid-template-areas: "portrait details";
   
   & > .wrapper {
     @import "./portrait.scss";

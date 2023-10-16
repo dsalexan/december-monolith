@@ -10,8 +10,9 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-
+    
     --icon-size: var(--s2-5);
+    --font-size: var(--s1-5);
 
     // #region CHILDREN
 
@@ -34,6 +35,18 @@
       }
     }
 
+    & > .label {
+      cursor: pointer;
+      font-size: var(--font-size);
+      color: #666;
+      font-weight: 500;
+      max-width: var(--s10);
+      white-space: normal;
+      text-align: center;
+      display: flex;
+      align-self: flex-end;
+    }
+
     & > svg.tag {
       margin-top: var(--s0-5);
       color: rgb(var(--semi-dark-primary-color), 1);
@@ -52,6 +65,7 @@
         & > .icon { color: #111; }
       }
 
+      & > .label { color: #111; }
     }
 
     &.tagged {

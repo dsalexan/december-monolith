@@ -1,0 +1,19 @@
+& > .header  {
+  display: flex;
+  flex-direction: row;
+  color: #444;
+
+  & > div > .icon {
+    cursor: pointer;
+    font-size: var(--s3);
+  }
+
+  & > div + div:not(.spacer) { margin-left: var(--s1); }
+
+  & > .send { color: rgb(var(--semi-dark-primary-color), 1); }
+
+  & > div.disabled {
+    color: #999;
+    pointer-events: none;
+  }
+}

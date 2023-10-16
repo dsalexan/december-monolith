@@ -16,6 +16,7 @@ import { globSync } from "glob"
 import rollupNodePolyFill from "rollup-plugin-node-polyfills"
 
 const TEMPLATES = globSync(`**/*.hbs`, { cwd: path.join(__dirname, `static/templates`) }).map(file => `modules/${MODULE_ID}/templates/${file}`.replaceAll(/\\/g, `/`))
+// console.log(`templates`, TEMPLATES)
 
 const config = Vite.defineConfig(({ command, mode }): Vite.UserConfig => {
   const buildMode = mode === `production` ? `production` : `development`

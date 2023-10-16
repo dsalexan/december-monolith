@@ -5,11 +5,14 @@ import { MODULE_ID } from "../../config"
 import ManeuverHUDButton from "../actor/maneuver-button"
 import GurpsMobileActor from "../actor/actor"
 import { GurpsMobileActorSheet } from "../actor/actor-sheet"
+import GurpsMobileModifierBucketEdtior from "../modifier-bucket"
 
 /**
  * This is the core of the module. A static class responsible for registering events and shit
  */
 export default class GurpsMobileCore extends Module {
+  ModifierBucketEditor!: GurpsMobileModifierBucketEdtior
+
   constructor() {
     super()
   }
@@ -33,6 +36,9 @@ export default class GurpsMobileCore extends Module {
     logger.add(`Initializing core `, paint.bold(MODULE_ID), ` ...`).info()
 
     // Assign custom classes and constants here
+    // Modifier Bucket must be defined after hit locations
+    this.ModifierBucketEditor = new GurpsMobileModifierBucketEdtior()
+    this.ModifierBucketEditor.render(true)
 
     // Register custom module settings
 
@@ -41,6 +47,7 @@ export default class GurpsMobileCore extends Module {
     TemplatePreloader.preloadHandlebarsTemplates()
 
     // Define custom Entity classes
+    // @ts-ignore
     CONFIG.Actor.documentClass = GurpsMobileActor
 
     // Register Sheet Classes

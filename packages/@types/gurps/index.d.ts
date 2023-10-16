@@ -1,3 +1,5 @@
+import { ModifierBucketEditor } from "gurps/module/modifier-bucket/tooltip-window"
+import { ModifierBucket } from "gurps/module/modifier-bucket/bucket-app"
 import { GurpsActorSheet } from "gurps/module/actor/actor-sheet"
 import { GurpsActor } from "gurps/module/actor/actor"
 import { Maneuver, Maneuvers } from "gurps/module/actor/maneuver"
@@ -18,6 +20,10 @@ declare module "gurps" {
     GurpsActor: typeof GurpsActor
     ManeuverHUDButton: typeof ManeuverHUDButton
     GurpsActorSheet: typeof GurpsActorSheet
+
+    ModifierBucketEditorClass: typeof ModifierBucketEditor
+    ModifierBucketClass: typeof ModifierBucket
+    ModifierBucket: ModifierBucket
 
     // Hack to remember the last Actor sheet that was accessed... for the Modifier Bucket to work
     LastActor: Actor | null

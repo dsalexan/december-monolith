@@ -1,0 +1,173 @@
+<form class="{{cssClass}}" autocomplete="off">
+  <div class="header">
+    <div class="bucket"><i class="icon mdi mdi-pail"></i></div>
+    <div class="spacer"></div>
+    <div class="send disabled"><i class="icon mdi mdi-send"></i></div>
+    <div class="close"><i class="icon mdi mdi-close-thick"></i></div>
+  </div>
+  <div class="body">
+    {{!-- <div class="wrapper button">Choose Target Character</div> --}}
+    <div class="wrapper">      
+      <div class="tabs" data-value="{{oocTab}}">
+        {{> components/tabs/tab value="custom" icon="mdi-numeric-9-plus"}}
+        {{> components/tabs/tab value="combat" label="Combat Modifiers"}}
+        {{> components/tabs/tab value="status_affictions" label="Status and Afflictions"}}
+        {{> components/tabs/tab value="speed_range" label="Speed/<wbr>Range"}}
+        {{> components/tabs/tab value="size" label="Size Modifier"}}
+        {{> components/tabs/tab value="hit_locations" label="Hit Locations"}}
+        {{> components/tabs/tab value="cover_posture" label="Cover and Posture"}}
+        {{> components/tabs/tab value="task" label="Task Difficulty"}}
+        {{> components/tabs/tab value="equipment" label="Equipment Quality"}}
+        {{> components/tabs/tab value="lightning" label="Lightning"}}
+        {{> components/tabs/tab value="rate_of_fire" label="Rate of Fire"}}
+      </div> 
+          
+      <div class="panels">
+        {{#> components/tabs/panel value="custom" style="display: block;"}}
+          <div>
+            {{> modifier-bucket/modifier}}
+            <div class="modifier has-content has-extra green selected">
+              <div class="value">+4</div>
+              <div class="content">
+                <div class="name">Determined Attack</div>
+                <div class="target">damage</div>
+                <div class="spacer"></div>
+                <div class="reference">
+                  <a>B 635</a>, <a>B 639</a>
+                </div>
+              </div>
+              <div class="extra">
+                <div class="note">cap SL at 9</div>
+              </div>
+            </div>
+            <div class="modifier has-content has-extra red">
+              <div class="value">+4</div>
+              <div class="content">
+                <div class="name">Determined Attack</div>
+                <div class="target">damage</div>
+                <div class="spacer"></div>
+                <div class="reference">
+                  <a>B 635</a>, <a>B 639</a>
+                </div>
+              </div>
+              <div class="extra">
+                <div class="note">cap SL at 9</div>
+              </div>
+            </div>
+            <div class="modifier has-content has-extra red">
+              <div class="value">+4</div>
+              <div class="content">
+                <div class="name">Determined Attack</div>
+                <div class="target">damage</div>
+                <div class="spacer"></div>
+                <div class="reference">
+                  <a>B 635</a>, <a>B 639</a>
+                </div>
+              </div>
+              <div class="extra">
+                <div class="note">cap SL at 9</div>
+              </div>
+            </div>
+            <div class="modifier red selected">
+              <div class="value">+4</div>
+              <div class="content">
+                <div class="name">Determined Attack</div>
+                <div class="target">damage</div>
+                <div class="spacer"></div>
+                <div class="reference">
+                  <a>B 635</a>, <a>B 639</a>
+                </div>
+              </div>
+              <div class="extra">
+                <div class="note">cap SL at 9</div>
+              </div>
+            </div>
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+            {{> modifier-bucket/modifier}}
+          </div>
+        {{/components/tabs/panel}}
+        {{#> components/tabs/panel value="combat"}}
+          <div>PANEL 1</div>
+        {{/components/tabs/panel}}
+        {{#> components/tabs/panel value="status_affictions"}}
+          <div>PANEL 1</div>
+        {{/components/tabs/panel}}
+        {{#> components/tabs/panel value="speed_range"}}
+          <div>PANEL 2</div>
+        {{/components/tabs/panel}}
+        {{#> components/tabs/panel value="size"}}
+          <div>PANEL 3</div>
+        {{/components/tabs/panel}}
+        {{#> components/tabs/panel value="hit_locations"}}
+          <div>PANEL 4</div>
+        {{/components/tabs/panel}}
+        {{#> components/tabs/panel value="cover_posture"}}
+          <div>PANEL 5</div>
+        {{/components/tabs/panel}}
+        {{#> components/tabs/panel value="task"}}
+          <div>PANEL 5</div>
+        {{/components/tabs/panel}}
+        {{#> components/tabs/panel value="equipment"}}
+          <div>PANEL 5</div>
+        {{/components/tabs/panel}}
+        {{#> components/tabs/panel value="lightning"}}
+          <div>PANEL 5</div>
+        {{/components/tabs/panel}}
+        {{#> components/tabs/panel value="rate_of_fire"}}
+          <div>PANEL 5</div>
+        {{/components/tabs/panel}}
+      </div>
+    </div>
+  </div>
+  <div class="floating">
+    <div class="button icon inverted">
+      <i class="icon mdi mdi-notification-clear-all"></i>
+    </div>
+    <div class="button" style="flex-grow: 1;">
+      <div class="character">No character selected</div>
+      <div class="modifier green">+10</div>
+    </div>
+    <div class="button icon inverted" style="--dark-color: var(--primary-color);">
+      <i class="icon mdi mdi-dice-6"></i>
+    </div>
+  </div>
+</form>

@@ -15,9 +15,13 @@ export default class Floating extends SheetHydrator {
     const self = this
     const traits = this.html.find(` > .floater[data-name="traits"]`)
 
+    const bucket = this.html.find(` > .floater[data-name="bucket"]`)
+
     // wire events
     traits.on(`click`, () => this.manager.stack.traits.expand(true))
     this.manager.stack.traits.on(`expand`, ({ data }) => self.show(`traits`, !data))
+
+    bucket.on(`click`, () => GURPS_MOBILE.ModifierBucketEditor.render(true))
 
     return super._hydrate()
   }
