@@ -1,4 +1,4 @@
-<form class="{{cssClass}} show-s1end" autocomplete="off">
+<form class="{{cssClass}}" autocomplete="off">
   <div class="header">
     <div class="button bucket"><i class="icon mdi mdi-pail"></i></div>
     <div class="spacer"></div>
@@ -41,7 +41,7 @@
       </div> 
           
       <div class="panels">
-        {{#> components/tabs/panel value="custom" style="display: block;"}}
+        {{#> components/tabs/panel value="custom"}}
           <div>
             {{> modifier-bucket/modifier}}
             <div class="modifier has-content has-extra green selected">
@@ -176,24 +176,24 @@
       </div>
     </div>
   </div>
-  <div class="floating show-sum1mary show-chara1cters">
+  <div class="floating">
     {{> modifier-bucket/summary}}
 
     <div class="buttons">
-      <div class="button icon inverted">
+      <div class="button icon inverted  clear">
         <i class="icon mdi mdi-notification-clear-all"></i>
       </div>
-      <div class="button grow icon characters">
+      <div class="button grow icon characters  close-choose-character">
         <i class="icon mdi mdi-check-bold"></i>
       </div>
       <div class="button grow summary  character-name">
         <div class="label character" style="font-weight: 500; font-style: normal;">Choose Character</div>
       </div>
-      <div class="button grow not-summary character-name">
+      <div class="button grow not-summary  current-modifiers">
         <div class="character none">No character selected</div>
         <div class="modifier green">+10</div>
       </div>
-      <div class="button icon inverted" style="--dark-color: var(--primary-color);">
+      <div class="button icon inverted  roll" style="--dark-color: var(--primary-color);">
         <i class="icon mdi mdi-dice-6"></i>
       </div>
     </div>

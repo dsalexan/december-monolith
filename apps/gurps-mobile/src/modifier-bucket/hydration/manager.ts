@@ -5,6 +5,8 @@ import GurpsMobileModifierBucketEdtior from ".."
 import { MODULE_ID } from "../../../config"
 
 import Header from "./header"
+import Body from "./body"
+import Floating from "./floating"
 // import StackWrapper from "./stack"
 // import { MODULE_ID } from "../../../../config"
 // import Floating from "./floating"
@@ -17,8 +19,8 @@ export default class ModifierBucketHTMLHydrationManager extends HTMLHydrationMan
 
   // // components
   header: Header
-  // stack: StackWrapper
-  // floating: Floating
+  body: Body
+  floating: Floating
 
   // traits: {
   //   list: TraitCardList
@@ -34,8 +36,8 @@ export default class ModifierBucketHTMLHydrationManager extends HTMLHydrationMan
     this.bucket = bucket
 
     this.header = new Header(this)
-    // this.stack = new StackWrapper(this)
-    // this.floating = new Floating(this)
+    this.body = new Body(this)
+    this.floating = new Floating(this)
 
     // this.traits = {
     //   list: new TraitCardList(this),
@@ -49,7 +51,7 @@ export default class ModifierBucketHTMLHydrationManager extends HTMLHydrationMan
   activateListeners(html: JQuery<HTMLElement>) {
     // TODO: Should i reset the listeners?
 
-    const zeroth = [this.header] // [this.header, this.stack, this.floating, this.modals.search, this.traits.list]
+    const zeroth = [this.header, this.body, this.floating] // [this.header, this.stack, this.floating, this.modals.search, this.traits.list]
     for (const hydrator of zeroth) hydrator._attach(html)
     for (const hydrator of zeroth) hydrator._persist()
     for (const hydrator of zeroth) hydrator._hydrate()
