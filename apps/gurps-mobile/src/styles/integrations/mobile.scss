@@ -12,6 +12,8 @@ body.mobile {
         display: none;
         background: rosybrown; 
       }
+      
+      & > .window-resizable-handle { display: none; }
     }
   }
 }

@@ -4,11 +4,12 @@
 .app.window-app.modifier-bucket {
   &.mobile {
     --padding: var(--s2);
-    --margin: var(--s1-5);
-    --border-radius: var(--s1-5);
+    --margin: 0px;
+    --border-radius: 0px;
 
     z-index: 205 !important;
     background-color: transparent;
+    @include utils.no-scroll;
     
     padding: var(--margin);
 
@@ -28,6 +29,9 @@
         @import "./body";
         @import "./floating";
 
+        
+        & > .header > .button.close { display: none; }
+
         &:not(.show-send) > .characters { display: none; }
         &.show-send {
           & > .header > .send {
@@ -43,6 +47,25 @@
 
             & > .wrapper { justify-content: center; }
           }
+        }
+      }
+    }
+  }
+}
+
+
+body.mobile {
+  .app.window-app.modifier-bucket {
+    &.mobile {
+      --margin: var(--s1-5);
+      --border-radius: var(--s1-5);
+
+      background: url(../ui/denim075.png) repeat;
+      border-radius: 0px;
+
+      & > section.window-content {
+        & > form {
+          & > .header > .button.close { display: block; }
         }
       }
     }

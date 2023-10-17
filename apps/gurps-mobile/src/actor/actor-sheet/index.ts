@@ -48,7 +48,7 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
   static get defaultOptions() {
     return mergeObject(super.defaultOptions, {
       classes: [`mobile`, `gurps-mobile`, `sheet`, `actor`],
-      resizable: false,
+      resizable: true,
       width: `100vw`,
       height: `100vh`,
       // tabs: [{ navSelector: `.gurps-sheet-tabs`, contentSelector: `.sheet-body`, initial: `description` }],
