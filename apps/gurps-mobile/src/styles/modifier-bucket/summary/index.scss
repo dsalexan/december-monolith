@@ -1,0 +1,33 @@
+& > .summary {
+  // display: none;
+  margin-bottom: var(--s1-25);
+
+  & > .header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    & > .down {
+      cursor: pointer;
+      font-size: var(--s2-5);
+    }
+
+    & > .character {
+      cursor: pointer;
+      font-size: var(--s1-66);
+      font-style: italic;
+      font-weight: 500;
+      color: #444;
+      //
+      background-color: transparent;
+      padding: var(--s0-5) var(--s1);
+      border-radius: var(--s0-5);
+
+      &.none {
+        background-color: #D0D0D0;
+        font-weight: 400;
+        color: #777;
+      }
+    }
+  }
+}

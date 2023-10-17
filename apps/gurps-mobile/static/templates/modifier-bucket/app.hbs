@@ -1,10 +1,28 @@
-<form class="{{cssClass}}" autocomplete="off">
+<form class="{{cssClass}} show-s1end" autocomplete="off">
   <div class="header">
-    <div class="bucket"><i class="icon mdi mdi-pail"></i></div>
+    <div class="button bucket"><i class="icon mdi mdi-pail"></i></div>
     <div class="spacer"></div>
-    <div class="send disabled"><i class="icon mdi mdi-send"></i></div>
-    <div class="close"><i class="icon mdi mdi-close-thick"></i></div>
+    <div class="button send"><i class="icon mdi mdi-send"></i></div>
+    <div class="button close"><i class="icon mdi mdi-close-thick"></i></div>
   </div>
+  
+  <div class="characters">
+    <div class="wrapper">
+      {{> modifier-bucket/character-portrait}}
+      {{> modifier-bucket/character-portrait}}
+      {{> modifier-bucket/character-portrait}}
+      {{> modifier-bucket/character-portrait}}
+      {{> modifier-bucket/character-portrait}}
+      {{> modifier-bucket/character-portrait}}
+      {{> modifier-bucket/character-portrait}}
+      {{> modifier-bucket/character-portrait}}
+    </div>
+
+    <div class="buttons">
+      <div class="button send disabled">Send</div>
+    </div>
+  </div>
+
   <div class="body">
     {{!-- <div class="wrapper button">Choose Target Character</div> --}}
     <div class="wrapper">      
@@ -158,16 +176,39 @@
       </div>
     </div>
   </div>
-  <div class="floating">
-    <div class="button icon inverted">
-      <i class="icon mdi mdi-notification-clear-all"></i>
+  <div class="floating show-sum1mary show-chara1cters">
+    {{> modifier-bucket/summary}}
+
+    <div class="buttons">
+      <div class="button icon inverted">
+        <i class="icon mdi mdi-notification-clear-all"></i>
+      </div>
+      <div class="button grow icon characters">
+        <i class="icon mdi mdi-check-bold"></i>
+      </div>
+      <div class="button grow summary  character-name">
+        <div class="label character" style="font-weight: 500; font-style: normal;">Choose Character</div>
+      </div>
+      <div class="button grow not-summary character-name">
+        <div class="character none">No character selected</div>
+        <div class="modifier green">+10</div>
+      </div>
+      <div class="button icon inverted" style="--dark-color: var(--primary-color);">
+        <i class="icon mdi mdi-dice-6"></i>
+      </div>
     </div>
-    <div class="button" style="flex-grow: 1;">
-      <div class="character">No character selected</div>
-      <div class="modifier green">+10</div>
-    </div>
-    <div class="button icon inverted" style="--dark-color: var(--primary-color);">
-      <i class="icon mdi mdi-dice-6"></i>
+    
+    <div class="characters">
+      <div class="wrapper">
+        {{> modifier-bucket/character-portrait}}
+        {{> modifier-bucket/character-portrait}}
+        {{> modifier-bucket/character-portrait}}
+        {{> modifier-bucket/character-portrait}}
+        {{> modifier-bucket/character-portrait}}
+        {{> modifier-bucket/character-portrait}}
+        {{> modifier-bucket/character-portrait}}
+        {{> modifier-bucket/character-portrait}}
+      </div>
     </div>
   </div>
 </form>

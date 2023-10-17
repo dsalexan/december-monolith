@@ -1,0 +1,76 @@
+& > .characters {
+  display: flex;
+  flex-direction: column;
+  //
+  padding: var(--s1-5);
+  border-bottom-left-radius: var(--s1);
+  border-bottom-right-radius: var(--s1);
+  background-color: #f1f1f1;
+
+  & > .buttons {
+    & > .button {
+      background-color: #555;
+      border-radius: var(--s1);
+      padding: var(--s1-25);
+      font-weight: 500;
+      text-align: center;
+      color: #EEE;
+
+      &.disabled {
+        pointer-events: none;
+        opacity: 0.5;
+      }
+    }
+  }
+  
+  & > .wrapper {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    & > .character {
+      cursor: pointer;
+  
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      //
+      margin: var(--s0-5);
+      
+      & > .portrait {
+        --width: var(--s10);
+        background: #555;
+        border: 3px solid #555;
+  
+        width: var(--width);
+        height: var(--s6);
+        border-radius: var(--s1);
+        //
+        margin-bottom: var(--s0-5);
+      }
+  
+      & > .name {
+        font-style: italic;
+        font-weight: 400;
+        color: #444;
+      }
+  
+      // VARIANTS
+      &.selected {
+        & > .portrait {
+          border-color: rgb(var(--primary-color), 1);
+          background-color: rgb(var(--lighter-primary-color), 1);
+        }
+  
+        & > .name {
+          font-weight: 500;
+          font-style: normal;
+        }
+      }
+    }
+  }
+
+  & > .wrapper + .buttons {
+    margin-top: var(--s1-5);
+  }
+}

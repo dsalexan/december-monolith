@@ -2,6 +2,7 @@
 
 & > .body {
   margin-top: var(--s1-5);
+  margin-bottom: var(--s7);
 
   & > .wrapper {
     &.button {
@@ -77,7 +78,7 @@
           justify-content: flex-start;
           flex-wrap: wrap;
 
-          padding-top: var(--s1-5);
+          padding-top: var(--s0-5);
 
           @import "./modifier";
 

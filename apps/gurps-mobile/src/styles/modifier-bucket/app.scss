@@ -23,9 +23,27 @@
       & > form {
         padding: var(--padding);
 
-        @import "./header";
+        @import "./header";        
+        @import "./characters";
         @import "./body";
         @import "./floating";
+
+        &:not(.show-send) > .characters { display: none; }
+        &.show-send {
+          & > .header > .send {
+            border-top-left-radius: var(--s1);
+            border-top-right-radius: var(--s1);
+            background-color: #F0F0F0;
+          }
+
+          & > .characters {
+            background-color: #F0F0F0;
+            border-top-left-radius: var(--s1);
+            border-top-right-radius: var(--s1);
+
+            & > .wrapper { justify-content: center; }
+          }
+        }
       }
     }
   }
