@@ -4,7 +4,7 @@ import { RECIPES, RECIPES_BY_TYPE, Recipe, RecipeName, RecipeType, getRecipeSet 
 
 import churchill from "../logger"
 
-export const logger = churchill.child({ name: `tree` })
+export const logger = churchill.child(`tree`)
 
 export class Tree {
   text: string

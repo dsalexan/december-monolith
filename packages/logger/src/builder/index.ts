@@ -6,9 +6,10 @@ import { LogLevel } from "../level"
 import Block, { DURATION_BLOCK, PAD_FROZEN_BLOCK } from "./block"
 import Profiler from "./profiler"
 import { isNil, isNilOrEmpty, isString } from "../utils"
-import { difference, identity, intersection, isBoolean, isNumber, range } from "lodash"
+import { difference, identity, intersection, isBoolean, isNumber, range, reverse } from "lodash"
 import { typing } from "@december/utils"
 import { isPrimitive } from "../../../utils/src/typing"
+import { ChalkFunction } from "chalk"
 
 export const BREAK_LINE = Symbol.for(`__DECEMBER_LOGGER_BREAK_LINE`)
 export const BLOCK_SYMBOLS = [BREAK_LINE] as const
@@ -41,6 +42,12 @@ export default class Builder {
   blocks: Block[] = []
   // styles: ValidStyle[] = [] // TODO: There should be "global" styles for builder?
 
+  // SPECIAL SHIT
+  _prefix: {
+    blocks: Block[]
+    styles: Paint[]
+  }
+
   get BREAK_LINE() {
     return BREAK_LINE
   }
@@ -50,10 +57,12 @@ export default class Builder {
 
     this.lastTimestamp = Date.now()
     this.options = this.getDefaultOptions(options)
+
+    this._prefix = { blocks: [], styles: [] }
   }
 
-  child(name: string, level?: LogLevel): Builder {
-    return this.logger.child(name, level).builder()
+  child(name: string, level?: LogLevel, options?: Partial<BuilderOptions>): Builder {
+    return this.logger.child(name, level).builder(options)
   }
 
   clone(frozeBlocks = false) {
@@ -67,7 +76,42 @@ export default class Builder {
 
     if (frozeBlocks) this.cleanAfterLog()
 
+    clone._prefix.blocks.push(...this._prefix.blocks)
+    clone._prefix.styles.push(...this._prefix.styles)
+
     return clone
+  }
+
+  /** replace all characters by whitespaces */
+  whitespace() {
+    const oldBlocks = [...this.blocks]
+
+    this.blocks = []
+    for (const block of oldBlocks) {
+      const length = String(block._data).length
+
+      const newBlock = this.createBlock(length === 0 ? `` : ` `.repeat(length))
+      this.addBlock(newBlock)
+    }
+
+    return this
+  }
+
+  /** add prefix (specially rendered text at the start of every log) */
+  prefix(...blocksOrStyles: (Block | Paint | unknown)[]) {
+    for (const blockOrStyle of blocksOrStyles) {
+      if ((blockOrStyle as Paint).isPaint) this._prefix.styles.push(blockOrStyle as Paint)
+      else {
+        const block = this._block(blockOrStyle)
+        this._prefix.blocks.push(block)
+      }
+    }
+
+    return this
+  }
+
+  fn(callback: (builder: Builder) => (...args: any[]) => void) {
+    return callback(this)
   }
 
   // #region OPTIONS
@@ -105,6 +149,10 @@ export default class Builder {
     return this
   }
 
+  get t() {
+    return this.tab()
+  }
+
   // #endregion
 
   // #region BLOCKS
@@ -115,27 +163,31 @@ export default class Builder {
 
   addBlock(block: Block): this {
     this.blocks.push(block)
-
     return this
+  }
+
+  _block(unknown: Block | string | number | unknown, style?: string[]) {
+    let block: Block
+    if (unknown instanceof Block) {
+      block = unknown as Block
+
+      // doing this to keep original argument immutable
+      if (style && style.length > 0) {
+        block = block._clone()
+        block._style = [...block._style, ...style]
+      }
+    } else block = this.createBlock(unknown, style)
+
+    return block
   }
 
   add(...args: unknown[]): this
   add(...blocks: (Block | string | number)[]): this
   add(...args: (Block | unknown)[]) {
     let style = undefined as string[] | undefined
-    let block: Block
 
     for (const unknown of args) {
-      if (unknown instanceof Block) {
-        block = unknown as Block
-
-        // doing this to keep original argument immutable
-        if (style && style.length > 0) {
-          block = block._clone()
-          block._style = [...block._style, ...style]
-        }
-      } else block = this.createBlock(unknown, style)
-
+      const block = this._block(unknown, style)
       this.addBlock(block)
     }
 
@@ -148,7 +200,7 @@ export default class Builder {
     return this
   }
 
-  get t() {
+  get p() {
     return this.space(1, this.options.tab.character)
   }
 
@@ -225,10 +277,10 @@ export default class Builder {
       tableLogger.info()
     }
 
-    // logger.pad().add(paint.italic.grey(`context`)).t.add(context).info()
-    // logger.pad().add(paint.italic.grey(`state`)).t.add(this._state).info()
-    // logger.pad().add(paint.italic.grey(`element`)).t.add(this.element).info()
-    // logger.pad().add(paint.italic.grey(`_element`)).t.add(this._element).info()
+    // logger.pad().add(paint.italic.grey(`context`)).p.add(context).info()
+    // logger.pad().add(paint.italic.grey(`state`)).p.add(this._state).info()
+    // logger.pad().add(paint.italic.grey(`element`)).p.add(this.element).info()
+    // logger.pad().add(paint.italic.grey(`_element`)).p.add(this._element).info()
 
     // clean up
     this.cleanAfterLog()
@@ -298,6 +350,18 @@ export default class Builder {
     const durationSuffixes = _blocks.filter(block => block._flags.includes(DURATION_BLOCK))
     const frozenBlocksAsPadding = _blocks.some(block => block._flags.includes(PAD_FROZEN_BLOCK))
 
+    // prepare prefixes for injection
+    const prefixStyles = this._prefix.styles.length > 0 ? reverse(this._prefix.styles) : []
+    const prefixBlocks = [] as Block[]
+    for (const block of this._prefix.blocks) {
+      prefixBlocks.push(prefixStyles.reduce((block, style) => style(block), block))
+    }
+
+    if (prefixBlocks.length > 0) {
+      prefixBlocks.unshift(prefixStyles.reduce((block, style) => style(block), this.createBlock(`[`)))
+      prefixBlocks.push(prefixStyles.reduce((block, style) => style(block), this.createBlock(`] `)))
+    }
+
     // inject frozen blocks
     for (const block of this.frozenBlocks) {
       const unimplementedFlags = difference(block._flags, IMPLEMENTED_FLAGS) // all flags that are yet to be implemented
@@ -357,7 +421,40 @@ export default class Builder {
       blocks.push(color(` ${sign}${Math.abs(duration)}ms`))
     }
 
+    // ONLY inject prefixes if there is something to print
+    if (blocks.length > 0) blocks.unshift(...prefixBlocks)
+
     return blocks
+  }
+
+  _buildBlock(target: `browser` | `terminal`, block: Block) {
+    const { data, styles } = block._buildForTarget(target, { ignoreStyle: !this.options.colorize, noTimestamp: this.options.noTimestamp })
+
+    // ignore empty shit
+    if ((isNil(data) || (isString(data) && isNilOrEmpty(data) && isNilOrEmpty(this.options.separator))) && isNilOrEmpty(styles)) return null
+
+    return { data, styles }
+  }
+
+  // build blocks for
+  build(target: `browser` | `terminal`) {
+    const blocks = this.postProcessedBlocks()
+
+    const objects = [] as any[]
+    const styles = [] as (string | ChalkFunction)[][]
+
+    const blocksClusters = [blocks]
+    for (const blocks of blocksClusters) {
+      for (const block of blocks) {
+        const builtBlock = this._buildBlock(target, block)
+        if (builtBlock) {
+          objects.push(builtBlock.data)
+          styles.push(builtBlock.styles ?? [])
+        }
+      }
+    }
+
+    return [objects, styles] as [any[], (string | ChalkFunction)[][]]
   }
 
   buildForBrowser() {
@@ -394,27 +491,41 @@ export default class Builder {
     this.blocks = []
   }
 
+  clearPrefix() {
+    this._prefix = { blocks: [], styles: [] }
+  }
+
   log(level: LogLevel): this {
     this.lastTimestamp = Date.now()
 
+    // inject tab
     const tab = this.options.tab.size === 0 ? `` : this.options.tab.character.repeat(this.options.tab.size)
 
-    if (this.options.isBrowser) {
-      const [objects, style] = this.buildForBrowser()
+    const [objects, styles] = this.build(this.options.isBrowser ? `browser` : `terminal`)
 
-      objects.splice(0, 0, tab)
-      style.splice(0, 0, ``)
+    objects.splice(0, 0, tab)
+    styles.splice(0, 0, [])
 
-      this.logger.logWithStyles(level, objects, style)
+    this.logger.log(level, objects, styles, { separator: this.options.separator })
 
-      // if (objects.length > 0) this.logger.logObjects(level, objects)
-    } else {
-      let message = this.buildForTerminal()
+    // if (objects.length > 0) this.logger.logObjects(level, objects)
 
-      message = `${tab}${message}`
+    // if (this.options.isBrowser) {
+    //   const [objects, style] = this.buildForBrowser()
 
-      this.logger.log(level, message)
-    }
+    //   objects.splice(0, 0, tab)
+    //   style.splice(0, 0, ``)
+
+    //   // this.logger.logWithStyles(level, objects, style)
+
+    //   // if (objects.length > 0) this.logger.logObjects(level, objects)
+    // } else {
+    //   let message = this.buildForTerminal()
+
+    //   message = `${tab}${message}`
+
+    //   this.logger.log(level, message)
+    // }
 
     this.cleanAfterLog()
 

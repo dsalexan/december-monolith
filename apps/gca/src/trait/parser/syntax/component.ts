@@ -17,6 +17,8 @@ export function makeSyntaticComponent<TComponent extends SyntaxComponent>(
     //
     functionNames: string[]
     patterns: RegExp[]
+    patternsName: string[]
+    specialization: boolean
   }>,
 ) {
   const base = {
@@ -28,6 +30,7 @@ export function makeSyntaticComponent<TComponent extends SyntaxComponent>(
     mathParent: options?.mathParent ?? false,
     mathGrandparent: options?.mathGrandparent ?? false,
     prio: (options?.prio ?? 0) as number,
+    specialization: options?.specialization ?? false,
   } as TComponent
 
   if (type === `math`) {
@@ -40,6 +43,9 @@ export function makeSyntaticComponent<TComponent extends SyntaxComponent>(
 
     separator.parents = options?.parents ?? []
     separator.prioBump = options?.prioBump ?? {}
+
+    separator.patterns = options?.patterns ?? []
+    separator.patternsName = options?.patternsName ?? []
   } else if (type === `aggregator`) {
     const aggregator = base as AggregatorSyntaxComponent
 

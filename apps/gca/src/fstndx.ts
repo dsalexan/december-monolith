@@ -34,7 +34,7 @@ type ExtractionRecipe = {
   parse: (lines: string[], index: number) => IndexedTrait | IndexedCategory | string[]
 }
 
-export const logger = churchill.child({ name: `fstndx` })
+export const logger = churchill.child(`fstndx`)
 
 const TEMPLATES = {
   entries: {
@@ -133,11 +133,7 @@ export class FastIndex {
     logger
       .builder()
       .tab()
-      .add(
-        `Finished extracting ${chalk.bold(sum(Object.values(sections).map(section => section.data.length)))} records (${sections.entries.data.length} entries, ${
-          sections.modifiers.data.length
-        } modifiers).`,
-      )
+      .add(`Finished extracting ${chalk.bold(sum(Object.values(sections).map(section => section.data.length)))} records (${sections.entries.data.length} entries, ${sections.modifiers.data.length} modifiers).`)
       .verbose({ duration: true })
 
     if (cursor !== this.content.length) {

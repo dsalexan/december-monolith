@@ -3,6 +3,7 @@ import { makeSyntaticComponent } from "./component"
 import { AggregatorSyntaxComponent, AsyntaticComponent, EnclosureSyntaxComponent, SeparatorSyntaxComponent, SyntaxComponent, SyntaxName } from "./types"
 import { MATH_SYNTAX_COMPONENTS } from "./math"
 import { DIRECTIVES } from "./directive"
+import { GCA5_SYNTAX_COMPONENTS } from "./gca5"
 
 export type { SyntaxComponent } from "./types"
 export type { SyntaxName } from "./types"
@@ -47,11 +48,10 @@ export const SYNTAX_COMPONENTS = {
   //mathParent: true,
   ...MATH_SYNTAX_COMPONENTS,
   ...LOGIC_SYNTAX_COMPONENTS,
+  ...GCA5_SYNTAX_COMPONENTS,
 } as Record<SyntaxName, SyntaxComponent>
 
-export const DEFAULT_SYNTAX_COMPONENTS = ([`string`, `marker`, `list`, `nil`, `imaginary`, `parenthesis`, `braces`, `brackets`, `quotes`, `comma`, `pipe`] as SyntaxName[]).map(
-  name => SYNTAX_COMPONENTS[name],
-)
+export const DEFAULT_SYNTAX_COMPONENTS = ([`string`, `marker`, `list`, `nil`, `imaginary`, `parenthesis`, `braces`, `brackets`, `quotes`, `comma`, `pipe`] as SyntaxName[]).map(name => SYNTAX_COMPONENTS[name])
 
 export const RECOGNIZED_FUNCTIONS = {
   "#": DIRECTIVES,

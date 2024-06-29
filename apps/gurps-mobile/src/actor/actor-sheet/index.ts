@@ -106,8 +106,8 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
 
     logger_
       .add(paint.bold(`[${this.actor.id}]`))
-      .t.add(`activateListeners`)
-      .t.add(inner)
+      .p.add(`activateListeners`)
+      .p.add(inner)
       .info()
 
     this.hydration.activateListeners(inner)
@@ -116,14 +116,14 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
   _applyState(inner: JQuery<HTMLElement>) {
     const logger = logger_
       .add(paint.bold(`[${this.actor.id}]`))
-      .t.clone(true)
+      .p.clone(true)
       .timer(`_updateHtml`)
 
     /**
      * Apply state to a recenlty rendered html (to keep the sheet as it was before re-rendering)
      */
 
-    logger.add(paint.white.bgRed(` _applyState `)).t.add(inner).info()
+    logger.add(paint.white.bgRed(` _applyState `)).p.add(inner).info()
   }
 
   async _render(force = false, context: any = {}) {
@@ -133,7 +133,7 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
 
     const logger = logger_
       .add(paint.bold(`[${this.actor.id}]`))
-      .t.clone(true)
+      .p.clone(true)
       .timer(`_render`)
 
     const origin = context?.userId
@@ -225,7 +225,7 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
   async _updateHtml({ ...context }: { [key: string]: any }) {
     const logger = logger_
       .add(paint.bold(`[${this.actor.id}]`))
-      .t.clone(true)
+      .p.clone(true)
       .timer(`_updateHtml`)
 
     /**
@@ -251,7 +251,7 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
   getData(options?: Partial<Options> | undefined): any {
     const logger = logger_
       .add(paint.bold(`[${this.actor.id}]`))
-      .t.clone(true)
+      .p.clone(true)
       .timer(`getData`)
 
     // getting data from gurps (the module, cnormand's)
@@ -268,8 +268,8 @@ export class GurpsMobileActorSheet extends GURPS.GurpsActorSheet {
     if (PARTIAL) logger.add(paint.italic.regular(` partial`))
     logger.info()
 
-    logger.add(paint.italic.web(`dimgray`)(`options:`)).t.add(options).info()
-    logger.add(paint.italic.web(`dimgray`)(`data:`)).t.add(sheetData).info()
+    logger.add(paint.italic.web(`dimgray`)(`options:`)).p.add(options).info()
+    logger.add(paint.italic.web(`dimgray`)(`data:`)).p.add(sheetData).info()
 
     logger.group()
 

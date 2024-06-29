@@ -29,6 +29,9 @@ export default class StackWrapper extends SheetHydrator {
     this.traits.on(`expand`, ({ data }) => {
       if (data) this.combat.expand(false)
       else this.combat.expand(true)
+
+      const features = this.html.parent().find(` > .features`)
+      features.toggleClass(`hidden`, data)
     })
 
     return super._hydrate()

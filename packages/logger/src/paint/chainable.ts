@@ -12,8 +12,7 @@ function createBlock(blockFactory: any, unknownOrBlock: unknown) {
 
   const styles = [] as string[]
 
-  if (blockFactory._style) styles.push(blockFactory._style)
-
+  // then comes all functions in parentage chain
   let parent = blockFactory._parent
   while (parent) {
     if (parent._style) styles.push(parent._style)
@@ -24,10 +23,14 @@ function createBlock(blockFactory: any, unknownOrBlock: unknown) {
   // console.log(chalk.bold(`text:`), string)
   // console.log(chalk.bold(`style:`), styles.join(`, `))
 
+  // then comes the style of the argument (if it is a block, that is)
   if (unknownOrBlock instanceof Block) {
     block._style.push(...unknownOrBlock._style)
     block._flags.push(...unknownOrBlock._flags)
   }
+
+  // last funcion in chain should be most prioritest
+  if (blockFactory._style) block._style.push(blockFactory._style)
 
   return block
 }
@@ -108,6 +111,12 @@ const CONSOLE_STYLES = [
 
 // Build a prototype with all chainable functions
 const chainingGetters = Object.create(null)
+
+chainingGetters[`isPaint`] = {
+  get() {
+    return true
+  },
+}
 
 for (const styleName of ANSI_STYLES) {
   chainingGetters[styleName] = {
@@ -226,9 +235,13 @@ const chainingPrototype = Object.defineProperties(() => {}, chainingGetters)
 
 export default function chainableFunctionFactory(parent?: unknown, style?: string) {
   const blockFactory = (...args: unknown[]) => {
-    const argument = args.length === 1 ? args[0] : args.join(` `)
+    // if (args.length > 1) debugger
+    if (args.length === 1 && isArray(args[0]) && args[0] instanceof Block) debugger
 
-    return createBlock(blockFactory, argument)
+    if (args.length === 1) {
+      if (isArray(args[0])) return args[0].map(argument => createBlock(blockFactory, argument))
+      else return createBlock(blockFactory, args[0])
+    } else return args.map(argument => createBlock(blockFactory, argument))
   }
 
   Object.setPrototypeOf(blockFactory, chainingPrototype)

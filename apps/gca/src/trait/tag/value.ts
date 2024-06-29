@@ -35,7 +35,7 @@ type Suffixed<Type, Suffix = string> = {
   suffix?: Suffix
 }
 
-const logger = churchil.child({ name: `trait` })
+const logger = churchil.child(`trait`)
 
 export class TraitTagValue<TValue = unknown> {
   tag: TraitTag

@@ -9,6 +9,8 @@ export type MathAsyntaticSyntaxNames = `math_expression` | `math_variable` | `ma
 
 export type LogicalSyntaxNames = `logical_if`
 
+export type GCA5SyntaxNames = `gca5_gives`
+
 type AsyntaticSyntaxTypes = `string` | `list` | `nil` | `math`
 type AsyntaticSyntaxNames = `string` | `marker` | `list` | `nil` | MathAsyntaticSyntaxNames
 
@@ -16,7 +18,7 @@ export type EnclosureSyntaxNames = `imaginary` | `parenthesis` | `braces` | `bra
 
 export type SeparatorSyntaxNames = `comma` | `pipe` | `colon` | `math_operator`
 
-export type AggregatorSyntaxNames = `math_function` | `directive` | `logic_if`
+export type AggregatorSyntaxNames = `math_function` | `directive` | `logic_if` | `gca5_gives`
 
 export type SyntaxType = AsyntaticSyntaxTypes | `enclosure` | `separator` | `aggregator`
 export type SyntaxName = AsyntaticSyntaxNames | EnclosureSyntaxNames | SeparatorSyntaxNames | MathSyntaxNames | AggregatorSyntaxNames
@@ -31,6 +33,7 @@ export type ComponentBase<TType extends SyntaxType = SyntaxType, TName extends S
   math: boolean // says if a syntax can act as a math_X synax (i.e. capable of mathematical calculations)
   mathParent?: boolean
   mathGrandparent?: boolean
+  specialization?: boolean
 }
 
 export type AsyntaticComponent = ComponentBase<AsyntaticSyntaxTypes, AsyntaticSyntaxNames>
@@ -53,6 +56,9 @@ export type SeparatorSyntaxComponent = SyntaxComponentBase<`separator`, Separato
   parents: SyntaxName[]
   prio: number
   prioBump: Partial<Record<SyntaxName, number>>
+  //
+  patterns: RegExp[]
+  patternsName: string[]
 }
 
 export type AggregatorSyntaxComponent = SyntaxComponentBase<`aggregator`, AggregatorSyntaxNames> & {

@@ -79,7 +79,14 @@ export function toName(j: number) {
 }
 
 export function splitOnRegexWithIndex(string: string, regex: RegExp) {
-  let results = [],
+  type SplitResult = {
+    before: string
+    after: string
+    index: number
+    text: string
+  }
+
+  let results = [] as SplitResult[],
     cnt = regex.global ? Infinity : 1,
     m,
     offset = 0

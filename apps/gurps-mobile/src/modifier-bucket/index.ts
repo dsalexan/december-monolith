@@ -28,7 +28,7 @@ export default class GurpsMobileModifierBucketEdtior extends Application {
     //    const data = await this.getData(this.options);
     //    inner = await this._renderInner(data);
 
-    logger_.add(`activateListeners`).t.add(inner).info()
+    logger_.add(`activateListeners`).p.add(inner).info()
 
     this.hydration.activateListeners(inner)
   }

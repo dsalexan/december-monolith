@@ -1,0 +1,19 @@
+& > .features {
+  --content-background-color: 51, 51, 51;
+
+  background-color: #EEE;
+  padding: var(--s1-5) var(--s1-5);
+  border-radius: var(--s1);
+
+  margin-top: calc(var(--s0-7 5) * -1);
+  margin-bottom: var(--s1);
+  margin-left: var(--s1);
+  margin-right: var(--s1);
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  font-weight: 500;
+  color: #444;
+}

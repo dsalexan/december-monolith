@@ -3,7 +3,7 @@ import { TraitParser } from ".."
 import { SyntaxComponent, SyntaxName } from "../syntax"
 import NodePrinter from "./printer"
 import NodeResolver, { NodeResolveOptions } from "./resolver"
-import LogBuilder from "@december/churchill/src/builder"
+import { Builder as LogBuilder } from "@december/logger"
 
 export type NodeIssueType = `unbalanced` | `parentless`
 
@@ -106,6 +106,7 @@ export default interface INode<TSyntax extends SyntaxComponent = SyntaxComponent
   resolve(options: Partial<NodeResolveOptions>): boolean
   reorganize(options: Partial<NodeResolveOptions>): void
   simplify(): INode | false
+  specialize(options: Partial<NodeResolveOptions>): INode | false
   rasterize(minStart: number, maxEnd: number): void
   normalize(): void
 

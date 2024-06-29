@@ -1,5 +1,8 @@
-import createLogger from "@december/churchill"
+import { ConsoleLogger } from "@december/logger"
 
-const logger = createLogger({ name: `gca`, level: `silly` })
+export { paint, Block } from "@december/logger"
+export type { Paint } from "@december/logger"
+
+const logger = new ConsoleLogger(`xii/gca`, `silly`).builder()
 
 export default logger

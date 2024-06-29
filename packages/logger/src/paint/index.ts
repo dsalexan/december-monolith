@@ -5,12 +5,19 @@ import chainableFunctionFactory from "./chainable"
 const paint = chainableFunctionFactory()
 
 interface ChainableFunction {
-  (...text: unknown[]): Block
+  (block: Block): Block
+  (text: string | number | boolean): Block
+  (blocks: Block[]): Block[]
+  (...blocks: Block[]): Block[]
+  (...text: unknown[]): Block[]
+  (...args: (unknown | Block)[]): Block[]
 }
 
 export interface Paint extends ChainableFunction {
   identity: Paint
   web(color: string): Paint
+
+  readonly isPaint: true
 
   readonly number: Paint
   readonly n: Paint

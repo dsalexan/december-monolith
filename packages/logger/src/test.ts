@@ -1,17 +1,32 @@
-import chalk from "chalk"
-import WinstonLogger from "./winston"
+// import chalk from "chalk"
+import ConsoleLogger from "./console"
 import paint from "./paint"
 import BrowserLogger from "./browser"
 // import createLogger from "./_index"
 
-const logger = new WinstonLogger(`december`, `silly`).builder()
+const logger = new ConsoleLogger(`december`, `silly`).builder()
 // const logger = new BrowserLogger(`december`, `silly`).builder()
 
 logger.add(`This is a message from a builder.`).info()
 logger.add(`This is a message from a builder.`).error()
 
-logger.add(`This is a ${chalk.bold.red(`message from a`)} builder.`).warn()
+logger.add(`This is a ${paint.bold.red(`message from a`)} builder.`).warn()
 logger.add(`This is a`, paint.bold.red(`message from a`), `builder.`).warn()
+logger.add(`This is a`, paint.bold.red(`message from a`), `builder. Also adding boolean`, true, `and number`, 10).warn()
+
+logger.group(true).add(`_render`)
+logger.add(`(after group open)`).verbose()
+logger.add(`Inside render group`, true).verbose()
+
+logger.openGroup(false).add(`(open group 2)`).verbose()
+logger.add(`Inside GRIOUP #2`, true).verbose()
+
+logger.openGroup(false).add(`(open group 3)`).verbose()
+logger.add(`Inside GRIOUP #3`, true).verbose().group()
+
+logger.group()
+
+logger.add(`closing 1`).verbose().group()
 
 const timer = logger.add(`Making timer`).verbose().timer()
 logger.add(`between timer`).verbose()
@@ -59,7 +74,7 @@ setTimeout(() => {
 
 // const timer2 = logger.startTimer()
 
-// const child = logger.child({ name: `january` })
+// const child = logger.child(`january`)
 
 // timer2.done({ message: `Took ∂duration to create a child logger` })
 

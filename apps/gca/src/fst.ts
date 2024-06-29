@@ -20,7 +20,7 @@ import { TAG_NAMES, TagName } from "./trait/tag/tag"
 import { TraitIssueManager } from "./trait/issues"
 import { guessNodeType } from "./trait/parser/node/utils"
 
-export const logger = churchill.child({ name: `fst` })
+export const logger = churchill.child(`fst`)
 
 export class Fast {
   fstndx: FastIndex
@@ -71,7 +71,7 @@ export class Fast {
     const traits = [] as Trait[]
     const errors = {} as any
 
-    const traitLogger = churchill.child({ name: `trait`, level: `data` }).builder().tab()
+    const traitLogger = churchill.child(`trait`, `data`).tab()
 
     const issues = new TraitIssueManager()
 
@@ -101,13 +101,7 @@ export class Fast {
       const typing = this.fstndx.traits.byID[i]
 
       traitLogger
-        .add(
-          chalk.grey(
-            `${chalk.bgBlue.black(` [${chalk.bold(i)}] | ${chalk.italic(typing.section ?? `<unknown section>`)} `)} | ${chalk.italic(
-              line.length > 100 ? line.substring(0, 97) + `...` : line,
-            )}`,
-          ),
-        )
+        .add(chalk.grey(`${chalk.bgBlue.black(` [${chalk.bold(i)}] | ${chalk.italic(typing.section ?? `<unknown section>`)} `)} | ${chalk.italic(line.length > 100 ? line.substring(0, 97) + `...` : line)}`))
         .verbose({ duration: true })
 
       const trait = new Trait(line, i, { fst: i + 1, fstndx: typing._row + 1 })

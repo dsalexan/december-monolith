@@ -1,0 +1,20 @@
+import { Strategy } from "./strategy"
+/* eslint-disable no-debugger */
+import { Primitive, isArray, set as _set, uniq, mergeWith, intersection, orderBy, min, isNil, isEmpty, flatten, pick, last, cloneDeep, flattenDeep, has, isEqual, set, get, groupBy } from "lodash"
+import { default as CompilableObject, InferData, applyRecipeIndex, parseRecipeIndex } from "./object"
+import { Instruction, InstructionIndex, instructionPriority, modePriority, prepareConflictResolution, resolveConflict } from "./instruction"
+import { Recipe, applyRecipe, parseInstruction } from "./recipe"
+
+export { default as CompilationManager } from "./compilation/newManager"
+export { default as ReactiveCompilationManager } from "./reactive/manager"
+// export type { ReferencedProxy } from "./manager"
+export { default as CompilableObject } from "./object"
+export * as Instruction from "./instruction/"
+export * as Strategy from "./strategy"
+// export * as Forwarding from "./forwarding"
+export * as Computed from "./reactive/computed"
+export * as Parity from "./reactive/parity"
+export * as Reaction from "./reactive/reaction"
+export * as Reference from "./reference"
+
+export { default as ReactiveCompilableObject } from "./reactive/object"

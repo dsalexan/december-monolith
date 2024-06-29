@@ -6,7 +6,7 @@
   // "javascript.format.enable": false,
   "eslint.validate": [ "javascript", "typescript" ],
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true,
+    "source.fixAll.eslint": "explicit"
   },
   "files.eol": "\n",
   "editor.tabSize": 2,

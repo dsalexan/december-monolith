@@ -1,12 +1,13 @@
+import { GCA5SyntaxNames } from "./../syntax/types"
 /* eslint-disable no-debugger */
-import LogBuilder from "@december/churchill/src/builder"
+import { Builder as LogBuilder } from "@december/logger"
 import churchill from "../../../logger"
 
 import { EnclosureSyntaxComponent, RECOGNIZED_FUNCTIONS, SYNTAX_COMPONENTS, SeparatorSyntaxComponent, SyntaxComponent, SyntaxName } from "../syntax"
 import { MATH_SYNTAX_NAMES } from "../syntax/math/syntax"
 
 import INode from "./interface"
-import { isNil, last, max, maxBy, min, orderBy, range, uniq, zip } from "lodash"
+import { groupBy, isNil, last, max, maxBy, min, minBy, orderBy, range, uniq, zip } from "lodash"
 import { advance } from "./carry"
 import { Node } from "."
 import { AggregatorSyntaxComponent, AsyntaticComponent } from "../syntax/types"
@@ -16,7 +17,8 @@ import { LOGIC_SYNTAX_NAMES } from "../syntax/logic"
 const RESOLVE_DIRECTIVES = [`close`, `open`, `char_child`, `unbalanced`, `as_string`] as const
 type ResolveDirective = (typeof RESOLVE_DIRECTIVES)[number]
 
-type IndexedAndPrioritizedNode = { node: Node; index: number; priority: number }
+type IndexedAndPrioritizedNodeExtraData = { syntax: SyntaxComponent; matches: (RegExpMatchArray | null)[] }
+type IndexedAndPrioritizedNode = { node: Node; index: number; priority: number; extra?: Partial<IndexedAndPrioritizedNodeExtraData> }
 
 export type NodeResolveOptions = {
   log: LogBuilder
@@ -57,7 +59,7 @@ export default class NodeResolver {
   // #region UTILS
 
   _setup(options: Partial<NodeResolveOptions> = {}, dontSet = false) {
-    let log = options.log ?? churchill.child({ name: `node` }).builder()
+    let log = options.log ?? churchill.child(`node`)
 
     const PRINT_LOG = options.printLog ?? false
     if (!PRINT_LOG) log = undefined as any
@@ -80,6 +82,7 @@ export default class NodeResolver {
       SYNTAXES,
       SYNTAX_INDEX,
       SYNTAX_FROM_CHARACTER: this.parser.getSyntaxFromCharacter(SYNTAXES),
+      SPECIALIZATION_SYNTAXES: Object.values(SYNTAX_INDEX).filter(syntax => syntax.specialization),
     }
 
     if (!dontSet) this.SETUP = SETUP
@@ -89,7 +92,7 @@ export default class NodeResolver {
 
   _new(start: number, syntax: SyntaxComponent, id?: number | `root`) {
     // id will be its probable (not necessaryly) index inside children
-    id = id ?? this.node.children.length
+    id = id === undefined ? this.node.children.length : id
 
     const node = new Node(this.parser, null, id, start, syntax) // new node starts at enclosure opener
     this.node.addChild(node)
@@ -272,12 +275,14 @@ export default class NodeResolver {
     // after resolving each character in substring, reorganize
     this.reorganize(options)
 
+    if (this.node.id === `root` && this.node.end === null) this.node.end = this.parser.text.length - 1
+
     return true
   }
 
   reorganize(options: Partial<NodeResolveOptions>) {
     // prioritize children of node
-    const prioritary = this._prioritize(this.node.children)
+    const prioritary = this._prioritize(this.node.children, options)
     if (isNil(prioritary)) return false
 
     // REORGANIZE NODES
@@ -341,6 +346,21 @@ export default class NodeResolver {
     if (this.node.start !== originalRange[0] || this.node.end !== originalRange[1]) debugger
 
     return false
+  }
+
+  specialize(options: Partial<NodeResolveOptions>) {
+    const validation = this.node.validate()
+    if (!validation.success && this.node.tree()) debugger
+
+    const originalRange = [this.node.start, this.node.end!]
+
+    // specialize thyself
+    const wasSpecialized = this._specialize(options)
+
+    // specialize children last
+    this._specialize_children(options)
+
+    return wasSpecialized
   }
 
   /**
@@ -459,20 +479,29 @@ export default class NodeResolver {
 
   // #region SYNTATIC REORGANIZATION
 
-  _prioritize(listOfNodes: INode[]) {
+  _prioritize(listOfNodes: INode[], options: Partial<NodeResolveOptions>) {
     const isMathAllowed = this.node.isMathAllowed
+
+    const { SYNTAXES, SYNTAX_INDEX } = this._setup(options)
+    const syntaxes = Object.values(SYNTAX_INDEX)
 
     // fast check if there are some priority nodes
     const hasPriorityNodes = listOfNodes.some(node => {
       if (node.syntax.type === `separator`) return true
       else if (node.syntax.type === `aggregator` && node.syntax.name !== `math_function`) return true
       else if (node.syntax.name === `marker`) return true
+
+      // check syntax parenting
+      if (syntaxes.some(syntax => (syntax as any).parents?.includes(node.syntax.name))) return true
     })
     if (!hasPriorityNodes) return null
 
     // index nodes and priorities in children
     const indexedNodes = listOfNodes.map((node, index) => {
-      let isRelevant = false
+      let isRelevant = false // flag if node is relevant for prioritization
+      let priority = undefined as number | undefined // priority for node
+      let extra = {} as Partial<IndexedAndPrioritizedNodeExtraData> // extra information to speed-up compilation
+
       // all separators are previously packaged as syntax
       if (node.syntax.type === `separator`) isRelevant = node.children.length === 0
       else if (node.syntax.type === `aggregator` && node.syntax.name !== `math_function`) isRelevant = node.children.length === 0
@@ -508,13 +537,14 @@ export default class NodeResolver {
         }
       }
 
-      let priority = undefined
-      if (isRelevant) {
+      // default priority (from node syntax)
+      if (isRelevant && priority === undefined) {
         priority = (node.syntax as any).prio ?? 0
+        // @ts-ignore
         if (typeof priority !== `number`) priority = priority[node.substring] ?? 0
       }
 
-      return { node, index, priority } as IndexedAndPrioritizedNode
+      return { node, index, priority, extra } as IndexedAndPrioritizedNode
     })
 
     if (!indexedNodes.find(({ priority }) => !isNil(priority))) return null
@@ -529,7 +559,7 @@ export default class NodeResolver {
     if (isNil(prioritaryNode.priority)) debugger
 
     // isolate mostest prioritariest
-    const prioritarySyntax = prioritaryNode.node.syntax
+    const prioritarySyntax = prioritaryNode.extra?.syntax ?? prioritaryNode.node.syntax
     let prioritaryNodes = [prioritaryNode]
 
     //    for math_operator JUST THE FIRST ONE is mostest prioritariest, not the rest
@@ -547,6 +577,7 @@ export default class NodeResolver {
 
     return {
       all: indexedNodes,
+      extra: prioritaryNode.extra,
       syntax: prioritarySyntax,
       node: prioritaryNode,
       nodes: prioritaryNodes,
@@ -635,6 +666,7 @@ export default class NodeResolver {
 
     if ([`math_operator`].includes(prioritary.syntax.name)) master = this._reorganize_math_operator(master, prioritary, options)
     else if ([`comma`, `pipe`].includes(prioritary.syntax.name)) master = this._reorganize_comma_pipe(master, prioritary, options)
+    // else if ([`gca5_gives`].includes(prioritary.syntax.name)) master = this._reorganize_gca5_gives(master, prioritary, options)
     else {
       // ERROR: Separator not implemented
       debugger
@@ -722,6 +754,107 @@ export default class NodeResolver {
 
     // faster than splicing ALL the rest
     this.node.children = [master]
+    // if (this.node.end === null) this.node.end = master.end
+    // if (this.node.start !== master.start) debugger // WARN: Untested
+
+    return master
+  }
+
+  _reorganize_gca5_gives(master: Node, prioritary: Exclude<ReturnType<NodeResolver[`_prioritize`]>, null>, options: Partial<NodeResolveOptions>) {
+    const { syntax, extra } = prioritary
+    const matches = extra?.matches ?? []
+
+    // ERROR: How the fuck
+    if (matches.length === 0) debugger
+    if (matches.every(match => isNil(match))) debugger
+
+    const validMatches = matches.filter(match => !isNil(match)) as RegExpMatchArray[]
+
+    const middles = [] as number[] //validMatches.map(match => [match.index!, match.index! + match[0].length - 1]).flat()
+    const tokens = [] as { type: `marker` | `string`; range: [number, number]; name?: string; childIndex?: number }[]
+
+    const i0 = master.start
+    const substring = master.substring
+
+    let cursor = 0
+    for (let i = 0; i < matches.length; i++) {
+      const match = matches[i]
+      if (isNil(match)) continue
+
+      const length = match[0].length
+      const start = match.index!
+      const end = match.index! + length - 1
+
+      // register middle pair
+      middles.push(start, end)
+
+      // build tokens
+      if (cursor !== start) {
+        //    before string
+        tokens.push({
+          type: `string`,
+          range: [cursor, start - 1],
+        })
+
+        cursor += start - cursor
+      }
+
+      //    operator
+      tokens.push({
+        type: `marker`,
+        name: (syntax as any).patternsName[i],
+        range: [start, end],
+      })
+
+      cursor += length
+    }
+
+    //    after string
+    if (cursor !== substring.length - 1) {
+      tokens.push({
+        type: `string`,
+        range: [cursor, substring.length - 1],
+      })
+    }
+
+    // compile string nodes
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i]
+      if (token.type !== `string`) continue
+
+      const [a, b] = token.range
+
+      const string = new Node(master.parser, null, master.children.length, i0 + a, SYNTAX_COMPONENTS.string)
+      string.end = i0 + b
+      master.addChild(string)
+
+      // reverse-bind child index
+      token.childIndex = string.id as number
+    }
+
+    // compile markers
+    const markers = [] as { name: string; siblings: [number] | [number, number] }[]
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i]
+      if (token.type !== `marker`) continue
+
+      const siblings = [] as any as [number] | [number, number]
+      if (i > 0) siblings.push(tokens[i - 1].childIndex!)
+      if (i < tokens.length - 1) siblings.push(tokens[i + 1].childIndex!)
+
+      markers.push({
+        name: token.name!,
+        siblings,
+      })
+    }
+
+    // update syntax
+    master.syntax = syntax
+    master.middles = middles.map(index => i0 + index)
+    master.meta = { markers }
+
+    const validation = this.node.validate()
+    if (!validation.success && this.node.tree()) debugger
 
     return master
   }
@@ -936,6 +1069,267 @@ export default class NodeResolver {
     }
 
     return somethingWasSimplified
+  }
+
+  // #endregion
+
+  // #region SPECIALIZATION
+
+  _specialize(options: Partial<NodeResolveOptions>) {
+    const { SPECIALIZATION_SYNTAXES } = this._setup(options)
+    if (SPECIALIZATION_SYNTAXES.length === 0) return false
+
+    const substring = this.node.substring
+
+    const syntaxes = orderBy(SPECIALIZATION_SYNTAXES, syntax => (syntax as any).prio ?? 0)
+
+    let choosenSyntax = null as SyntaxComponent | null
+    let patternMatches = [] as (RegExpMatchArray | null)[]
+    // #region determine specialization syntax
+    for (const syntax of syntaxes) {
+      // test syntax against node
+
+      //    verify parents
+      const syntaxParents = (syntax as any).parents
+      if (syntaxParents) {
+        // node does not have required parents (by syntax definition)
+        if (!syntaxParents.includes(this.node.syntax.name)) continue
+      }
+
+      //    test patterns
+      const patterns = ((syntax as any).patterns ?? []) as RegExp[]
+
+      // ERROR: Syntax lacks patterns, how should I know if it matches?
+      if (patterns.length === 0) debugger
+
+      const matches = patterns.map(pattern => substring.match(pattern))
+      //      no pattern is a match, continue to next syntax
+      if (matches.every(match => isNil(match))) continue
+
+      patternMatches = matches
+      choosenSyntax = syntax
+
+      break
+    }
+
+    if (choosenSyntax === null) return false
+    // #endregion
+
+    if ([`gca5_gives`].includes(choosenSyntax.name)) {
+      this._specialize_gca(this.node as Node, choosenSyntax, patternMatches, options)
+    } else {
+      // ERROR: Unimplemented specialization syntax
+      debugger
+    }
+
+    return this.node
+  }
+
+  _specialize_children(options: Partial<NodeResolveOptions>) {
+    let somethingWasSpecialized = false
+    const children = this.node.children
+
+    // let children simplify themselves as individual nodes
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
+
+      const specialized = child.specialize(options)
+
+      if (specialized) {
+        somethingWasSpecialized = true
+
+        this.node.addChild(specialized)
+        children.splice(children.length - 1, 1)
+
+        children[i] = specialized
+      }
+    }
+
+    return somethingWasSpecialized
+  }
+
+  _specialize_gca(master: Node, syntax: SyntaxComponent, matches: (RegExpMatchArray | null)[], options: Partial<NodeResolveOptions>) {
+    const substring = master.substring
+    const i0 = master.start
+
+    // #region break matches into tokens (and register middles)
+
+    const middles = [] as number[] //validMatches.map(match => [match.index!, match.index! + match[0].length - 1]).flat()
+    const tokens = [] as { type: `marker` | `string`; range: [number, number]; name?: string; childIndex?: number }[]
+
+    let cursor = 0
+    for (let i = 0; i < matches.length; i++) {
+      const match = matches[i]
+      if (isNil(match)) continue
+
+      const length = match[0].length
+      const start = match.index!
+      const end = match.index! + length - 1
+
+      // register middle pair
+      middles.push(start, end)
+
+      // build tokens
+      if (cursor !== start) {
+        //    before string
+        tokens.push({
+          type: `string`,
+          range: [cursor, start - 1],
+        })
+
+        cursor += start - cursor
+      }
+
+      //    operator
+      tokens.push({
+        type: `marker`,
+        name: (syntax as any).patternsName[i],
+        range: [start, end],
+      })
+
+      cursor += length
+    }
+
+    //    after string
+    if (cursor !== substring.length - 1) {
+      tokens.push({
+        type: `string`,
+        range: [cursor, substring.length - 1],
+      })
+    }
+
+    // #endregion
+
+    // map tokens to existing children
+    const TOKEN_DIRECTIVES = range(0, tokens.length).map(i => []) as { directive: `REUSE_NODE` | `ENLIST_NODES` | `BREAK_NODE`; node: number | `master` }[][]
+
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i]
+      if (token.type !== `string`) continue
+
+      const [a, b] = token.range.map(i => i0 + i)
+
+      if (master.children.length === 0) {
+        TOKEN_DIRECTIVES[i].push({
+          directive: `BREAK_NODE`,
+          node: `master`,
+        })
+      } else {
+        for (let childIndex = 0; childIndex < master.children.length; childIndex++) {
+          const child = master.children[childIndex]
+
+          const tokenIsNotRelatedToChild = b < child.start || child.end! < a
+          if (tokenIsNotRelatedToChild) continue
+
+          const tokenIsChild = a === child.start && b === child.end!
+          const tokenIsInsideChild = child.start <= a && b <= child.end!
+          const tokenIsOutsideChild = !tokenIsInsideChild && a <= child.start && child.end! <= b
+          const tokenIsAtLeftOfChild = !tokenIsInsideChild && !tokenIsOutsideChild && a < child.start
+          const tokenIsAtRightOfChild = !tokenIsInsideChild && !tokenIsOutsideChild && child.end! < b
+
+          if (tokenIsChild || tokenIsOutsideChild) {
+            TOKEN_DIRECTIVES[i].push({
+              directive: `REUSE_NODE`,
+              node: childIndex,
+            })
+          } else if (tokenIsAtLeftOfChild || tokenIsAtRightOfChild || tokenIsInsideChild) {
+            TOKEN_DIRECTIVES[i].push({
+              directive: `BREAK_NODE`,
+              node: childIndex,
+            })
+          } else {
+            // ERROR: Unimplemented
+            debugger
+          }
+        }
+      }
+    }
+
+    const newChildren = [] as INode[]
+    // apply directives to establish new children
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i]
+      if (token.type !== `string`) continue
+
+      const [a, b] = token.range.map(i => i0 + i)
+
+      const nodes = [] as Node[]
+      const directives = TOKEN_DIRECTIVES[i]
+      for (const { directive, node: nodeIndex } of directives) {
+        const node = nodeIndex === `master` ? master : (master.children[nodeIndex] as Node)
+
+        if (directive === `BREAK_NODE`) {
+          const start = Math.max(a, node.start)
+          const end = Math.min(b, node.end!)
+
+          // create new node from token range
+          const string = new Node(master.parser, null, nodes.length, start, SYNTAX_COMPONENTS.string)
+          string.end = end
+
+          nodes.push(string)
+        } else if (directive === `REUSE_NODE`) {
+          // update node index
+          node.id = nodes.length
+
+          nodes.push(node)
+        } else {
+          // ERROR: Unimplemented
+          debugger
+        }
+      }
+
+      let tokenNode: Node = null as any as Node
+      if (nodes.length > 1) {
+        // enlist nodes
+        tokenNode = new Node(this.parser, null, newChildren.length, nodes[0].start, SYNTAX_COMPONENTS.list)
+        tokenNode.end = last(nodes)!.end
+
+        for (const node of nodes) tokenNode.addChild(node)
+      } else if (nodes.length === 1) {
+        tokenNode = nodes[0]
+        tokenNode.id = newChildren.length
+      } else {
+        // ERROR: Unimplemented
+        debugger
+      }
+
+      // ERROR: cNTB
+      if (tokenNode === null) debugger
+
+      // reverse-bind child index
+      token.childIndex = tokenNode.id as number
+
+      newChildren.push(tokenNode)
+    }
+
+    const markers = [] as { name: string; siblings: [number] | [number, number] }[]
+    //  markers
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i]
+      if (token.type !== `marker`) continue
+
+      const siblings = [] as any as [number] | [number, number]
+      if (i > 0) siblings.push(tokens[i - 1].childIndex!)
+      if (i < tokens.length - 1) siblings.push(tokens[i + 1].childIndex!)
+
+      markers.push({
+        name: token.name!,
+        siblings,
+      })
+    }
+
+    // update node
+    master.syntax = syntax
+    master.middles = middles.map(index => i0 + index)
+    master.meta = { markers }
+
+    master.children = []
+    for (const child of newChildren) master.addChild(child)
+
+    const validation = master.validate()
+    if (!validation.success && master.tree()) debugger
+
+    return master
   }
 
   // #endregion

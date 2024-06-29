@@ -31,6 +31,7 @@ export default class WinstonLogger implements ILogger {
         new winston.transports.Console({
           level: `${level}`,
           format: winston.format.combine(
+            //
             winston.format.padLevels({ ...config, levels: LEVEL_PRIORITY }),
             timestamp({ store: this.store }),
             winston.format.splat(),

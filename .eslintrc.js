@@ -62,6 +62,7 @@ module.exports = {
     "no-unused-vars": [`off`],
     "no-sparse-arrays": [`off`],
     "no-useless-escape": [`off`],
+    "no-debugger": [`warn`],
     // "jsdoc/require-param": [`off`],
     // "jsdoc/require-param-description": [`off`],
     // "jsdoc/require-returns-description": [`off`],

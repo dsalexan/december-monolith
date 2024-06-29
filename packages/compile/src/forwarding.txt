@@ -1,0 +1,209 @@
+import { clone, cloneDeep, isArray, isNil, isRegExp, isString, uniq, uniqBy } from "lodash"
+import crypto from "crypto"
+
+import type CompilationManager from "./compilation/newManager"
+import type { Parity } from "./reactive/parity"
+import { isNilOrEmpty } from "../../utils/src"
+
+import type { ReactionDefinition } from "./reactive/reaction/definition"
+import { generateReactionHash, ParallelReaction } from "./reactive/reaction"
+import { ReactionTarget } from "./reactive/reaction/triggers"
+import * as Utils from "./reference/utils"
+import { PropertyReference } from "./reference"
+
+export class ForwardingInstruction {
+  // validation
+  id: string // uniq instruction identifier, since i'm unsure about how to deal with repeating instructions (hash built from parity, reaction and watchlist)
+  parity: Parity // parity hash to determine if the instruction is still valid
+  // core
+  object: string // object string where reaction is waiting
+  reaction: Omit<ParallelReaction, `trigger`> // reaction to be called when onde of the targets is updated TODO: why trigger is ignored?
+  watchlist: IndexedReactionTarget[] // basically the targets to watch of a reaction, but with an index
+  // if some reference in watchlist is updated, call the forwarding instruction (which in turn will call the reaction)
+
+  constructor(objectID: string, reaction: Omit<ParallelReaction, `trigger`>, parity: Parity) {
+    this.parity = parity
+    //
+    this.object = objectID
+    this.reaction = reaction
+    this.watchlist = []
+  }
+
+  _updateID() {
+    // uniq instruction identifier, since i'm unsure about how to deal with repeating instructions (hash built from parity, reaction and watchlist)
+
+    const isEmptyContext = isNil(this.reaction.context) || Object.keys(this.reaction.context).length === 0
+    // probably context doesnt matter for instruction id, up in the air
+
+    const watchlist = [] as string[]
+    for (const target of this.watchlist) {
+      const _policy = target.policy === `always` ? `` : `${target.policy}//`
+      const _object = target.type === `event` ? `event` : Utils.Object.flatten(target.property.object)
+      const _path = target.type === `event` ? target.name : String(target.property.path)
+
+      watchlist.push(`${_policy}${_object}:${_path}`)
+    }
+    watchlist.sort()
+
+    // based on reaction hash
+    const id = `${this.object}:::${generateReactionHash(this.reaction as ParallelReaction)}:::${watchlist.join(`,`)}`
+
+    if (!isNilOrEmpty(this.id)) debugger
+    this.id = id
+  }
+
+  /** Add a target to watch (forwarding when that it is updated) */
+  add(target: ReactionTarget) {
+    // let objectPointer: IndexedReference[`reference`][`object`] = typeof object === `string` ? Target.objectFromString(object) : object
+
+    const index = this.watchlist.length
+    const indexedTarget: IndexedReactionTarget = { ...cloneDeep(target), index }
+
+    this.watchlist.push(indexedTarget)
+    this._updateID()
+
+    return this
+  }
+
+  validate() {
+    // ERROR: Instruction needs parity
+    if (!this.parity) debugger
+
+    // ERROR: There is no reason for a forwarding instruction to have no targets
+    if (!this.watchlist.length) debugger
+
+    // ERROR: Instruction needs an id to detect repeating instructions
+    if (!this.id) debugger
+
+    return true
+  }
+}
+
+export default class ForwardingManager {
+  compilationManager: CompilationManager
+
+  instructions: Map<string, ForwardingInstruction> = new Map() // id -> instruction
+
+  index: {
+    //
+    bySourceObjectAndParity: Record<string, Record<string, ForwardingInstruction[`id`][]>> // object pointer (as string) -> parity key -> instruction ids
+    byObjectAndPath: Record<string, Record<string, ForwardingInstruction[`id`][]>> // object pointer (as string) -> path (as string) -> instruction ids
+    byEvent: Record<string, ForwardingInstruction[`id`][]> // event name -> instruction ids
+  }
+
+  constructor(compilationManager: CompilationManager) {
+    this.compilationManager = compilationManager
+
+    this.index = {
+      bySourceObjectAndParity: {},
+      byObjectAndPath: {},
+      byEvent: {},
+    }
+  }
+
+  make(objectID: string, reaction: Omit<ParallelReaction, `trigger`>, parity: Parity, ...targets: ReactionTarget[]): ForwardingInstruction {
+    const instruction = new ForwardingInstruction(objectID, reaction, parity)
+    for (const target of targets) instruction.add(target)
+
+    return instruction
+  }
+
+  /** Adds forwarding instruction to manager */
+  add(instruction: ForwardingInstruction) {
+    // ERROR: Duplicate instruction
+    if (this.instructions.has(instruction.id)) debugger
+
+    this.instructions.set(instruction.id, instruction)
+
+    // indexing instructions
+
+    // SOURCE (OBJECT) AND PARITY
+    if (!this.index.bySourceObjectAndParity[instruction.object]) this.index.bySourceObjectAndParity[instruction.object] = {}
+    if (!this.index.bySourceObjectAndParity[instruction.object][instruction.parity.key]) this.index.bySourceObjectAndParity[instruction.object][instruction.parity.key] = []
+    this.index.bySourceObjectAndParity[instruction.object][instruction.parity.key].push(instruction.id)
+
+    // WATCHING PROPERTY REFERENCE
+    for (const target of instruction.watchlist) {
+      if (target.type === `event`) {
+        const event = target.name
+
+        if (!this.index.byEvent[event]) this.index.byEvent[event] = []
+        this.index.byEvent[event].push(instruction.id)
+      } else if (target.type === `property`) {
+        // WARN: Untesded, i thinkl
+        if (!Utils.Property.isStrict(target.property)) debugger
+
+        const _object = Utils.Object.flatten(target.property.object)
+        const _path = String(target.property.path) // parses a regex in a string if necessary
+
+        if (!this.index.byObjectAndPath[_object]) this.index.byObjectAndPath[_object] = {}
+        if (!this.index.byObjectAndPath[_object][_path]) this.index.byObjectAndPath[_object][_path] = []
+        this.index.byObjectAndPath[_object][_path].push(instruction.id)
+      } else {
+        // ERROR: Unimplemtened target type
+        debugger
+      }
+    }
+  }
+
+  remove(id: ForwardingInstruction[`id`]) {
+    if (!this.instructions.has(id)) return null
+
+    debugger
+    const instruction = this.instructions.get(id)!
+
+    // remove indexes
+
+    // PARITY
+    const objectID = instruction.object
+    const parity = instruction.parity.key
+    this.index.bySourceObjectAndParity[objectID][parity] = this.index.bySourceObjectAndParity[objectID][parity].filter(_id => _id !== id)
+
+    // TARGET AND PATHS
+    for (const target of instruction.watchlist) {
+      if (target.type === `event`) {
+        // TODO: Implement
+        debugger
+      } else if (target.type === `property`) {
+        const _object = Utils.Object.flatten(target.property.object)
+        const _path = String(target.property.path) // parses a regex in a string if necessary
+
+        this.index.byObjectAndPath[_object][_path] = this.index.byObjectAndPath[_object][_path].filter(_id => _id !== id)
+      } else {
+        // ERROR: Unimplemtened target type
+        debugger
+      }
+    }
+
+    // remove instruction
+    this.instructions.delete(id)
+
+    return instruction
+  }
+
+  getByProperty(reference: PropertyReference): ForwardingInstruction[] {
+    // if (reference.object.type === `lifecycle`) debugger
+
+    const _object = Utils.Object.flatten(reference.object)
+    const _path = String(reference.path)
+
+    const byPath = this.index.byObjectAndPath[_object] ?? {}
+
+    if (isRegExp(reference.path)) {
+      debugger
+    } else if (reference.path === `*`) {
+      // if path is "any", return all instructions for object, regardless of path
+
+      const instructions = [] as ForwardingInstruction[]
+      for (const path of Object.keys(byPath)) {
+        instructions.push(...byPath[path].map(key => this.instructions[key]))
+      }
+    }
+
+    // path -> instruction ids
+    const strictPath = byPath[_path] ?? [] // return all instructions for argument path
+    const anyPath = byPath[`*`] ?? [] // return all instructions that fits "any" path
+
+    return uniq([...strictPath, ...anyPath]).map(key => this.instructions[key])
+  }
+}

@@ -1,15 +1,12 @@
-import { isEmpty, isNil } from "lodash"
+import { isArray, isEmpty, isNil, set } from "lodash"
 
+export * as compare from "./compare"
 export * as storage from "./storage"
 
 export function push<TKey extends string | number | symbol = string | number | symbol, TValue = any>(map: Record<TKey, TValue[]>, key: TKey, value: TValue) {
   if (map[key] === undefined) map[key] = []
 
   map[key].push(value)
-}
-
-export function isNilOrEmpty(value: any): value is null | undefined | `` {
-  return isNil(value) || isEmpty(value)
 }
 
 export function capString(text: string, size: number, ellipsis = `...`, returnAsArray = false) {
@@ -201,4 +198,76 @@ export function colorNameToHex(color: string) {
 
   const hex = definedColorNames[color]
   return hex as string | undefined
+}
+
+export function asArray<TValue = unknown>(value: TValue | TValue[]): TValue[] {
+  return isArray(value) ? value : [value]
+}
+
+export const SUPERSCRIPT_NUMBERS = `⁰¹²³⁴⁵⁶⁷⁸⁹`
+
+export function toSuperscript(number: number) {
+  if (number < 0) debugger
+  if (!Number.isInteger(number)) debugger
+
+  if (number > 9) {
+    const characters = [...number.toString()]
+    return characters.map(character => SUPERSCRIPT_NUMBERS[parseInt(character)]).join(``)
+  }
+
+  return SUPERSCRIPT_NUMBERS[number]
+}
+
+export function fromSuperscript(text: string) {
+  if (!Number.isInteger(parseFloat(text))) debugger
+
+  const characters = [...text]
+  const numbers = characters.map(character => SUPERSCRIPT_NUMBERS.indexOf(character))
+
+  return parseInt(numbers.join(``))
+}
+
+export function isNilOrEmpty(value: any): value is null | undefined | `` {
+  return isNil(value) || isEmpty(value)
+}
+
+export function arrayJoin(array: any[], separator: any = `, `) {
+  return array
+    .map(item => [item, separator])
+    .flat()
+    .slice(0, -1)
+}
+
+export function conditionalSet<TObject extends object = object>(object: TObject, key: string | number | symbol, value: any, refuseIf: `nil` | `empty` | `nilOrEmpty` = `nilOrEmpty`) {
+  let doSet = true
+
+  if (refuseIf === `nil` && isNil(value)) doSet = false
+  else if (refuseIf === `empty` && isEmpty(value)) doSet = false
+  else if (refuseIf === `nilOrEmpty` && isNilOrEmpty(value)) doSet = false
+
+  if (doSet) object[key] = value
+
+  //   set(path: PropertyPath, value: any): this;
+  //   /**
+  //    * @see _.set
+  //    */
+  //   set<TResult>(path: PropertyPath, value: any): ImpChain<TResult>;
+  // }
+  // interface LoDashExplicitWrapper<TValue> {
+  //   /**
+  //    * @see _.set
+  //    */
+  //   set(path: PropertyPath, value: any): this;
+  //   /**
+  //    * @see _.set
+  //    */
+  //   set<TResult>(path: PropertyPath, value: any): ExpChain<TResult>;
+
+  // set<T extends object>(object: T, path: PropertyPath, value: any): T;
+  // /**
+  //  * @see _.set
+  //  */
+  // set<TResult>(object: object, path: PropertyPath, value: any): TResult;
+
+  return object
 }

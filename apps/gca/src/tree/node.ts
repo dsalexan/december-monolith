@@ -22,7 +22,7 @@ export type NodeMeta = {
   type: `string` | RecipeName
 }
 
-export const logger = churchill.child({ name: `node` })
+export const logger = churchill.child(`node`)
 
 export class Node {
   tree!: Tree

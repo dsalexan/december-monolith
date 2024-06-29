@@ -1,8 +1,8 @@
 /* eslint-disable no-debugger */
-import { cloneDeep, identity, isString, last, orderBy, padEnd, padStart, range, uniq } from "lodash"
+import { chunk, cloneDeep, identity, isString, last, orderBy, padEnd, padStart, range, uniq } from "lodash"
 
 import churchill from "../../../logger"
-import LogBuilder from "@december/churchill/src/builder"
+import { Builder as LogBuilder } from "@december/logger"
 
 import INode from "./interface"
 import chalk from "chalk"
@@ -338,7 +338,7 @@ export default class NodePrinter {
   }
 
   _setup(options: Partial<PrintOptions> = {}): PrintSetup {
-    const log = (options.log ?? churchill.child({ name: `parser` })).builder({ separator: `` })
+    const log = options.log ?? churchill.child(`parser`, undefined, { separator: `` })
 
     const SOURCE_TEXT = this.parser.text
 
@@ -419,6 +419,7 @@ export default class NodePrinter {
       }
     })
     function padBefore(index: number) {
+      if (PADDING_COLUMN[index] === undefined) debugger
       PADDING_COLUMN[index].BEFORE = CHARACTERS.WHITESPACE
       if (index > 1) PADDING_COLUMN[index - 1].AFTER = CHARACTERS.WHITESPACE
     }
@@ -733,6 +734,24 @@ export default class NodePrinter {
       substring.push(color.bold(paddedOpen))
       substring.push(color.dim(paddedArgs))
       substring.push(color.bold(paddedClose))
+    } else if ([`gca5_gives`].includes(node.syntax.name)) {
+      const pairMiddles = chunk(node.middles, 2)
+
+      for (let i = 0; i < pairMiddles.length; i++) {
+        const middle = pairMiddles[i]
+        const previousMiddle = pairMiddles[i - 1] ?? [-1, node.start - 1]
+
+        // since end is in the array we only need to add the before text and middle text
+        const beforeText = this._substring(previousMiddle[1] + 1, middle[0])
+        const middleText = this._substring(middle[0], middle[1] + 1)
+
+        substring.push(beforeText)
+        substring.push(color.bold(middleText))
+        if (i === pairMiddles.length - 1 && middle[1] !== node.end!) {
+          const afterText = this._substring(middle[1] + 1, node.end! + 1)
+          substring.push(afterText)
+        }
+      }
     } else if (node.syntax.type === `separator` || node.syntax.type === `aggregator`) {
       // color middles alone
       const middlesAndEnd = [...node.middles, node.end! + 1]
@@ -898,6 +917,7 @@ export default class NodePrinter {
       calculateLevelsFrom: this.node.level + 1,
     })
   }
+
   compactRelevant(display: string, options: Partial<PrintOptions> = {}) {
     console.error(this.node.backgroundColor(`${` `.repeat(50)}${display}${` `.repeat(50)}`))
     this.relevant({ sections: [`header`, `context`], ...options })

@@ -715,7 +715,7 @@ export type TraitIssuePrintOptions = {
 }
 
 function getPrintOptions(options: Partial<TraitIssuePrintOptions> = {}) {
-  const log = (options.log ?? churchill.child({ name: `gca` })).builder() //({ separator: `` })
+  const log = options.log ?? churchill.child(`gca`) //({ separator: `` })
 
   const HIDE = options.hide ?? []
 

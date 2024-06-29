@@ -10,9 +10,10 @@ import INode, { ISerializedNode, NodeIssue, createNodeIssue } from "./interface"
 import NodePrinter from "./printer"
 import NodeResolver, { NodeResolveOptions } from "./resolver"
 import { removeANSI, toName } from "./utils"
-import LogBuilder from "@december/churchill/src/builder"
+import { Builder as LogBuilder } from "@december/logger"
+import { GCA5SyntaxNames } from "../syntax/types"
 
-export const logger = churchill.child({ name: `node` })
+export const logger = churchill.child(`node`)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class Node<TSyntax extends SyntaxComponent = SyntaxComponent, TData extends object = any> implements INode {
@@ -37,6 +38,7 @@ export class Node<TSyntax extends SyntaxComponent = SyntaxComponent, TData exten
   start: number
   end: number | null
   middles: number[]
+  meta: any
 
   syntax: TSyntax
 
@@ -279,7 +281,7 @@ export class Node<TSyntax extends SyntaxComponent = SyntaxComponent, TData exten
   }
 
   tree(log?: LogBuilder): true {
-    log = log ?? churchill.child({ name: `node` }).builder()
+    log = log ?? churchill.child(`node`)
 
     this._tree(log)
 
@@ -313,7 +315,7 @@ export class Node<TSyntax extends SyntaxComponent = SyntaxComponent, TData exten
   }
 
   header(text: string, log?: LogBuilder) {
-    log = (log ?? churchill.child({ name: `node` })).builder({ separator: `` })
+    log = log ?? churchill.child(`node`, undefined, { separator: `` })
 
     const FULL_PAD = 50
     const PAD = FULL_PAD - removeANSI(text).length
@@ -352,9 +354,17 @@ export class Node<TSyntax extends SyntaxComponent = SyntaxComponent, TData exten
     this.resolver.normalize()
   }
 
+  specialize(options: Partial<NodeResolveOptions>) {
+    return this.resolver.specialize(options)
+  }
+
+  // #region special parsing
+
   resolveMath() {
     return this.resolver.resolveMath()
   }
+
+  // #endregion
 
   // #endregion
 

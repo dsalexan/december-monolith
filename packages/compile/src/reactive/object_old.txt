@@ -1,0 +1,377 @@
+import crypto from "crypto"
+import { cloneDeep, groupBy, isNumber, omit, uniq, uniqBy } from "lodash"
+
+import CompilableObject, { UpdateEvent } from "../object"
+import { Strategy, Factory } from "../strategy"
+import type CompilationManager from "../compilation/manager"
+import { Builder, paint } from "@december/logger"
+import { arrayJoin } from "@december/utils"
+import { ReactionReference, StrictPropertyReference } from "../reference"
+import { ParallelReaction } from "./reaction"
+
+const StrategyFactory = new Factory()
+
+// #region PRIORITIZED REACTION
+
+export interface PrioritizedReaction<TReactionData extends object> {
+  priority: number
+  reaction: {
+    watchlist: number // index at watchlist for target property, watchlist (index) -> IndexedReactionTarget[watchlist]
+  } & TReactionData
+}
+
+export type PrioritizedReactionReference = PrioritizedReaction<{ reference: ReactionReference }>
+export type PrioritizedParallelReaction = PrioritizedReaction<{ parallel: Omit<ParallelReaction, `trigger`> }>
+
+// #endregion
+
+export default class ReactiveCompilableObject<TData extends object = object> extends CompilableObject<TData> {
+  // all reactive strategies to be considered on update
+  strategies = {} as Record<string, Strategy>
+  // strategy indexes
+  //    we cant really index regex paths, so we need to centralize a function to return all stragies for a given path (half checking in indexes and half testing all regexes)
+  _: {
+    priority: {
+      // a.k.a. "priority of a strategy at insert time defined as an argument to addStrategy"
+      byStrategy: Record<string, number> // strategy.name -> priority
+    }
+    prioritized: {
+      reactions: {
+        //                      object -> path (string) -> reactions[]
+        byObjectAndPath: Record<string, Record<string, PrioritizedReactionReference[]>>
+        //                      object -> regex path key -> { pattern, reactions[] }
+        byObjectAndRegex: Record<string, Record<string, { pattern: RegExp; reactions: PrioritizedReactionReference[] }>>
+        //            event name -> reactions[]
+        byEvent: Record<string, PrioritizedReactionReference[]>
+      }
+    }
+  } = {
+    priority: {
+      byStrategy: {},
+    },
+    prioritized: {
+      reactions: {
+        byObjectAndPath: {},
+        byObjectAndRegex: {},
+        byEvent: {},
+      },
+    },
+  }
+
+  constructor(id: string, data?: TData) {
+    super(id, data)
+
+    // add local empty strategy
+    const local = StrategyFactory.strategy(`local`)
+    this.addStrategy(local)
+
+    // track every time object is updated
+    this.listen()
+  }
+
+  static override make<TData extends object = object>(id: string, data?: TData) {
+    return new ReactiveCompilableObject<TData>(id, data)
+  }
+
+  addToManager(manager: CompilationManager, cluster?: string, logger?: Builder) {
+    if (logger) {
+      if (cluster) logger.add(paint.grey(cluster), ` `)
+      logger.add(paint.bold(this.id))
+
+      if (Object.values(this.strategies).length)
+        logger.add(
+          ` `,
+          ...arrayJoin(
+            Object.values(this.strategies).map(strategy => paint.blue(`strategy:`, paint.bold(strategy.name))),
+            paint.grey(`, `),
+          ).flat(),
+        )
+      else logger.add(paint.grey(` (No strategies)`))
+
+      logger.debug()
+    }
+
+    manager.addObject(this, cluster)
+
+    return this
+  }
+
+  /** React to changes to target reference */
+  _react(target: StrictPropertyReference): ReactionToTarget[] {
+    const _object = objectToString(target.object)
+
+    // get all strategies that target this path directly
+    const byPath = this._.prioritized.reactions.byObjectAndPath[_object]?.[target.path] ?? []
+
+    // get all strategies that target this path through a regex pattern
+    //                target -> regex path key -> { pattern, list of prioritized strategies }
+    const byPattern = [] as ReactionToTarget[][]
+    const patterns = this._.prioritized.reactions.byObjectAndRegex[_object] ?? {}
+    for (const { pattern, reactions } of Object.values(patterns)) {
+      // test path for pattern
+      const globalPattern = new RegExp(pattern, `g`)
+      const match = [...target.path.matchAll(globalPattern)]
+      if (match.length === 0) continue
+
+      // ERROR: Untested multiple matching
+      if (match.length > 1) debugger
+
+      const groups = match[0].slice(1)
+
+      // if it passes, add strategies to list
+      //    injecting capturing groups
+      const context: Omit<ParallelReactionContext, `trigger`> = {
+        regex: groups,
+      }
+
+      const local = [] as (typeof byPattern)[number]
+      for (const reaction of reactions) local.push({ ...reaction, context })
+
+      byPattern.push(local)
+    }
+
+    // merge prioritized indexes into one
+    const prioritizedReactions = [...byPath, ...byPattern.flat()]
+
+    // WARN: Never tested explicit targets
+    if (target.object.type !== `self` && Object.keys(prioritizedReactions).length > 0) debugger
+
+    // WARN: Never tested "any" paths
+    if (target.path === `*` && Object.keys(prioritizedReactions).length > 0) debugger
+
+    return prioritizedReactions
+  }
+
+  /** React (return reactions) to a changes in these target references */
+  react(...targets: StrictPropertyReference[]): Map<number, SemiExplainedReaction[]> {
+    const prioritizedReactions = [] as (SemiExplainedReaction & { priority: number })[]
+    for (const _target of targets) {
+      // build trigger
+      const reference = { object: _target.object, path: _target.path } as StrictReference
+      const trigger: ReferenceUpdatedTrigger = { reason: `reference_was_updated`, watchlistIndex: -1, reference }
+
+      // #region expand target into list (mostly adding self and "any" if applicable)
+      const _targets = [_target]
+
+      // 0. adding "any" path if it is not already there
+      const objectsWithoutAnyPath = [] as StrictReference[`object`][]
+      const byObject = groupBy(targets, ({ object }) => objectToString(object))
+      for (const targets of Object.values(byObject)) {
+        const hasAnyPath = targets.some(({ path }) => path === `*`)
+        if (!hasAnyPath) objectsWithoutAnyPath.push(targets[0].object)
+      }
+
+      for (const object of objectsWithoutAnyPath) {
+        _targets.push({ object, path: `*` })
+      }
+
+      // 1. adding self if some target matches object id
+      const selfTargets = _targets.filter(({ object }) => object.type === `id` && object.key === this.id)
+      for (const target of selfTargets) {
+        _targets.push({ object: { type: `self` }, path: target.path })
+      }
+
+      // #endregion
+
+      // react to each refernce individually
+      const targetReactions = _targets.map(target => this._react(target)).flat()
+
+      // store prioritized explained reactions
+      for (const { priority, watchlistIndex, context, ...reaction } of targetReactions) {
+        const semiExplainedReaction: SemiExplainedReaction & { priority: number } = {
+          reaction,
+          context: {
+            ...context,
+            trigger: { ...cloneDeep(trigger), watchlistIndex },
+          },
+          //
+          priority,
+        }
+
+        prioritizedReactions.push(semiExplainedReaction)
+      }
+    }
+
+    // compile into a prioritized index
+    const prioritizedIndex = new Map<number, SemiExplainedReaction[]>()
+
+    const priorities = uniq(prioritizedReactions.map(({ priority }) => Number(priority)))
+    priorities.sort()
+    for (const priority of priorities) prioritizedIndex.set(priority, [])
+
+    for (const { priority, ...semiExplainedReaction } of prioritizedReactions) {
+      const list = prioritizedIndex.get(priority)!
+      list.push(semiExplainedReaction)
+
+      prioritizedIndex.set(priority, list)
+    }
+
+    return prioritizedIndex
+  }
+
+  listen() {
+    /** Listen for any changes in itself (to call any reactions) */
+    this.on(`update`, ({ data: { object: objectID, paths }, ...event }: { data: UpdateEvent }) => {
+      // check if any of updated paths are reactive
+
+      /**
+       * Listen of reactions
+       *    LOWER PRIORITY IS EXECUTED FIRST
+       *    A already sorted list of reactions to be queued
+       *    He we already know the reactions because we are looking for all reactions to "self" or to object's own id
+       */
+      const reactions: ExplainedReaction[] = []
+
+      // for each updated path
+      //    path === effectively updated path (never gonna be "*" any)
+      for (const path of paths) {
+        // gather all reactions/strategies looking at path
+        const prioritizedReactions = this.react({ object: { type: `id`, key: objectID }, path })
+
+        // for each priority
+        for (const [priority, priorityReactions] of prioritizedReactions) {
+          // group by strategy
+          const byStrategy = groupBy(priorityReactions, `reaction.strategy`)
+          const strategies = Object.keys(byStrategy) as string[]
+
+          // for each strategy
+          const localReactions = [] as ExplainedReaction[]
+          for (const strategy of strategies) {
+            const trigerredReactions = byStrategy[strategy]
+
+            if (trigerredReactions.length === 0) debugger
+            if (!this.strategies[strategy]) debugger
+
+            // group by reaction
+            const byReaction = groupBy(trigerredReactions, `reaction.index`)
+            const indexes = Object.keys(byReaction).map(Number)
+            indexes.sort()
+
+            // for each reaction
+            for (const index of indexes) {
+              const reactionsAtIndex = byReaction[index]
+
+              // store strategy and specific reactions for later
+              const explainedReaction = fullyExplainReaction(reactionsAtIndex)
+
+              localReactions.push(explainedReaction)
+            }
+          }
+
+          reactions.push(...localReactions)
+        }
+      }
+
+      // from here prioritizedStrategies is a list with all strategies and its specific reactions to be processed
+
+      // TODO: Check if the same strategy is repeated in different indexes BUT with different reactions
+
+      // if there are reactions to queue
+      if (reactions.length > 0) {
+        // define trigger responsible for reaction
+
+        // fire a queueReact event (informing some manager that this object needs to be recompiled through some reactive strategy)
+        this.fire(`queueReact`, { reactions } as QueueReactEvent)
+      }
+    })
+  }
+
+  isPathReactable(path: string, object: StrictReference[`object`]) {
+    const index = this._react({ object, path })
+
+    debugger
+
+    return Object.values(index).flat(Infinity).length > 0
+  }
+
+  addStrategy(...strategies: Strategy[]): this
+  addStrategy(priority: number | null, ...strategies: Strategy[]): this
+  addStrategy(priorityOrStrategy0: number | null | Strategy, ...strategies: Strategy[]) {
+    // parse overload args
+    let priority: number = null as any as number
+    if (priorityOrStrategy0 === null || isNumber(priorityOrStrategy0)) priority = priorityOrStrategy0 as number
+    else strategies.unshift(priorityOrStrategy0 as Strategy)
+
+    priority = priority ?? 0
+
+    // register strategies
+    for (const strategy of strategies) {
+      if (this.strategies[strategy.name]) debugger
+      this.strategies[strategy.name] = strategy
+    }
+
+    // index strategies priority (only necessary for re-updating optim indexes out of flow)
+    this._.priority.byStrategy = this._.priority.byStrategy ?? {}
+    for (const strategy of strategies) this._.priority.byStrategy[strategy.name] = priority
+
+    this.updateOptimizationIndexes()
+
+    return this
+  }
+
+  updateOptimizationIndexes() {
+    const strategies = Object.values(this.strategies)
+
+    for (const strategy of strategies) {
+      // only way to know the priority of a reaction/strategy is at insert time (so out-of-flow updates of indexes depend on a immutable priority index)
+      const priority = this._.priority.byStrategy[strategy.name]
+
+      // ERROR: Every strategy should have a priority
+      if (priority === undefined) debugger
+
+      // index reactions by path (to "speed up" later searches)
+      for (let index = 0; index < strategy.reactions.length; index++) {
+        const reaction = strategy.reactions[index]
+        const pointer: ReactionPointer = { strategy: strategy.name, index }
+
+        for (let watchlistIndex = 0; watchlistIndex < reaction.watchlist.length; watchlistIndex++) {
+          const {
+            reference: { object: objectPointer, path },
+            rule,
+          } = reaction.watchlist[watchlistIndex]
+          const object = objectToString(objectPointer)
+          const key = String(path)
+
+          const prioritizedPointer: PrioritizedReactionReference = { ...pointer, priority, watchlistIndex }
+
+          // index event
+          if (objectPointer.type === `lifecycle`) {
+            if (!this._.prioritized.reactions.byEvent[key]) this._.prioritized.reactions.byEvent[key] = []
+            const index = this._.prioritized.reactions.byEvent[key]
+
+            if (!containsPrioritizedPointer(index, prioritizedPointer)) index.push(prioritizedPointer)
+          }
+          // index reference
+          else {
+            // index string
+            if (typeof path === `string`) {
+              if (!this._.prioritized.reactions.byObjectAndPath[object]) this._.prioritized.reactions.byObjectAndPath[object] = {}
+              const index = this._.prioritized.reactions.byObjectAndPath[object] ?? {}
+              // path -> priority -> reactions
+
+              if (!index[path]) index[path] = []
+              if (!containsPrioritizedPointer(index[path], prioritizedPointer)) index[path].push(prioritizedPointer)
+            }
+
+            // semi-index regex patterns
+            else {
+              if (!this._.prioritized.reactions.byObjectAndRegex[object]) this._.prioritized.reactions.byObjectAndRegex[object] = {}
+              const index = this._.prioritized.reactions.byObjectAndRegex[object] ?? {}
+              // regex path key -> priority -> { pattern, list of reactions }
+
+              if (!index[key]) index[key] = { pattern: path, reactions: [] }
+              if (!containsPrioritizedPointer(index[key].reactions, prioritizedPointer)) index[key].reactions.push(prioritizedPointer)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// export type QueueReactEvent = { reactions: ReactionPointer[]; trigger: { reason: CompilationTrigger[`reason`]; object: string; paths: string[] } }
+export type QueueReactEvent = { reactions: ExplainedReaction[] }
+
+export function containsPrioritizedPointer(list: PrioritizedReactionReference[], reaction: PrioritizedReactionReference) {
+  return list.some(item => item.strategy === reaction.strategy && item.index === reaction.index && item.priority === reaction.priority && item.watchlistIndex === reaction.watchlistIndex)
+}

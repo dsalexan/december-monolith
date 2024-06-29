@@ -171,7 +171,7 @@ export default class Mobile extends Module {
   private enter() {
     if (!this.isAllowed()) return
 
-    logger.t.add(`Entering mobile mode...`).verbose().tab(2) // COMMENT
+    logger.p.add(`Entering mobile mode...`).verbose().tab(2) // COMMENT
 
     logger.add(`Flagging Mobile singleton as active`).verbose() // COMMENT
     this.active = true
@@ -187,7 +187,7 @@ export default class Mobile extends Module {
 
     logger.add(`Removing canvas`).verbose() // COMMENT
     this.removeCanvas()
-    logger.t.add(!this.canvasExists() ? paint.grey.italic(`Canvas successfully removed`) : paint.bold.red(`Could not remove canvas`)).verbose() // COMMENT
+    logger.p.add(!this.canvasExists() ? paint.grey.italic(`Canvas successfully removed`) : paint.bold.red(`Could not remove canvas`)).verbose() // COMMENT
 
     Hooks.call(`${MODULE_ID}:enter`)
 

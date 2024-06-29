@@ -1,0 +1,755 @@
+import crypto from "crypto"
+
+import { Instruction, ReactiveCompilableObject, Strategy } from "@december/compile"
+import { Builder, paint } from "@december/logger"
+import { arrayJoin, isNilOrEmpty } from "@december/utils"
+
+import { last, get, isNil, isEmpty, has, isNumber, groupBy, intersection, isArray, uniq, uniqBy, omit, indexOf, findIndex, isEqual } from "lodash"
+import CompilableObject from "../object"
+import { EventEmitter } from "@billjs/event-emitter"
+import { completeInstructionIndex } from "../instruction/fast"
+import ReferenceManager from "../reference"
+import ForwardingManager, { ForwardingInstruction } from "../forwarding"
+
+export interface PathCompilationTrigger {
+  paths: string[]
+  target?: string
+}
+
+export interface LifecycleCompilationTrigger {
+  lifecycle: string
+  key?: string
+}
+
+export type CompilationTrigger = (PathCompilationTrigger | LifecycleCompilationTrigger) & { forwarding?: true }
+
+export function triggerToString(trigger: CompilationTrigger) {
+  const _trigger = trigger as any
+
+  let text = [] as string[]
+
+  if (trigger.forwarding) text.push(`▶️`)
+  if (_trigger.lifecycle) text.push(`[${_trigger.lifecycle}${_trigger.key ? `, "${_trigger.key}"` : ``}]`)
+  if (_trigger.paths) {
+    if (_trigger.target) text.push(`(${_trigger.target}[${_trigger.paths.join(`, `)}])`)
+    else text.push(`(${_trigger.paths.join(`, `)})`)
+  }
+
+  return text.join(` `)
+}
+
+export interface ReactionWithTrigger {
+  hash: string // hash to identify reaction (MUST BE UNIQUE), kind of "reaction address" or "reaction path" [target.strategy.reaction]
+  reaction: number // reaction index (from strategy) to run
+  // original cause that triggered the reaction
+  //    last one is ALWAYS the "current" triggers, a.k.a. the ones that made the instruction be queued
+  //    the other ones are a "history" of causes, most likely forwardings
+  //    it is an array of arrays because multiple triggers can cause a reaction in a single stack, so we keep them for bookkeeping
+  //    this is a list of triggers that CAUSED THE RUN OF A REACTION, but ONLY for a single reaction (they don't track triggers that caused a previous reaction to run)
+  triggers: CompilationTrigger[][]
+}
+
+export interface CompilationInstruction {
+  stack: number // stack index
+  index: number // position in stack
+  //
+  target: string // object id to execute instruction on
+  strategy: string // specific strategy of object to open
+  reactions: ReactionWithTrigger[]
+  //
+  addReaction: (reaction: string | number, triggers: CompilationTrigger[][]) => void
+}
+
+export function getReactionHash(target: string, strategy: string, reaction: number) {
+  return `${target}.${strategy}.${reaction}`
+}
+
+export interface CompilationStack {
+  index: number
+  tags: string[]
+  //
+  instructions: CompilationInstruction[]
+  byHash: Record<string, [number, number]> // hash (MUST BE UNIQUE, reaction address) -> (instruction index, reactionWithTrigger index)
+}
+
+export interface ReferencedProxy {
+  index: number
+  source: string // source object's id
+  strategy: string
+  reference: string // target's reference key
+  paths: string[] // paths to watch in target
+  reactions: string[] // reactions to call when any of path is updated
+}
+
+// TODO: Implement formal proxy reaction call
+// TODO: Implement reference swipe and baking
+
+/**
+ * Manages compilation of objects in bulk (for "efficiency")
+ */
+export default class CompilationManager extends EventEmitter {
+  logger: Builder
+
+  objects: Record<string, ReactiveCompilableObject> = {}
+  // _history: Record<string, Record<string, Record<string, ReactionCause[]>>> = {} // object id -> strategy -> reaction -> causes
+
+  /**
+   * GURPS objects can reference other objects by a hash with trait type and name
+   * Once every "batch" of compilation is done, i will swipe all added references and call reactions to them
+   *
+   * Since we only know that "hash" in run time, trait strategy will need to have a "proxy" reaction to handle thoses traits
+   * And create custom runtime reactions to call that proxy once the manager considers the references "baked"
+   * (to watch only added references would not inform a trait that a referenced trait doesnt exist)
+   */
+  references = new ReferenceManager(this)
+  references1: {
+    /**
+     * ready — references are ready to be used
+     * pending — there are pending references to be added to index
+     */
+    state: `ready` | `pending`
+    pendingStack: `PendingReference`[] // (reference key, object id)
+    objectIDByReference: Record<string, string> // reference key -> trait id
+    referenceByObjectID: Record<string, string> // trait id -> reference key
+
+    proxies: ReferencedProxy[]
+    proxiesByReference: Record<string, number[]> // (index) reference key -> proxy index
+    proxiesBySource: Record<string, number[]> // (index) source object -> proxy index
+  } = {
+    state: `ready`,
+    pendingStack: [],
+    objectIDByReference: {},
+    referenceByObjectID: {},
+    //
+    proxies: [],
+    proxiesByReference: {},
+    proxiesBySource: {},
+  }
+  forwarding = new ForwardingManager(this)
+
+  clusters: Record<string, string[]> = {}
+
+  // targetedStrategyStacks: TargetedStrategy[][] = []
+  stacks: CompilationStack[] = []
+  _currentStack = -1
+  // history of executed instructions
+  _history: Record<string, Record<string, CompilationTrigger[][]>> = {} // object id -> reaction hash (a.k.a. "reaction address") -> triggers[]
+  // _stackTags: Record<string, number> = {} // tag -> stack index
+
+  constructor(logger: Builder) {
+    super()
+
+    this.logger = logger.clone()
+    // this.logger.prefix(paint.grey.italic)
+    // this.logger.prefix(`compiler`)
+
+    this.references.on(`indexed`, ({ data: { reference, object } }) => {
+      // (References, Scenario 1) Reference was just indexed, try to forward it to everyone asking any path (['*'])
+      //                          It is like the referenced object has just updated "any" key, but the REAL cause was the lifecycle event references:indexed
+
+      this.forward({ type: `reference`, key: reference }, [`*`], [{ lifecycle: `references:indexed`, key: reference }])
+    })
+  }
+
+  addObject(object: ReactiveCompilableObject, cluster?: string) {
+    const id = object.id
+    if (this.objects[id]) debugger
+
+    this.objects[id] = object
+    this._history[id] = {} // strategy -> instruction hash/reaction address -> triggers[]
+
+    if (cluster) {
+      if (!this.clusters[cluster]) this.clusters[cluster] = []
+      if (!this.clusters[cluster].includes(id)) this.clusters[cluster].push(id)
+    }
+
+    // track every time object NEEDS to react to something
+    object.on(`queueReact`, ({ data: { strategies, paths }, ...event }: { data: { strategies: { strategy: Strategy.Strategy; reactions: number[] }[]; paths: string[] } }) => {
+      if (strategies.length === 0) debugger
+
+      if (paths.length === 0) debugger
+
+      const trigger = [{ paths }] as CompilationTrigger[]
+
+      // queueReact is called when a object is updated
+      for (const { strategy, reactions } of strategies) {
+        // any logic to get relevant paths is already done inside reactive object, just queue it
+        const instruction = this.addInstruction(object, id, strategy.name)
+        for (const reaction of reactions) instruction.addReaction(reaction, [trigger])
+        // this.addTargetedStrategy({ target: id, cause: { paths }, strategy: strategy.strategy.name, reactions: strategy.reactions })
+      }
+    })
+
+    this._listen(object)
+  }
+
+  /** Listen for any changes in a object (to store references) */
+  _listen(target: ReactiveCompilableObject) {
+    target.on(`update`, ({ data: { version, object: objectID, paths }, ...event }) => {
+      // TODO: What if reference key changes???
+
+      const previousReferenceKeys = this.references.object(objectID)
+      const referenceKeys = get(target.data, `_.referenceKeys`) as string[] | undefined
+
+      const hasReferences = !isNil(referenceKeys) && referenceKeys.length > 0
+      const wasReferenceKeysUpdated = paths.includes(`_.referenceKeys`)
+      const referenceConflict = hasReferences && !isNil(previousReferenceKeys) && previousReferenceKeys.length > 0 && !isEqual(referenceKeys, previousReferenceKeys)
+
+      // TODO: Handle when references are changed (for example, when nameext changes)
+      if (referenceConflict) debugger
+
+      // store reference key for object
+      if (wasReferenceKeysUpdated) {
+        if (isNil(referenceKeys) || referenceKeys.length === 0 || !isArray(referenceKeys)) debugger
+
+        // register new reference instruction
+        referenceKeys!.map(referenceKey => this.references.push({ command: `add`, key: referenceKey, objectID }))
+      } else if (hasReferences && paths.length > 0) {
+        // object HAS references
+        //  and those references WERE NOT updated in this run
+        // (References, Scenario 2) Object was updated, so we inform FORWARDING that the object was updated (so anyone looking for updates in its reference can react)
+
+        // paths holds ALL updated paths (even non-relevant ones to forwarding)
+        //    but .forward is gonna handle getting relevant paths
+
+        // TODO: Implement forwarding by target id
+        for (const referenceKey of referenceKeys) {
+          debugger
+          this.forward({ type: `reference`, key: referenceKey }, paths, [{ target: ForwardingManager.pointerToString({ type: `reference`, key: referenceKey }), paths }])
+        }
+      } else {
+        // object has NO references
+        //  and those references WERE NOT updated in this run
+        // debugger
+      }
+    })
+  }
+
+  getObjects(clusterOrID: string) {
+    if (this.objects[clusterOrID]) return this.objects[clusterOrID]
+    if (this.clusters[clusterOrID]) return this.clusters[clusterOrID].map(id => this.objects[id])
+
+    return null
+  }
+
+  addInstruction(object: ReactiveCompilableObject, target: string, strategy: string, targetStack: number | null | string = null) {
+    const lastExistingStackIndex = (this.stacks.length === 0 ? 1 : this.stacks.length) - 1
+
+    // 0. determine target stack
+    let stackIndex = targetStack as number
+    if (targetStack === null) stackIndex = lastExistingStackIndex
+    else if (typeof targetStack === `string`) {
+      // add new stack with tag (if it doesnt exist)
+      stackIndex = findIndex(this.stacks, s => s.tags.includes(targetStack))
+      if (stackIndex === -1) {
+        // create new stack
+        stackIndex = this.stacks.length
+        if (!this.stacks[stackIndex]) this.stacks[stackIndex] = { index: stackIndex, tags: [targetStack], instructions: [], byHash: {} }
+      }
+    }
+
+    // 1. instiantiate stack if necessary
+    if (!this.stacks[stackIndex]) this.stacks[stackIndex] = { index: stackIndex, tags: [], instructions: [], byHash: {} }
+    const stack = this.stacks[stackIndex]
+
+    // 2. define strict target
+    let _target = target as string
+    if (target === `self`) debugger
+
+    // 3. add incomplete instruction to stack
+    const instructionIndex = stack.instructions.length
+    const incompleteInstruction = {
+      stack: stackIndex,
+      index: instructionIndex,
+      //
+      target: _target,
+      strategy,
+      reactions: [],
+    } as Omit<CompilationInstruction, `addReaction`> as CompilationInstruction
+
+    stack.instructions.push(incompleteInstruction)
+
+    // 3. inject function to add reactions
+    incompleteInstruction.addReaction = this._addReactionToInstruction(stack, instructionIndex)
+
+    return incompleteInstruction as CompilationInstruction
+  }
+
+  _addReactionToInstruction(stack: CompilationStack, instructionIndex: number) {
+    const instruction = stack.instructions[instructionIndex]
+
+    return (reaction: string | number, triggers: CompilationTrigger[][]) => {
+      // 1. reduce reaction to index (if necessary)
+      let reactionIndex = reaction as number
+      if (typeof reaction === `string`) {
+        const object = this.objects[instruction.target]
+        const strategy = object.strategies[instruction.strategy]
+
+        reactionIndex = strategy.reactions.findIndex(r => r._name === reaction)
+        if (reactionIndex === -1) debugger
+      }
+
+      // 2. check hash
+      const reactionHash = getReactionHash(instruction.target, instruction.strategy, reactionIndex)
+
+      // ERROR: HASH MUST BE UNIQUE
+      if (stack.byHash[reactionHash]) debugger
+
+      // 3. add reaction to instruction (and index it)
+      const indexInArray = instruction.reactions.length
+      instruction.reactions.push({ hash: reactionHash, reaction: reactionIndex, triggers })
+
+      //      index it
+      stack.byHash[reactionHash] = [instructionIndex, indexInArray]
+    }
+  }
+
+  runInstruction({ target: targetID, strategy: strategyName }: CompilationInstruction, reactions: ReactionWithTrigger[]) {
+    // all that needs validation was already validated in _compile
+    const target = this.objects[targetID]
+    const strategy = target.strategies[strategyName]
+    // const reactions = _reactions.map(({ reaction }) => strategy.reactions[reaction]) as Reaction<object, Strategy.ReactionContext>[]
+
+    // 0. save history
+
+    // ERROR: Should have being instantiated at "addObject"
+    if (!this._history[target.id]) debugger
+
+    for (const { hash, triggers } of reactions) {
+      // target -> reaction hash -> triggers
+      if (!this._history[target.id][hash]) this._history[target.id][hash] = []
+      this._history[target.id][hash].push(...triggers)
+    }
+
+    // 1. processing (pre and post)
+    // #region
+
+    const preProcessedData = reactions.map(() => null as object | null)
+    const processedInstructions = reactions.map(() => null as Instruction.InstructionIndex | null)
+    const postProcessedInstructions = reactions.map(() => null as Instruction.InstructionIndex | null)
+
+    const newForwardingInstructions = [] as KeyedForwardingInstruction[]
+
+    const stages = [`pre-process`, `process`, `post-process`]
+
+    for (const stage of stages) {
+      for (let i = 0; i < reactions.length; i++) {
+        const context = reactions[i]
+        const reaction = strategy.reactions[context.reaction]
+
+        // pre-processing
+        if (stage === `pre-process`) {
+          if (!reaction._preProcess) continue
+
+          // TODO: Implement pre processing
+          debugger
+
+          const _preProcessedData = reaction._preProcess(target.data, target, this, context)
+          if (_preProcessedData === null) preProcessedData[i] = null
+          else preProcessedData[i] = _preProcessedData
+        }
+        // processing
+        else if (stage === `process`) {
+          if (!reaction._process) continue
+
+          const preProcessed = preProcessedData[i]
+
+          const instructionIndexOrArray = reaction._process(target.data, target, preProcessed, this, context)
+
+          const [instructionIndex, listOfInstructions] = isArray(instructionIndexOrArray) ? instructionIndexOrArray : [instructionIndexOrArray]
+
+          // if there are forwarding instructions to be added
+          if (listOfInstructions?.length) {
+            for (const instruction of listOfInstructions) {
+              // check if instruction already exists (for this specific hash)
+              const existing = this.forwarding.getByHash(instruction)
+
+              // only add it to forwarding manager if it is a new instruction
+              if (existing.length === 0) newForwardingInstructions.push(instruction as KeyedForwardingInstruction)
+            }
+          }
+
+          // if there is at least one instruction to modify data
+          if (instructionIndex) {
+            processedInstructions[i] = completeInstructionIndex(instructionIndex, { type: `strategy`, source: `${strategy.name}::${reaction._name ?? `[${i}]`}`, strategy, reaction })
+          }
+        }
+        //
+        else if (stage === `post-process`) {
+          let postProcessedInstructionIndex = processedInstructions[i]
+
+          // if there is a post process function
+          if (reaction._postProcess) {
+            // TODO: Implement post processing
+            debugger
+
+            const _postProcessedInstructions = reaction._postProcess(postProcessedInstructionIndex, target.data, target, this, context)
+            postProcessedInstructionIndex = _postProcessedInstructions
+          }
+
+          // update instructions at last array (regardless of there being a post process function or not)
+          postProcessedInstructions[i] = postProcessedInstructionIndex
+        }
+      }
+    }
+
+    // #endregion
+
+    // 2. apply mutation instructions to target
+    const mutableData = {} as any
+    const instructions = postProcessedInstructions.filter(instructions => instructions !== null).flat(Infinity) as Instruction.InstructionIndex[]
+
+    const recipeIndexes = target.compile(`instructions`, instructions, mutableData, {})
+    target.update(mutableData, recipeIndexes)
+
+    // 3. check all parity tuples, and remove attached shit to that parity info (for now just forwarding instructions)
+    const forwardingInstructions = this.forwarding.getBySource(target.id) as KeyedForwardingInstruction[]
+    const parity = get(target.data, `_.parity`) ?? {}
+    for (const [path, value] of Object.entries(parity)) {
+      debugger
+    }
+
+    if (forwardingInstructions.length) {
+      const invalidInstructionKeys = [] as number[]
+      for (const instruction of forwardingInstructions) {
+        const source = this.objects[instruction.source.id]
+
+        const pathExists = has(source.data, instruction.source.path)
+        const value = pathExists ? get(source.data, instruction.source.path) : null
+
+        // NO NEED to hash it, parity data is already stored hashed
+        // const hash = pathExists ? crypto.createHash(`md5`).update(value).digest(`hex`) : null
+        const hashesMatch = value === instruction.source.value
+
+        const isValid = pathExists && hashesMatch
+
+        if (!isValid) {
+          if (!invalidInstructionKeys.includes(instruction._key)) invalidInstructionKeys.push(instruction._key)
+        }
+      }
+
+      // remove these instructions
+      for (const key of invalidInstructionKeys) this.forwarding.remove(key)
+    }
+
+    // 4. add new forwarding instructions
+    if (newForwardingInstructions.length) {
+      for (const instruction of newForwardingInstructions) this.forwarding._add(instruction)
+    }
+
+    return Object.keys(mutableData)
+  }
+
+  compile() {
+    this.logger.add(`Starting Compilation...`).debug()
+
+    for (let i = 0; i < this.stacks.length; i++) {
+      this.logger.tab()
+
+      this._compile(i)
+
+      this.logger.tab(-1)
+    }
+
+    this.stacks = []
+    this._currentStack = -1
+  }
+
+  _validateReactionWithTrigger(target: string, hash: string, reaction: Reaction, triggers: CompilationTrigger[]): boolean {
+    // 0. if reaction is happening because of a forwarding, it is ALWAYS valid
+    if (triggers.some(trigger => trigger.forwarding)) return true
+
+    // 1. check if reaction is regime-safe
+    let somePathIsRegimeSafe = true // there should be AT LEAST one path that is regime-safe
+    for (const { target: _target, regime } of reaction.paths) {
+      // if (regime === `always`) allowPath = true
+      if (regime === `once` || regime === `fallback`) {
+        // check history to see if this path was already reacted to
+        const history = this._history[target][hash] ?? [] // list all triggers that caused this reaction to run
+
+        // if (history.length === 0) allowPath = true
+        if (history.length > 0) {
+          if (regime === `fallback`) somePathIsRegimeSafe = false
+          else {
+            // regime === 'once'
+
+            // WARN: Never tested
+            debugger
+
+            // WARN: Never tested
+            if (history.length > 1) debugger
+
+            // TODO: probably check if one of the triggers is "path"
+            // NOTE: any ("*") should count???
+
+            for (const triggers of history) {
+              // // if it was never reacted to BECAUSE of a path change (probably just some lifecycle), ALLOW IT
+              // if (!(cause.paths ?? []).length) return true
+              //
+              // only DISALLOW IT if it was ran with a CAUSE containing the path (or a "any" *)
+              // if (cause.paths!.includes(`*`)) return false
+              //
+              // return !cause.paths!.includes(path)
+            }
+          }
+        }
+      }
+
+      // confirmed that some path is regime safe, keep going
+      if (somePathIsRegimeSafe) break
+    }
+
+    return somePathIsRegimeSafe
+  }
+
+  validateInstruction(instruction: CompilationInstruction): ReactionWithTrigger[] {
+    const { target, strategy: strategyName, reactions } = instruction
+
+    const object = this.objects[target]
+    const strategy = object.strategies[strategyName]
+
+    // 1. return only valid reactions
+    const validReactions = [] as ReactionWithTrigger[]
+    for (const reactionWithTrigger of reactions) {
+      const { hash, reaction: reactionIndex, triggers } = reactionWithTrigger
+
+      const reaction = strategy.reactions[reactionIndex]
+      // send "current" triggers, a.k.a. the last one, which are the "real" reason why a reaction was queued
+      const isValid = this._validateReactionWithTrigger(target, hash, reaction, last(triggers)!)
+
+      if (isValid) validReactions.push({ hash, reaction: reactionIndex, triggers })
+    }
+
+    return validReactions
+  }
+
+  _compile(index: number) {
+    this._currentStack = index
+    const stack = this.stacks[index]
+
+    const _tags = stack.tags.length === 0 ? `` : ` (${stack.tags.join(`, `)})`
+    this.logger.add(`Stack `, paint.bold.white(index), paint.grey(_tags), `, `, stack.instructions.length, ` targets`).debug()
+
+    if (!stack) debugger
+
+    let i = 0
+
+    /**
+     * "compiling" is done in three stages:
+     * - pre-processing
+     *    - this is where the object is "prepared" for the strategy
+     *    - what it returns? a modified context?
+     * - processing
+     *   - this is where the object is "compiled" by the strategy, generating a list of instructions
+     * - post-processing
+     *  - this is where the list of instructions can be modified by the strategy
+     */
+
+    // PRE-VALIDATION (checking if all instructions parts really exist in the object)
+    for (let i = 0; i < stack.instructions.length; i++) {
+      const { target, strategy: strategyName, reactions } = stack.instructions[i]
+
+      const object = this.objects[target]
+      if (!object) debugger
+
+      const strategy = object.strategies[strategyName]
+      if (!strategy) debugger
+
+      for (const { reaction: reactionIndex } of reactions) {
+        const reaction = strategy.reactions[reactionIndex]
+        if (!reaction) debugger
+        if (!reaction._name) debugger
+      }
+    }
+
+    this.logger.tab()
+
+    // run strategies in stack
+    const oldReferencesHash = this.references.operations
+    i = 0
+    while (i < stack.instructions.length) {
+      const instruction = stack.instructions[i]
+      const { target, strategy: strategyName } = instruction
+
+      const object = this.objects[target]
+      const strategy = object.strategies[strategyName]
+      const reactions = this.validateInstruction(instruction)
+
+      const name = get(object.data, `name`) ?? get(object.data, `_.raw.name`, `<Unnamed>`)
+      const type = get(object.data, `type`) ?? get(object.data, `_.raw.type`, `<Untyped>`)
+
+      // 1. build debug strings 'cause
+      //        triggers
+      let _triggers = [] as string[]
+      for (const reaction of reactions) {
+        const moreThanOne = reaction.triggers.length > 1
+        const [l, r] = moreThanOne ? [`{ `, ` }`] : [``, ``]
+
+        _triggers.push(reaction.triggers.map(triggers => `${l}${triggers.map(trigger => triggerToString(trigger)).join(` | `)}${r}`).join(` -> `))
+      }
+
+      //        iterator
+      let _iterator = `[${index}] [${i}/${stack.instructions.length - 1}] `
+
+      // 2. run instruction (or don't)
+      if (reactions.length === 0) {
+        debugger
+      } else {
+        // RUN INSTRUCTION
+
+        this.logger
+          .add(
+            paint.italic.grey(_iterator),
+            `Apply `, //
+            paint.blue(`strategy:`),
+            paint.blue.bold(strategy.name),
+            ` to `,
+            paint.green.dim(`${type.toLowerCase()}: `),
+            paint.green(`${target} :`),
+            paint.green.bold(`${name}`),
+            paint.grey(` ${_triggers.join(`, `)}`),
+          )
+          .debug()
+
+        // TODO: Fill context
+        const changedKeys = this.runInstruction(instruction, reactions)
+        // const changedKeys = this._runStrategy(object, strategy, reactions, cause, {} as any)
+
+        if (changedKeys) {
+          const _changedKeys = changedKeys.length === 0 ? [`—`] : changedKeys
+          this.logger.p
+            .add(
+              ...paint.grey(
+                paint.italic(`(${changedKeys.length} changed keys) `),
+                ...arrayJoin(
+                  _changedKeys.map(k => paint.white(k)),
+                  `, `,
+                ),
+              ),
+            )
+            .debug()
+        }
+      }
+
+      i++
+    }
+
+    // once all strategies are run, we check if there are any pending references
+    if (this.references.state === `pending`) {
+      // process all pending references
+      //    it will formally index them
+      //    all also call any events that are waiting for them (mostly references:indexed i think)
+      this.references.process()
+    }
+
+    // should only really do this if there were any changes to references
+    if (oldReferencesHash !== this.references.operations) {
+      if (this.references.state !== `ready`) debugger
+      // (References, Scenario 3) Once all references are processed (and the references index is changed in some way), call lifecyle:references:ready as a reaction
+      this.lifecycle(`references:ready`)
+    }
+
+    this.logger.tab(-1)
+  }
+
+  forward(target: { type: `reference`; key: string }, paths: string[], trigger: CompilationTrigger[]) {
+    // inject "forwarding" flag to last trigger
+    const lastIndex = trigger.length - 1
+    trigger[lastIndex].forwarding = true
+
+    const stack = this._currentStack + 1
+
+    // fetch all instructions for target/paths
+    const allInstructions = [] as ForwardingInstruction[]
+
+    for (const path of paths) {
+      const instructions = this.forwarding.getByPath(target, path)
+      allInstructions.push(...instructions)
+    }
+
+    // filter out duplicates
+    const instructions = uniqBy(allInstructions, `id`)
+    if (instructions.length === 0) return false
+
+    // for each instruction, queue its reactions ("callbacks")
+    for (const instruction of instructions) {
+      for (const { strategy, reactions } of instruction.callbacks) {
+        debugger
+        const source = this.objects[instruction.source.id]
+
+        const compilationInstruction = this.addInstruction(source, source.id, strategy, stack)
+        for (const reaction of reactions) compilationInstruction.addReaction(reaction, [trigger])
+        // this.addTargetedStrategy({ target: instruction.listener, cause: { forwarding: _forwardingStackCause }, strategy, reactions }, this._currentStack + 1)
+      }
+    }
+
+    return true
+  }
+
+  lifecycle(event = `references:ready`) {
+    const stack = `${this._currentStack}->${event}`
+
+    // preparing list of future stacks (since we don't need to queue the same thing twice)
+    const futureStacks = this.stacks.slice(this._currentStack + 1)
+    const futureInstructionsByTarget = groupBy(futureStacks.map(({ instructions }) => instructions).flat(), `target`)
+
+    const allObjects = Object.keys(this.objects)
+    for (const objectID of allObjects) {
+      const object = this.objects[objectID]
+      const futureInstructions = futureInstructionsByTarget[objectID] ?? []
+
+      // if (objectID === `11364`) debugger
+
+      for (const strategy of Object.values(object.strategies)) {
+        // 1. checking if object is waiting for lifecycle event in this strategy, and if it is not, bail out
+        //    a.k.a. "object has reaction to this lifecycle event? no? then skip"
+        const reactions = strategy.reactions.filter(reaction => reaction.has(`lifecycle:${event}`, `self`)) // all reactions looking to lifecycle event
+        if (reactions.length === 0) continue
+
+        const indexes = reactions.map(reaction => strategy.reactions.indexOf(reaction)) // reactions in index form
+
+        // 2. check if reactions are already queued (by comparing index/reaction name and strategy)
+        //    a.k.a. "there is a reaction looking to this lifecycle event, but it is happening for other reasons?"
+        const queued = [] as { instruction: CompilationInstruction; reactionIndex: number }[]
+        for (const instruction of futureInstructions) {
+          // different strategies, move on
+          if (instruction.strategy !== strategy.name) continue
+
+          // check if some reaction that is looking to lifecycle event is already queued
+          const indexedReactions = instruction.reactions.map((reactionWithTrigger, index) => ({ reactionWithTrigger, index }))
+          const reactions = indexedReactions.filter(({ reactionWithTrigger: { reaction } }) => indexes.includes(reaction))
+          if (reactions.length === 0) continue
+
+          // NOTE: Never tested
+          if (reactions.length > 1) debugger
+
+          queued.push({ instruction, reactionIndex: reactions[0].index })
+        }
+
+        const trigger = [{ lifecycle: event }] as CompilationTrigger[] // array bcause many triggers can be responsible for a reaction at the same time
+
+        // 3. if some already queued instruction matches, no need to queue it again
+        if (queued.length > 0) {
+          // Dont queue it again, but add this lifecycle as trigger to instruction
+          const { instruction, reactionIndex } = queued[0]
+
+          const reactionWithTrigger = instruction.reactions[reactionIndex]
+          const lastIndex = reactionWithTrigger.triggers.length - 1
+          // current triggers (last one) are EQUALLY responsible for the reaction execution
+          reactionWithTrigger.triggers[lastIndex].push(...trigger)
+
+          continue
+        }
+
+        // queue reaction to lifecycle event
+        //    queue reaction at a specific stack (with a tag tha combines current stack AND the event)
+        // NOTE: Never tested with multiple reactions to same lifecycle event
+        if (indexes.length > 1) debugger
+
+        const instruction = this.addInstruction(object, objectID, strategy.name, stack)
+        for (const index of indexes) instruction.addReaction(index, [trigger])
+        // const address = this.addTargetedStrategy({ target: objectID, cause: { lifecyle: event }, strategy: strategy.name, reactions: indexes }, `${this._currentStack}->${event}`)
+      }
+    }
+  }
+}

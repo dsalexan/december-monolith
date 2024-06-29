@@ -1,0 +1,250 @@
+import { has, isRegExp, isString } from "lodash"
+
+import { FastInstructionIndex, Instruction, InstructionIndex } from "../../instruction"
+import type ReactiveCompilableObject from "../object"
+import type CompilationManager from "../../manager/manager"
+import { ForwardingInstruction } from "../../forwarding"
+import { areObjectEquals, Reference } from "../../reference"
+import { ReactionTrigger, ReactionHistory } from "../../manager/trigger"
+
+export interface ReactionPointer {
+  strategy: string // strategy name
+  index: number // reaction index inside strategy
+}
+
+export function reactionToString(reaction: ReactionPointer) {
+  return `${reaction.strategy}:${reaction.index}`
+}
+
+// export interface ReactionReference {
+//   strategy: string // strategy name
+//   name: string // reaction name (NOT THE INDEX)
+// }
+
+/**
+ * Path Execution Rule
+ * - always:    execute every time the path is updated
+ * - once:      execute only once, then "disable" the reaction
+ * - fallback:  execute on path update ONLY if reaction has not been executed yet
+ */
+export type ReactionRule = `always` | `once` | `fallback`
+
+export interface ReferenceWithRule {
+  reference: Reference
+  rule: ReactionRule
+}
+
+// #region Processing Functions
+
+/**
+ * A Strategy is a collection of Reactions
+ * A Reaction is a set of functions (pre, post and process) that are executed in order to generate a list of instructions (upon a change in some keys of the object)
+ */
+
+export interface ParallelReactionContext {
+  trigger: ReactionTrigger // trigger is equivalent to history
+  //
+  regex?: string[]
+  atomic?: Record<string, any>
+}
+
+export interface ReactionContext {
+  history: ReactionHistory
+  // all keys in parallel reaction context are arrays in a reaction context
+  regex?: ParallelReactionContext[`regex`][]
+  atomic?: ParallelReactionContext[`atomic`][]
+}
+
+export const ReactionContextParallelKeys = [`trigger`, `regex`, `atomic`] as (keyof ParallelReactionContext | `trigger`)[]
+
+export type ReactionPreProcessFunction<TData extends object = object, TContext extends ReactionContext = ReactionContext> = (
+  data: TData,
+  object: ReactiveCompilableObject<TData>,
+  compilationManager: CompilationManager,
+  context: TContext,
+) => object | null
+
+export type ReactionProcessFunction<TData extends object = object, TContext extends ReactionContext = ReactionContext> = (
+  data: TData,
+  object: ReactiveCompilableObject<TData>,
+  preProcessedData: object | null,
+  compilationManager: CompilationManager,
+  context: TContext,
+) => [FastInstructionIndex, ForwardingInstruction[]] | FastInstructionIndex | null
+
+export type ReactionPostProcessFunction<TData extends object = object, TContext extends ReactionContext = ReactionContext> = (
+  processedInstructions: InstructionIndex | null,
+  data: TData,
+  object: ReactiveCompilableObject<TData>,
+  compilationManager: CompilationManager,
+  context: TContext,
+) => InstructionIndex | null
+
+// #endregion
+
+export class Reaction<TData extends object = object, TContext extends ReactionContext = ReactionContext> {
+  watchlist: ReferenceWithRule[]
+  _index: number
+  _name?: string
+  _preProcess?: ReactionPreProcessFunction<TData, TContext>
+  _process?: ReactionProcessFunction<TData, TContext>
+  _postProcess?: ReactionPostProcessFunction<TData, TContext>
+
+  constructor() {
+    this.watchlist = []
+  }
+
+  get pointer() {
+    return { strategy: this._name ?? ``, index: this._index } as ReactionPointer
+  }
+
+  static make<TData extends object = object>(...referencesOrPathsOrPathsAndRule: (ReferenceWithRule | Reference[`path`] | string)[]): Reaction<TData> {
+    const reaction = new Reaction<TData>()
+    for (const referenceOrPathOrPathAndRule of referencesOrPathsOrPathsAndRule) {
+      reaction.add(referenceOrPathOrPathAndRule)
+    }
+
+    return reaction
+  }
+
+  _add(path: Reference[`path`], object: Reference[`object`] | `self` = `self`, rule: ReactionRule = `always`) {
+    // ERROR: Unimplemented execution rule
+    if (![`always`, `once`, `fallback`].includes(rule)) debugger
+
+    let _object: Reference[`object`] = object === `self` ? { type: `self` } : object
+
+    if (typeof path === `string` && path.startsWith(`lifecycle:`)) {
+      _object = { type: `lifecycle` }
+      const [, ...event] = path.split(`:`)
+      path = event.join(`:`)
+    }
+
+    const reference: ReferenceWithRule = {
+      reference: { object: _object, path },
+      rule,
+    }
+
+    this.watchlist.push(reference)
+  }
+
+  add(referenceOrPathOrPathAndRule: ReferenceWithRule | Reference[`path`] | string): this {
+    let object: Reference[`object`] | `self` | undefined
+    let rule: ReactionRule | undefined
+
+    let path: Reference[`path`]
+    if (typeof referenceOrPathOrPathAndRule === `string`) {
+      // if arg is a string, then it is either a PATH or a PATH_AND_RULE
+
+      // try to extract rule from path
+      const [_path, injectedRule] = referenceOrPathOrPathAndRule.split(`//`).reverse() as [string, ReactionRule | undefined]
+
+      path = _path
+      rule = injectedRule
+    } else if (isRegExp(referenceOrPathOrPathAndRule)) {
+      // if arg is a regex, then it is a PATH
+      path = referenceOrPathOrPathAndRule
+    } else {
+      // if arg is a object, then it is a REFERENCE_WITH_RULE
+      path = referenceOrPathOrPathAndRule.reference.path
+      object = referenceOrPathOrPathAndRule.reference.object ?? object
+      rule = referenceOrPathOrPathAndRule.rule ?? rule
+    }
+
+    this._add(path, object, rule)
+
+    return this
+  }
+
+  has(path: Reference[`path`], object: Reference[`object`]): boolean {
+    const key = String(path)
+
+    return this.watchlist.some(({ reference, rule }) => String(reference.path) === key && areObjectEquals(reference.object, object))
+  }
+
+  name(name: string): this {
+    this._name = name
+    return this
+  }
+
+  preProcess<TDataLocal extends object = TData>(fn: ReactionPreProcessFunction<TDataLocal>): this {
+    // HACK: This will drive me crazy eventually
+    this._preProcess = fn as any as ReactionPreProcessFunction<TData>
+    return this
+  }
+
+  process<TDataLocal extends object = TData>(fn: ReactionProcessFunction<TDataLocal>): this {
+    // HACK: This will drive me crazy eventually
+    this._process = fn as any as ReactionProcessFunction<TData>
+    return this
+  }
+
+  postProcess<TDataLocal extends object = TData>(fn: ReactionPostProcessFunction<TDataLocal>): this {
+    // HACK: This will drive me crazy eventually
+    this._postProcess = fn as any as ReactionPostProcessFunction<TData>
+    return this
+  }
+
+  /**
+   *
+   * @param triggers Current triggers, a.k.a. why this reaction is currently running
+   * @param history All previous triggers that caused this reaction to run for this object (we don't need to know the object in question)
+   * @returns
+   */
+  validate(triggers: ReactionTrigger[], history: ReactionHistory): boolean {
+    // _history: Record<string, Record<string, CompilationTrigger[][]>> = {}
+    //              object id -> reaction pointer (as string) -> triggers[]
+    //
+
+    // for all triggers responsible for this reaction running, check if any of them is valid
+    for (const trigger of triggers) {
+      // @ts-ignore
+      if (this.watchlist[trigger.watchlistIndex]?.rule === `fallback`) debugger
+
+      // 0. if reaction is happening because of a forwarding, it is ALWAYS valid (we assume something caused that forwarding)
+      if (trigger.reason === `forwarding`) return true
+
+      // 0. if reaction is happening because of a lifecycle event, it is ALWAYS valid (we assume something caused that lifecycle event)
+      if (trigger.reason === `lifecycle`) return true
+
+      // 1. check if reaction if rule-safe for reference update (since a reaction most commonly runs in a reference - majoritarily path - update)
+      if (trigger.reason === `reference_was_updated`) {
+        const referenceWithRule = this.watchlist[trigger.watchlistIndex]
+
+        const isValid = validateReference(referenceWithRule.reference, referenceWithRule.rule, history)
+
+        if (!isValid) debugger
+        if (isValid) return true
+      }
+    }
+
+    return false
+  }
+}
+
+/**
+ * Validate a reference/rule pair to check if a reaction should be executed
+ * @param reference Reference to be validated
+ * @param rule Execution rule
+ * @param history  All triggers that ran reactions in this reference
+ */
+function validateReference(reference: Reference, rule: ReactionRule, history: ReactionHistory) {
+  // _history: Record<string, Record<string, CompilationTrigger[][]>> = {}
+  //              object id -> reaction pointer (as string) -> triggers[]
+  //
+
+  if (rule === `always`) return true
+  else if (rule === `fallback`) {
+    // only allow if reaction was never ran for any reason
+
+    debugger
+  } else if (rule === `once`) {
+    // only allow if reaction was never ran for a specific path
+
+    debugger
+  }
+
+  // ERROR: Unimplemented rule
+  debugger
+
+  return false
+}

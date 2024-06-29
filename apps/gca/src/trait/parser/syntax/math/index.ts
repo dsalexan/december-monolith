@@ -7,7 +7,7 @@ import churchill from "../../../../logger"
 import preprocessExpression from "./preprocess"
 import MathObject from "./object"
 
-export const logger = churchill.child({ name: `math` })
+export const logger = churchill.child(`math`)
 
 export { MATH_SYNTAX_COMPONENTS } from "./syntax"
 

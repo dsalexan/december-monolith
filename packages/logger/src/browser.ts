@@ -1,37 +1,39 @@
-import ILogger from "./interface"
+import ILogger, { GlobalLoggerContext } from "./interface"
 import { LEVEL_COLOR, LEVEL_COLOR_BROWSER, LEVEL_PRIORITY, LOG_LEVELS, LogLevel } from "./level"
 import Builder, { BuilderOptions } from "./builder"
 import { formatTimestamp, isNilOrEmpty } from "./utils"
 import { set } from "lodash"
 
-type GlobalDecemberLogger = {
-  MAX_NAME_LENGTH: number
-  OPEN_GROUPS: { collapsed: boolean }[]
-  CLOSE_GROUPS: number
-}
-
-declare global {
-  let __DECEMBER_LOGGER: GlobalDecemberLogger
-
-  interface Window {
-    __DECEMBER_LOGGER: GlobalDecemberLogger
-  }
-}
-
 export default class BrowserLogger implements ILogger {
   name: string
   level: LogLevel
+  globalContext: string = `__DECEMBER_LOGGER`
 
-  constructor(name: string, level: LogLevel, config = {}) {
+  get GLOBAL_CONTEXT() {
+    const key = this.globalContext as keyof typeof window
+    return (window[key] || {}) as GlobalLoggerContext
+  }
+
+  initializeGlobalContext() {
+    const key = this.globalContext as keyof typeof window
+
+    if (window[key] !== undefined) return
+
+    const context: GlobalLoggerContext = {
+      MAX_NAME_LENGTH: 0,
+      OPEN_GROUPS: [],
+      CLOSE_GROUPS: 0,
+    }
+
+    // @ts-ignore
+    window[key] = context
+  }
+
+  constructor(name: string, level: LogLevel) {
     this.name = name
     this.level = level
 
-    if (window.__DECEMBER_LOGGER === undefined)
-      window.__DECEMBER_LOGGER = {
-        MAX_NAME_LENGTH: 0,
-        OPEN_GROUPS: [],
-        CLOSE_GROUPS: 0,
-      }
+    this.initializeGlobalContext()
   }
 
   child(name: string, level?: LogLevel): ILogger {

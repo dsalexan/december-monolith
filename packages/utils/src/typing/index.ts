@@ -1,6 +1,14 @@
 import { isArray, isBoolean, isFunction, isNil, isNumber, isObjectLike, isString, isSymbol } from "lodash"
 import { VariableType } from "./types"
 
+export type { ITyped } from "./custom"
+export { getTypes, isOfType, isTyped } from "./custom"
+
+export type { VariableType } from "./types"
+export type Primitive = string | number | boolean | symbol | null | undefined
+
+export type Indexed<T> = T & { _index: number }
+
 // export type VariableType = `string` | `number` | `bigint` | `boolean` | `symbol` | `undefined` | `object` | `function`
 
 export function isType(value: unknown, type: VariableType) {

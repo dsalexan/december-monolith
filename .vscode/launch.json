@@ -51,6 +51,17 @@
     {
       "type": "node-terminal",
       "request": "launch",
+      "name": "GCA (CER)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register --project ${workspaceFolder}\\apps\\gca\\tsconfig.json -- ${workspaceFolder}\\apps\\gca\\src\\sheet2\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
       "name": "GCA (Zod Type Generation)",
       "skipFiles": [
         "<node_internals>/**"
@@ -73,6 +84,39 @@
     {
       "type": "node-terminal",
       "request": "launch",
+      "name": "GCA (Sheet2)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\apps\\gca\\src\\sheet2\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "Tree",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src1\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "Tree (Interpreter)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src1\\interpreter\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
       "name": "logger",
       "skipFiles": [
         "<node_internals>/**"
@@ -84,11 +128,11 @@
     {
       "type": "node-terminal",
       "request": "launch",
-      "name": "logger/color",
+      "name": "logger/paint",
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\logger\\src\\color\\test.ts",
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\logger\\src\\paint\\test.ts",
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },

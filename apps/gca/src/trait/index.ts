@@ -14,11 +14,11 @@ import { hasOnlybornAnd, isOnlybornAnd } from "./parser/node/utils"
 import { SYNTAX_COMPONENTS } from "./parser/syntax"
 import { TAGS, TagName } from "./tag/tag"
 import { ISSUE_PRIORITY, TraitIssueManager, createTraitIssue, maxIssuesPriority } from "./issues"
-import LogBuilder from "@december/churchill/src/builder"
+import { Builder as LogBuilder } from "@december/logger"
 import { LAZY_VALUE, UNPARSED_VALUE } from "./tag/value"
 import { guessType } from "@december/utils/src/typing"
 
-export const logger = churchill.child({ name: `trait` })
+export const logger = churchill.child(`trait`)
 
 export const TRAIT_PILELINES = [`parse`, `compile`, `mount`, `validate`] as const
 export type TraitPipeline = (typeof TRAIT_PILELINES)[number]
@@ -181,13 +181,7 @@ export default class Trait<TDefinition extends TraitDefinition = TraitDefinition
 
       if (log)
         log
-          .add(
-            chalk.gray.italic(
-              `  ${
-                tag.values === UNPARSED_VALUE ? `UNPARSED` : tag.values.map(value => (isSymbol(value) ? value.toString().replace(`Symbol(`, ``).replace(`_VALUE)`, ``) : `PARSED`))
-              } (${localIssues.length} issues)`,
-            ),
-          )
+          .add(chalk.gray.italic(`  ${tag.values === UNPARSED_VALUE ? `UNPARSED` : tag.values.map(value => (isSymbol(value) ? value.toString().replace(`Symbol(`, ``).replace(`_VALUE)`, ``) : `PARSED`))} (${localIssues.length} issues)`))
           .verbose({ duration: true })
 
       tags[tag.name] = tag
