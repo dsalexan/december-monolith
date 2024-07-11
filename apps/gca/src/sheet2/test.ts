@@ -40,6 +40,7 @@ sheet.import(pathfile, GCACharacterImporterStrategy).then(_sheet => {
       const paths = [
         //
         `name`,
+        [`damagebasedon`, `damage.basedOn`],
         [`damage`, `damage.value`],
         [`dmg`, `damage.form`],
         [`damtype`, `damage.type`],

@@ -42,6 +42,14 @@ originalEntry = `$if(me::level > ST:DX THEN 2*@basethdice(ST:Punch) ELSE 0)`
 originalEntry = `$if(me::level <= ST:DX THEN 2 * @basethdice(ST:Punch) ELSE 0)`
 originalEntry = `$eval(20 + 1)d` // (20 + 1) * 1d
 // originalEntry = `$eval(20 + 1)d17` // (20 + 1) * 1d17
+originalEntry = `1 + 2`
+originalEntry = `d`
+originalEntry = `d + 2d`
+originalEntry = `d + 5 * 2d`
+originalEntry = `1-2 - 1`
+originalEntry = `1d - 2`
+// originalEntry = `1d-2 - 1`
+// originalEntry = `1d-2 - 1 + 1d-2 + 1d-2`
 
 // const startsWithComma = originalEntry.startsWith(`,`)
 // if (!startsWithComma) originalEntry = `,${originalEntry}`

@@ -17,6 +17,10 @@ import { Token } from "typescript"
 import NodePrinter from "../printer"
 import { typing } from "@december/utils"
 
+import { Simplifier } from "../simplifier"
+
+import { create, all, simplify } from "mathjs"
+
 interface IgnoreTokenProtocol {
   protocol: `ignore`
 }
@@ -56,6 +60,7 @@ export interface InterpreterOptions extends ProcessorOptions {
   validateScope: boolean
   strict: boolean
   fillScope: boolean
+  simplify?: Simplifier
 }
 
 export interface ProcessorOptions {
@@ -392,7 +397,7 @@ export default class TreeInterpreter {
     return result
   }
 
-  interpret(object: ProcessedObject, scope: object, { validateScope, fillScope, strict, mode, units }: Partial<InterpreterOptions> = { strict: true }) {
+  interpret(object: ProcessedObject, scope: object, { validateScope, strict, fillScope, simplify: _simplify, mode, units }: Partial<InterpreterOptions> = { strict: true }) {
     if (validateScope) {
       // verify if scope has all variables
       const validation = this.validateScope(object, scope)
@@ -412,7 +417,77 @@ export default class TreeInterpreter {
     this.__mode = mode ?? `text`
     this.__units = units ?? createUnitIndex()
 
-    return this._interpretIR(object.representation, [], null)
+    const minimalExpression = this._interpretIR(object.representation, [], null)
+
+    if (typeof minimalExpression !== `string`) return minimalExpression
+
+    if (_simplify) return _simplify.simplify(minimalExpression)
+
+    return minimalExpression
+
+    // TODO: Implement my own simplify
+    const config = {}
+    const math = create(all, config)
+    math.createUnit(`d`)
+
+    const TO_REMOVE = [0, 51, 48]
+
+    for (const [index, rule] of simplify.rules.entries()) {
+      const prefix = TO_REMOVE.includes(index) ? `{REMOVED} ` : ``
+      console.log(`${prefix} [${index}] `, rule)
+    }
+
+    const simplifyCore = simplify.rules[0]
+    const defaultContex = (simplify as any).defaultContext
+
+    const rules = simplify.rules.filter((_, index) => !TO_REMOVE.includes(index))
+
+    const result = math.simplify(
+      minimalExpression,
+      [
+        ...rules,
+        // {
+        //   l: `1*vl`,
+        //   r: `vl`,
+        //   imposeContext: { multiply: { commutative: true } },
+        // },
+        // { l: `vl`, r: `1vl` },
+      ],
+      {},
+    )
+    const resultExpression = result.toString()
+
+    console.log(`RAW:     `, math.simplify(minimalExpression, []).toString())
+    console.log(
+      `BASE:    `,
+      math
+        .simplify(
+          minimalExpression,
+          simplify.rules,
+          {},
+          {
+            context: {
+              multiply: {
+                associative: false,
+                commutative: false,
+                total: false,
+                trivial: false,
+              },
+            },
+          },
+        )
+        .toString(),
+    )
+    const start = 1
+    for (let i = start; i < simplify.rules.length; i++) {
+      const rules = simplify.rules.slice(start, i + 1)
+      // console.log(`TO ${i}:    `, math.simplify(minimalExpression, [...rules]).toString())
+    }
+    console.log(`CUSTOM:  `, result.toString())
+
+    const fixedResultExpression = resultExpression.replace(/( d)/g, `d`)
+
+    return fixedResultExpression
   }
 
   _interpretIR(representation: LogicalRepresentation, path: (string | number)[], parent: LogicalRepresentation | null) {
@@ -440,7 +515,7 @@ export default class TreeInterpreter {
       // unit literals
       // TODO: How to reliably check if it is a unit literal?
       const unit = this.__units.match(representation.value)
-      if (unit) return unit
+      if (unit) return unit.decorate(1)
 
       // TODO: Generate a report of all "missing" variables in scope
 

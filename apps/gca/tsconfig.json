@@ -117,8 +117,8 @@
       "@december/gurps/*": ["../../../apps/gurps/src/*"],
       "@december/compile": ["../../../packages/compile/src"],
       "@december/compile/*": ["../../../packages/compile/src/*"],
-      "@december/tree": ["../../../packages/tree/src1"],
-      "@december/tree/*": ["../../../packages/tree/src1/*"],
+      "@december/tree": ["../../../packages/tree/src2"],
+      "@december/tree/*": ["../../../packages/tree/src2/*"],
     }
   },
   "include": ["."],

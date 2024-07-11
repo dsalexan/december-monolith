@@ -146,6 +146,18 @@
       "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\utils\\src\\test.ts",
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
-    }
+    },
+    
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "v4 (Lexer)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src2\\lexer\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
   ]
 }
