@@ -2,6 +2,7 @@ import { isArray, isEmpty, isNil, set } from "lodash"
 
 export * as compare from "./compare"
 export * as storage from "./storage"
+export { default as Range } from "./range"
 
 export function push<TKey extends string | number | symbol = string | number | symbol, TValue = any>(map: Record<TKey, TValue[]>, key: TKey, value: TValue) {
   if (map[key] === undefined) map[key] = []

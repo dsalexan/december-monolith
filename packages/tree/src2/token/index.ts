@@ -1,3 +1,6 @@
+import { Lexeme } from "./lexeme"
+import { TypeName } from "../type/declarations/name"
+import { Attributes } from "./attributes"
 /**
  * | Token name                                                                                                    | Explanation                                            | Sample token values                                |
  * | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------- |
@@ -12,8 +15,10 @@
  */
 
 import type Lexer from "../lexer"
-import type { TokenTypeName } from "./type"
-import type { EvaluatorOptions, TokenTypeID } from "./type/base"
+import assert from "assert"
+import { EvaluatorOptions } from "../lexer/evaluation"
+import Grammar from "../type/grammar"
+import Range from "../../../utils/src/range"
 
 /**
  * IDENTIFIER — basically a variable
@@ -27,44 +32,48 @@ import type { EvaluatorOptions, TokenTypeID } from "./type/base"
  *              In any case, anything inside this category effectively separates lexical tokens (so it is somewhat useful to find lexemes)
  */
 
-export interface Lexeme {
-  start: number // index of starting character for sequence of characters that matches the lexeme
-  length: number // number of characters in sequence
-  name: TokenTypeName // id for lexical token type
-}
-
-export interface TokenAttributes<TValue = any> {
-  value: TValue
-  // LITERAL
-  atomic: `string` | `number` | `boolean`
-  // SEPARATOR
-  variant: `intermediary` | `opener` | `closer` | `opener-and-closer`
-}
-
 export const NON_EVALUATED_LEXICAL_TOKEN = Symbol.for(`NON_EVALUATED_LEXICAL_TOKEN`)
 
 export default class Token<TValue = any> {
   private lexer: Lexer
   //
-  private _lexeme: Lexeme
+  private _range: Range
+  private _type: TypeName
 
   // evaluated attributes from base lexeme during evaluation
-  private _attributes: Partial<TokenAttributes<TValue>> | typeof NON_EVALUATED_LEXICAL_TOKEN = NON_EVALUATED_LEXICAL_TOKEN
+  private _attributes: Partial<Attributes<TValue>> | typeof NON_EVALUATED_LEXICAL_TOKEN = NON_EVALUATED_LEXICAL_TOKEN
 
   // #region GETTERS and SETTERS
 
+  /** Returns initial character of lexeme in original expression */
+  public get start() {
+    return this._range.start
+  }
+
+  /** Returns range (initial and final indexes) of lexeme in original expression */
+  public get range() {
+    return this._range
+  }
+
   public get lexeme(): string {
-    return this.lexer.substring(this._lexeme.start, this._lexeme.length)
+    // TODO: Test this
+    if (this.range.length === 0) debugger
+
+    return this.lexer.substring(this._range.start, this._range.length)
+  }
+
+  public get grammar(): Grammar {
+    return this.lexer.grammar
   }
 
   public get type() {
-    return this._lexeme.name
+    return this.grammar.get(this._type)!
   }
 
-  public get attributes(): TokenAttributes<TValue> {
+  public get attributes(): Attributes<TValue> {
     if (typeof this._attributes === `symbol` && this._attributes === NON_EVALUATED_LEXICAL_TOKEN) throw new Error(`Token not evaluated yet`)
 
-    return this._attributes as TokenAttributes<TValue>
+    return this._attributes as Attributes<TValue>
   }
 
   public get value(): TValue {
@@ -77,11 +86,13 @@ export default class Token<TValue = any> {
 
   constructor(lexer: Lexer, lexeme: Lexeme) {
     this.lexer = lexer
-    this._lexeme = lexeme
+
+    this._range = new Range(lexeme.start, lexeme.length)
+    this._type = lexeme.type.name
   }
 
   _evaluateOptions(options: Partial<EvaluatorOptions>) {
-    // TODO: Default options
+    // TODO: Default options-
     return options
   }
 
@@ -89,8 +100,8 @@ export default class Token<TValue = any> {
   evaluate(_options: Partial<EvaluatorOptions> = {}) {
     const options = this._evaluateOptions(_options)
 
-    const type = this.lexer.grammar.get(this.type)!
+    assert(this.type, `Token type not set`)
 
-    this._attributes = type.evaluate(this, options)
+    this._attributes = this.type.lexical!.evaluate(this, options) ?? {}
   }
 }

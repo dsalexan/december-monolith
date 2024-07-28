@@ -10,18 +10,22 @@
  */
 
 import assert from "assert"
-import Token, { Lexeme } from "../token"
-import LexicalGrammar from "../token/grammar"
-import { EvaluatorOptions, TokenTypeID } from "../token/type/base"
+import Token from "../token"
+import LexicalGrammar from "../type/grammar"
 import { omit, orderBy, sortedIndex } from "lodash"
-import { TokenTypeName, TokenType } from "../token/type"
 
 import churchill, { Block, paint, Paint } from "../logger"
-import { UNKNOWN } from "../token/type/literal"
+import Type from "../type/base"
+import { Lexeme } from "../token/lexeme"
+import { UNKNOWN } from "../type/declarations/literal"
+import Grammar from "../type/grammar"
+import { EvaluatorOptions } from "./evaluation"
+import { TypeName } from "../type/declarations/name"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 /**
+ * Tokenizer — split expression into tokens (but, here, we are splitting into words) (a token is a word, or lexeme, AND a type, but whatever)
  * Scanner — split expression into lexemes (a lexeme is a string of characters AND a type)
  * Evaluater — produce a value (sometimes, most of the time the lexeme's string of characters is the value), and a value + lexeme is a lexicalToken
  */
@@ -38,14 +42,14 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
  */
 
 export interface ScannerOptions {
-  defaultLexemeType: TokenTypeName
+  defaultLexemeType: TypeName
   logger?: typeof _logger
 }
 
 export type LexerOptions = ScannerOptions & EvaluatorOptions
 
 interface ProtoToken {
-  type: { name: `word` } | TokenType
+  type: { name: `word` } | Type
   value: string
 }
 
@@ -55,7 +59,7 @@ export default class Lexer {
   private expression: string
   private cursor: number // current cursor position (index of character in expression)
   //
-  public grammar: LexicalGrammar
+  public grammar: Grammar
   public tokens: Token[]
 
   constructor(grammar: LexicalGrammar) {
@@ -115,7 +119,7 @@ export default class Lexer {
       // if lexeme was already determined
       if (word.type.name !== `word`) {
         // build lexeme and add it to list
-        const lexeme = word.type.makeLexeme(this.cursor, word.value.length)
+        const lexeme: Lexeme = { start: this.cursor, length: word.value.length, type: word.type }
         lexemes.push(lexeme)
 
         this.cursor += word.value.length // advance cursor
@@ -161,7 +165,7 @@ export default class Lexer {
       const character = this.expression[i]
 
       // 1) determine token type for character
-      const characterType = this.grammar.testWhitespace(character)
+      const characterType = this.grammar.match(character, type => type.id === `whitespace`)
       if (!characterType.length) type = { name: `word` } // character is a word
       else type = characterType[0]
 
@@ -187,7 +191,7 @@ export default class Lexer {
     // https://cs.stackexchange.com/questions/155898/should-i-lookahead-in-the-lexer-or-parser
     // https://en.wikipedia.org/wiki/Maximal_munch
 
-    const lexemes: (Lexeme & { priority: number })[] = []
+    const lexemes: Lexeme[] = []
 
     let i = this.cursor
     let sequence = ``
@@ -202,8 +206,8 @@ export default class Lexer {
         // store lexemes by priority
         for (const type of types) {
           // const type = types[0]
-          const lexeme = type.makeLexeme(this.cursor, sequence.length)
-          lexemes.push({ ...lexeme, priority: type.priority })
+          const lexeme = { start: this.cursor, length: sequence.length, type }
+          lexemes.push(lexeme)
         }
       }
     } while (++i < upTo)
@@ -229,7 +233,7 @@ export default class Lexer {
 
         // if character has no recognized type, return it as an unknown lexeme
         if (types.length === 0) {
-          const lexeme: (typeof lexemes)[0] = { start: this.cursor, length: 1, name: UNKNOWN.name, priority: UNKNOWN.priority }
+          const lexeme = { start: this.cursor, length: 1, type: UNKNOWN }
           lexemes.push(lexeme)
 
           break
@@ -272,16 +276,14 @@ export default class Lexer {
 
     // PRINT EACH TOKEN INLINE
     for (const token of this.tokens) {
-      const type = this.grammar.get(token.type)!
-
       const isWhitespace = token.lexeme.match(/^\s+$/)
 
       let color = isWhitespace ? paint.bgGrey : paint.white
 
-      if (type.name === `unknown`) color = isWhitespace ? paint.bgYellow : paint.yellow
-      else if (type.id === `literal`) color = isWhitespace ? paint.bgBlue : paint.blue
-      else if (type.id === `separator`) color = isWhitespace ? paint.bgGreen : paint.green
-      else if (type.id === `operator`) color = isWhitespace ? paint.bgWhite : paint.white
+      if (token.type.name === `unknown`) color = isWhitespace ? paint.bgYellow : paint.yellow
+      else if (token.type.id === `literal`) color = isWhitespace ? paint.bgBlue : paint.blue
+      else if (token.type.id === `separator`) color = isWhitespace ? paint.bgGreen : paint.green
+      else if (token.type.id === `operator`) color = isWhitespace ? paint.bgWhite : paint.white
 
       logger.add(color(token.lexeme))
     }
@@ -303,15 +305,14 @@ export default class Lexer {
 
       let color = paint.grey
 
-      const type = this.grammar.get(token.type)!
-      if (type.name === `unknown`) color = paint.yellow
-      else if (type.id === `literal`) color = paint.blue
-      else if (type.id === `separator`) color = paint.green
-      else if (type.id === `operator`) color = paint.white
+      if (token.type.name === `unknown`) color = paint.yellow
+      else if (token.type.id === `literal`) color = paint.blue
+      else if (token.type.id === `separator`) color = paint.green
+      else if (token.type.id === `operator`) color = paint.white
 
-      logger.add(color.bold(type.id))
+      logger.add(color.bold(token.type.id))
       logger.add(paint.grey(`:`))
-      logger.add(color(type.name))
+      logger.add(color(token.type.name))
 
       logger.add(paint.grey(`), `))
       logger.info()

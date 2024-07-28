@@ -155,7 +155,7 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src2\\lexer\\test.ts",
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src2\\test.ts",
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },

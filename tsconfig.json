@@ -44,10 +44,10 @@
       "@december/mobile/*": ["./apps/mobile/src/*"],
       "@december/gurps": ["./apps/gurps/src"],
       "@december/gurps/*": ["./apps/gurps/src/*"],
-      "@december/tree": ["./packages/tree/src2"],
-      "@december/tree/*": ["./packages/tree/src2/*"],
+      "@december/tree": ["packages/tree/src2"],
+      "@december/tree/*": ["packages/tree/src2/*"],
     }
   },
   "exclude": ["node_modules"],
-  "include": ["packages/*/src/**/*", "apps/*/src/**/*"]
+  "include": ["packages/*/src/**/*", "apps/*/src/**/*", "packages/utils/src/range.ts"]
 }

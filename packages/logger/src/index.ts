@@ -12,3 +12,5 @@ export type { default as Block } from "./builder/block"
 
 export { default as paint } from "./paint"
 export type { Paint as Paint } from "./paint"
+
+export * as Grid from "./grid"

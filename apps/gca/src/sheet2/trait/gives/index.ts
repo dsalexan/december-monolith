@@ -3,7 +3,7 @@ export { Gives } from "./schema"
 import { isNil } from "lodash"
 import { expect } from "earl"
 
-import { Parser, Printer, Syntax, SyntaxNode, Utils } from "@december/tree"
+import { Parser, Printer, Syntax, SyntaxNode, Utils } from "../../../../../../packages/tree/src2"
 
 import { Gives } from "./schema"
 import { MathEnabledValue } from "../../core"

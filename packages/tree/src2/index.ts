@@ -10,7 +10,7 @@
  * - Tokens (Keywords, Identifiers, Operators, etc...)
  * - Expression -> Tokenized Expression
  *
- * 2) SYNTAX ANALYSIS/PARSING
+ * 2) TODO: SYNTAX ANALYSIS/PARSING
  *    In this stage, the compiler checks the syntax of the source code to ensure that it conforms to the rules of the programming
  *    language. The compiler builds a parse tree, which is a hierarchical representation of the program’s structure, and uses it to
  *    check for syntax errors.
@@ -25,7 +25,7 @@
  *
  * - Tokenized Expression -> Abstract Syntax Tree (AST)
  *
- * 3) SEMANTIC ANALYSIS
+ * 3) TODO: SEMANTIC ANALYSIS
  *    In this stage, the compiler checks the meaning of the source code to ensure that it makes sense. The compiler performs type
  *    checking, which ensures that variables are used correctly and that operations are performed on compatible data types.
  *    The compiler also checks for other semantic errors, such as undeclared variables and incorrect function calls.
@@ -36,7 +36,7 @@
  *    and check if they are valid. E.g., we can check if the summing node (+) has exactly two child nodes.
  *    If we have a programming language with static types, we can verify that all child nodes return compatible types.
  * *
- * 4) SIMPLIFIER
+ * 4) TODO: SIMPLIFIER
  *    The simplifier is a tool that can simplify an expression.
  *    It is a TERM REWRITE SYSTEM (https://stackoverflow.com/questions/7540227/strategies-for-simplifying-math-expressions)
  *    There is a list of rules, that contains a pattern and a replacement (regex maybe?). Use special symbols as pattern variables,
@@ -61,7 +61,7 @@
  * - AST -> Simplified AST
  *
  *
- * 5) EXECUTOR
+ * 5) TODO: EXECUTOR
  *    The same execution approach I mentioned for prefix notation works for syntax trees as well. Trees are really good for recursion.
  *    To calculate an expression we need to do a recursive depth-first traversal (DFT) of its syntax tree and execute each node
  *
@@ -72,3 +72,4 @@
  */
 
 export * as Token from "./token"
+import * as Parser from "./parser"

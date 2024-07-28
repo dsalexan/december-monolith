@@ -2,7 +2,7 @@ import { get, has, isNil, max, maxBy } from "lodash"
 // import { Dice } from "../../dice"
 import CharacterSheet from ".."
 import { makeWorkers } from "./workers"
-import { Interpreter } from "@december/tree"
+import { Interpreter } from "../../../../../packages/tree/src2"
 import { Dice } from "../../dice/index"
 
 export interface BaseInterpreterContext<TMe = unknown> {

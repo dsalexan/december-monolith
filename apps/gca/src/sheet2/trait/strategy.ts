@@ -1,6 +1,6 @@
 import crypto from "crypto"
 import { Instruction, Strategy, Computed, Reference, Reaction } from "@december/compile"
-import * as Tree from "@december/tree"
+import * as Tree from "../../../../../packages/tree/src2"
 
 import { Metadata } from "./../schema"
 import { RawTrait } from "./schema"
