@@ -66,7 +66,9 @@ import SyntaxTree from "./tree"
 import { range, sum } from "lodash"
 
 import { Grid } from "@december/logger"
+import { Range } from "@december/utils"
 import * as Formats from "./formats"
+import { PrintOptions } from "./printer"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -114,7 +116,7 @@ export default class Parser {
 
   /** Parses the tokenized expression into an abstract tree */
   private _abstractTree(start = 0) {
-    const tree = new SyntaxTree(Node.Root())
+    const tree = new SyntaxTree(this.expression)
 
     // consume tokens until the end of the token list
     let current: Node = tree.root
@@ -141,74 +143,17 @@ export default class Parser {
 
   // #region DEBUG
 
-  print() {
+  print(options: PrintOptions = {}) {
     const logger = _logger
 
+    // 1. Print expression
     console.log(` `)
     logger.add(paint.gray(range(0, this.expression.length).join(` `))).info()
     logger.add(paint.gray([...this.expression].join(` `))).info()
     console.log(` `)
 
-    // TODO: Print original expression reconstructed from AT
-
-    // TODO: Implement alternating colors horizontally
-    // TODO: Implemente nested column numbers by order of magnitude
-    // TODO: Implement printing nil and such
-    // TODO: Implement printing sub-tree
-    // TODO: Implement breakline
-
-    const LEVEL_PADDING = String(this.AT.height).length + 2
-    const NODES_BY_LEVEL = this.AT.nodesByLevel()
-
-    const grid = new Grid.Grid()
-    grid.setColumns(this.expression.length)
-
-    // preparing()
-    for (let level = 0; level < this.AT.height; level++) {
-      const nameRow = new Grid.Row()
-      const contentRow = new Grid.Row()
-
-      const nodes = NODES_BY_LEVEL[level] ?? []
-
-      for (const [i, node] of nodes.entries()) {
-        nameRow.add(...Formats.name(node))
-        contentRow.add(...Formats.content(node))
-      }
-
-      grid.add(nameRow)
-      grid.add(contentRow)
-    }
-
-    grid.balance()
-
-    // printing()
-    logger.add(` `.repeat(LEVEL_PADDING))
-    logger.add(...grid.header([...this.expression].map((_, i) => String(i)))).info()
-
-    logger.add(` `.repeat(LEVEL_PADDING))
-    logger.add(...grid.header([...this.expression], true)).info()
-
-    console.log(` `)
-
-    for (let level = 0; level < this.AT.height; level++) {
-      const nameRow = grid.rows[level * 2 + 0]
-      const contentRow = grid.rows[level * 2 + 1]
-
-      const name = nameRow.fill(this.expression.length)
-      const content = contentRow.fill(this.expression.length)
-
-      logger.add(paint.gray(`${level}`.padEnd(LEVEL_PADDING)))
-      for (const [i, sequence] of content.entries()) logger.add(...sequence.print(grid, { showBrackets: false }))
-      logger.info()
-
-      logger.add(paint.gray(` `.repeat(LEVEL_PADDING)))
-      for (const [i, sequence] of name.entries()) logger.add(...sequence.print(grid, { showBrackets: true }))
-      logger.info()
-    }
-
-    // TODO: Print AST
-
-    // debugger
+    // 2. Print tree
+    this.AT.print(this.AT.root, options)
   }
 
   // #endregion

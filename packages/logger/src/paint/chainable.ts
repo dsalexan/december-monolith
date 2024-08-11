@@ -213,6 +213,19 @@ chainingGetters[`opacity`] = {
   },
 }
 
+chainingGetters[`pad`] = {
+  get() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    const generator = function (start: number, end: number) {
+      const chainableFunction = chainableFunctionFactory(self, `pad:${start}|${end}`)
+      return chainableFunction
+    }
+    Object.defineProperty(self, `pad`, { value: generator })
+    return generator
+  },
+}
+
 chainingGetters[`identity`] = {
   get() {
     const chainableFunction = chainableFunctionFactory(this, `identity`)

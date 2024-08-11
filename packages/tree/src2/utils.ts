@@ -10,3 +10,8 @@ export function numberToLetters(j: number) {
     .map(() => ALPHABET[0])
     .join(``)}${ALPHABET[i]}`
 }
+
+export function baseAlphabet(j: number) {
+  if (j < 10) return j
+  else return numberToLetters(j - 10)
+}

@@ -18,7 +18,7 @@ import type Lexer from "../lexer"
 import assert from "assert"
 import { EvaluatorOptions } from "../lexer/evaluation"
 import Grammar from "../type/grammar"
-import Range from "../../../utils/src/range"
+import { Interval } from "@december/utils"
 
 /**
  * IDENTIFIER — basically a variable
@@ -37,7 +37,7 @@ export const NON_EVALUATED_LEXICAL_TOKEN = Symbol.for(`NON_EVALUATED_LEXICAL_TOK
 export default class Token<TValue = any> {
   private lexer: Lexer
   //
-  private _range: Range
+  private _interval: Interval
   private _type: TypeName
 
   // evaluated attributes from base lexeme during evaluation
@@ -47,19 +47,16 @@ export default class Token<TValue = any> {
 
   /** Returns initial character of lexeme in original expression */
   public get start() {
-    return this._range.start
+    return this._interval.start
   }
 
-  /** Returns range (initial and final indexes) of lexeme in original expression */
-  public get range() {
-    return this._range
+  /** Returns interval (initial and final indexes) of lexeme in original expression */
+  public get interval() {
+    return this._interval
   }
 
   public get lexeme(): string {
-    // TODO: Test this
-    if (this.range.length === 0) debugger
-
-    return this.lexer.substring(this._range.start, this._range.length)
+    return this.lexer.substring(this._interval.start, this._interval.length)
   }
 
   public get grammar(): Grammar {
@@ -87,7 +84,7 @@ export default class Token<TValue = any> {
   constructor(lexer: Lexer, lexeme: Lexeme) {
     this.lexer = lexer
 
-    this._range = new Range(lexeme.start, lexeme.length)
+    this._interval = Interval.fromLength(lexeme.start, lexeme.length)
     this._type = lexeme.type.name
   }
 

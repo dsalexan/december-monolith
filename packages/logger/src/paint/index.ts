@@ -38,6 +38,7 @@ export interface Paint extends ChainableFunction {
   */
   hex(color: string): Paint
   opacity(a: number): Paint
+  pad(start: number, end: number): Paint
 
   rgb(rgb: [number, number, number]): Paint
   rgb(rgba: [number, number, number, number]): Paint

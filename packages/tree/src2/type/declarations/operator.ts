@@ -23,7 +23,7 @@ export const GREATER = new Type(`operator`, `greater`, `>`).addLexical(OPERATOR_
 export const SMALLER = new Type(`operator`, `smaller`, `<`).addLexical(OPERATOR_PRIORITY + 11, Pattern.STRING(`<`)).deriveSyntactical(2)
 
 // ALGEBRAIC
-export const MULTIPLICATION = new Type(`operator`, `multiplication`, `×`).addLexical(OPERATOR_PRIORITY + 7, Pattern.STRING(`#`)).deriveSyntactical(2)
+export const MULTIPLICATION = new Type(`operator`, `multiplication`, `×`).addLexical(OPERATOR_PRIORITY + 7, Pattern.STRING(`*`)).deriveSyntactical(2)
 export const DIVISION = new Type(`operator`, `division`, `÷`).addLexical(OPERATOR_PRIORITY + 7, Pattern.STRING(`/`)).deriveSyntactical(2)
 export const ADDITION = new Type(`operator`, `addition`, `+`).addLexical(OPERATOR_PRIORITY + 5, Pattern.STRING(`+`)).deriveSyntactical(2)
 export const SUBTRACTION = new Type(`operator`, `subtraction`, `-`).addLexical(OPERATOR_PRIORITY + 5, Pattern.STRING(`-`)).deriveSyntactical(2)

@@ -5,7 +5,9 @@
  *
  */
 
+import { range } from "lodash"
 import Lexer from "./lexer"
+import logger, { paint } from "./logger"
 import Parser from "./parser"
 import { LITERALS, NUMBER, STRING } from "./type/declarations/literal"
 import { OPERATORS } from "./type/declarations/operator"
@@ -14,14 +16,33 @@ import { WHITESPACES } from "./type/declarations/whitespace"
 import Grammar from "./type/grammar"
 
 let expression = `1 + 2`
-// expression = `1 a`
-// expression = `(1 + 2) + 3`
-// expression = `"1 + 2" + 3`
-// expression = `"1 + teste"`
-// expression = `"1 + teste" + [3 * 4]`
-// expression = `1  <= 5`
-// expression = `teste, 1 + 3, A24, -10, [1, 2, 3,], 10 >= 1`
-// expression = `2 ** 3`
+expression = `1 a`
+expression = `1 + 2 * 3`
+expression = `1 + 2 + 3`
+expression = `(1)`
+expression = `(1 + 2)`
+expression = `(1 + 2) + 3`
+expression = `"1 + 2" + 3`
+expression = `"1 + teste"`
+expression = `"1 + teste" + [3 * 4]`
+expression = `1  <= 5`
+expression = `2 ** 3`
+expression = `-10`
+expression = `(100000+)`
+expression = `11111111+22222222`
+expression = `11111111 + 22222222`
+expression = `1 + 2`
+expression = `-10`
+expression = `teste, 1, ok`
+expression = `teste,`
+expression = `,teste`
+expression = `, 1`
+expression = `[1]`
+expression = `,1,2,`
+expression = `teste, [1,2,3],`
+expression = `teste, 1 + 3, A24, -10, [1, 2, 3,], 10 >= 1`
+expression = `teste, 1 ; 2 | 1, 3`
+expression = `teste, 1 ;, 2 | 1, 3`
 
 const grammar = new Grammar()
 grammar.add(...WHITESPACES)
@@ -35,8 +56,32 @@ grammar.print()
 const lexer = new Lexer(grammar)
 const parser = new Parser(grammar)
 
+// 1. Print expression
+console.log(` `)
+const N = expression.length
+const M = Math.ceil(Math.log10(N))
+logger
+  .add(
+    paint.gray(
+      range(0, N)
+        .map(i => String(i).padStart(M))
+        .join(` `),
+    ),
+  )
+  .info()
+logger.add(paint.gray([...expression].map(c => c.padStart(M)).join(` `))).info()
+console.log(` `)
+
 lexer.process(expression)
 lexer.print()
 
 parser.process(expression, lexer.tokens)
-parser.print()
+parser.print({
+  sequence: {
+    // minimumSizeForBracket: 0,
+    // minimumSizeForPipe: 1,
+    // padding: { character: `‾` },
+    // spacing: { character: `.` },
+  },
+  style: {},
+})

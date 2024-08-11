@@ -1,56 +1,346 @@
-import { difference } from "lodash"
-export default class Range {
+import assert from "assert"
+import { difference, last, orderBy } from "lodash"
+
+export class Point {
+  index: number
+
+  constructor(index: number) {
+    this.index = index
+  }
+
+  /** Checks if two points (or a Point and an interval) overlap */
+  overlap(intervalOrPoint: Interval | Point) {
+    if (intervalOrPoint instanceof Point) return overlap_Points(this, intervalOrPoint)
+    else return overlap_Interval_Point(intervalOrPoint, this)
+  }
+}
+
+export class Interval {
   start: number
-  length: number
+  end: number
 
-  get isRange() {
-    return this.length > 0
+  get length() {
+    return this.end - this.start + 1
   }
 
-  get end() {
-    if (this.length === 0) throw new Error(`Range has no length`)
-
-    return this.start + this.length - 1
-  }
-
-  constructor(start: number, length: number) {
+  constructor(start: number, end: number) {
     this.start = start
-    this.length = length
+    this.end = end
   }
 
-  static interval(start: number, end: number) {
-    return new Range(start, end - start + 1)
+  static fromLength(start: number, length: number) {
+    return new Interval(start, start + length - 1)
   }
 
-  static merge(...ranges: Range[]) {
-    if (ranges.length === 0) return new Range(0, 0)
+  // /** Returns all ranges not contained in list of ranges */
+  // static difference(...ranges: Range[]) {
+  //   if (ranges.length === 0) return []
 
-    const start = Math.min(...ranges.map(range => range.start))
-    const end = Math.max(...ranges.map(range => range.end))
+  //   const differences: Range[] = []
 
-    return Range.interval(start, end)
+  //   for (const [i, range] of [...ranges.entries()].slice(1)) {
+  //     const previous = ranges[i - 1]
+
+  //     if (previous.end + 1 < range.start) differences.push(Range.interval(previous.end + 1, range.start - 1))
+  //   }
+
+  //   return differences
+  // }
+
+  // /** Subtract all ranges from one range */
+  // static subtract(from: Range, ...ranges: Range[]) {
+  //   if (ranges.length === 0) return [from]
+
+  //   const result: Range[] = []
+
+  //   const min = from.start
+  //   const max = from.end
+
+  //   let cursor = min
+  //   for (const [i, range] of ranges.entries()) {
+  //     if (cursor < range.start) result.push(Range.interval(cursor, range.start - 1))
+
+  //     cursor = range.end + 1
+  //   }
+
+  //   if (cursor <= max) result.push(Range.interval(cursor, max))
+
+  //   return result
+  // }
+
+  // /** Break "from" range between ranges */
+  // static break(from: Range, ...ranges: Range[]): { range: Range; index: number }[] {
+  //   if (ranges.length === 0) return [{ range: from, index: -1 }]
+
+  //   const result: { range: Range; index: number }[] = []
+
+  //   const min = from.start
+  //   const max = from.end
+
+  //   let cursor = min
+
+  //   for (const [i, range] of ranges.entries()) {
+  //     if (cursor < range.start) result.push({ range: Range.interval(cursor, range.start - 1), index: -1 })
+  //     result.push({ range, index: i })
+
+  //     cursor = range.end + 1
+  //   }
+
+  //   if (cursor <= max) result.push({ range: Range.interval(cursor, max), index: -1 })
+
+  //   return result
+  // }
+
+  /** Checks if two intervals (or an interval and a Point) overlap */
+  overlap(intervalOrPoint: Interval | Point) {
+    if (intervalOrPoint instanceof Interval) return overlap_Intervals(this, intervalOrPoint)
+    else return overlap_Interval_Point(this, intervalOrPoint)
   }
 
-  /** Returns all ranges not contained in list of ranges */
-  static difference(...ranges: Range[]) {
-    if (ranges.length === 0) return []
+  toRange() {
+    return new Range(this)
+  }
+}
 
-    const differences: Range[] = []
+/** Checks if two points overlap */
+function overlap_Points(A: Point, B: Point) {
+  return A.index === B.index
+}
 
-    for (const [i, range] of [...ranges.entries()].slice(1)) {
-      const previous = ranges[i - 1]
+/** Checks if two intervals overlap */
+function overlap_Intervals(A: Interval, B: Interval) {
+  return Math.max(A.start, B.start) - Math.min(A.end, B.end) <= 0
+}
 
-      if (previous.end + 1 < range.start) differences.push(Range.interval(previous.end + 1, range.start - 1))
+/** Check if a Point overlaps with an interval */
+function overlap_Interval_Point(A: Interval, B: Point) {
+  const { start, end } = A
+  const { index: point } = B
+
+  return point > start && point < end
+}
+
+export default class Range {
+  private _entries: (Point | Interval)[] = []
+
+  get length() {
+    const simple = this.simplify()
+
+    return simple instanceof Point ? 0 : simple.length
+  }
+
+  get x() {
+    const simple = this.simplify()
+
+    return simple instanceof Point ? simple.index : simple.start
+  }
+
+  get y() {
+    const simple = this.simplify()
+
+    return simple instanceof Point ? simple.index : simple.end
+  }
+
+  constructor(...entries: (Point | Interval | Range)[]) {
+    const _entries: (Point | Interval)[] = entries.flatMap(entry => (entry instanceof Range ? [...entry.getEntries()] : [entry]))
+
+    this.addEntry(..._entries)
+  }
+
+  static fromPoint(index: number) {
+    return new Range(new Point(index))
+  }
+
+  static fromInterval(start: number, end: number) {
+    return new Range(new Interval(start, end))
+  }
+
+  static fromLength(start: number, length: number) {
+    return new Range(Interval.fromLength(start, length))
+  }
+
+  static fromEntryRange(start: Point | Interval, end: Point | Interval) {
+    const range = new Range()
+
+    if (start instanceof Point) range.addEntry(start)
+
+    if (start instanceof Point && end instanceof Point && start.index === end.index) return range
+
+    if (end instanceof Point && end.index - 1 < 0) debugger
+    range.addEntry(new Interval(start instanceof Point ? start.index : start.start, end instanceof Point ? end.index - 1 : end.end))
+
+    if (end instanceof Point) range.addEntry(end)
+
+    return range
+  }
+
+  static simplify(...entries: (Point | Interval)[]): Point | Interval {
+    assert(entries.length > 0, `Range must have at least one entry`)
+
+    const allPoints = entries.every(entry => entry instanceof Point)
+
+    // WARN: Unimplemented and untested
+    if (allPoints && entries.length > 1) debugger
+
+    if (allPoints) return entries[0] as Point
+
+    const start = Math.min(...entries.map(entry => (entry instanceof Point ? entry.index : entry.start)))
+    const end = Math.max(...entries.map(entry => (entry instanceof Point ? entry.index : entry.end)))
+
+    return new Interval(start, end)
+  }
+
+  getEntries() {
+    return this._entries
+  }
+
+  addEntry(...entries: (Interval | Point)[]) {
+    for (const entry of entries) {
+      // insert entry in sorted order
+      const index = this._entries.findIndex(e => (e instanceof Point ? e.index - 0.5 : e.start) > (entry instanceof Point ? entry.index - 0.5 : entry.start))
+
+      if (index === -1) this._entries.push(entry)
+      else this._entries.splice(index, 0, entry)
     }
 
-    return differences
+    return this
+  }
+
+  simplify() {
+    return Range.simplify(...this._entries)
+  }
+
+  split() {
+    assert(this._entries.length > 0, `Range must have entries to determine atomics`)
+
+    const pieces: Range[] = []
+
+    let current: Range = new Range(this._entries[0])
+    for (const entry of this._entries.slice(1)) {
+      if (entry instanceof Interval && current._entries[0] instanceof Interval) {
+        const { end } = last(current._entries)! as Interval
+        const { start } = entry
+
+        // if entry continues the interval at current
+        if (end + 1 === start) {
+          // merge intervals
+          //    a.k.a. add interval to range
+
+          current._entries.push(entry)
+
+          continue
+        }
+      }
+
+      // dont merge
+      pieces.push(current)
+      current = new Range(entry)
+    }
+
+    pieces.push(current)
+
+    // sort pieces by start
+    // const sorted = orderBy(pieces, piece => (piece.entries[0] instanceof Point ? (piece.entries[0] as Point).index - 0.5 : (piece.entries[0] as Interval).start))
+
+    return pieces
+  }
+
+  isPoint() {
+    return this.simplify() instanceof Point
+  }
+
+  isInterval() {
+    return this.simplify() instanceof Interval
+  }
+
+  offsetPoints(offset: number) {
+    const first = this._entries[0]
+    const last = this._entries[this._entries.length - 1]
+
+    return {
+      x: first instanceof Point ? first.index + offset : first.start,
+      y: last instanceof Point ? last.index + offset : last.end,
+    }
+  }
+
+  static toCoordinates(range: Range | Point | Interval, offset: number = 0): { x: number; y: number } {
+    if (range instanceof Range) {
+      const entries = range.getEntries()
+      const first = Range.toCoordinates(entries[0], offset)
+      const last = Range.toCoordinates(entries[entries.length - 1], offset)
+
+      return { x: first.x, y: last.y }
+    }
+    if (range instanceof Point) return { x: range.index + offset, y: range.index + offset }
+    if (range instanceof Interval) return { x: range.start, y: range.end }
+
+    throw new Error(`Range is no range`)
   }
 
   /** Check if range overlaps with another range */
-  overlap(range: Range) {
-    // foir sizeless ranges, just check if start is inside the range
-    if (!this.isRange) return this.start <= range.start || this.start >= range.end
+  static overlap(A: Range | Point | Interval, B: Range | Point | Interval, offset: number = 0) {
+    const a = Range.toCoordinates(A, -0.5)
+    const b = Range.toCoordinates(B, -0.5)
 
-    return Math.max(this.start, range.start) - Math.min(this.end, range.end) <= 0
+    return Math.max(a.x, b.x) - Math.min(a.y, b.y) <= 0
   }
+
+  overlap(range: Range | Point | Interval, offset: number = 0) {
+    return Range.overlap(this, range, offset)
+  }
+
+  static compare(range1: Range | Point | Interval, range2: Range | Point | Interval) {
+    const A = Range.toCoordinates(range1, -0.5)
+    const B = Range.toCoordinates(range2, -0.5)
+
+    // https://www.alanzucconi.com/2015/07/26/enum-flags-and-bitwise-operators/
+
+    // how to compare bitwise
+    // X & SAME > 0
+    // check exactly: (b & X) === Y
+    // check partial: (b & X) !== 0
+
+    const start = A.x === B.x ? STARTS_SAME : A.x < B.x ? STARTS_BEFORE : STARTS_AFTER
+    const end = A.y === B.y ? ENDS_SAME : A.y < B.y ? ENDS_BEFORE : ENDS_AFTER
+
+    let result = start | end
+
+    if (A.y < B.x) result |= ENDS_BEFORE_START
+    else if (A.y > B.x) result |= ENDS_AFTER_START
+
+    return result
+  }
+
+  compare(range: Range | Point | Interval) {
+    return Range.compare(this, range)
+  }
+
+  toString() {
+    return `{${this._entries.map(entry => (entry instanceof Point ? entry.index : `[${entry.start}:${entry.end}]`)).join(`,`)}}`
+  }
+}
+
+// const test = Range.break(Range.interval(0, 7), Range.interval(2, 3), Range.interval(5, 6))
+
+const STARTS_BEFORE = 1 << 0
+const STARTS_SAME = 1 << 1
+const STARTS_AFTER = 1 << 2
+const ENDS_BEFORE = 1 << 3
+const ENDS_SAME = 1 << 4
+const ENDS_AFTER = 1 << 5
+const ENDS_BEFORE_START = 1 << 6
+const ENDS_AFTER_START = 1 << 7
+
+export const RANGE_COMPARISON = {
+  // start: before, same, after
+  STARTS_BEFORE,
+  STARTS_SAME,
+  STARTS_AFTER,
+  ENDS_BEFORE,
+  ENDS_SAME,
+  ENDS_AFTER,
+  ENDS_BEFORE_START,
+  ENDS_AFTER_START,
+  //
+  SAME: STARTS_SAME | ENDS_SAME,
 }

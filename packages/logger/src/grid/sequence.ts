@@ -1,9 +1,10 @@
 import { Range } from "@december/utils"
 
-import { isArray, sum } from "lodash"
+import { isArray, last, sum } from "lodash"
 import type Grid from "./grid"
 import Block from "../builder/block"
 import paint, { Paint } from "../paint"
+import { PartialDeep } from "type-fest"
 
 export const SEQUENCE_ALIGNMENT = [`LEFT`, `RIGHT`, `CENTER`, `FILL`] as const
 export type SequenceAlignment = (typeof SEQUENCE_ALIGNMENT)[number]
@@ -73,24 +74,12 @@ export class Sequence {
 
   // #endregion
 
-  // #region Range
-
-  public get start() {
-    return this.range.start
-  }
-
-  public get end() {
-    return this.range.start
-  }
-
-  // #endregion
-
-  _mergeOptions(options: Partial<PrintOptions>): PrintOptions {
+  _mergeOptions(options: PartialDeep<PrintOptions>): PrintOptions {
     this.options = {
       showBrackets: options.showBrackets ?? this.options.showBrackets ?? false,
       padding: {
         character: options.padding?.character ?? this.options.padding?.character ?? ` `,
-        color: options.padding?.color ?? this.options.padding?.color ?? paint.grey,
+        color: options.padding?.color ?? this.options.padding?.color ?? undefined,
       },
       dash: {
         character: options.dash?.character ?? this.options.dash?.character ?? `-`,
@@ -100,6 +89,7 @@ export class Sequence {
         character: options.spacing?.character ?? this.options.spacing?.character ?? ` `,
         color: options.spacing?.color ?? this.options.spacing?.color ?? paint.red,
       },
+      minimumSizeForPipe: options.minimumSizeForPipe ?? this.options.minimumSizeForPipe ?? 2,
       minimumSizeForBracket: options.minimumSizeForBracket ?? this.options.minimumSizeForBracket ?? 2,
     }
 
@@ -107,7 +97,7 @@ export class Sequence {
   }
 
   /** Print content within informed width */
-  print(grid: Grid, _options: Partial<PrintOptions> = {}): Block[] {
+  print(grid: Grid, _options: PartialDeep<PrintOptions> = {}): Block[] {
     const options = this._mergeOptions(_options)
 
     const showBrackets = options.showBrackets
@@ -117,50 +107,59 @@ export class Sequence {
 
     const DASH_CHARACTER = options.dash.character
     const DASH_COLOR = options.dash.color
+
     const MINIMUM_SIZE_FOR_BRACKET = options.minimumSizeForBracket
+    const MINIMUM_SIZE_FOR_PIPE = options.minimumSizeForPipe
 
     const SPACING_CHARACTER = options.spacing.character
     const SPACING_COLOR = options.spacing.color
 
     const blocks: Block[] = []
 
-    const width = grid.width(this.range)
+    const ranges = this.range.split()
+
+    let content = this.content
+    const width = grid.width(...ranges)
     const extra = width - this.length
 
     // ERROR: Missing space is impossible (unless you forgot to balance the grid)
     if (extra < 0) debugger
 
-    let content = this.content
+    // figure out spacing from ranges
+    const [A, B] = [ranges[0], last(ranges)!]
 
-    const startPadding: Padding[] = []
-    const endPadding: Padding[] = []
+    const [before] = grid.getSpacingIndexes(A)
+    const [, after] = grid.getSpacingIndexes(B)
 
-    let startSpacing = grid.spacing[this.range.start]
-    let endSpacing = grid.spacing[this.range.end + 1]
+    let startSpacing = grid.spacing[before] ?? 0
+    let endSpacing = grid.spacing[after] ?? 0
+
     // actually, only print end spacing if range ends at the last column
-    if (this.range.end !== grid.columns.length - 1) endSpacing = 0
-
-    // ERROR: Untested
-    if (!this.range.isRange) debugger
+    const printEndSpacing = last(grid.imaginary)! > 0 ? this.range.y === grid.columns.length : this.range.y === grid.columns.length - 1
+    if (!printEndSpacing) endSpacing = 0
 
     // calculate paddings
-    if (this.alignment === `LEFT`) endPadding.push({ content: PADDING_CHARACTER, repeat: extra, style: PADDING_COLOR })
-    else if (this.alignment === `RIGHT`) startPadding.push({ content: PADDING_CHARACTER, repeat: extra, style: PADDING_COLOR })
+    const startPadding: Padding[] = []
+    const endPadding: Padding[] = []
+    const colorPadding = PADDING_COLOR ?? paint.grey
+
+    if (this.alignment === `LEFT`) endPadding.push({ content: PADDING_CHARACTER, repeat: extra, style: colorPadding })
+    else if (this.alignment === `RIGHT`) startPadding.push({ content: PADDING_CHARACTER, repeat: extra, style: colorPadding })
     else if (this.alignment === `CENTER`) {
       const start = Math.ceil(extra / 2)
 
-      startPadding.push({ content: PADDING_CHARACTER, repeat: start, style: PADDING_COLOR })
-      endPadding.push({ content: PADDING_CHARACTER, repeat: extra - start, style: PADDING_COLOR })
+      startPadding.push({ content: PADDING_CHARACTER, repeat: start, style: colorPadding })
+      endPadding.push({ content: PADDING_CHARACTER, repeat: extra - start, style: colorPadding })
     } else if (this.alignment === `FILL`) {
       const fillingContent: Block[] = []
 
       let currentLength = 0
-      while (currentLength < this.range.length) {
-        for (let i = 0; i < this.content.length && currentLength < this.range.length; i++) {
+      while (currentLength < width) {
+        for (let i = 0; i < this.content.length && currentLength < width; i++) {
           const block = this.content[i]
           const blockLength = String(block._data).length
 
-          const remaining = this.range.length - currentLength
+          const remaining = width - currentLength
 
           if (remaining >= blockLength) {
             fillingContent.push(block)
@@ -182,24 +181,35 @@ export class Sequence {
 
     // calculate brackets
     if (showBrackets) {
-      if (startPadding[0] && startPadding[0].repeat >= MINIMUM_SIZE_FOR_BRACKET) {
+      const exceedsMinimumForBracket = startPadding[0] && startPadding[0].repeat >= MINIMUM_SIZE_FOR_BRACKET && endPadding[0] && endPadding[0].repeat >= MINIMUM_SIZE_FOR_BRACKET
+      const exceedsMinimumForPipe = startPadding[0] && startPadding[0].repeat >= MINIMUM_SIZE_FOR_PIPE && endPadding[0] && endPadding[0].repeat >= MINIMUM_SIZE_FOR_PIPE
+
+      if (exceedsMinimumForBracket) {
         // replace spaces with dashes
-        startPadding[0].repeat--
         startPadding[0].content = DASH_CHARACTER
         startPadding[0].style = DASH_COLOR
 
-        // add pipe
-        startPadding.unshift({ content: `|`, repeat: 1, style: DASH_COLOR })
+        if (exceedsMinimumForPipe) {
+          // remove one dash to add pipe
+          startPadding[0].repeat--
+
+          // add pipe
+          startPadding.unshift({ content: `|`, repeat: 1, style: DASH_COLOR })
+        }
       }
 
-      if (endPadding[0] && endPadding[0].repeat >= MINIMUM_SIZE_FOR_BRACKET) {
+      if (exceedsMinimumForBracket) {
         // replace spaces with dashes
-        endPadding[0].repeat--
         endPadding[0].content = DASH_CHARACTER
         endPadding[0].style = DASH_COLOR
 
-        // add pipe
-        endPadding.push({ content: `|`, repeat: 1, style: DASH_COLOR })
+        if (exceedsMinimumForPipe) {
+          // remove one dash to add pipe
+          endPadding[0].repeat--
+
+          // add pipe
+          endPadding.push({ content: `|`, repeat: 1, style: DASH_COLOR })
+        }
       }
     }
 
@@ -209,6 +219,8 @@ export class Sequence {
     blocks.push(...content)
     for (const padding of endPadding) blocks.push(padding.style(padding.content.repeat(padding.repeat)))
     if (endSpacing > 0) blocks.push(SPACING_COLOR(SPACING_CHARACTER.repeat(startSpacing)))
+
+    // if (global.__DEBUG_LABEL === `,->L2.b`) debugger
 
     return blocks
   }
@@ -224,7 +236,7 @@ export interface PrintOptions {
   showBrackets: boolean
   padding: {
     character: string
-    color: Paint
+    color: Paint | undefined
   }
   dash: {
     character: string
@@ -235,4 +247,11 @@ export interface PrintOptions {
     color: Paint
   }
   minimumSizeForBracket: number
+  minimumSizeForPipe: number
 }
+
+type DeepPartial<T> = T extends object
+  ? {
+      [P in keyof T]?: DeepPartial<T[P]>
+    }
+  : T

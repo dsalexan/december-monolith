@@ -129,7 +129,7 @@ export default class Lexer {
       else {
         const upTo = this.cursor + word.value.length
         do {
-          const lexeme = this._loohahead(upTo)
+          const lexeme = this._lookhahead(upTo)
 
           // no lexeme was found, bail out // TODO: Never tested
           if (lexeme === null) debugger
@@ -187,7 +187,7 @@ export default class Lexer {
   }
 
   /** Scan words with lookahead (looking until a certain index, not the whole expression) */
-  private _loohahead(upTo: number): Lexeme | null {
+  private _lookhahead(upTo: number): Lexeme | null {
     // https://cs.stackexchange.com/questions/155898/should-i-lookahead-in-the-lexer-or-parser
     // https://en.wikipedia.org/wiki/Maximal_munch
 
@@ -293,7 +293,7 @@ export default class Lexer {
 
     // PRINT EACH TOKEN
     for (const token of this.tokens) {
-      logger.add(paint.grey(`(`))
+      logger.add(paint.grey(``))
 
       let lexeme = token.lexeme
 
@@ -314,7 +314,14 @@ export default class Lexer {
       logger.add(paint.grey(`:`))
       logger.add(color(token.type.name))
 
-      logger.add(paint.grey(`), `))
+      logger.add(paint.grey(`, `))
+
+      logger.add(paint.white(token.interval.start))
+      logger.add(paint.grey(`:`))
+      logger.add(paint.white(token.interval.end))
+
+      logger.add(paint.grey(`, `))
+
       logger.info()
     }
   }

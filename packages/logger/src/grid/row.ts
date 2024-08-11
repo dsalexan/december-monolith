@@ -4,19 +4,22 @@ import paint from "../paint"
 import { isNil } from "lodash"
 
 import { Range } from "@december/utils"
+import Block from "../builder/block"
 
 export default class Row {
   sequences: Sequence[] = [] // already sorted
+  prefix: Block[] = []
 
   constructor() {}
 
   /** Determine index to insert range (if there is no overlap) */
   _sortedInsert(range: Range): number {
+    const OFFSET = -0.5
     // IMPLEMENT INSERT WHEN THERE IS SOME SEQUENCE WITHOUT LENGTH (like when the sequence is "" empty string, its range whould be [start, -1])
 
-    // 1. Find earliest sequence that ends before range
+    // 1. Find latest sequence that ends before range
     //      -1 means that all sequences end after range.start
-    const previous = this.sequences.findLastIndex(sequence => sequence.range.end <= range.start)
+    const previous = this.sequences.findLastIndex(sequence => sequence.range.offsetPoints(OFFSET).y <= range.offsetPoints(OFFSET).x)
 
     // 2. check if range overlaps with previous
     const _previous = this.sequences[previous]?.range
@@ -41,39 +44,18 @@ export default class Row {
   }
 
   add(...sequences: Sequence[]) {
-    for (const sequence of sequences) this._add(sequence)
+    for (const [k, sequence] of sequences.entries()) {
+      // if (global.__DEBUG_LABEL === `]->L5.b` && k === 5) debugger
+
+      this._add(sequence)
+    }
 
     return this
   }
 
-  /** Returns an list of sequences with all "gaps" filled */
-  fill(maxLength?: number) {
-    const FILLING_CHARACTER = ` `
-    const FILLING_COLOR = paint.grey
+  addPrefix(...blocks: Block[]) {
+    this.prefix.push(...blocks)
 
-    const filled: Sequence[] = []
-
-    let cursor = 0
-
-    for (const [i, sequence] of this.sequences.entries()) {
-      // if (sequence.__debug?.name === `n3.b`) debugger
-
-      // there is a gap between cursor and start of current sequence
-      if (cursor < sequence.start) {
-        filled.push(Sequence.FILL(FILLING_COLOR(FILLING_CHARACTER), new Range(cursor, sequence.start - cursor)))
-        cursor += sequence.start - cursor
-      }
-
-      filled.push(sequence)
-
-      // ERROR: TEST THIS
-      if (!sequence.range.isRange) debugger
-
-      cursor += sequence.range.length
-    }
-
-    if (!isNil(maxLength)) if (cursor < maxLength - 1) filled.push(Sequence.FILL(FILLING_COLOR(FILLING_CHARACTER), new Range(cursor, maxLength - cursor - 1)))
-
-    return filled
+    return this
   }
 }
