@@ -56,6 +56,11 @@ import Token from "../token"
  * OPERATOR
  */
 
+// TODO: Implement AST from AT
+// TODO: Validate AST
+// TODO: Print errors found in AST
+// TODO: Build symbol table
+
 import churchill, { Block, paint, Paint } from "../logger"
 import Node from "./node"
 import { isOperand } from "../type/base"

@@ -16,7 +16,7 @@ import { TAGS, TagName } from "./tag/tag"
 import { ISSUE_PRIORITY, TraitIssueManager, createTraitIssue, maxIssuesPriority } from "./issues"
 import { Builder as LogBuilder } from "@december/logger"
 import { LAZY_VALUE, UNPARSED_VALUE } from "./tag/value"
-import { guessType } from "@december/utils/src/typing"
+// import { guessType } from "@december/utils/src/typing"
 
 export const logger = churchill.child(`trait`)
 

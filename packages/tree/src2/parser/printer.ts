@@ -105,7 +105,6 @@ export default class TreePrinter {
     // TODO: Print original expression reconstructed from AT
 
     // TODO: Implement nested column numbers by order of magnitude
-    // TODO: Implement printing nil and such
     // TODO: Implement printing sub-tree
     // TODO: Implement printing column slices
 

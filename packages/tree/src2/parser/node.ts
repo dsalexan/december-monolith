@@ -325,16 +325,6 @@ export default class Node {
     return null
   }
 
-  repr() {
-    if (this._tokens.length > 0) {
-      // TODO: Implement for multiple tokens
-      if (this._tokens.length > 1) debugger
-
-      return this._tokens[0].lexeme
-    }
-    if (this._type) return `{${this._type.name.toUpperCase()}}`
-  }
-
   addToken(token: Token) {
     this._tokens.push(token)
   }
