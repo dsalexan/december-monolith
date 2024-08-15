@@ -19,6 +19,7 @@ import assert from "assert"
 import { EvaluatorOptions } from "../lexer/evaluation"
 import Grammar from "../type/grammar"
 import { Interval } from "@december/utils"
+import { cloneDeep } from "lodash"
 
 /**
  * IDENTIFIER — basically a variable
@@ -100,5 +101,13 @@ export default class Token<TValue = any> {
     assert(this.type, `Token type not set`)
 
     this._attributes = this.type.lexical!.evaluate(this, options) ?? {}
+  }
+
+  clone() {
+    const token = new Token(this.lexer, { start: this.interval.start, length: this.interval.length, type: this.type })
+
+    token._attributes = cloneDeep(this._attributes)
+
+    return token
   }
 }

@@ -2,7 +2,7 @@ import assert from "assert"
 import Node, { NODE_BALANCING } from "./node"
 import { isOperand } from "../type/base"
 import { isWrapper, LIST } from "../type/declarations/separator"
-import { last, sortedIndex, sortedIndexBy } from "lodash"
+import { isString, last, sortedIndex, sortedIndexBy } from "lodash"
 
 import { Point, Range } from "@december/utils"
 import { Grid } from "@december/logger"
@@ -10,7 +10,7 @@ import churchill, { Block, paint, Paint } from "../logger"
 import { PartialDeep } from "type-fest"
 
 import TreePrinter, { PrintOptions } from "./printer"
-import { BY_TYPE } from "./formats/styles"
+import { BY_TYPE } from "../type/styles"
 import { NIL } from "../type/declarations/literal"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
@@ -42,7 +42,8 @@ export default class SyntaxTree {
 
     // create new list if necessry
     if (!list) {
-      const fallbackRange = Range.fromPoint(children.length > 0 ? children[0].range.x : parent.type.name === `root` ? 0 : parent.range.y)
+      const imaginary = children.length > 0 ? children[0].range.column(`first`) : parent.range.column(`last`) // return firstmost imaginary of child OR last imaginary of parent
+      const fallbackRange = Range.fromPoint(parent.type.name === `root` ? 0 : imaginary) // if root, always get firstmost imaginary column
       list = new Node(LIST, fallbackRange)
     }
 
@@ -98,7 +99,7 @@ export default class SyntaxTree {
         if (firstChild.type.name === `list`) target = firstChild
         // list is the new target to add the new child
         else {
-          const fallbackRange = Range.fromPoint(firstChild.range.x)
+          const fallbackRange = Range.fromPoint(firstChild.range.column(`first`))
           target = this.addAsParent(new Node(LIST, fallbackRange), firstChild)
         }
       } else if (parent.children.length > 1) throw new Error(`Unary thing should not have multiple children`)
@@ -120,7 +121,7 @@ export default class SyntaxTree {
         if (lastChild.type.name === `list`) target = lastChild
         // list is the new target to add the new child
         else {
-          const fallbackRange = Range.fromPoint(lastChild.range.x)
+          const fallbackRange = Range.fromPoint(lastChild.range.column(`first`))
           target = this.addAsParent(new Node(LIST, fallbackRange), lastChild)
         }
       } else if (parent.children.length > 1) throw new Error(`Binary thing should not have more than two children`)
@@ -140,7 +141,7 @@ export default class SyntaxTree {
 
   /** Inserts node in sub-tree starting at target */
   insert(target: Node, node: Node) {
-    const __DEBUG = true // COMMENT
+    const __DEBUG = false // COMMENT
     global.__DEBUG_LABEL = `${node.lexeme}->${target.name}` // COMMENT
 
     if (__DEBUG) {
@@ -189,7 +190,7 @@ export default class SyntaxTree {
           //  there are no children to enlist
           //  create and add a nil token
 
-          const nil = new Node(NIL, Range.fromPoint(target.range.x))
+          const nil = new Node(NIL, Range.fromPoint(target.range.column(`first`)))
           this.addTo(target, nil)
         }
 
@@ -288,7 +289,7 @@ export default class SyntaxTree {
         this.addAsParent(node, target.children[0]) // add node as target of new list (which would be last - or first - child)
 
         // ERROR: Untested (points can only be up until N+1)
-        if (node.range.y + 1 > this.expression.length) debugger
+        if (node.range.column(`last`) + 1 > this.expression.length) debugger
 
         const fallbackRange = Range.fromPoint(last(node.tokens)!.interval.end + 1)
         const list = new Node(LIST, fallbackRange)
@@ -303,7 +304,7 @@ export default class SyntaxTree {
 
         assert(separator?.type?.name === node.type.name, `Separator mismatch`)
 
-        const fallbackRange = Range.fromPoint(node.range.y + 1)
+        const fallbackRange = Range.fromPoint(node.range.column(`last`) + 1)
         const list = new Node(LIST, fallbackRange)
         this.addTo(separator, list) // add new list to parent of target (which is a separator)
 
@@ -386,5 +387,22 @@ export default class SyntaxTree {
 
   print(from: Node, options: PrintOptions = {}) {
     TreePrinter.print(this, from, options)
+  }
+
+  /** Traverse tree by level */
+  traverse(predicate: (node: Node) => void) {
+    predicate(this.root)
+
+    const queue: Node[] = [this.root]
+
+    while (queue.length) {
+      const parent = queue.shift()!
+
+      for (const node of parent.children) {
+        predicate(node)
+
+        queue.push(node)
+      }
+    }
   }
 }

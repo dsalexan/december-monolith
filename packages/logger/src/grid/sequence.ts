@@ -89,6 +89,10 @@ export class Sequence {
         character: options.spacing?.character ?? this.options.spacing?.character ?? ` `,
         color: options.spacing?.color ?? this.options.spacing?.color ?? paint.red,
       },
+      filling: {
+        character: options.filling?.character ?? this.options.filling?.character ?? ` `,
+        color: options.filling?.color ?? this.options.filling?.color ?? paint.grey,
+      },
       minimumSizeForPipe: options.minimumSizeForPipe ?? this.options.minimumSizeForPipe ?? 2,
       minimumSizeForBracket: options.minimumSizeForBracket ?? this.options.minimumSizeForBracket ?? 2,
     }
@@ -114,6 +118,9 @@ export class Sequence {
     const SPACING_CHARACTER = options.spacing.character
     const SPACING_COLOR = options.spacing.color
 
+    const FILLING_CHARACTER = options.filling.character // · ■▮
+    const FILLING_COLOR = options.filling.color
+
     const blocks: Block[] = []
 
     const ranges = this.range.split()
@@ -135,7 +142,8 @@ export class Sequence {
     let endSpacing = grid.spacing[after] ?? 0
 
     // actually, only print end spacing if range ends at the last column
-    const printEndSpacing = last(grid.imaginary)! > 0 ? this.range.y === grid.columns.length : this.range.y === grid.columns.length - 1
+    const lastColumn = this.range.column(`last`)
+    const printEndSpacing = last(grid.imaginary)! > 0 ? lastColumn === grid.columns.length : lastColumn === grid.columns.length - 1
     if (!printEndSpacing) endSpacing = 0
 
     // calculate paddings
@@ -153,10 +161,12 @@ export class Sequence {
     } else if (this.alignment === `FILL`) {
       const fillingContent: Block[] = []
 
+      const base = FILLING_CHARACTER ? [FILLING_COLOR(FILLING_CHARACTER)] : this.content
+
       let currentLength = 0
       while (currentLength < width) {
-        for (let i = 0; i < this.content.length && currentLength < width; i++) {
-          const block = this.content[i]
+        for (let i = 0; i < base.length && currentLength < width; i++) {
+          const block = base[i]
           const blockLength = String(block._data).length
 
           const remaining = width - currentLength
@@ -243,6 +253,10 @@ export interface PrintOptions {
     color: Paint
   }
   spacing: {
+    character: string
+    color: Paint
+  }
+  filling: {
     character: string
     color: Paint
   }

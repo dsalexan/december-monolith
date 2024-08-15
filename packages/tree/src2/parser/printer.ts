@@ -192,7 +192,7 @@ export default class TreePrinter {
 
         // if (global.__DEBUG_LABEL === `,->root`) debugger
 
-        const row = grid.fill(raw, rootSpan) // fill gaps in row
+        const row = grid.fill(raw.sequences, rootSpan) // fill gaps in row
 
         // print prefix (padded by grid)
         const prefix = sum(raw.prefix?.map(p => String(p._data).length) ?? [0])
@@ -202,6 +202,8 @@ export default class TreePrinter {
         // print each sequence in row
         for (const [k, sequence] of row.entries()) {
           // if (global.__DEBUG_LABEL === `,->root` && sequence.__debug?.node?.name === `root`) debugger
+          // if (sequence.__debug?.node?.name === `C1.a` && sequence.__debug?.format === `name`) debugger
+          // if (sequence.__debug?.index === 1 && sequence.__debug?.format === `header`) debugger
 
           const blocks = sequence.print(grid, format.printingOptions)
           logger.add(...blocks)

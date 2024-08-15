@@ -30,6 +30,10 @@ export default class Type {
     this.addSyntactical = SyntacticalRuleAdder
     this.deriveSyntactical = SyntacticalRuleDeriver
   }
+
+  toString() {
+    return `${this.id}:${this.name}`
+  }
 }
 
 export function isOperand(id: TypeID): id is `literal` | `identifier` {

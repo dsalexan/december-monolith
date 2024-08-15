@@ -128,18 +128,34 @@ export default class Node {
     return this._tokens[0].lexeme
   }
 
-  public get content(): string {
-    // TODO: Implement for tokenless and childless nodes
-    if (this._tokens.length === 0 && this.children.length === 0) debugger
+  /** Non-overflowable content */
+  public get _content(): string | null {
+    // TODO: Implement for tokenless and childless nodes that are not points
+    if (this._tokens.length === 0 && this.children.length === 0 && !this._range.columnIsPoint(`first`)) debugger
+
+    if (this._tokens.length) {
+      // TODO: Implement for >= 2 tokens
+      if (this._tokens.length > 1) debugger
+
+      return this._tokens[0].lexeme
+    }
+
+    return null
+  }
+
+  public get content(): string | null {
+    if (this._tokens.length === 0 && this.children.length === 0) return null
 
     const tokens: string[] = []
 
-    if (this.children.length === 0) tokens.push(...this.children.map(child => child.content))
+    // if (this.children.length === 0) tokens.push(...this.children.map(child => child.content).map(content => (content === null ? `` : content)))
 
     this.traverse((node, token) => {
       if (token === null) return
-      else if (token === undefined) tokens.push(node.content)
-      else tokens.push(token.lexeme)
+      else if (token === undefined) {
+        const content = node._content
+        if (content !== null) tokens.push(content)
+      } else tokens.push(token.lexeme)
     })
 
     // TODO: Implement for > 2 tokens
@@ -309,16 +325,13 @@ export default class Node {
   find(name: string): Node | null
   find(predicate: (node: Node) => boolean): Node | null
   find(nameOrPredicate: string | ((node: Node) => boolean)): Node | null {
-    if (isString(nameOrPredicate)) {
-      const name = nameOrPredicate
+    let predicate: (node: Node) => boolean = nameOrPredicate as any
+    if (isString(nameOrPredicate)) predicate = node => node.name === nameOrPredicate
 
-      return this.find(node => node.name === name)
-    }
+    if (predicate(this)) return this
 
     for (const child of this.children) {
-      if (nameOrPredicate(child)) return child
-
-      const found = child.find(nameOrPredicate)
+      const found = child.find(predicate)
       if (found) return found
     }
 
@@ -403,6 +416,15 @@ export default class Node {
       predicate(this, this.tokens[0])
       right?.traverse(predicate, maxLevel)
     } else throw new Error(`Unsupported n-arity "${narity}" when printing node text`)
+  }
+
+  clone() {
+    const node = new Node(this._type!, this._range ? this._range.clone() : this._range)
+
+    node.id = this.id
+    node._tokens = this._tokens.map(token => token.clone())
+
+    return node
   }
 }
 

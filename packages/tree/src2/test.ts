@@ -36,12 +36,13 @@ expression = `-10`
 expression = `teste, 1, ok`
 expression = `teste,`
 expression = `,teste`
-expression = `, 1`
-expression = `[1]`
-expression = `,1,2,`
-expression = `teste, [1,2,3],`
-expression = `teste, 1 + 3, A24, -10, [1, 2, 3,], 10 >= 1`
-expression = `teste, 1 ; 2 | 1, 3`
+expression = ` 1`
+expression = ` , 1`
+expression = `[ 1] `
+// expression = `,1,2,`
+// expression = `teste, [1,2,3],`
+// expression = `teste, 1 + 3, A24, -10, [1, 2, 3,], 10 >= 1`
+// expression = `teste, 1 ; 2 | 1, 3`
 expression = `teste, 1 ;, 2 | 1, 3`
 
 const grammar = new Grammar()
@@ -82,6 +83,7 @@ parser.print({
     // minimumSizeForPipe: 1,
     // padding: { character: `‾` },
     // spacing: { character: `.` },
+    // filling: { character: `▮` },
   },
   style: {},
 })

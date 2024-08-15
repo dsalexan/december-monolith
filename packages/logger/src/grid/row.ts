@@ -36,7 +36,7 @@ export default class Row {
 
   /** Sorted insert of sequence in array based on effective range */
   _add(sequence: Sequence) {
-    const index = this._sortedInsert(sequence.range)
+    const index = Range.sortedInsert(this.sequences, sequence.range, sequence => sequence?.range)
 
     assert(index !== -1, `Sequence overlaps with existing sequence`)
 

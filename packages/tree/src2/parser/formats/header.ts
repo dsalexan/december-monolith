@@ -3,7 +3,7 @@ import { Grid, paint } from "@december/logger"
 import { Range } from "@december/utils"
 
 import type Node from "../node"
-import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "./styles"
+import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "../../type/styles"
 import { FlatNode } from "../node"
 import type Token from "../../token"
 import { PartialDeep } from "type-fest"

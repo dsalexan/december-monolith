@@ -3,7 +3,7 @@ import { Grid, paint } from "@december/logger"
 import { Range } from "@december/utils"
 
 import type Node from "../node"
-import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "./styles"
+import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "../../type/styles"
 import { FlatNode } from "../node"
 import type Token from "../../token"
 import { PartialDeep } from "type-fest"
@@ -22,7 +22,7 @@ export function formatContent(level: number, node: Node, token: Token | undefine
   const __DEBUG_TOKENS = tokens.map(token => {
     const repr = token.token ? token.token.lexeme : token.node.lexeme
     const range = token.token?.interval?.toRange() ?? token.node.range
-    return `${token.node.name}, (${repr}), [${range.x}:${range.y}]`
+    return `${token.node.name}, (${repr}), [${range.column(`first`, -0.5)}:${range.column(`last`, -0.5)}]`
   })
 
   for (const { node: leaf, token } of tokens) {
@@ -43,7 +43,7 @@ export function formatContent(level: number, node: Node, token: Token | undefine
     // if (repr.length === 0) repr = `⌀`
 
     const range = token?.interval?.toRange() ?? leaf.range
-    const sequence = Grid.Sequence.Sequence.CENTER(color(repr), range, !options.ignoreSpacing && range.isInterval() ? [`BEFORE`, `AFTER`] : [])
+    const sequence = Grid.Sequence.Sequence.CENTER(color(repr), range, !options.ignoreSpacing && !range.columnIsPoint(`first`) ? [`BEFORE`, `AFTER`] : [])
     sequence.__debug = { format: `content`, node: leaf }
 
     sequences.push(sequence)

@@ -1,8 +1,8 @@
 import { Grid, paint, Paint } from "@december/logger"
 
-import type { TypeName } from "../../type/declarations/name"
-import type { TypeID } from "../../type/base"
-import type Type from "../../type/base"
+import type { TypeName } from "./declarations/name"
+import type { TypeID } from "./base"
+import type Type from "./base"
 
 export interface Style {
   foreground: Paint

@@ -38,24 +38,36 @@ export default class Grid {
   }
 
   getSpacingIndexes(range: Range): [number, number] {
-    if (range.isPoint()) return [(range.x - 1) * 2 + 1, range.x * 2]
+    const x = range.column(`first`)
+    const y = range.column(`last`)
 
-    const before_imaginary = (range.x - 1) * 2 + 1
-    const before = range.x * 2
+    let before = x * 2 - 1 // point always use imaginary spacing
+    if (!range.columnIsPoint(`first`)) {
+      // before spacings
+      const imaginary = before
+      const real = x * 2
 
-    const after = range.y * 2 + 1
-    const after_imaginary = (range.y + 1) * 2
+      const imaginaryColumn = this.imaginary[x]
+      if (imaginaryColumn > 0) before = real
+      // use real spacing if IMAGINARY_COLUMN is empty AND real spacing is bigger (i.e. use max of imaginary or real spacing if there is no imaginary column in between)
+      else if (imaginaryColumn === 0 && this.spacing[real] >= (this.spacing[imaginary] ?? 0)) before = real
+      else before = before < 0 ? 0 : before
+    }
 
-    const previous_imaginary = this.imaginary[range.x]
-    const next_imaginary = this.imaginary[range.y + 1]
+    let after = y * 2 // point always use imaginary spacing
+    if (!range.columnIsPoint(`last`)) {
+      // after spacings
+      const imaginary = after
+      const real = y * 2 + 1
 
-    let _before = before
-    if (previous_imaginary === 0 && this.spacing[before_imaginary] > this.spacing[_before]) _before = before_imaginary
+      const imaginaryColumn = this.imaginary[y + 1]
+      if (imaginaryColumn > 0) after = real
+      // use real spacing if IMAGINARY_COLUMN is empty AND real spacing is bigger (i.e. use max of imaginary or real spacing if there is no imaginary column in between)
+      else if (imaginaryColumn === 0 && this.spacing[real] >= (this.spacing[imaginary] ?? 0)) after = real
+      else after = after > this.columns.length ? this.columns.length : after
+    }
 
-    let _after = after
-    if (next_imaginary === 0 && this.spacing[after_imaginary] > this.spacing[_after]) _after = after_imaginary
-
-    return [_before, _after]
+    return [before, after]
   }
 
   calcWidths(c0: number, cN: number) {
@@ -84,31 +96,34 @@ export default class Grid {
     const widths: number[][] = []
 
     // sum inner widths
-    for (const _range of ranges) {
-      if (!_range.isInterval()) {
-        widths.push([this.imaginary[_range.x]])
-        continue
-      }
-
-      let fullWidth = sum(range(_range.x, _range.y + 1).map(c => this.columns[c]))
+    for (const r of ranges) {
+      let fullWidth = 0
       let innerSpacing = 0
       let innerImaginary = 0
 
-      for (let c = _range.x + 1; c <= _range.y; c++) {
-        const i = c
+      const entries = r.getEntries()
+      for (const entry of entries) {
+        if (entry instanceof Point) fullWidth += this.imaginary[entry.index]
+        else if (entry instanceof Interval) {
+          fullWidth += sum(range(entry.start, entry.end + 1).map(c => this.columns[c]))
 
-        const bi = (c - 1) * 2 + 1
-        const b = c * 2
+          for (let c = entry.start + 1; c <= entry.end; c++) {
+            const i = c
 
-        const a = c * 2 + 1
-        const ai = (c + 1) * 2
+            const bi = (c - 1) * 2 + 1
+            const b = c * 2
 
-        const imaginary = this.imaginary[i]
+            const a = c * 2 + 1
+            const ai = (c + 1) * 2
 
-        const before = imaginary === 0 ? Math.max(this.spacing[bi] ?? 0, this.spacing[b] ?? 0) : (this.spacing[bi] ?? 0) + (this.spacing[b] ?? 0)
+            const imaginary = this.imaginary[i]
 
-        innerImaginary += imaginary
-        innerSpacing += before
+            const before = imaginary === 0 ? Math.max(this.spacing[bi] ?? 0, this.spacing[b] ?? 0) : (this.spacing[bi] ?? 0) + (this.spacing[b] ?? 0)
+
+            innerImaginary += imaginary
+            innerSpacing += before
+          }
+        } else throw new Error(`Unimplemented entry type`)
       }
 
       widths.push([fullWidth, innerImaginary, innerSpacing])
@@ -144,25 +159,41 @@ export default class Grid {
       for (const [i, sequence] of row.sequences.entries()) {
         const length = sequence.length // space ocuppied by sequence content
 
-        const ranges = sequence.range.split()
-        const columns = sum(ranges.flatMap(r => (r.isPoint() ? this.imaginary[r.x] || 1 : range(r.x, r.y + 1).map(c => this.columns[c])))) // full width availble (number of columns available, both discreet and imaginary)
+        // const ranges = sequence.range.split()
+        const simplifiedRange = Range.simplify(sequence.range, 0.5)
+
+        if (simplifiedRange.toString() !== sequence.range.toString()) debugger
+
+        // calculate full column space ("full width")
+        let columns = 0
+
+        for (const entry of simplifiedRange.getEntries()) {
+          if (entry instanceof Point) columns += this.imaginary[entry.index] || 1
+          else if (entry instanceof Interval) columns += sum(range(entry.start, entry.end + 1).map(c => this.columns[c]))
+          else throw new Error(`Unimplemented entry type`)
+        }
+
+        // const columns = sum(ranges.flatMap(r => (r.isPoint() ? this.imaginary[r.x] || 1 : range(r.x, r.y + 1).map(c => this.columns[c])))) // full width availble (number of columns available, both discreet and imaginary)
 
         const diff = length - columns // SEQUENCE_CONTENT - COLUMNS
 
         // measure full size and check if it is bigger than range
         if (diff > 0) {
           const average = Math.floor(length / (columns || 1))
-          const averages = ranges.flatMap(r => (r.isPoint() ? [r.x] : range(r.x, r.y + 1))).map(() => average)
-          if (sum(averages) < length) averages[0] += length - sum(averages)
+          const firstAverage = average * columns < length ? length - average * columns : average
 
           // if it is, stretch all columns inside full range by average
-          for (const range of ranges) {
-            for (let i = range.x; i <= range.y; i++) {
-              const isImaginary = range.isPoint()
+          for (const entry of simplifiedRange.getEntries()) {
+            const isImaginary = entry instanceof Point
 
+            const i0 = isImaginary ? entry.index : entry.start
+            const iN = isImaginary ? entry.index : entry.end
+
+            for (let i = i0; i <= iN; i++) {
               const target = !isImaginary ? this.columns[i] : this.imaginary[i]
+              const localAverage = i === i0 ? firstAverage : average
 
-              const newSize = Math.max(target, averages.shift()!)
+              const newSize = Math.max(target, localAverage)
 
               // no need to stretch
               if (newSize === target) continue
@@ -180,11 +211,8 @@ export default class Grid {
         }
 
         // calculate spacing
-        const first = ranges[0]
-        const last = ranges[ranges.length - 1]
-
-        const before = first.isInterval() ? first.x * 2 : (first.x - 1) * 2 + 1
-        const after = last.isInterval() ? last.y * 2 + 1 : last.y * 2
+        const before = !simplifiedRange.columnIsPoint(`first`) ? simplifiedRange.column(`first`) * 2 : (simplifiedRange.column(`first`) - 1) * 2 + 1
+        const after = !simplifiedRange.columnIsPoint(`first`) ? simplifiedRange.column(`last`) * 2 + 1 : simplifiedRange.column(`last`) * 2
 
         const ignoreBefore = before < 0
         const ignoreAfter = after >= this.spacing.length
@@ -291,92 +319,48 @@ export default class Grid {
     return blocks
   }
 
-  /** Returns an list of sequences with all "gaps" filled */
-  fill(row: Row, ranges: Range[]) {
-    const FILLING_CHARACTER = `▮` // · ■
-    const FILLING_COLOR = paint.grey
+  /** Returns a list of sequences with all "gaps filled" */
+  fill(sequences: Sequence[], space: Range[]) {
+    // #region Calculate space coverage (easier to debug like this)
 
-    /**
-     * The idea is to fill all ranges in range with content
-     *    The content can come from row.sequences
-     *    Or it can be filled with FILLING_CHARACTER
-     */
+    const OFFSET = -0.5
 
-    const filled: Sequence[] = []
+    type CoverageEntry = { range: Range; sequence?: Sequence }
+    const coverage: CoverageEntry[] = []
 
-    const queue = [...row.sequences]
-    let sequence = queue.shift()
+    // 1. Sorted insert ranges from sequences and space into coverage
+    for (const sequence of sequences) {
+      const index = Range.sortedInsert(coverage, sequence.range, entry => entry?.range)
 
-    // for (const [i, range] of ranges.entries()) {
-    for (let i = 0; i < ranges.length; i++) {
-      // define CURSOR, which list the last range already covered in filled
-      const _last = last(filled)?.range
-      const __entries = _last?.getEntries() ?? []
-      const CURSOR = last(__entries) ?? null
+      assert(index !== -1, `Sequence overlaps with existing sequence (Should not happen when transfering sequences to coverage)`)
 
-      let range = ranges[i]
-      const _entries = range.getEntries()
+      coverage.splice(index, 0, { range: sequence.range, sequence })
+    }
 
-      // define LIMITS
-      //    A: first possible range (last currently in filled, fallback to first of range)
-      //    B: last possible range (last of range)
+    const _coverage = coverage.map(({ range }) => range.getEntries()).flat()
 
-      const B = _entries[_entries.length - 1]
-      let A = _entries[0]
-      if (CURSOR instanceof Point) A = new Interval(CURSOR.index, CURSOR.index)
-      else if (CURSOR instanceof Interval) A = new Point(CURSOR.end + 1)
+    // 2. Fill gaps by subtracting sequences from all ranges in space
+    //      basically a variant implementation of Range.sortedInsert (but here we clip the range to fit into a non-overlaping gap)
+    for (const range of space) {
+      // find latest range that ends before range
+      const previous = coverage.findLastIndex(({ range: covered }) => covered.offsetPoints(OFFSET).y <= range.offsetPoints(OFFSET).x)
 
-      // no more sequences to consume
-      if (!sequence) {
-        const R = Range.fromEntryRange(A, B)
-        const R_width = this.width(R)
-        if (R_width > 0) filled.push(Sequence.FILL(FILLING_COLOR(FILLING_CHARACTER), R))
+      // CLIP if there is overlap
+      let clipped = range.clone().subtract(_coverage)
 
-        continue
-      }
-
-      const beforeGap = new Range(A).compare(sequence.range)
-
-      // fill space between RANGE and SEQUENCE
-      if (beforeGap & RANGE_COMPARISON.STARTS_BEFORE) {
-        const before = A instanceof Point ? Range.fromPoint(A.index) : Range.fromInterval(A.start, sequence.range.x - 1)
-        if (this.width(before) > 0) filled.push(Sequence.FILL(FILLING_COLOR(FILLING_CHARACTER), before))
-      }
-
-      const position = range.compare(sequence.range)
-
-      // add sequence to filled (since it starts before range is finished <=> since range ends after sequence starts)
-      if (position & (RANGE_COMPARISON.ENDS_AFTER_START | RANGE_COMPARISON.ENDS_SAME)) {
-        while (sequence && range.compare(sequence.range) & (RANGE_COMPARISON.ENDS_AFTER_START | RANGE_COMPARISON.ENDS_SAME)) {
-          filled.push(sequence) // pass sequence
-
-          // discard ranges that are fully consumed by sequence
-          while (i + 1 < ranges.length && ranges[i + 1].compare(sequence.range) & (RANGE_COMPARISON.ENDS_SAME | RANGE_COMPARISON.ENDS_BEFORE)) {
-            range = ranges[++i]
-          }
-
-          sequence = queue.shift() // get next sequence
-
-          if (sequence) {
-            // find new cursor/A
-            // if it is not the same as "sequence" start, then dont continue this while (because there is gap missing)
-            const _last = last(filled)?.range
-            const __entries = _last?.getEntries() ?? []
-            const CURSOR = last(__entries) ?? null
-
-            let A = _entries[0]
-            if (CURSOR instanceof Point) A = new Interval(CURSOR.index, CURSOR.index)
-            else if (CURSOR instanceof Interval) A = new Point(CURSOR.end + 1)
-
-            // if (new Range(A).compare(sequence.range) & RANGE_COMPARISON.STARTS_BEFORE) debugger
-            if (new Range(A).compare(sequence.range) & RANGE_COMPARISON.STARTS_BEFORE) {
-              i--
-              break
-            }
-          }
+      // insert clipped range into coverage
+      for (const entry of clipped.getEntries()) {
+        const _range = new Range(entry)
+        if (this.width(_range) > 0) {
+          const index = coverage.findLastIndex(({ range: covered }) => covered.offsetPoints(OFFSET).y <= _range.offsetPoints(OFFSET).x)
+          coverage.splice(index + 1, 0, { range: _range })
         }
       }
     }
+
+    // 3. Compile coverage into sequences to return
+    const filled: Sequence[] = []
+    for (let { range, sequence } of coverage) filled.push(sequence ?? Sequence.FILL(paint.grey(` `), range))
 
     return filled
   }

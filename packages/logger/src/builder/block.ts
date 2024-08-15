@@ -30,6 +30,10 @@ export default class Block {
     this._style = style ?? []
   }
 
+  get length() {
+    return String(this._data).length
+  }
+
   // #region INTERNALS
 
   _clone() {
