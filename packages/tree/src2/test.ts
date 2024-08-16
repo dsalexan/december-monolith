@@ -19,6 +19,7 @@ import { OPERATORS } from "./type/declarations/operator"
 import { DEFAULT_SEPARATORS, SEPARATORS } from "./type/declarations/separator"
 import { WHITESPACES } from "./type/declarations/whitespace"
 import { COMPOSITES } from "./type/declarations/composite"
+import Simplify from "./phases/simplify"
 
 let expression = `1 + 2`
 expression = `1 a`
@@ -68,6 +69,7 @@ grammar.print()
 const lexer = new Lexer(grammar)
 const parser = new Parser(grammar)
 const semantic = new Semantic(grammar)
+const simplify = new Simplify(grammar)
 
 // 1. Print expression
 console.log(` `)
@@ -102,3 +104,6 @@ parser.print({
 
 semantic.process(expression, parser.AST)
 semantic.print({})
+
+simplify.process(expression, semantic.ST, semantic.symbolTable, {})
+simplify.print({})
