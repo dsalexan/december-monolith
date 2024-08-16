@@ -3,10 +3,12 @@
  */
 
 import { assert } from "console"
-import { orderBy } from "lodash"
+import { filter, orderBy } from "lodash"
 import { TypeName } from "./declarations/name"
 import Type from "./base"
-import { match } from "../pattern"
+import { Match } from "@december/utils"
+import type Node from "../node"
+import { SemanticalMatch } from "./rules/semantical"
 
 export default class Grammar {
   types: Map<TypeName, Type>
@@ -41,13 +43,33 @@ export default class Grammar {
       // ERROR: Unimplemented many patterns
       assert(lexical.patterns.length === 1, `Unimplemented multiple patterns`)
 
-      if (match(sequence, pattern)) matches.push(type)
+      if (Match.match(sequence, pattern)) matches.push(type)
     }
 
     // sort by priority (lower is worse)
     const sorted = orderBy(matches, [`priority`], [`desc`])
 
     return sorted
+  }
+
+  matchSemantical(parent: Node, children: Node[]) {
+    const _types = [...this.types.values()]
+    const types = filter(_types, (type: Type) => !!type.semantical?.match)
+
+    const matches: { type: Type; result: ReturnType<SemanticalMatch> }[] = []
+    for (const type of types) {
+      assert(type.semantical?.match, `Type lacks semantical (or semantical match)`)
+
+      const { match } = type.semantical!
+
+      const result = match!(parent, children)
+      if (result) matches.push({ type, result })
+    }
+
+    // sort matches
+    const sortedMatches = orderBy(matches, ({ type }) => type.semantical!.priority, `desc`)
+
+    return sortedMatches
   }
 
   print() {

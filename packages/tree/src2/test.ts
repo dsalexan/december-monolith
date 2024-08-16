@@ -6,14 +6,19 @@
  */
 
 import { range } from "lodash"
-import Lexer from "./lexer"
+
 import logger, { paint } from "./logger"
-import Parser from "./parser"
+
+import Grammar from "./type/grammar"
+import Lexer from "./phases/lexer"
+import Parser from "./phases/parser"
+import Semantic from "./phases/semantic"
+
 import { LITERALS, NUMBER, STRING } from "./type/declarations/literal"
 import { OPERATORS } from "./type/declarations/operator"
 import { DEFAULT_SEPARATORS, SEPARATORS } from "./type/declarations/separator"
 import { WHITESPACES } from "./type/declarations/whitespace"
-import Grammar from "./type/grammar"
+import { COMPOSITES } from "./type/declarations/composite"
 
 let expression = `1 + 2`
 expression = `1 a`
@@ -39,11 +44,16 @@ expression = `,teste`
 expression = ` 1`
 expression = ` , 1`
 expression = `[ 1] `
-// expression = `,1,2,`
-// expression = `teste, [1,2,3],`
-// expression = `teste, 1 + 3, A24, -10, [1, 2, 3,], 10 >= 1`
-// expression = `teste, 1 ; 2 | 1, 3`
+expression = `,1,2,`
+expression = `teste, [1,2,3],`
+expression = `teste, 1 + 3, A24, -10, [1, 2, 3,], 10 >= 1`
+expression = `teste, 1 ; 2 | 1, 3`
 expression = `teste, 1 ;, 2 | 1, 3`
+expression = `teste , 1.10, 1,5,  "inside ,quotes", fn(arg0, ..., argN)`
+expression = `[1]a`
+expression = `fn(), test`
+expression = `fn(1,2)`
+expression = `fn1(), fn2(1), fn3(1,2)`
 
 const grammar = new Grammar()
 grammar.add(...WHITESPACES)
@@ -51,11 +61,13 @@ grammar.add(...LITERALS)
 grammar.add(...SEPARATORS)
 grammar.add(...DEFAULT_SEPARATORS)
 grammar.add(...OPERATORS)
+grammar.add(...COMPOSITES)
 
 grammar.print()
 
 const lexer = new Lexer(grammar)
 const parser = new Parser(grammar)
+const semantic = new Semantic(grammar)
 
 // 1. Print expression
 console.log(` `)
@@ -87,3 +99,6 @@ parser.print({
   },
   style: {},
 })
+
+semantic.process(expression, parser.AST)
+semantic.print({})

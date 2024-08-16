@@ -1,7 +1,7 @@
 import { PartialDeep } from "type-fest"
-import type Token from "../../token"
-import type Node from "../node"
-import SyntaxTree from "../tree"
+import type Token from "../../../token"
+import type Node from "../../../node"
+import Tree from "../.."
 import { Grid } from "@december/logger"
 
 export interface BaseFormatOptions {

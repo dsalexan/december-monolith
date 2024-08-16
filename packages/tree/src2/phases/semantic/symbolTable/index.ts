@@ -1,10 +1,10 @@
 import assert from "assert"
 
-import churchill, { Block, paint, Paint } from "../logger"
+import churchill, { Block, paint, Paint } from "../../../logger"
 
-import type SyntaxTree from "../parser/tree"
-import type Node from "../parser/node"
-import { BY_TYPE } from "../type/styles"
+import type Tree from "../../../tree"
+import type Node from "../../../node"
+import { BY_TYPE } from "../../../type/styles"
 import { isString, max, sum } from "lodash"
 
 export const _logger = churchill.child(`tree`, undefined, { separator: `` })
@@ -15,13 +15,13 @@ export interface Simbol {
 }
 
 export default class SymbolTable {
-  public tree: SyntaxTree
+  public tree: Tree
   public symbols: Map<string, Simbol> = new Map()
   private reverse_content: Map<string, string> = new Map() // content -> key
 
   constructor() {}
 
-  static from(tree: SyntaxTree) {
+  static from(tree: Tree) {
     const table = new SymbolTable()
     table.from(tree)
 
@@ -53,7 +53,7 @@ export default class SymbolTable {
     throw new Error(`Type ${type} not implemented for searching symbol table`)
   }
 
-  from(tree: SyntaxTree) {
+  from(tree: Tree) {
     this.reset()
 
     this.tree = tree

@@ -3,8 +3,9 @@ import { isString } from "lodash"
 import { TypeName } from "./declarations/name"
 import LexicalRule, { LexicalRuleAdder } from "./rules/lexical"
 import SyntacticalRule, { SyntacticalRuleAdder, SyntacticalRuleDeriver } from "./rules/syntactical"
+import SemanticalRule, { SemanticalRuleAdder, SemanticalRuleDeriver } from "./rules/semantical"
 
-export type TypeID = `structural` | `literal` | `whitespace` | `separator` | `operator` | `identifier`
+export type TypeID = `structural` | `literal` | `whitespace` | `separator` | `operator` | `identifier` | `composite`
 
 export default class Type {
   public id: TypeID
@@ -12,10 +13,13 @@ export default class Type {
 
   public lexical?: LexicalRule
   public syntactical?: SyntacticalRule
+  public semantical?: SemanticalRule
 
   declare addLexical: typeof LexicalRuleAdder
   declare addSyntactical: typeof SyntacticalRuleAdder
   declare deriveSyntactical: typeof SyntacticalRuleDeriver
+  declare addSemantical: typeof SemanticalRuleAdder
+  declare deriveSemantical: typeof SemanticalRuleDeriver
 
   // debug/printing shit
   public prefix: string
@@ -29,6 +33,8 @@ export default class Type {
     this.addLexical = LexicalRuleAdder
     this.addSyntactical = SyntacticalRuleAdder
     this.deriveSyntactical = SyntacticalRuleDeriver
+    this.addSemantical = SemanticalRuleAdder
+    this.deriveSemantical = SemanticalRuleDeriver
   }
 
   toString() {

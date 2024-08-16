@@ -552,7 +552,8 @@ export default class Range {
 
       // if there is a gap between cursor and entry
       if (cursor[1] + OFFSET < start) {
-        debugger
+        intervals.push(cursor)
+        cursor = [start, end]
       } else {
         cursor[1] = end
       }

@@ -1,5 +1,5 @@
 import assert from "assert"
-import Node, { NODE_BALANCING } from "./node"
+import Node, { NODE_BALANCING } from "../node"
 import { isOperand } from "../type/base"
 import { isWrapper, LIST } from "../type/declarations/separator"
 import { isString, last, sortedIndex, sortedIndexBy } from "lodash"
@@ -15,7 +15,7 @@ import { NIL } from "../type/declarations/literal"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-export default class SyntaxTree {
+export default class Tree {
   public expression: string
   public root: Node
 
@@ -213,11 +213,11 @@ export default class SyntaxTree {
 
       newTarget = node
     } else if (node.type.id === `separator` && isWrapper(node.type)) {
-      let variant = node.attributes!.variant
+      let variant = node.tokenAttributes!.variant
 
       // if variant is opener-and-closer, we need to determine if it's an opener or closer based on ancestry
       if (variant === `opener-and-closer`) {
-        const openerAncestor = target.findAncestor(ancestor => ancestor.type.name === node.type.name && ancestor.attributes!.variant === `opener-and-closer` && ancestor.balancing === NODE_BALANCING.UNBALANCED)
+        const openerAncestor = target.findAncestor(ancestor => ancestor.type.name === node.type.name && ancestor.tokenAttributes!.variant === `opener-and-closer` && ancestor.balancing === NODE_BALANCING.UNBALANCED)
 
         variant = openerAncestor ? `closer` : `opener`
       }
@@ -230,7 +230,9 @@ export default class SyntaxTree {
         assert(target.parent, `Node has no parent`)
 
         // find first opener wrapper context in ancestry
-        const openerAncestor = target.findAncestor(ancestor => ancestor.type.name === node.type.name && ancestor.attributes!.variant === `opener` && ancestor.balancing === NODE_BALANCING.UNBALANCED)
+        const openerAncestor = target.findAncestor(
+          ancestor => ancestor.type.name === node.type.name && (ancestor.tokenAttributes!.variant === `opener` || ancestor.tokenAttributes!.variant === `opener-and-closer`) && ancestor.balancing === NODE_BALANCING.UNBALANCED,
+        )
 
         // ancestor closes separator
         if (openerAncestor) {
@@ -241,7 +243,7 @@ export default class SyntaxTree {
           openerAncestor._tokens.push(...node._tokens)
 
           // return ancestor (since closer node is never added to the tree)
-          newTarget = openerAncestor
+          newTarget = openerAncestor.parent
         }
         // target doesnt close
         else {

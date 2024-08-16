@@ -9,11 +9,13 @@ import { Match } from "@december/utils"
  *    OPERANDS have the highest priority, so no other node can be children of it
  */
 
-export const ROOT = new Type(`structural`, `root`, ``).addSyntactical(-Infinity, 1)
+const IDENTIFIER_PRIORITY = 10000000
+
+export const IDENTIFIER = new Type(`identifier`, `identifier`, `v`).addSemantical(IDENTIFIER_PRIORITY + 10)
 
 // WARN: Always update this list when adding a new recipe
-export const STRUCTURALS = [ROOT]
-export const STRUCTURALS_NAMES = [`root`] as const
-export type StructuralTypeName = (typeof STRUCTURALS_NAMES)[number]
+export const IDENTIFIERS = [IDENTIFIER]
+export const IDENTIFIER_NAMES = [`identifier`] as const
+export type IdentifierTypeName = (typeof IDENTIFIER_NAMES)[number]
 
-export const STRUCTURALSS_BY_NAME = STRUCTURALS.reduce((acc, recipe) => ({ ...acc, [recipe.name]: recipe }), {})
+export const IDENTIFIERS_BY_NAME = IDENTIFIERS.reduce((acc, recipe) => ({ ...acc, [recipe.name]: recipe }), {})

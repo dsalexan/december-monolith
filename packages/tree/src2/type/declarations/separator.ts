@@ -1,9 +1,9 @@
 import assert from "assert"
 import Type from "../base"
-import * as Pattern from "../../pattern"
+import { Match } from "@december/utils"
 import type Token from "../../token"
 import { isNil } from "lodash"
-import { EvaluatorOptions } from "../../lexer/evaluation"
+import { EvaluatorOptions } from "../../phases/lexer/evaluation"
 
 /**
  * Lower Priority means less nodes can be parent of this node
@@ -18,7 +18,7 @@ export function isWrapper(type: Type): type is (typeof WRAPPER_SEPARATORS)[numbe
   return type.id === `separator` && WRAPPER_SEPARATOR_NAMES.includes(type.name as WrapperSeparatorTypeName)
 }
 
-export function openerAndCloserAreTheSame(pattern: Pattern.ListPattern) {
+export function openerAndCloserAreTheSame(pattern: Match.Value.ListValuePattern) {
   return pattern.type === `list` && pattern.values[0] === pattern.values[1]
 }
 
@@ -32,7 +32,7 @@ export function WrapperEvaluator(token: Token, options: EvaluatorOptions) {
 
   const value = token.lexeme
 
-  if (pattern.type === `string`) variant = `intermediary`
+  if (pattern.type === `equals`) variant = `intermediary`
   else if (pattern.type === `list`) {
     if (openerAndCloserAreTheSame(pattern) && value === pattern.values[0]) variant = `opener-and-closer`
     else if (value === pattern.values[0]) variant = `opener`
@@ -45,15 +45,15 @@ export function WrapperEvaluator(token: Token, options: EvaluatorOptions) {
 }
 
 export const LIST = new Type(`separator`, `list`, `L`).addSyntactical(SEPARATOR_PRIORITY + 16, Infinity) // list of "nodes", has no lexical equivalent
-export const COMMA = new Type(`separator`, `comma`, `C`).addLexical(SEPARATOR_PRIORITY + 15, Pattern.STRING(`,`)).deriveSyntactical(Infinity)
-export const COLON = new Type(`separator`, `colon`, `N`).addLexical(SEPARATOR_PRIORITY + 14, Pattern.STRING(`;`)).deriveSyntactical(Infinity)
-export const PIPE = new Type(`separator`, `pipe`, `P`).addLexical(SEPARATOR_PRIORITY + 13, Pattern.STRING(`|`)).deriveSyntactical(Infinity)
+export const COMMA = new Type(`separator`, `comma`, `C`).addLexical(SEPARATOR_PRIORITY + 15, Match.Value.EQUALS(`,`)).deriveSyntactical(Infinity)
+export const COLON = new Type(`separator`, `colon`, `N`).addLexical(SEPARATOR_PRIORITY + 14, Match.Value.EQUALS(`;`)).deriveSyntactical(Infinity)
+export const PIPE = new Type(`separator`, `pipe`, `P`).addLexical(SEPARATOR_PRIORITY + 13, Match.Value.EQUALS(`|`)).deriveSyntactical(Infinity)
 
-export const PARENTHESIS = new Type(`separator`, `paranthesis`, `ρ`).addLexical(SEPARATOR_PRIORITY + 7, Pattern.LIST(`(`, `)`), WrapperEvaluator).deriveSyntactical(Infinity)
-export const BRACES = new Type(`separator`, `braces`, `γ`).addLexical(SEPARATOR_PRIORITY + 6, Pattern.LIST(`{`, `}`), WrapperEvaluator).deriveSyntactical(Infinity)
-export const BRACKETS = new Type(`separator`, `brackets`, `β`).addLexical(SEPARATOR_PRIORITY + 5, Pattern.LIST(`[`, `]`), WrapperEvaluator).deriveSyntactical(Infinity)
-export const QUOTES = new Type(`separator`, `quotes`, `κ`).addLexical(SEPARATOR_PRIORITY + 4, Pattern.LIST(`"`, `"`), WrapperEvaluator).deriveSyntactical(Infinity)
-export const PERCENTAGE = new Type(`separator`, `percentage`, `τ`).addLexical(SEPARATOR_PRIORITY + 3, Pattern.LIST(`%`, `%`), WrapperEvaluator).deriveSyntactical(Infinity)
+export const PARENTHESIS = new Type(`separator`, `paranthesis`, `ρ`).addLexical(SEPARATOR_PRIORITY + 7, Match.Value.LIST(`(`, `)`), WrapperEvaluator).deriveSyntactical(Infinity)
+export const BRACES = new Type(`separator`, `braces`, `γ`).addLexical(SEPARATOR_PRIORITY + 6, Match.Value.LIST(`{`, `}`), WrapperEvaluator).deriveSyntactical(Infinity)
+export const BRACKETS = new Type(`separator`, `brackets`, `β`).addLexical(SEPARATOR_PRIORITY + 5, Match.Value.LIST(`[`, `]`), WrapperEvaluator).deriveSyntactical(Infinity)
+export const QUOTES = new Type(`separator`, `quotes`, `κ`).addLexical(SEPARATOR_PRIORITY + 4, Match.Value.LIST(`"`, `"`), WrapperEvaluator).deriveSyntactical(Infinity)
+export const PERCENTAGE = new Type(`separator`, `percentage`, `τ`).addLexical(SEPARATOR_PRIORITY + 3, Match.Value.LIST(`%`, `%`), WrapperEvaluator).deriveSyntactical(Infinity)
 
 // WARN: Always update this list when adding a new recipe
 export const WRAPPER_SEPARATORS = [PARENTHESIS, BRACES, BRACKETS, QUOTES, PERCENTAGE]

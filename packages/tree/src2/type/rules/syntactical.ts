@@ -7,9 +7,9 @@
  */
 
 import { isArray, isNil } from "lodash"
-import { Pattern } from "../../pattern"
+import { Match } from "@december/utils"
 import type Type from "../base"
-import { EvaluateFunction } from "../../lexer/evaluation"
+import { EvaluateFunction } from "../../phases/lexer/evaluation"
 import assert from "assert"
 
 export function SyntacticalRuleAdder(this: Type, priority: number, narity: number) {
@@ -24,9 +24,9 @@ export function SyntacticalRuleAdder(this: Type, priority: number, narity: numbe
 export function SyntacticalRuleDeriver(this: Type, narity: number, { priority }: Partial<SyntacticalRule> = {}) {
   this.syntactical = new SyntacticalRule()
 
-  assert(this.lexical, `deriveSyntactical requires LexicalRule to derive from`)
+  assert(this.lexical || this.semantical, `deriveSyntactical requires either a LexicalRule or SemanticalRule to derive from`)
 
-  this.addSyntactical(priority ?? this.lexical.priority, narity)
+  this.addSyntactical(priority ?? this.lexical?.priority ?? this.syntactical?.priority, narity)
 
   return this
 }

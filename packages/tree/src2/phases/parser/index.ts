@@ -1,5 +1,5 @@
-import Token from "../token"
-import SymbolTable from "../symbolTable"
+import Token from "../../token"
+import SymbolTable from "../semantic/symbolTable"
 
 /**
  * SYNTATIC ANALYSIS
@@ -58,19 +58,20 @@ import SymbolTable from "../symbolTable"
  * OPERATOR
  */
 
-import churchill, { Block, paint, Paint } from "../logger"
-import Node from "./node"
-import { isOperand } from "../type/base"
-import Grammar from "../type/grammar"
+import churchill, { Block, paint, Paint } from "../../logger"
+import Node from "../../node"
+import { isOperand } from "../../type/base"
+import Grammar from "../../type/grammar"
 import assert from "assert"
-import SyntaxTree from "./tree"
+import Tree from "../../tree"
 
 import { range, sum } from "lodash"
 
 import { Grid } from "@december/logger"
 import { Range } from "@december/utils"
-import * as Formats from "./formats"
-import { PrintOptions } from "./printer"
+import * as Formats from "../../tree/printer/formats"
+import { PrintOptions } from "../../tree/printer"
+import { STRING, STRING_COLLECTION } from "../../type/declarations/literal"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -85,8 +86,7 @@ export default class Parser {
   // tokenized expression -> AT
   private expression: string
   private tokens: Token[]
-  private AT: SyntaxTree
-  public AST: SyntaxTree
+  public AST: Tree
   public symbolTable: SymbolTable
   //
 
@@ -108,23 +108,20 @@ export default class Parser {
 
     this._process()
 
-    return this.tokens
+    return this.AST
   }
 
   /** Process tokenized expression into an AST */
   private _process() {
-    this.AT = this._abstractTree()
-    this.AST = this._abstractSyntaxTree(this.AT)
+    this.AST = this._abstractTree()
 
     // TODO: Validate AST
     // TODO: Print errors found in AST
-    // TODO: Build symbol table
-    this.symbolTable = SymbolTable.from(this.AT)
   }
 
   /** Parses the tokenized expression into an abstract tree */
   private _abstractTree(start = 0) {
-    const tree = new SyntaxTree(this.expression)
+    const tree = new Tree(this.expression)
 
     // consume tokens until the end of the token list
     let current: Node = tree.root
@@ -139,43 +136,6 @@ export default class Parser {
 
       // advance to next token
       cursor++
-    }
-
-    return tree
-  }
-
-  /** Parses an abstract tree into a Abstract Syntax Tree */
-  private _abstractSyntaxTree(AT: unknown) {
-    const __DEBUG = true // COMMENT
-
-    // TODO: Ignore whitespaces when necessary
-    // TODO: Aggregate quotes + literals as a string node (how reversible the process should be? maybe I should create a new node type?)
-    // TODO:
-
-    const tree = new SyntaxTree(this.expression, this.AT.root.clone())
-
-    const queue = [this.AT.root]
-
-    while (queue.length) {
-      const ATParent = queue.shift()!
-
-      const parent = tree.root.find(node => node.id === ATParent.id)!
-
-      assert(parent, `Parent node not found`)
-
-      // insert node at AST
-      for (const ATNode of ATParent.children) {
-        const node = ATNode.clone()
-
-        // A. ignore whitespaces
-        if (node.type.name === `whitespace`) continue
-
-        // B.
-
-        parent._addChild(node)
-
-        queue.push(ATNode) // enqueue child
-      }
     }
 
     return tree
@@ -196,25 +156,12 @@ export default class Parser {
     console.log(`\n`)
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
     _logger
-      .add(paint.grey(`ABSTRACT TREE`)) //
-      .info()
-    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
-
-    this.AT.print(this.AT.root, options)
-
-    // 3. Print Abstract Tree
-    console.log(`\n`)
-    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
-    _logger
       .add(paint.grey(`ABSTRACT SYNTAX TREE`)) //
       .info()
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
+    console.log(``)
 
     this.AST.print(this.AST.root, options)
-
-    // 4. Print symbol table
-    // console.log(`\n`)
-    // this.symbolTable.print()
   }
 
   // #endregion

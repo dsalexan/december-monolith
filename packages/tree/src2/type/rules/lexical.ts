@@ -7,11 +7,11 @@
  */
 
 import { isArray, isNil } from "lodash"
-import { Pattern } from "../../pattern"
+import { Match } from "@december/utils"
 import type Type from "../base"
-import { EvaluateFunction } from "../../lexer/evaluation"
+import { EvaluateFunction } from "../../phases/lexer/evaluation"
 
-export function LexicalRuleAdder(this: Type, priority: number, patterns: Pattern | Pattern[], evaluate?: EvaluateFunction | undefined) {
+export function LexicalRuleAdder(this: Type, priority: number, patterns: Match.Pattern | Match.Pattern[], evaluate?: EvaluateFunction | undefined) {
   this.lexical = new LexicalRule()
 
   this.lexical.priority = priority
@@ -23,6 +23,6 @@ export function LexicalRuleAdder(this: Type, priority: number, patterns: Pattern
 
 export default class LexicalRule {
   public priority: number
-  public patterns: Pattern[]
+  public patterns: Match.Pattern[]
   public evaluate: EvaluateFunction
 }

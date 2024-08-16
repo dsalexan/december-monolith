@@ -1,15 +1,16 @@
 import { Grid, paint } from "@december/logger"
 import { Range } from "@december/utils"
 
-import type Node from "../node"
-import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "../../type/styles"
-import { numberToLetters } from "../../utils"
-import type Token from "../../token"
+import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "../../../type/styles"
+import { numberToLetters } from "../../../utils"
+import type Token from "../../../token"
 import { PartialDeep } from "type-fest"
 
 import { BaseFormatOptions, FormatFunction, TokenFormatOptions } from "./base"
 import assert from "assert"
-import type SyntaxTree from "../tree"
+
+import type Node from "../../../node"
+import type Tree from "../.."
 
 export function formatName(level: number, node: Node, token: Token | undefined, { ...options }: TokenFormatOptions): Grid.Sequence.Sequence[] {
   if (level !== node.level) return [Grid.Sequence.Sequence.FILL(paint.yellow(` `), token?.interval?.toRange() ?? node.range)]
@@ -28,8 +29,8 @@ export function formatName(level: number, node: Node, token: Token | undefined, 
   if (node.type.name === `whitespace`) {
     repr = ` `
     color = paint.gray
-  } else if (node.type.id === `literal`) {
-    if (node.type.name === `number`) repr = `${node.type.prefix}${numberToLetters(node.number.level)}`
+  } else if (node.type.id === `literal` || node.type.name === `identifier`) {
+    if (node.type.name === `number` || node.type.name === `string_collection` || node.type.name === `identifier`) repr = `${node.type.prefix}${numberToLetters(node.number.level)}`
     else if (node.type.name === `string`) repr = `${numberToLetters(node.number.level)}`
     else if (node.type.name === `nil`) repr = `${node.type.prefix}`
   } else if (node.type.name === `list`) {
@@ -54,8 +55,8 @@ export function formatName(level: number, node: Node, token: Token | undefined, 
   return [sequence]
 }
 
-// (tree: SyntaxTree, options: TokenFormatOptions) => Grid.Sequence.Sequence[]
-export default function name(tree: SyntaxTree, level: number, format: TokenFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
+// (tree: Tree, options: TokenFormatOptions) => Grid.Sequence.Sequence[]
+export default function name(tree: Tree, level: number, format: TokenFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
   return {
     fn: () => {
       const tokens = tree.root.tokenize(level)

@@ -2,14 +2,15 @@ import { difference } from "lodash"
 import { Grid, paint } from "@december/logger"
 import { Range } from "@december/utils"
 
-import type Node from "../node"
-import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "../../type/styles"
-import { FlatNode } from "../node"
-import type Token from "../../token"
+import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "../../../type/styles"
+
+import type Token from "../../../token"
 import { PartialDeep } from "type-fest"
 import { FormatFunction, TokenFormatOptions } from "./base"
 import assert from "assert"
-import type SyntaxTree from "../tree"
+
+import type Node from "../../../node"
+import type Tree from "../.."
 
 export function formatContent(level: number, node: Node, token: Token | undefined, { ...options }: TokenFormatOptions): Grid.Sequence.Sequence[] {
   const sequences: Grid.Sequence.Sequence[] = []
@@ -17,6 +18,7 @@ export function formatContent(level: number, node: Node, token: Token | undefine
   const higherContent = node.level < level
 
   // if (global.__DEBUG_LABEL === `,->root` && node.name === `C1.a`) debugger
+  // if (node.name === `s3.b`) debugger
 
   const tokens = token ? [{ node, token }] : node.tokenize()
   const __DEBUG_TOKENS = tokens.map(token => {
@@ -38,6 +40,8 @@ export function formatContent(level: number, node: Node, token: Token | undefine
       if (node.id !== leaf.id) color = color.dim
     } else if (node.type.id === `separator`) {
       if (node.id !== leaf.id) color = color.dim
+    } else if (node.type.name === `function`) {
+      if (node.id !== leaf.id && !leaf.attributes.tags.includes(`name`)) color = color.dim
     }
 
     // if (repr.length === 0) repr = `⌀`
@@ -52,7 +56,7 @@ export function formatContent(level: number, node: Node, token: Token | undefine
   return sequences
 }
 
-export default function content(tree: SyntaxTree, level: number, format: TokenFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
+export default function content(tree: Tree, level: number, format: TokenFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
   return {
     fn: () => {
       // if (level === 3) debugger

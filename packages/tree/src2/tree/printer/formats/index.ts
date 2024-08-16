@@ -20,4 +20,4 @@ export interface FormatSpec {
 
 export type RowSpec = FormatSpec | `BREAKLINE`
 
-export * as Styles from "../../type/styles"
+export * as Styles from "../../../type/styles"

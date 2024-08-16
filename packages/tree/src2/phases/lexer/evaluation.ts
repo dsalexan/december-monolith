@@ -1,5 +1,5 @@
-import type Token from "../token"
-import type { Attributes } from "../token/attributes"
+import type Token from "../../token"
+import type { Attributes } from "../../token/attributes"
 
 export interface EvaluatorOptions {}
 

@@ -1,7 +1,9 @@
 import { push } from "@december/utils"
 // AST: Abstract Syntax Tree
 
-import { identity, indexOf, isNil, isString, orderBy, uniq, uniqBy } from "lodash"
+export * as Search from "./search"
+
+import { cloneDeep, identity, indexOf, isArray, isNil, isString, orderBy, reverse, uniq, uniqBy } from "lodash"
 import Token from "../token"
 
 import { v4 as uuidv4 } from "uuid"
@@ -11,8 +13,9 @@ import { ROOT } from "../type/declarations/structural"
 import { Point, Range } from "@december/utils"
 import { numberToLetters } from "../utils"
 
-import SyntaxTree from "./tree"
 import { isWrapper } from "../type/declarations/separator"
+
+import { Attributes } from "./attributes"
 
 export const NODE_BALANCING = {
   UNBALANCED: `UNBALANCED`,
@@ -47,12 +50,35 @@ export default class Node {
   private _tokens: Token[]
   private _type: Type | null
   public _range: Range // this is only returned in "get range()" if node is tokenless AND childless
+  private _attributes: Attributes
 
   public get tokens() {
     return this._tokens
   }
 
+  private _defaultAttributes() {
+    this._attributes ??= {
+      tags: [],
+    }
+  }
+
   public get attributes() {
+    this._defaultAttributes()
+    return this._attributes!
+  }
+
+  public setAttributes(attributes: Partial<Attributes>) {
+    this._defaultAttributes()
+
+    this._attributes = {
+      ...this._attributes,
+      ...attributes,
+    }
+
+    return this
+  }
+
+  public get tokenAttributes() {
     // TODO: Implement for multiple tokens
     if (this._tokens.length > 1) debugger
 
@@ -77,6 +103,9 @@ export default class Node {
     assert(uniqueTokens.length > 0, `Node has multiple token types`)
 
     return uniqueTokens[0]
+  }
+  public setType(type: Type) {
+    this._type = type
   }
 
   private _children: Node[] = []
@@ -125,7 +154,9 @@ export default class Node {
 
     if (this.tokens.length === 0) return this.children.map(child => child.lexeme()).join(``)
 
-    return this._tokens[0].lexeme
+    return this._tokens.map(token => token.lexeme).join(``)
+
+    // return this._tokens[0].lexeme
   }
 
   /** Non-overflowable content */
@@ -133,12 +164,7 @@ export default class Node {
     // TODO: Implement for tokenless and childless nodes that are not points
     if (this._tokens.length === 0 && this.children.length === 0 && !this._range.columnIsPoint(`first`)) debugger
 
-    if (this._tokens.length) {
-      // TODO: Implement for >= 2 tokens
-      if (this._tokens.length > 1) debugger
-
-      return this._tokens[0].lexeme
-    }
+    if (this._tokens.length) return this._tokens.map(token => token.lexeme).join(``)
 
     return null
   }
@@ -157,9 +183,6 @@ export default class Node {
         if (content !== null) tokens.push(content)
       } else tokens.push(token.lexeme)
     })
-
-    // TODO: Implement for > 2 tokens
-    if (this._tokens.length > 2) debugger
 
     return tokens.join(``)
   }
@@ -249,13 +272,13 @@ export default class Node {
     }
   }
 
-  _removeChild(node: Node) {
+  _removeChild(node: Node, IGNORE_UPDATE_NUMBERS = false) {
     const { index } = this._children.find(child => child.id === node.id) ?? { index: -1 }
 
-    return this._removeChildAt(index)
+    return this._removeChildAt(index, IGNORE_UPDATE_NUMBERS)
   }
 
-  _removeChildAt(index: number) {
+  _removeChildAt(index: number, IGNORE_UPDATE_NUMBERS = false) {
     assert(index > -1, `Node not found in children`)
     assert(index < this._children.length, `Node not found in children`)
 
@@ -263,18 +286,25 @@ export default class Node {
 
     // remove child
     const [node] = this._children.splice(index, 1)
-    node._removeParent()
+    node._removeParent(IGNORE_UPDATE_NUMBERS)
 
     // update indexes
     for (let i = index; i < this._children.length; i++) this._children[i]._index = i
 
     // update numbers
-    this.root._updateNumbers(level)
+    if (!IGNORE_UPDATE_NUMBERS) this.root._updateNumbers(level, IGNORE_UPDATE_NUMBERS)
 
     return node
   }
 
-  _addChild(node: Node, index: number | null = null) {
+  removeAllChildren(IGNORE_UPDATE_NUMBERS = false) {
+    const children = reverse(this._children)
+    for (const child of children) this._removeChild(child, IGNORE_UPDATE_NUMBERS)
+
+    return reverse(children)
+  }
+
+  _addChild(node: Node, index: number | null = null, IGNORE_UPDATE_NUMBERS = false) {
     // determine index
     if (index === null) index = this._children.length
 
@@ -286,10 +316,10 @@ export default class Node {
     for (let i = index; i < this._children.length; i++) this._children[i]._index = i
 
     // update numbers
-    this.root._updateNumbers(this.level)
+    if (!IGNORE_UPDATE_NUMBERS) this.root._updateNumbers(this.level)
   }
 
-  _removeParent() {
+  _removeParent(IGNORE_UPDATE_NUMBERS = false) {
     if (this._parent) {
       this._parent = null
       this._index = -1
@@ -298,12 +328,14 @@ export default class Node {
     }
   }
 
-  _addToParent(parent: Node, index: number | null = null) {
+  _addToParent(parent: Node, index: number | null = null, IGNORE_UPDATE_NUMBERS = false) {
     // first, remove from current parent
-    if (this.parent) this.parent._removeChild(this)
+    if (this.parent) this.parent._removeChild(this, IGNORE_UPDATE_NUMBERS)
 
     // add to new parent
-    parent._addChild(this, index)
+    parent._addChild(this, index, IGNORE_UPDATE_NUMBERS)
+
+    return this
   }
 
   // #endregion
@@ -338,8 +370,29 @@ export default class Node {
     return null
   }
 
-  addToken(token: Token) {
-    this._tokens.push(token)
+  scope(predicate: (node: Node) => string[]) {
+    const scopes: string[] = []
+
+    let ancestor: Node | null = this
+
+    while (ancestor) {
+      const result = predicate(ancestor)
+
+      for (const tag of result) if (!scopes.includes(tag)) scopes.push(tag)
+
+      ancestor = ancestor.parent
+    }
+
+    return scopes
+  }
+
+  addToken(token: Token | Token[], index?: number) {
+    const tokens = isArray(token) ? token : [token]
+    this._tokens.splice(index ?? this._tokens.length, 0, ...tokens)
+  }
+
+  clearTokens() {
+    this._tokens.splice(0, this._tokens.length)
   }
 
   tokenize(level?: number): { node: Node; token?: Token }[] {
@@ -380,22 +433,56 @@ export default class Node {
         // ERROR: Never tested
         if (this._tokens.length > children.length + 1) debugger
 
-        let i = 0
-        for (i = 0; i < this._tokens.length; i++) {
-          const child = children[i]
+        // for infinte narities, just intercalate tokens and children
+        //    OR use traversalIndex (in token.attributes) if any
 
-          if (!child) debugger
-          child.traverse(predicate, maxLevel)
+        const traversalList: (Node | Token)[] = [...children]
 
-          const token = this._tokens[i]
+        let tokens: { token: Token; index: number }[] = []
 
-          if (!token) debugger
-          predicate(this, token)
+        // first add "intercalation" tokens (those without traversal index)
+        let cursor = 0
+        for (const token of this._tokens) {
+          if (token.attributes.traversalIndex !== undefined) continue
+          tokens.push({ token, index: cursor++ })
         }
 
-        const lastChild = children[i]
-        // if (!lastChild) debugger
-        if (lastChild) lastChild.traverse(predicate, maxLevel)
+        let reverseSortedTokens = orderBy(tokens, ({ index }) => index, `desc`)
+        for (const { token, index } of reverseSortedTokens) traversalList.splice(index, 0, token)
+
+        // second add fixed traversal indexes
+        tokens = []
+        for (const token of this._tokens) {
+          const index = token.attributes.traversalIndex
+          if (index === undefined) continue
+
+          tokens.push({ token, index: index >= 0 ? index : tokens.length + index })
+        }
+
+        reverseSortedTokens = orderBy(tokens, ({ index }) => index, `desc`)
+        for (const { token, index } of reverseSortedTokens) traversalList.splice(index, 0, token)
+
+        for (const entry of traversalList) {
+          if (entry instanceof Token) predicate(this, entry)
+          else entry.traverse(predicate, maxLevel)
+        }
+
+        // let i = 0
+        // for (i = 0; i < this._tokens.length; i++) {
+        //   const child = children[i]
+
+        //   if (!child) debugger
+        //   child.traverse(predicate, maxLevel)
+
+        //   const token = this._tokens[i]
+
+        //   if (!token) debugger
+        //   predicate(this, token)
+        // }
+
+        // const lastChild = children[i]
+        // // if (!lastChild) debugger
+        // if (lastChild) lastChild.traverse(predicate, maxLevel)
       }
     } else if (narity === 1) {
       // ERROR: Never tested
@@ -404,16 +491,13 @@ export default class Node {
       predicate(this, null)
       children[0].traverse(predicate, maxLevel)
     } else if (narity === 2) {
-      // WARN: Untested
-      if (this._tokens.length === 0) debugger
-
       // TODO: How to position multiple tokens? A single token should be at center, thats ok
       if (this._tokens.length > 1) debugger
 
       const [left, right] = children
 
       left.traverse(predicate, maxLevel)
-      predicate(this, this.tokens[0])
+      if (this._tokens.length > 0) predicate(this, this.tokens[0])
       right?.traverse(predicate, maxLevel)
     } else throw new Error(`Unsupported n-arity "${narity}" when printing node text`)
   }
@@ -423,8 +507,14 @@ export default class Node {
 
     node.id = this.id
     node._tokens = this._tokens.map(token => token.clone())
+    if (this._attributes) node._attributes = cloneDeep(this._attributes)
 
     return node
+  }
+
+  toString() {
+    const _tags = this.attributes.tags.length ? ` [${this.attributes.tags.join(`,`)}]` : ``
+    return `${this.name}${_tags}`
   }
 }
 

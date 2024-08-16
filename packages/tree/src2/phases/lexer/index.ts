@@ -10,17 +10,17 @@
  */
 
 import assert from "assert"
-import Token from "../token"
-import LexicalGrammar from "../type/grammar"
+import Token from "../../token"
+import LexicalGrammar from "../../type/grammar"
 import { omit, orderBy, sortedIndex } from "lodash"
 
-import churchill, { Block, paint, Paint } from "../logger"
-import Type from "../type/base"
-import { Lexeme } from "../token/lexeme"
-import { UNKNOWN } from "../type/declarations/literal"
-import Grammar from "../type/grammar"
+import churchill, { Block, paint, Paint } from "../../logger"
+import Type from "../../type/base"
+import { Lexeme } from "../../token/lexeme"
+import { UNKNOWN } from "../../type/declarations/literal"
+import Grammar from "../../type/grammar"
 import { EvaluatorOptions } from "./evaluation"
-import { TypeName } from "../type/declarations/name"
+import { TypeName } from "../../type/declarations/name"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -270,7 +270,14 @@ export default class Lexer {
   print() {
     const logger = _logger
 
-    console.log(` `)
+    console.log(`\n`)
+    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
+    _logger
+      .add(paint.grey(`TOKENIZED EXPRESSION`)) //
+      .info()
+    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
+    console.log(``)
+
     logger.add(paint.gray(this.expression)).info()
     console.log(` `)
 
@@ -289,7 +296,6 @@ export default class Lexer {
     }
 
     logger.info()
-    console.log(` `)
 
     // PRINT EACH TOKEN
     for (const token of this.tokens) {

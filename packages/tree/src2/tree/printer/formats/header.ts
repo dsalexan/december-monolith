@@ -2,14 +2,15 @@ import { difference, last } from "lodash"
 import { Grid, paint } from "@december/logger"
 import { Range } from "@december/utils"
 
-import type Node from "../node"
-import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "../../type/styles"
-import { FlatNode } from "../node"
-import type Token from "../../token"
+import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "../../../type/styles"
+
+import type Token from "../../../token"
 import { PartialDeep } from "type-fest"
 import type { BaseFormatOptions, ExpressionFormatOptions, FormatFunction } from "./base"
 import assert from "assert"
-import type SyntaxTree from "../tree"
+
+import type Node from "../../../node"
+import type Tree from "../.."
 
 export function formatHeader(expression: string, printIndex: boolean, { ...options }: ExpressionFormatOptions): Grid.Sequence.Sequence[] {
   // if (global.__DEBUG_LABEL === `,->root` && node.name === `root`) debugger
@@ -37,8 +38,8 @@ export function formatHeader(expression: string, printIndex: boolean, { ...optio
   return sequences
 }
 
-// (tree: SyntaxTree, options: TokenFormatOptions) => Grid.Sequence.Sequence[]
-export default function header(tree: SyntaxTree, printIndex: boolean, format: ExpressionFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
+// (tree: Tree, options: TokenFormatOptions) => Grid.Sequence.Sequence[]
+export default function header(tree: Tree, printIndex: boolean, format: ExpressionFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
   return {
     fn: () => formatHeader(tree.expression, printIndex, format),
     printingOptions: print,

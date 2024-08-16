@@ -1,0 +1,92 @@
+import assert from "assert"
+
+export interface BasePattern {}
+
+// ATOMIC PATTERNS
+
+export interface StringPattern extends BasePattern {
+  type: `string`
+  value: string
+}
+
+export interface RegexPattern extends BasePattern {
+  type: `regex`
+  pattern: RegExp
+}
+
+export interface ListPattern extends BasePattern {
+  type: `list`
+  values: string[]
+}
+
+// MULTIPLE PATTERNS
+
+export interface MultiplePattern extends BasePattern {
+  patterns: Pattern[]
+  not: boolean
+}
+
+export interface AndPattern extends MultiplePattern {
+  type: `and`
+}
+
+export interface OrPattern extends MultiplePattern {
+  type: `or`
+}
+
+export const AtomicPatternTypes = [`string`, `regex`, `list`] as const
+export const MultiplePatternTypes = [`and`, `or`] as const
+export const PatternTypes = [...AtomicPatternTypes, ...MultiplePatternTypes] as const
+export type PatternType = (typeof PatternTypes)[number]
+
+export type Pattern = StringPattern | RegexPattern | ListPattern | AndPattern | OrPattern
+
+// #region FACTORIES
+
+export function STRING(value: string): StringPattern {
+  return { type: `string`, value }
+}
+
+export function REGEX(pattern: RegExp): RegexPattern {
+  return { type: `regex`, pattern }
+}
+
+export function LIST(...values: string[]): ListPattern {
+  return { type: `list`, values }
+}
+
+//
+
+export function AND(...patterns: Pattern[]): AndPattern {
+  return { type: `and`, patterns, not: false }
+}
+
+export function OR(...patterns: Pattern[]): OrPattern {
+  return { type: `or`, patterns, not: false }
+}
+
+export function NOT_AND(...patterns: Pattern[]): AndPattern {
+  return { type: `and`, patterns, not: true }
+}
+
+export function NOT_OR(...patterns: Pattern[]): OrPattern {
+  return { type: `or`, patterns, not: true }
+}
+
+// #endregion
+
+export function match(value: string, pattern: Pattern): boolean {
+  if (pattern.type === `string`) return pattern.value === value
+  else if (pattern.type === `regex`) return pattern.pattern.test(value)
+  else if (pattern.type === `list`) return pattern.values.includes(value)
+  //
+  else if (pattern.type === `and`) {
+    const result = pattern.patterns.every(p => match(value, p))
+    return pattern.not ? !result : result
+  } else if (pattern.type === `or`) {
+    const result = pattern.patterns.some(p => match(value, p))
+    return pattern.not ? !result : result
+  } else assert(false, `Invalid pattern type`)
+
+  return false
+}

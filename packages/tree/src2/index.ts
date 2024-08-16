@@ -72,4 +72,4 @@
  */
 
 export * as Token from "./token"
-import * as Parser from "./parser"
+import * as Parser from "./phases/parser"

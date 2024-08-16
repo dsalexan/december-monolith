@@ -13,6 +13,7 @@ export const BY_TYPE_ID: Partial<Record<TypeID, Paint>> = {
   literal: paint.blue,
   separator: paint.green,
   operator: paint.white,
+  composite: paint.magenta,
 }
 
 export const BY_TYPE_NAME: Partial<Record<TypeName, Paint>> = {

@@ -1,27 +1,27 @@
 import { Range } from "@december/utils"
 import { Grid } from "@december/logger"
-import churchill, { Block, paint, Paint } from "../logger"
+import churchill, { Block, paint, Paint } from "../../logger"
 
 import { PartialDeep } from "type-fest"
 
-import type SyntaxTree from "./tree"
-import type Node from "./node"
+import type Tree from ".."
+import type Node from "../../node"
 import { content, RowSpec, header, name } from "./formats"
 import { isString, last, sum } from "lodash"
 import { TokenFormatOptions } from "./formats/base"
 import { PartialObjectDeep } from "type-fest/source/partial-deep"
-import { baseAlphabet, numberToLetters } from "../utils"
+import { baseAlphabet, numberToLetters } from "../../utils"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export default class TreePrinter {
   constructor() {}
 
-  static print(tree: SyntaxTree, from: Node, options: PrintOptions) {
+  static print(tree: Tree, from: Node, options: PrintOptions) {
     return new TreePrinter().print(tree, from, options)
   }
 
-  _setup(tree: SyntaxTree, from: Node, options: PrintOptions): PrintSetup {
+  _setup(tree: Tree, from: Node, options: PrintOptions): PrintSetup {
     const nodesByLevel = tree.nodesByLevel()
 
     const style: PrintSetup[`style`] = {
@@ -99,7 +99,7 @@ export default class TreePrinter {
     }
   }
 
-  print(tree: SyntaxTree, from: Node, options: PrintOptions) {
+  print(tree: Tree, from: Node, options: PrintOptions) {
     const { logger, style, ...setup } = this._setup(tree, from, options)
 
     // TODO: Print original expression reconstructed from AT

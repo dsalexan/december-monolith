@@ -14,9 +14,9 @@ import { Attributes } from "./attributes"
  *
  */
 
-import type Lexer from "../lexer"
+import type Lexer from "../phases/lexer"
 import assert from "assert"
-import { EvaluatorOptions } from "../lexer/evaluation"
+import { EvaluatorOptions } from "../phases/lexer/evaluation"
 import Grammar from "../type/grammar"
 import { Interval } from "@december/utils"
 import { cloneDeep } from "lodash"
@@ -103,11 +103,17 @@ export default class Token<TValue = any> {
     this._attributes = this.type.lexical!.evaluate(this, options) ?? {}
   }
 
-  clone() {
-    const token = new Token(this.lexer, { start: this.interval.start, length: this.interval.length, type: this.type })
+  clone(lexeme?: Lexeme, attributes?: Partial<Attributes<TValue>>) {
+    lexeme ??= { start: this.interval.start, length: this.interval.length, type: this.type }
 
-    token._attributes = cloneDeep(this._attributes)
+    const token = new Token(this.lexer, lexeme)
+
+    token._attributes = cloneDeep(attributes ?? this._attributes)
 
     return token
+  }
+
+  toString() {
+    return `"${this.lexeme}" ${this._interval}`
   }
 }
