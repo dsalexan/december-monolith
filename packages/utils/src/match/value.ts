@@ -1,6 +1,8 @@
 import assert from "assert"
 
-export interface BaseValuePattern {}
+export interface BaseValuePattern {
+  negate?: boolean
+}
 
 export interface EqualsValuePattern<TValue = any> extends BaseValuePattern {
   type: `equals`
@@ -23,11 +25,15 @@ export type ValuePatternType = (typeof ValuePatternTypes)[number]
 export type ValuePattern<TValue = any> = EqualsValuePattern<TValue> | RegexValuePattern | ListValuePattern<TValue>
 
 export function matchValue<TValue = any>(value: TValue, pattern: ValuePattern<TValue>): boolean {
-  if (pattern.type === `equals`) return pattern.value === value
-  else if (pattern.type === `regex`) return pattern.pattern.test(String(value))
-  else if (pattern.type === `list`) return pattern.values.includes(value)
+  let result = false
 
-  assert(false, `Invalid pattern type`)
+  if (pattern.type === `equals`) result = pattern.value === value
+  else if (pattern.type === `regex`) result = pattern.pattern.test(String(value))
+  else if (pattern.type === `list`) result = pattern.values.includes(value)
+  //
+  else assert(false, `Invalid pattern type`)
+
+  return pattern.negate ? !result : result
 }
 
 // #region FACTORIES

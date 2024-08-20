@@ -4,6 +4,7 @@ import { Match } from "@december/utils"
 import type Token from "../../token"
 import { isNil } from "lodash"
 import { EvaluatorOptions } from "../../phases/lexer/evaluation"
+import { interleavedInOrder, wrapperInOrder } from "../../node/traversal"
 
 /**
  * Lower Priority means less nodes can be parent of this node
@@ -45,15 +46,39 @@ export function WrapperEvaluator(token: Token, options: EvaluatorOptions) {
 }
 
 export const LIST = new Type(`separator`, `list`, `L`).addSyntactical(SEPARATOR_PRIORITY + 16, Infinity) // list of "nodes", has no lexical equivalent
-export const COMMA = new Type(`separator`, `comma`, `C`).addLexical(SEPARATOR_PRIORITY + 15, Match.Value.EQUALS(`,`)).deriveSyntactical(Infinity)
-export const COLON = new Type(`separator`, `colon`, `N`).addLexical(SEPARATOR_PRIORITY + 14, Match.Value.EQUALS(`;`)).deriveSyntactical(Infinity)
-export const PIPE = new Type(`separator`, `pipe`, `P`).addLexical(SEPARATOR_PRIORITY + 13, Match.Value.EQUALS(`|`)).deriveSyntactical(Infinity)
+export const COMMA = new Type(`separator`, `comma`, `C`)
+  .addLexical(SEPARATOR_PRIORITY + 15, Match.Value.EQUALS(`,`))
+  .deriveSyntactical(Infinity)
+  .setInOrderBehaviour(interleavedInOrder)
+export const COLON = new Type(`separator`, `colon`, `N`)
+  .addLexical(SEPARATOR_PRIORITY + 14, Match.Value.EQUALS(`;`))
+  .deriveSyntactical(Infinity)
+  .setInOrderBehaviour(interleavedInOrder)
+export const PIPE = new Type(`separator`, `pipe`, `P`)
+  .addLexical(SEPARATOR_PRIORITY + 13, Match.Value.EQUALS(`|`))
+  .deriveSyntactical(Infinity)
+  .setInOrderBehaviour(interleavedInOrder)
 
-export const PARENTHESIS = new Type(`separator`, `paranthesis`, `ρ`).addLexical(SEPARATOR_PRIORITY + 7, Match.Value.LIST(`(`, `)`), WrapperEvaluator).deriveSyntactical(Infinity)
-export const BRACES = new Type(`separator`, `braces`, `γ`).addLexical(SEPARATOR_PRIORITY + 6, Match.Value.LIST(`{`, `}`), WrapperEvaluator).deriveSyntactical(Infinity)
-export const BRACKETS = new Type(`separator`, `brackets`, `β`).addLexical(SEPARATOR_PRIORITY + 5, Match.Value.LIST(`[`, `]`), WrapperEvaluator).deriveSyntactical(Infinity)
-export const QUOTES = new Type(`separator`, `quotes`, `κ`).addLexical(SEPARATOR_PRIORITY + 4, Match.Value.LIST(`"`, `"`), WrapperEvaluator).deriveSyntactical(Infinity)
-export const PERCENTAGE = new Type(`separator`, `percentage`, `τ`).addLexical(SEPARATOR_PRIORITY + 3, Match.Value.LIST(`%`, `%`), WrapperEvaluator).deriveSyntactical(Infinity)
+export const PARENTHESIS = new Type(`separator`, `paranthesis`, `ρ`)
+  .addLexical(SEPARATOR_PRIORITY + 7, Match.Value.LIST(`(`, `)`), WrapperEvaluator)
+  .deriveSyntactical(Infinity)
+  .setInOrderBehaviour(wrapperInOrder)
+export const BRACES = new Type(`separator`, `braces`, `γ`)
+  .addLexical(SEPARATOR_PRIORITY + 6, Match.Value.LIST(`{`, `}`), WrapperEvaluator)
+  .deriveSyntactical(Infinity)
+  .setInOrderBehaviour(wrapperInOrder)
+export const BRACKETS = new Type(`separator`, `brackets`, `β`)
+  .addLexical(SEPARATOR_PRIORITY + 5, Match.Value.LIST(`[`, `]`), WrapperEvaluator)
+  .deriveSyntactical(Infinity)
+  .setInOrderBehaviour(wrapperInOrder)
+export const QUOTES = new Type(`separator`, `quotes`, `κ`)
+  .addLexical(SEPARATOR_PRIORITY + 4, Match.Value.LIST(`"`, `"`), WrapperEvaluator)
+  .deriveSyntactical(Infinity)
+  .setInOrderBehaviour(wrapperInOrder)
+export const PERCENTAGE = new Type(`separator`, `percentage`, `τ`)
+  .addLexical(SEPARATOR_PRIORITY + 3, Match.Value.LIST(`%`, `%`), WrapperEvaluator)
+  .deriveSyntactical(Infinity)
+  .setInOrderBehaviour(wrapperInOrder)
 
 // WARN: Always update this list when adding a new recipe
 export const WRAPPER_SEPARATORS = [PARENTHESIS, BRACES, BRACKETS, QUOTES, PERCENTAGE]

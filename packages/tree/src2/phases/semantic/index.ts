@@ -7,7 +7,7 @@ import Grammar from "../../type/grammar"
 import assert from "assert"
 import { PrintOptions } from "../../tree/printer"
 import Tree from "../../tree"
-import { STRING_COLLECTION } from "../../type/declarations/literal"
+import { NIL, STRING_COLLECTION } from "../../type/declarations/literal"
 import Node from "../../node"
 import { OriginalChildrenTracking, ReorganizationStatus } from "../../type/rules/semantical"
 
@@ -69,7 +69,7 @@ export default class Semantic {
       for (const ATNode of ATParent.children) {
         let QUEUE_CHILDREN = true
 
-        const node = ATNode.clone()
+        let node = ATNode.clone()
         node.setAttributes({
           ...(node.attributes ?? {}),
           originalNodes: [ATNode],
@@ -85,7 +85,19 @@ export default class Semantic {
         // A. ignore whitespaces in non-string context
         if (node.type.name === `whitespace` && !scope.includes(`string`)) continue
 
-        // B. collapse quotes into a string
+        // B. collapse no/single child list
+        if (node.type.name === `list` && node.children.length <= 1) {
+          node.attributes.originalNodes = [ATNode, ...ATNode.children]
+
+          const child = node.children[0]
+
+          node.setType(!child ? NIL : child.type) // collapse list into child type
+
+          assert(node.tokens.length === 0, `List should not have tokens`)
+          if (child) node.addToken(child.tokens) // transplant tokens to old list
+        }
+
+        // C. collapse quotes into a string
         if (node.type.name === `quotes`) {
           QUEUE_CHILDREN = false
 

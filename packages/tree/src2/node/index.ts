@@ -16,6 +16,8 @@ import { numberToLetters } from "../utils"
 import { isWrapper } from "../type/declarations/separator"
 
 import { Attributes } from "./attributes"
+import { inOrder } from "./traversal"
+import { PolarCoordinates } from "mathjs"
 
 export const NODE_BALANCING = {
   UNBALANCED: `UNBALANCED`,
@@ -113,6 +115,11 @@ export default class Node {
     return this._children
   }
 
+  getChildren(maxDepth: number) {
+    if (this.level >= maxDepth) return []
+    return this.children
+  }
+
   get root() {
     const root = this.parent ? this.parent.root : this
 
@@ -176,7 +183,7 @@ export default class Node {
 
     // if (this.children.length === 0) tokens.push(...this.children.map(child => child.content).map(content => (content === null ? `` : content)))
 
-    this.traverse((node, token) => {
+    inOrder(this, (node, token) => {
       if (token === null) return
       else if (token === undefined) {
         const content = node._content
@@ -196,7 +203,7 @@ export default class Node {
 
     const range = new Range()
 
-    this.traverse((node, token) => {
+    inOrder(this, (node, token) => {
       if (token === null) return
       else if (token === undefined) range.addEntry(...node.range.getEntries())
       else range.addEntry(token.interval)
@@ -340,6 +347,63 @@ export default class Node {
 
   // #endregion
 
+  /** Returns the nth ancestor of node */
+  ancestor(offset: number = 0) {
+    let ancestor: Node | null = this.parent
+
+    while (ancestor && offset > 0) {
+      ancestor = ancestor.parent
+      offset--
+    }
+
+    return ancestor
+  }
+
+  /** Returns offspring at height N from node */
+  offspring(offset: number): Node[] {
+    const offspring: Node[] = []
+
+    let queue: Node[] = [this]
+
+    while (queue.length && offset > 0) {
+      let size = queue.length
+      while (size) {
+        const node = queue.shift()!
+
+        if (node.level === offset) offspring.push(node)
+        else queue.push(...node.children)
+
+        size--
+      }
+
+      offset--
+    }
+
+    // TODO: test this
+    if (offspring.length >= 3) debugger
+
+    return offspring
+  }
+
+  /** Returns the nth sibling of node */
+  sibling(offset: number) {
+    if (!this.parent) return null
+
+    const _index = this.parent.children.findIndex(child => child.id === this.id)
+    assert(this.index + offset !== _index, `Node internal index doesn't match it's position in parent.children[...]`)
+
+    return this.parent.children[this.index + offset]
+  }
+
+  /** Translates to another node in tree */
+  translate(offset: Partial<{ x: number; y: number }>) {
+    const y = offset.y ?? 0
+    const x = offset.x ?? 0
+
+    const vertical = y === 0 ? this : y < 0 ? this.ancestor(y * -1) : this.offspring(y)[0]
+    return vertical!.sibling(x)
+  }
+
   findAncestor(predicate: (node: Node) => boolean | null): Node | null {
     let ancestor: Node | null = this
 
@@ -398,11 +462,15 @@ export default class Node {
   tokenize(level?: number): { node: Node; token?: Token }[] {
     const list: { node: Node; token?: Token }[] = []
 
-    this.traverse((node, token) => {
-      if (token === null) return
-      else if (token === undefined) list.push({ node })
-      else list.push({ node, token })
-    }, level)
+    inOrder(
+      this,
+      (node, token) => {
+        if (token === null) return
+        else if (token === undefined) list.push({ node })
+        else list.push({ node, token })
+      },
+      level,
+    )
 
     return list
   }
@@ -413,7 +481,7 @@ export default class Node {
    * token === null      -> ignore node token/content if applicable
    * token === Token     -> only consider this specific token from node
    */
-  traverse(predicate: (node: Node, token?: Token | null) => void, maxLevel?: number) {
+  traver1se(predicate: (node: Node, token?: Token | null) => void, maxLevel?: number) {
     if (this._tokens.length === 0 && this.children.length === 0) return predicate(this)
 
     const children = !isNil(maxLevel) && this.level >= maxLevel ? [] : this.children
@@ -424,10 +492,10 @@ export default class Node {
 
     if (narity === Infinity) {
       if (this.type.name === `list`) {
-        if (this.children.length > 0) for (const child of children) child.traverse(predicate, maxLevel)
+        if (this.children.length > 0) for (const child of children) child.traver1se(predicate, maxLevel)
       } else if (isWrapper(this.type)) {
         if (this._tokens[0]) predicate(this, this._tokens[0])
-        if (this.children.length > 0) for (const child of children) child.traverse(predicate, maxLevel)
+        if (this.children.length > 0) for (const child of children) child.traver1se(predicate, maxLevel)
         if (this._tokens[1]) predicate(this, this._tokens[1])
       } else {
         // ERROR: Never tested
@@ -464,7 +532,7 @@ export default class Node {
 
         for (const entry of traversalList) {
           if (entry instanceof Token) predicate(this, entry)
-          else entry.traverse(predicate, maxLevel)
+          else entry.traver1se(predicate, maxLevel)
         }
 
         // let i = 0
@@ -489,16 +557,16 @@ export default class Node {
       if (this._tokens.length > 0) debugger
 
       predicate(this, null)
-      children[0].traverse(predicate, maxLevel)
+      children[0].traver1se(predicate, maxLevel)
     } else if (narity === 2) {
       // TODO: How to position multiple tokens? A single token should be at center, thats ok
       if (this._tokens.length > 1) debugger
 
       const [left, right] = children
 
-      left.traverse(predicate, maxLevel)
+      left.traver1se(predicate, maxLevel)
       if (this._tokens.length > 0) predicate(this, this.tokens[0])
-      right?.traverse(predicate, maxLevel)
+      right?.traver1se(predicate, maxLevel)
     } else throw new Error(`Unsupported n-arity "${narity}" when printing node text`)
   }
 
@@ -516,18 +584,8 @@ export default class Node {
     const _tags = this.attributes.tags.length ? ` [${this.attributes.tags.join(`,`)}]` : ``
     return `${this.name}${_tags}`
   }
-}
 
-export interface FlatFullNode {
-  type: `node`
-  node: Node
-}
+  // #region Traversal
 
-export interface FlatPartialNode {
-  type: `partial`
-  node: Node
-  range: Range
-  token: Token
+  // #endregion
 }
-
-export type FlatNode = FlatFullNode | FlatPartialNode

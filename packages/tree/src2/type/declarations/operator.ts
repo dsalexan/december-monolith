@@ -1,6 +1,7 @@
 import assert from "assert"
 import Type from "../base"
 import { Match } from "@december/utils"
+import { narityInOrder } from "../../node/traversal"
 
 /**
  * Lower Priority means less nodes can be parent of this node
@@ -12,21 +13,54 @@ import { Match } from "@december/utils"
 const OPERATOR_PRIORITY = 1000
 
 // LOGICAL
-export const _OR = new Type(`operator`, `or`, `|`).addLexical(OPERATOR_PRIORITY + 102, Match.Value.EQUALS(`|`)).deriveSyntactical(2)
-export const _AND = new Type(`operator`, `and`, `$`).addLexical(OPERATOR_PRIORITY + 101, Match.Value.EQUALS(`&`)).deriveSyntactical(2)
+export const _OR = new Type(`operator`, `or`, `|`)
+  .addLexical(OPERATOR_PRIORITY + 102, Match.Value.EQUALS(`|`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
+export const _AND = new Type(`operator`, `and`, `$`)
+  .addLexical(OPERATOR_PRIORITY + 101, Match.Value.EQUALS(`&`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
 
 // RELATIONAL
-export const EQUALS = new Type(`operator`, `equals`, `=`).addLexical(OPERATOR_PRIORITY + 15, Match.Value.EQUALS(`=`)).deriveSyntactical(2)
-export const GREATER_OR_EQUAL = new Type(`operator`, `greater_or_equal`, `>=`).addLexical(OPERATOR_PRIORITY + 12, Match.Value.EQUALS(`>=`)).deriveSyntactical(2)
-export const SMALLER_OR_EQUAL = new Type(`operator`, `smaller_or_equal`, `<=`).addLexical(OPERATOR_PRIORITY + 12, Match.Value.EQUALS(`<=`)).deriveSyntactical(2)
-export const GREATER = new Type(`operator`, `greater`, `>`).addLexical(OPERATOR_PRIORITY + 11, Match.Value.EQUALS(`>`)).deriveSyntactical(2)
-export const SMALLER = new Type(`operator`, `smaller`, `<`).addLexical(OPERATOR_PRIORITY + 11, Match.Value.EQUALS(`<`)).deriveSyntactical(2)
+export const EQUALS = new Type(`operator`, `equals`, `=`)
+  .addLexical(OPERATOR_PRIORITY + 15, Match.Value.EQUALS(`=`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
+export const GREATER_OR_EQUAL = new Type(`operator`, `greater_or_equal`, `>=`)
+  .addLexical(OPERATOR_PRIORITY + 12, Match.Value.EQUALS(`>=`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
+export const SMALLER_OR_EQUAL = new Type(`operator`, `smaller_or_equal`, `<=`)
+  .addLexical(OPERATOR_PRIORITY + 12, Match.Value.EQUALS(`<=`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
+export const GREATER = new Type(`operator`, `greater`, `>`)
+  .addLexical(OPERATOR_PRIORITY + 11, Match.Value.EQUALS(`>`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
+export const SMALLER = new Type(`operator`, `smaller`, `<`)
+  .addLexical(OPERATOR_PRIORITY + 11, Match.Value.EQUALS(`<`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
 
 // ALGEBRAIC
-export const MULTIPLICATION = new Type(`operator`, `multiplication`, `×`).addLexical(OPERATOR_PRIORITY + 7, Match.Value.EQUALS(`*`)).deriveSyntactical(2)
-export const DIVISION = new Type(`operator`, `division`, `÷`).addLexical(OPERATOR_PRIORITY + 7, Match.Value.EQUALS(`/`)).deriveSyntactical(2)
-export const ADDITION = new Type(`operator`, `addition`, `+`).addLexical(OPERATOR_PRIORITY + 5, Match.Value.EQUALS(`+`)).deriveSyntactical(2)
-export const SUBTRACTION = new Type(`operator`, `subtraction`, `-`).addLexical(OPERATOR_PRIORITY + 5, Match.Value.EQUALS(`-`)).deriveSyntactical(2)
+export const MULTIPLICATION = new Type(`operator`, `multiplication`, `×`, [`math`])
+  .addLexical(OPERATOR_PRIORITY + 7, Match.Value.EQUALS(`*`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
+export const DIVISION = new Type(`operator`, `division`, `÷`, [`math`])
+  .addLexical(OPERATOR_PRIORITY + 7, Match.Value.EQUALS(`/`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
+export const ADDITION = new Type(`operator`, `addition`, `+`, [`math`])
+  .addLexical(OPERATOR_PRIORITY + 5, Match.Value.EQUALS(`+`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
+export const SUBTRACTION = new Type(`operator`, `subtraction`, `-`, [`math`])
+  .addLexical(OPERATOR_PRIORITY + 5, Match.Value.EQUALS(`-`))
+  .deriveSyntactical(2)
+  .setInOrderBehaviour(narityInOrder)
 
 // WARN: Always update this list when adding a new recipe
 export const LOGICAL_OPERATORS = [_AND, _OR]
@@ -46,3 +80,6 @@ export const OPERATOR_NAMES = [...LOGICAL_OPERATOR_NAMES, ...RELATIONAL_OPERATOR
 export type OperatorTypeName = (typeof OPERATOR_NAMES)[number]
 
 export const OPERATORS_BY_NAME = OPERATORS.reduce((acc, recipe) => ({ ...acc, [recipe.name]: recipe }), {})
+
+export const DEFAULT_OPERATORS = [...LOGICAL_OPERATORS, ...RELATIONAL_OPERATORS]
+export const MATH_OPERATORS = [...ALGEBRAIC_OPERATORS]

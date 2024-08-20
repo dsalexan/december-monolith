@@ -73,3 +73,6 @@
 
 export * as Token from "./token"
 import * as Parser from "./phases/parser"
+import * as Simplifier from "./phases/simplify"
+
+export * as Match from "./match"

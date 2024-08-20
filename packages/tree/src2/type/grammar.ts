@@ -12,6 +12,7 @@ import { SemanticalMatch } from "./rules/semantical"
 
 export default class Grammar {
   types: Map<TypeName, Type>
+  typesByModule: Map<string, TypeName[]>
 
   constructor() {
     this.types = new Map()

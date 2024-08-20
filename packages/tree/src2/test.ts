@@ -15,11 +15,12 @@ import Parser from "./phases/parser"
 import Semantic from "./phases/semantic"
 
 import { LITERALS, NUMBER, STRING } from "./type/declarations/literal"
-import { OPERATORS } from "./type/declarations/operator"
+import { OPERATORS, DEFAULT_OPERATORS, ALGEBRAIC_OPERATORS } from "./type/declarations/operator"
 import { DEFAULT_SEPARATORS, SEPARATORS } from "./type/declarations/separator"
 import { WHITESPACES } from "./type/declarations/whitespace"
 import { COMPOSITES } from "./type/declarations/composite"
 import Simplify from "./phases/simplify"
+import NodeReplacementSystem, { Rule } from "./phases/simplify/replacementSystem"
 
 let expression = `1 + 2`
 expression = `1 a`
@@ -55,6 +56,9 @@ expression = `[1]a`
 expression = `fn(), test`
 expression = `fn(1,2)`
 expression = `fn1(), fn2(1), fn3(1,2)`
+//
+expression = `0+1`
+// expression = `(1/2)+0`
 
 const grammar = new Grammar()
 grammar.add(...WHITESPACES)
@@ -70,6 +74,8 @@ const lexer = new Lexer(grammar)
 const parser = new Parser(grammar)
 const semantic = new Semantic(grammar)
 const simplify = new Simplify(grammar)
+
+const NRS = new NodeReplacementSystem()
 
 // 1. Print expression
 console.log(` `)
@@ -105,5 +111,5 @@ parser.print({
 semantic.process(expression, parser.AST)
 semantic.print({})
 
-simplify.process(expression, semantic.ST, semantic.symbolTable, {})
+simplify.process(expression, semantic.ST, semantic.symbolTable, {}, NRS, {})
 simplify.print({})

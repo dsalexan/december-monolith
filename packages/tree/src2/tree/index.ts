@@ -139,6 +139,22 @@ export default class Tree {
     return parent._removeChildAt(index)
   }
 
+  /** Replaces a target node with another node */
+  replaceWith(target: Node, node: Node) {
+    assert(target.parent, `Target has no parent`)
+
+    const parent = target.parent!
+    const index = target.index
+
+    // remove target from parent
+    parent._removeChildAt(index)
+
+    // add node to parent at that index
+    this.addTo(parent, node, index)
+
+    return node
+  }
+
   /** Inserts node in sub-tree starting at target */
   insert(target: Node, node: Node) {
     const __DEBUG = false // COMMENT
@@ -389,6 +405,36 @@ export default class Tree {
 
   print(from: Node, options: PrintOptions = {}) {
     TreePrinter.print(this, from, options)
+  }
+
+  clone() {
+    const tree = new Tree(this.expression, this.root.clone())
+
+    const queue = [this.root]
+
+    // replicate
+    while (queue.length) {
+      const ATParent = queue.shift()!
+
+      const parent = tree.root.find(node => node.id === ATParent.id)!
+
+      assert(parent, `Parent node not found`)
+
+      // insert node at ST
+      for (const ATNode of ATParent.children) {
+        const node = ATNode.clone()
+        node.setAttributes({
+          ...(node.attributes ?? {}),
+          originalNodes: [ATNode],
+        })
+
+        parent._addChild(node)
+
+        queue.push(ATNode) // enqueue child
+      }
+    }
+
+    return tree
   }
 
   /** Traverse tree by level */

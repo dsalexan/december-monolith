@@ -10,6 +10,9 @@ import { STRING_COLLECTION } from "../../type/declarations/literal"
 import Node from "../../node"
 import { OriginalChildrenTracking, ReorganizationStatus } from "../../type/rules/semantical"
 import SymbolTable from "../semantic/symbolTable"
+import { postOrder } from "../../node/traversal"
+
+import NodeReplacementSystem from "./replacementSystem"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -54,6 +57,7 @@ export default class Simplify {
   private symbolTable: SymbolTable
   private environment: unknown
   private SST: Tree
+  private nodeReplacementSystem: NodeReplacementSystem
   //
 
   constructor(grammar: Grammar) {
@@ -66,13 +70,15 @@ export default class Simplify {
   }
 
   /** Process tokenized expression into an Abstract Syntax Tree (AST) */
-  process(expression: string, ST: Tree, symbolTable: SymbolTable, environment: unknown, options: Partial<SimplifyOptions> = {}) {
+  process(expression: string, ST: Tree, symbolTable: SymbolTable, environment: unknown, nodeReplacementSystem: NodeReplacementSystem, options: Partial<SimplifyOptions> = {}) {
     this._options(options) // default options
 
     this.expression = expression
     this.ST = ST
     this.symbolTable = symbolTable
     this.environment = environment
+
+    this.nodeReplacementSystem = nodeReplacementSystem
 
     this._process()
 
@@ -83,9 +89,19 @@ export default class Simplify {
   private _simplifySemanticTree(ST: Tree, symbolTable: SymbolTable, environment: unknown) {
     const __DEBUG = true // COMMENT
 
-    const tree = new Tree(this.expression, ST.root.clone())
+    const tree = ST.clone()
 
-    debugger
+    // post order so we change children before parents
+    postOrder(tree.root, node => {
+      debugger
+      const newNode = this.nodeReplacementSystem.exec(node)
+
+      if (newNode) {
+        debugger
+
+        tree.replaceWith(node, newNode)
+      }
+    })
 
     return tree
   }
