@@ -12,7 +12,7 @@ import { OriginalChildrenTracking, ReorganizationStatus } from "../../type/rules
 import SymbolTable from "../semantic/symbolTable"
 import { postOrder } from "../../node/traversal"
 
-import NodeReplacementSystem from "./replacementSystem"
+import { NodeReplacementSystem } from "./nrs"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -93,7 +93,6 @@ export default class Simplify {
 
     // post order so we change children before parents
     postOrder(tree.root, node => {
-      debugger
       const newNode = this.nodeReplacementSystem.exec(node)
 
       if (newNode) {

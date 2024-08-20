@@ -46,7 +46,7 @@ export function REGEX(pattern: RegExp): RegexValuePattern {
   return { type: `regex`, pattern }
 }
 
-export function LIST<TValue = any>(...values: TValue[]): ListValuePattern<TValue> {
+export function LIST<TValue = any>(values: TValue[]): ListValuePattern<TValue> {
   return { type: `list`, values }
 }
 

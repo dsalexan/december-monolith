@@ -20,7 +20,7 @@ import { DEFAULT_SEPARATORS, SEPARATORS } from "./type/declarations/separator"
 import { WHITESPACES } from "./type/declarations/whitespace"
 import { COMPOSITES } from "./type/declarations/composite"
 import Simplify from "./phases/simplify"
-import NodeReplacementSystem, { Rule } from "./phases/simplify/replacementSystem"
+import { BASE_RULESET, NodeReplacementSystem } from "./phases/simplify/nrs"
 
 let expression = `1 + 2`
 expression = `1 a`
@@ -76,6 +76,7 @@ const semantic = new Semantic(grammar)
 const simplify = new Simplify(grammar)
 
 const NRS = new NodeReplacementSystem()
+NRS.addRuleSet(BASE_RULESET)
 
 // 1. Print expression
 console.log(` `)

@@ -159,7 +159,7 @@ export default class Node {
   public get lexeme() {
     if (this.tokens.length === 0 && this.children.length === 0) return ``
 
-    if (this.tokens.length === 0) return this.children.map(child => child.lexeme()).join(``)
+    if (this.tokens.length === 0) return this.children.map(child => child.lexeme).join(``)
 
     return this._tokens.map(token => token.lexeme).join(``)
 
@@ -179,19 +179,25 @@ export default class Node {
   public get content(): string | null {
     if (this._tokens.length === 0 && this.children.length === 0) return null
 
-    const tokens: string[] = []
+    const strings: string[] = []
 
-    // if (this.children.length === 0) tokens.push(...this.children.map(child => child.content).map(content => (content === null ? `` : content)))
-
-    inOrder(this, (node, token) => {
-      if (token === null) return
-      else if (token === undefined) {
+    const tokens = this.tokenize()
+    for (const { node, token } of tokens) {
+      if (token) strings.push(token.lexeme)
+      else {
         const content = node._content
-        if (content !== null) tokens.push(content)
-      } else tokens.push(token.lexeme)
-    })
+        if (content !== null) strings.push(content)
+      }
+    }
+    // inOrder(this, (node, token) => {
+    //   if (token === null) return
+    //   else if (token === undefined) {
+    //     const content = node._content
+    //     if (content !== null) tokens.push(content)
+    //   } else tokens.push(token.lexeme)
+    // })
 
-    return tokens.join(``)
+    return strings.join(``)
   }
 
   public get range(): Range {
@@ -203,11 +209,14 @@ export default class Node {
 
     const range = new Range()
 
-    inOrder(this, (node, token) => {
-      if (token === null) return
-      else if (token === undefined) range.addEntry(...node.range.getEntries())
-      else range.addEntry(token.interval)
-    })
+    const tokens = this.tokenize()
+    for (const { node, token } of tokens) range.addEntry(...(token ? [token.interval] : node.range.getEntries()))
+
+    // inOrder(this, (node, token) => {
+    //   if (token === null) return
+    //   else if (token === undefined) range.addEntry(...node.range.getEntries())
+    //   else range.addEntry(token.interval)
+    // })
 
     return range
   }
@@ -462,15 +471,7 @@ export default class Node {
   tokenize(level?: number): { node: Node; token?: Token }[] {
     const list: { node: Node; token?: Token }[] = []
 
-    inOrder(
-      this,
-      (node, token) => {
-        if (token === null) return
-        else if (token === undefined) list.push({ node })
-        else list.push({ node, token })
-      },
-      level,
-    )
+    inOrder(this, (node, token, ignorable) => !ignorable && list.push({ node, token: token || undefined }), level)
 
     return list
   }

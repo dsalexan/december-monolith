@@ -33,13 +33,21 @@ export interface NodeTypePattern extends BaseNodePattern {
 
 export type NodePattern = NodeTypeNamePattern | NodeTypePattern
 
-// const p: NodePattern = {
-//   target: `type:name`,
-//   pattern: {
-//     type: `equals`,
-//     value: `ad`,
-//   },
-// }
+export type NodePatternByTarget = {
+  [`type:name`]: NodeTypeNamePattern
+  [`type:id`]: NodeTypePattern
+  [`type:full`]: NodeTypePattern
+}
+
+// #region Proxies
+
+export const TYPE = {
+  NAME: (pattern: Match.Value.ValuePattern<TypeName>): NodeTypeNamePattern => ({ target: `type:name`, pattern }),
+  ID: (pattern: Match.Value.ValuePattern<string>): NodeTypePattern => ({ target: `type:id`, pattern }),
+  FULL: (pattern: Match.Value.ValuePattern<string>): NodeTypePattern => ({ target: `type:full`, pattern }),
+}
+
+// #endregion
 
 export function _matchNode(node: Node, pattern: NodePattern): boolean {
   if (pattern.target === `type:id`) return Match.Value.matchValue(node.type.id, pattern.pattern)

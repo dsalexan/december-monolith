@@ -19,7 +19,7 @@ import { isNil, reverse } from "lodash"
  * An "iteratee" is the function be called on each node during a traversal.
  */
 
-export type TraversalIteratee = (node: Node, token: Token | null) => void
+export type TraversalIteratee = (node: Node, token: Token | null, ignorable?: boolean) => void
 
 export function postOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
   const children = node.getChildren(maxDepth)
@@ -48,6 +48,9 @@ export function inOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infi
    * Each type of node can override this behaviour by implementing a custom in-order traversal.
    */
 
+  // If we reached the max depth, we don't need to traverse the children (there will be none)
+  if (node.level >= maxDepth) return iteratee(node, null)
+
   const behaviour = node.type.inOrderBehaviour || defaultInOrderBehaviour
 
   behaviour(node, iteratee, maxDepth)
@@ -60,10 +63,12 @@ export function defaultInOrderBehaviour(node: Node, iteratee: TraversalIteratee,
 
   for (const child of children.slice(0, -1)) inOrder(child, iteratee, maxDepth)
 
-  if (node.tokens.length === 0) iteratee(node, null)
-  else for (const token of node.tokens) iteratee(node, token)
+  for (const token of node.tokens) iteratee(node, token)
 
   if (children.length > 0) inOrder(children[children.length - 1], iteratee, maxDepth)
+
+  // FALLBACK: No tokens or children
+  if (node.tokens.length === 0 && children.length === 0) iteratee(node, null)
 }
 
 export function unaryInOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
@@ -77,7 +82,7 @@ export function unaryInOrder(node: Node, iteratee: TraversalIteratee, maxDepth =
   assert(children.length <= 1, `Unary nodes must have at most 1 child`)
   assert(node.tokens.length <= 1, `Unary nodes must have at most 1 token`)
 
-  iteratee(node, node.tokens[0] || null)
+  iteratee(node, node.tokens[0] || null, !node.tokens[0])
   if (children.length > 0) inOrder(children[0], iteratee, maxDepth)
 }
 

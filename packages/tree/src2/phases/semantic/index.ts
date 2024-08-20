@@ -87,9 +87,11 @@ export default class Semantic {
 
         // B. collapse no/single child list
         if (node.type.name === `list` && node.children.length <= 1) {
+          QUEUE_CHILDREN = false
+
           node.attributes.originalNodes = [ATNode, ...ATNode.children]
 
-          const child = node.children[0]
+          const child = ATNode.children[0]
 
           node.setType(!child ? NIL : child.type) // collapse list into child type
 
