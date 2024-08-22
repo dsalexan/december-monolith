@@ -22,7 +22,7 @@ export const FUNCTION = new Type(`composite`, `function`, `f`)
       const string = Search.find(children, node => node.type.name === `string`) // 1. find literal
       const parenthesis = Search.next(children, string) // 2. find parenthesis right next
 
-      return !isNil(parenthesis) ? { string, parenthesis } : false
+      return children[parenthesis!]?.type?.name === `parenthesis` ? { string, parenthesis } : false
     },
     (parent, children, match: { string: number; parenthesis: number }, tracking: OriginalChildrenTracking) => {
       const string = children[match.string]

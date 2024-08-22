@@ -1,53 +1,51 @@
 import assert from "assert"
+import { BasePattern, BasePatternOptions } from "./base"
 
-export interface BaseValuePattern {
-  negate?: boolean
+export class EqualsValuePattern<TValue = any> extends BasePattern {
+  declare type: `equals`
+  public value: TValue
+
+  constructor(value: TValue, options: Partial<BasePatternOptions> = {}) {
+    super(`equals`, options)
+    this.value = value
+  }
+
+  override _match<TTestValue = TValue>(value: TTestValue): boolean {
+    // @ts-ignore
+    return this.value === value
+  }
 }
 
-export interface EqualsValuePattern<TValue = any> extends BaseValuePattern {
-  type: `equals`
-  value: TValue
+export class RegexValuePattern extends BasePattern {
+  declare type: `regex`
+  public regex: RegExp
+
+  constructor(regex: RegExp, options: Partial<BasePatternOptions> = {}) {
+    super(`regex`, options)
+    this.regex = regex
+  }
+
+  override _match<TValue = any>(value: TValue): boolean {
+    return this.regex.test(String(value))
+  }
 }
 
-export interface RegexValuePattern extends BaseValuePattern {
-  type: `regex`
-  pattern: RegExp
-}
-
-export interface ListValuePattern<TValue = any> extends BaseValuePattern {
-  type: `list`
-  values: TValue[]
-}
-
-export const ValuePatternTypes = [`equals`, `regex`, `list`] as const
+export const ValuePatternTypes = [`equals`, `regex`] as const
 export type ValuePatternType = (typeof ValuePatternTypes)[number]
 
-export type ValuePattern<TValue = any> = EqualsValuePattern<TValue> | RegexValuePattern | ListValuePattern<TValue>
+export type ValuePattern<TValue = any> = EqualsValuePattern<TValue> | RegexValuePattern
 
-export function matchValue<TValue = any>(value: TValue, pattern: ValuePattern<TValue>): boolean {
-  let result = false
-
-  if (pattern.type === `equals`) result = pattern.value === value
-  else if (pattern.type === `regex`) result = pattern.pattern.test(String(value))
-  else if (pattern.type === `list`) result = pattern.values.includes(value)
-  //
-  else assert(false, `Invalid pattern type`)
-
-  return pattern.negate ? !result : result
+export function isValuePattern<TValue = any>(pattern: BasePattern): pattern is ValuePattern<TValue> {
+  return ValuePatternTypes.includes(pattern.type as any)
 }
 
 // #region FACTORIES
 
 export function EQUALS<TValue = any>(value: TValue): EqualsValuePattern<TValue> {
-  return { type: `equals`, value }
+  return new EqualsValuePattern(value)
 }
 
 export function REGEX(pattern: RegExp): RegexValuePattern {
-  return { type: `regex`, pattern }
+  return new RegexValuePattern(pattern)
 }
-
-export function LIST<TValue = any>(values: TValue[]): ListValuePattern<TValue> {
-  return { type: `list`, values }
-}
-
 // #endregion

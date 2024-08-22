@@ -6,7 +6,7 @@ import { assert } from "console"
 import { filter, orderBy } from "lodash"
 import { TypeName } from "./declarations/name"
 import Type from "./base"
-import { Match } from "@december/utils"
+
 import type Node from "../node"
 import { SemanticalMatch } from "./rules/semantical"
 
@@ -44,7 +44,7 @@ export default class Grammar {
       // ERROR: Unimplemented many patterns
       assert(lexical.patterns.length === 1, `Unimplemented multiple patterns`)
 
-      if (Match.match(sequence, pattern)) matches.push(type)
+      if (pattern.match(sequence)) matches.push(type)
     }
 
     // sort by priority (lower is worse)

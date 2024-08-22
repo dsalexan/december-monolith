@@ -12,15 +12,14 @@ import logger, { paint } from "./logger"
 import Grammar from "./type/grammar"
 import Lexer from "./phases/lexer"
 import Parser from "./phases/parser"
-import Semantic from "./phases/semantic"
+import Semantic, { NRS as SemanticNRS } from "./phases/semantic"
+import Simplify, { NRS as SimplifyNRS } from "./phases/simplify"
 
 import { LITERALS, NUMBER, STRING } from "./type/declarations/literal"
 import { OPERATORS, DEFAULT_OPERATORS, ALGEBRAIC_OPERATORS } from "./type/declarations/operator"
 import { DEFAULT_SEPARATORS, SEPARATORS } from "./type/declarations/separator"
 import { WHITESPACES } from "./type/declarations/whitespace"
 import { COMPOSITES } from "./type/declarations/composite"
-import Simplify from "./phases/simplify"
-import { BASE_RULESET, NodeReplacementSystem } from "./phases/simplify/nrs"
 
 let expression = `1 + 2`
 expression = `1 a`
@@ -52,13 +51,18 @@ expression = `teste, 1 + 3, A24, -10, [1, 2, 3,], 10 >= 1`
 expression = `teste, 1 ; 2 | 1, 3`
 expression = `teste, 1 ;, 2 | 1, 3`
 expression = `teste , 1.10, 1,5,  "inside ,quotes", fn(arg0, ..., argN)`
-expression = `[1]a`
-expression = `fn(), test`
-expression = `fn(1,2)`
-expression = `fn1(), fn2(1), fn3(1,2)`
-//
-expression = `0+1`
+// expression = `[1]a`
+// expression = `fn(), test`
+// expression = `fn(1,2)`
+// expression = `fn1(), fn2(1), fn3(1,2)`
+// //
+// expression = ` 0+1`
+// expression = `2+1`
 // expression = `(1/2)+0`
+// expression = `1, "inside ,quotes", 2`
+// // expression = `"inside ,quotes"`
+// expression = `1 = 2 + 3`
+// expression = `10=0-999`
 
 const grammar = new Grammar()
 grammar.add(...WHITESPACES)
@@ -74,9 +78,6 @@ const lexer = new Lexer(grammar)
 const parser = new Parser(grammar)
 const semantic = new Semantic(grammar)
 const simplify = new Simplify(grammar)
-
-const NRS = new NodeReplacementSystem()
-NRS.addRuleSet(BASE_RULESET)
 
 // 1. Print expression
 console.log(` `)
@@ -109,8 +110,8 @@ parser.print({
   style: {},
 })
 
-semantic.process(expression, parser.AST)
+semantic.process(expression, parser.AST, SemanticNRS)
 semantic.print({})
 
-simplify.process(expression, semantic.ST, semantic.symbolTable, {}, NRS, {})
-simplify.print({})
+// simplify.process(expression, semantic.ST, semantic.symbolTable, {}, SimplifyNRS, {})
+// simplify.print({})

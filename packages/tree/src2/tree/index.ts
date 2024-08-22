@@ -1,5 +1,5 @@
 import assert from "assert"
-import Node, { NODE_BALANCING } from "../node"
+import Node, { NODE_BALANCING, NodeCloningOptions } from "../node"
 import { isOperand } from "../type/base"
 import { isWrapper, LIST } from "../type/declarations/separator"
 import { isString, last, sortedIndex, sortedIndexBy } from "lodash"
@@ -15,13 +15,15 @@ import { NIL } from "../type/declarations/literal"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
+export interface TreeCloningOptions extends NodeCloningOptions {}
+
 export default class Tree {
   public expression: string
   public root: Node
 
   constructor(expression: string, root?: Node) {
     this.expression = expression
-    this.root = root ?? Node.Root(Range.fromLength(0, expression.length).addEntry(new Point(0)).addEntry(new Point(expression.length)))
+    this.root = root ?? Node.ROOT(Range.fromLength(0, expression.length).addEntry(new Point(0)).addEntry(new Point(expression.length)))
   }
 
   get height() {
@@ -139,6 +141,14 @@ export default class Tree {
     return parent._removeChildAt(index)
   }
 
+  /** Removes a node from tree */
+  remove(node: Node) {
+    assert(node.parent, `Node has no parent`)
+    assert(node.index === node.parent.children.findIndex(child => child.id === node.id), `Node index mismatch`)
+
+    return this.removeFrom(node.parent!, node.index)
+  }
+
   /** Replaces a target node with another node */
   replaceWith(target: Node, node: Node) {
     assert(target.parent, `Target has no parent`)
@@ -176,7 +186,7 @@ export default class Tree {
       console.log(`\n`)
     }
 
-    // if (global.__DEBUG_LABEL === `]->L5.b`) debugger
+    // if (global.__DEBUG_LABEL === `+->=1.a`) debugger
 
     assert(node.type.syntactical, `Type "${node.type.name}" has no syntactical rules`)
 
@@ -194,20 +204,23 @@ export default class Tree {
 
       if (node.syntactical!.priority > target.syntactical!.priority) {
         // node AS PRIORITARY OR MORE than current
-        //    insert node between current and its last child
+        //    insert node between TARGET and its last child
         //    i.e. last child becomes child of new node, new node becomes last child of current
 
         // ERROR: untested
         if (node.syntactical!.narity !== 2) debugger
 
-        // enlist children
-        if (target.children.length > 0) this.enlistChildren(target, 0, target.children.length - 1)
-        else {
+        // handle children
+        if (target.children.length === 0) {
           //  there are no children to enlist
-          //  create and add a nil token
+          //    create and add a nil token as last (and, well, only) child
 
           const nil = new Node(NIL, Range.fromPoint(target.range.column(`first`)))
           this.addTo(target, nil)
+        } else {
+          //  target has children
+          //    target is not yet "full" (as per n-arity)
+          if (target.children.length < target.syntactical!.narity) debugger
         }
 
         // add node in lastChild's place (as it's parent)
@@ -407,8 +420,8 @@ export default class Tree {
     TreePrinter.print(this, from, options)
   }
 
-  clone() {
-    const tree = new Tree(this.expression, this.root.clone())
+  clone(options: Partial<TreeCloningOptions> = {}) {
+    const tree = new Tree(this.expression, this.root.clone(options))
 
     const queue = [this.root]
 
@@ -422,7 +435,8 @@ export default class Tree {
 
       // insert node at ST
       for (const ATNode of ATParent.children) {
-        const node = ATNode.clone()
+        const node = ATNode.clone(options)
+
         node.setAttributes({
           ...(node.attributes ?? {}),
           originalNodes: [ATNode],

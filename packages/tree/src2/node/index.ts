@@ -16,7 +16,7 @@ import { numberToLetters } from "../utils"
 import { isWrapper } from "../type/declarations/separator"
 
 import { Attributes } from "./attributes"
-import { inOrder } from "./traversal"
+import { inOrder, preOrder } from "./traversal"
 import { PolarCoordinates } from "mathjs"
 
 export const NODE_BALANCING = {
@@ -53,6 +53,7 @@ export default class Node {
   private _type: Type | null
   public _range: Range // this is only returned in "get range()" if node is tokenless AND childless
   private _attributes: Attributes
+  public _preCalculatedScope: string[] = null as any // pre-calculated scope for this node, usually a scope is calculated externally and then assigned here
 
   public get tokens() {
     return this._tokens
@@ -131,6 +132,11 @@ export default class Node {
   private _parent: Node | null = null
   public get parent() {
     return this._parent
+  }
+
+  public setParent(parent: Node) {
+    this._parent = parent
+    return this
   }
 
   private _index: number = -1
@@ -234,9 +240,18 @@ export default class Node {
     if (tokenOrType instanceof Type && range) this._range = range
   }
 
-  static Root(range: Range) {
+  // #region Factories
+
+  static ROOT(range: Range) {
     return new Node(ROOT, range)
   }
+
+  NIL(range?: Range) {
+    range ??= this.range
+    return new Node(ROOT, Range.fromPoint(range.column(`first`)))
+  }
+
+  // #endregion
 
   // #region Proxy
 
@@ -374,18 +389,11 @@ export default class Node {
 
     let queue: Node[] = [this]
 
-    while (queue.length && offset > 0) {
-      let size = queue.length
-      while (size) {
-        const node = queue.shift()!
+    while (queue.length > 0) {
+      const node = queue.shift()!
 
-        if (node.level === offset) offspring.push(node)
-        else queue.push(...node.children)
-
-        size--
-      }
-
-      offset--
+      if (node.level === this.level + offset) offspring.push(node)
+      else queue.push(...node.children)
     }
 
     // TODO: test this
@@ -571,12 +579,19 @@ export default class Node {
     } else throw new Error(`Unsupported n-arity "${narity}" when printing node text`)
   }
 
-  clone() {
+  clone(options: Partial<NodeCloningOptions> = {}) {
     const node = new Node(this._type!, this._range ? this._range.clone() : this._range)
 
     node.id = this.id
     node._tokens = this._tokens.map(token => token.clone())
     if (this._attributes) node._attributes = cloneDeep(this._attributes)
+
+    if (options?.cloneSubTree) {
+      for (const child of this.children) {
+        const clone = child.clone(options)
+        node._addChild(clone, null, true)
+      }
+    }
 
     return node
   }
@@ -586,7 +601,25 @@ export default class Node {
     return `${this.name}${_tags}`
   }
 
+  debug() {
+    console.log(`======================================`)
+    console.log(`                DEBUG `)
+    console.log(` ${this.name} `)
+    console.log(` ${this.id} `)
+    console.log(`======================================`)
+    console.log(`\n`)
+
+    preOrder(this, (node, token) => {
+      console.log(`${` `.repeat(node.level * 2)}${node.name} ${token ? `<${token.lexeme}>` : ``}`)
+    })
+  }
+
   // #region Traversal
 
   // #endregion
+}
+
+export interface NodeCloningOptions {
+  registerOriginalNodes: boolean
+  cloneSubTree: boolean
 }

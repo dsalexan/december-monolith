@@ -10,6 +10,12 @@ import Tree from "../../tree"
 import { NIL, STRING_COLLECTION } from "../../type/declarations/literal"
 import Node from "../../node"
 import { OriginalChildrenTracking, ReorganizationStatus } from "../../type/rules/semantical"
+import { postOrder } from "../../node/traversal"
+
+import { NodeReplacementSystem } from "../../nrs"
+import { KEEP_NODE, REMOVE_NODE } from "../../nrs/system"
+
+export { default as NRS } from "./nrs"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -27,6 +33,8 @@ export default class Semantic {
   public ST: Tree
   public symbolTable: SymbolTable
   //
+  private nodeReplacementSystem: NodeReplacementSystem
+  //
 
   constructor(grammar: Grammar) {
     this.grammar = grammar
@@ -38,84 +46,42 @@ export default class Semantic {
   }
 
   /** Process tokenized expression into an Abstract Syntax Tree (AST) */
-  process(expression: string, AST: Tree, options: Partial<SemanticOptions> = {}) {
+  process(expression: string, AST: Tree, nodeReplacementSystem: NodeReplacementSystem, options: Partial<SemanticOptions> = {}) {
     this._options(options) // default options
 
     this.expression = expression
     this.AST = AST
+
+    this.nodeReplacementSystem = nodeReplacementSystem
 
     this._process()
 
     return this.ST
   }
 
-  /** Transfer nodes from a AST into a ST */
-  private _parseSemanticTree(AST: Tree) {
-    const __DEBUG = true // COMMENT
+  private _processAbstractTree(AST: Tree) {
+    const tree = AST.clone()
 
-    const tree = new Tree(this.expression, AST.root.clone())
+    // post order so we change children before parents
+    const order: Node[] = []
+    postOrder(tree.root, node => order.push(node))
+    for (const node of order) {
+      const scope = node.scope(node => {
+        if (node.type.name === `quotes`) return [`string`]
+        if (node.type.name === `string`) return [`string`]
 
-    const queue = [AST.root]
+        return []
+      })
 
-    // replicate AST into ST
-    while (queue.length) {
-      const ATParent = queue.shift()!
+      node._preCalculatedScope = scope
 
-      const parent = tree.root.find(node => node.id === ATParent.id)!
+      const newNode = this.nodeReplacementSystem.exec(node)
 
-      assert(parent, `Parent node not found`)
-
-      // insert node at ST
-      for (const ATNode of ATParent.children) {
-        let QUEUE_CHILDREN = true
-
-        let node = ATNode.clone()
-        node.setAttributes({
-          ...(node.attributes ?? {}),
-          originalNodes: [ATNode],
-        })
-
-        const scope = ATNode.scope(node => {
-          if (node.type.name === `quotes`) return [`string`]
-          if (node.type.name === `string`) return [`string`]
-
-          return []
-        })
-
-        // A. ignore whitespaces in non-string context
-        if (node.type.name === `whitespace` && !scope.includes(`string`)) continue
-
-        // B. collapse no/single child list
-        if (node.type.name === `list` && node.children.length <= 1) {
-          QUEUE_CHILDREN = false
-
-          node.attributes.originalNodes = [ATNode, ...ATNode.children]
-
-          const child = ATNode.children[0]
-
-          node.setType(!child ? NIL : child.type) // collapse list into child type
-
-          assert(node.tokens.length === 0, `List should not have tokens`)
-          if (child) node.addToken(child.tokens) // transplant tokens to old list
-        }
-
-        // C. collapse quotes into a string
-        if (node.type.name === `quotes`) {
-          QUEUE_CHILDREN = false
-
-          const tokenized = ATNode.tokenize()
-          const tokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
-
-          node.setType(STRING_COLLECTION)
-
-          node.clearTokens()
-          node.addToken(tokens.slice(1, -1), 1)
-        }
-
-        parent._addChild(node)
-
-        if (QUEUE_CHILDREN) queue.push(ATNode) // enqueue child
-      }
+      if (newNode === KEEP_NODE) {
+        // do nothing
+      } else if (newNode === REMOVE_NODE) tree.remove(node)
+      else if (newNode instanceof Node) tree.replaceWith(node, newNode)
+      else throw new Error(`Invalid node replacement action`)
     }
 
     return tree
@@ -173,7 +139,7 @@ export default class Semantic {
 
   /** Process tokenized expression into an AST */
   private _process() {
-    this.ST = this._parseSemanticTree(this.AST)
+    this.ST = this._processAbstractTree(this.AST)
     this._reorganizeSemanticTree(this.ST)
 
     // TODO: Validate AST

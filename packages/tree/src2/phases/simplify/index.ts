@@ -12,7 +12,10 @@ import { OriginalChildrenTracking, ReorganizationStatus } from "../../type/rules
 import SymbolTable from "../semantic/symbolTable"
 import { postOrder } from "../../node/traversal"
 
-import { NodeReplacementSystem } from "./nrs"
+import { NodeReplacementSystem } from "../../nrs"
+import { KEEP_NODE, REMOVE_NODE } from "../../nrs/system"
+
+export { default as NRS } from "./nrs"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -57,6 +60,7 @@ export default class Simplify {
   private symbolTable: SymbolTable
   private environment: unknown
   private SST: Tree
+  //
   private nodeReplacementSystem: NodeReplacementSystem
   //
 
@@ -92,15 +96,18 @@ export default class Simplify {
     const tree = ST.clone()
 
     // post order so we change children before parents
-    postOrder(tree.root, node => {
+    const order: Node[] = []
+    postOrder(tree.root, node => order.push(node))
+    for (const node of order) {
       const newNode = this.nodeReplacementSystem.exec(node)
 
-      if (newNode) {
+      if (newNode === KEEP_NODE) {
+        // do nothing
+      } else if (newNode === REMOVE_NODE) {
         debugger
-
-        tree.replaceWith(node, newNode)
-      }
-    })
+      } else if (newNode instanceof Node) tree.replaceWith(node, newNode)
+      else throw new Error(`Invalid node replacement action`)
+    }
 
     return tree
   }
