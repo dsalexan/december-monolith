@@ -56,7 +56,7 @@ interface ProtoToken {
 export default class Lexer {
   public options: Partial<LexerOptions>
   //
-  private expression: string
+  public expression: string
   private cursor: number // current cursor position (index of character in expression)
   //
   public grammar: Grammar
@@ -65,20 +65,6 @@ export default class Lexer {
   constructor(grammar: LexicalGrammar) {
     this.grammar = grammar
   }
-
-  // #region UTILS
-
-  substring(start: number, length: number, strict = true) {
-    if (strict) {
-      assert(start >= 0 && start < this.expression.length, `Invalid start index`)
-      assert(length >= 0, `Invalid length`)
-      assert(length <= this.expression.length - start, `Invalid length`)
-    }
-
-    return this.expression.slice(start, start + length)
-  }
-
-  // #endregion
 
   /** Defaults options for lexer */
   _options(options: Partial<LexerOptions>) {

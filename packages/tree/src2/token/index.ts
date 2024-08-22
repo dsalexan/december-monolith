@@ -37,6 +37,7 @@ export const NON_EVALUATED_LEXICAL_TOKEN = Symbol.for(`NON_EVALUATED_LEXICAL_TOK
 
 export default class Token<TValue = any> {
   private lexer: Lexer
+  private _expression: string
   //
   private _interval: Interval
   private _type: TypeName
@@ -56,8 +57,12 @@ export default class Token<TValue = any> {
     return this._interval
   }
 
+  private get expression() {
+    return this._expression ?? this.lexer.expression
+  }
+
   public get lexeme(): string {
-    return this.lexer.substring(this._interval.start, this._interval.length)
+    return this.substring(this._interval.start, this._interval.length)
   }
 
   public get grammar(): Grammar {
@@ -87,6 +92,24 @@ export default class Token<TValue = any> {
 
     this._interval = Interval.fromLength(lexeme.start, lexeme.length)
     this._type = lexeme.type.name
+  }
+
+  private substring(start: number, length: number, strict = true) {
+    if (strict) {
+      assert(start >= 0 && start < this.expression.length, `Invalid start index`)
+      assert(length >= 0, `Invalid length`)
+      assert(length <= this.expression.length - start, `Invalid length`)
+    }
+
+    return this.expression.slice(start, start + length)
+  }
+
+  updateExpression(expression: string) {
+    this._expression = expression
+  }
+
+  updateInterval(interval: Interval) {
+    this._interval = interval
   }
 
   _evaluateOptions(options: Partial<EvaluatorOptions>) {

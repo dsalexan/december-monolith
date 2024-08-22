@@ -107,7 +107,7 @@ export default class Tree {
       } else if (parent.children.length > 1) throw new Error(`Unary thing should not have multiple children`)
 
       // add child to target
-      target._addChild(child)
+      target._addChild(child, index)
     } else if (narity === 2) {
       // binary
       //    parent should have two children
@@ -129,7 +129,7 @@ export default class Tree {
       } else if (parent.children.length > 1) throw new Error(`Binary thing should not have more than two children`)
 
       // add child to target
-      target._addChild(child)
+      target._addChild(child, index)
     } else throw new Error(`Unimplemented n-arity ${narity}`)
   }
 
@@ -157,12 +157,39 @@ export default class Tree {
     const index = target.index
 
     // remove target from parent
-    parent._removeChildAt(index)
+    parent._removeChildAt(index, true)
 
     // add node to parent at that index
     this.addTo(parent, node, index)
 
     return node
+  }
+
+  /** Swap two nodes */
+  swap(nodeA: Node, nodeB: Node) {
+    assert(nodeA.parent, `Node A has no parent`)
+    assert(nodeA.parent, `Node B has no parent`)
+
+    const parentA = nodeA.parent!
+    const indexA = nodeA.index
+    const levelA = nodeA.level
+
+    const parentB = nodeB.parent!
+    const indexB = nodeB.index
+    const levelB = nodeB.level
+
+    parentA._removeChildAt(indexA)
+    parentB._removeChildAt(indexB)
+
+    parentB._addChild(nodeA, indexB, true)
+    parentA._addChild(nodeB, indexA, true)
+
+    // update numbers
+    const lowerLevel = Math.min(levelA, levelB)
+    const upperLevel = Math.max(levelA, levelB)
+
+    this.root._updateNumbers(lowerLevel)
+    this.root._updateNumbers(upperLevel)
   }
 
   /** Inserts node in sub-tree starting at target */
@@ -220,7 +247,7 @@ export default class Tree {
         } else {
           //  target has children
           //    target is not yet "full" (as per n-arity)
-          if (target.children.length < target.syntactical!.narity) debugger
+          if (target.syntactical!.narity !== Infinity && target.children.length < target.syntactical!.narity) debugger
         }
 
         // add node in lastChild's place (as it's parent)

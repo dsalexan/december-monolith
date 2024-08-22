@@ -51,18 +51,19 @@ expression = `teste, 1 + 3, A24, -10, [1, 2, 3,], 10 >= 1`
 expression = `teste, 1 ; 2 | 1, 3`
 expression = `teste, 1 ;, 2 | 1, 3`
 expression = `teste , 1.10, 1,5,  "inside ,quotes", fn(arg0, ..., argN)`
-// expression = `[1]a`
-// expression = `fn(), test`
-// expression = `fn(1,2)`
-// expression = `fn1(), fn2(1), fn3(1,2)`
-// //
-// expression = ` 0+1`
-// expression = `2+1`
-// expression = `(1/2)+0`
-// expression = `1, "inside ,quotes", 2`
-// // expression = `"inside ,quotes"`
-// expression = `1 = 2 + 3`
-// expression = `10=0-999`
+expression = `[1]a`
+expression = `fn(), test`
+expression = `fn(1,2)`
+expression = `fn1(), fn2(1), fn3(1,2)`
+//
+expression = ` 0+1`
+expression = `2+1`
+expression = `1, "inside ,quotes", 2`
+expression = `"inside ,quotes"`
+expression = `1 = 2 + 3`
+expression = `10=0-999`
+expression = `1+0`
+expression = `(1/2) + 0`
 
 const grammar = new Grammar()
 grammar.add(...WHITESPACES)
@@ -113,5 +114,5 @@ parser.print({
 semantic.process(expression, parser.AST, SemanticNRS)
 semantic.print({})
 
-// simplify.process(expression, semantic.ST, semantic.symbolTable, {}, SimplifyNRS, {})
-// simplify.print({})
+simplify.process(expression, semantic.ST, semantic.symbolTable, {}, SimplifyNRS, {})
+simplify.print({})

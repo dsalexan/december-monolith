@@ -6,19 +6,21 @@ import { TYPE, NODE } from "../../match/pattern"
 
 import { NodeReplacementSystem } from "../../nrs"
 import { MatchState, StateRuleMatch, Rule, match, get, offspring, position, offspringAt, getChild, firstChild, leftOperand, rightOperand } from "../../nrs/rule"
+import { KEEP_NODE } from "../../nrs/system"
+import type Node from "../../node"
 
 export const BASE_RULESET: Rule[] = []
 
-// //             addRule( new TARuleFromString( '0+_1', '_1' ) );
-// BASE_RULESET.push(
-//   new Rule(
-//     [
-//       (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`addition`)))), // "+"
-//       (state: MatchState) => flow(getChild(state)(0)(0), match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`))))), // "0"
-//     ],
-//     node => node.children[1],
-//   ),
-// )
+//             addRule( new TARuleFromString( '0+_1', '_1' ) );
+BASE_RULESET.push(
+  new Rule(
+    [
+      (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`addition`)))), // "+"
+      (state: MatchState) => flow(getChild(state)(0)(0), match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`))))), // "0"
+    ],
+    node => node.children[1],
+  ),
+)
 
 //             addRule( new TARuleFromString( '_Literal2=0-_1', '_1=0-_Literal2' ) );
 //                push literal to rightmost
@@ -32,20 +34,24 @@ BASE_RULESET.push(
       // _Literal2 = 0 - XXXXXXXXX
     ],
     // node => node.children[1].children[1],
-    node => flow(rightOperand, leftOperand)(node)!,
+    (node: Node) => {
+      node.tree.swap(node.children[0], node.children[1].children[1])
+
+      return KEEP_NODE
+    },
   ),
 )
 
-// //             addRule( new TARuleFromString( '_1+0', '_1' ) );
-// BASE_RULESET.push(
-//   new Rule(
-//     [
-//       (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`addition`)))), // "+"
-//       (state: MatchState) => flow(offspringAt(1, 1), match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`))))), // "0"
-//     ],
-//     node => node.children[0],
-//   ),
-// )
+//             addRule( new TARuleFromString( '_1+0', '_1' ) );
+BASE_RULESET.push(
+  new Rule(
+    [
+      (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`addition`)))), // "+"
+      (state: MatchState) => flow(offspringAt(1, 1), match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`))))), // "0"
+    ],
+    node => node.children[0],
+  ),
+)
 
 //             addRule( new TARuleFromString( '_Literal2=0-_1', '_1=0-_Literal2' ) );
 
@@ -146,6 +152,6 @@ BASE_RULESET.push(
 //             addRule( new TARuleFromString( '_literal1 / _NonLiteral = _literal2', '_literal1 * _literal2 = _NonLiteral' ) );
 
 const NRS = new NodeReplacementSystem()
-NRS.addRuleSet(BASE_RULESET)
+NRS.addRuleSet(BASE_RULESET.slice(-1))
 
 export default NRS

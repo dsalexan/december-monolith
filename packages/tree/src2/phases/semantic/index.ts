@@ -66,6 +66,7 @@ export default class Semantic {
     const order: Node[] = []
     postOrder(tree.root, node => order.push(node))
     for (const node of order) {
+      // TODO: Impprove scope detection.
       const scope = node.scope(node => {
         if (node.type.name === `quotes`) return [`string`]
         if (node.type.name === `string`) return [`string`]

@@ -1,4 +1,6 @@
 import { filter, isNil, range } from "lodash"
+import { Interval, Point, Range } from "@december/utils"
+
 import churchill, { Block, paint, Paint } from "../../logger"
 
 import Type, { isOperand } from "../../type/base"
@@ -10,7 +12,7 @@ import { STRING_COLLECTION } from "../../type/declarations/literal"
 import Node from "../../node"
 import { OriginalChildrenTracking, ReorganizationStatus } from "../../type/rules/semantical"
 import SymbolTable from "../semantic/symbolTable"
-import { postOrder } from "../../node/traversal"
+import { inOrder, postOrder } from "../../node/traversal"
 
 import { NodeReplacementSystem } from "../../nrs"
 import { KEEP_NODE, REMOVE_NODE } from "../../nrs/system"
@@ -55,7 +57,7 @@ export default class Simplify {
   //
   public grammar: Grammar
   // Semantic Tree + environment -> Simplified Semantic Tree
-  private expression: string
+  private originalExpression: string
   private ST: Tree
   private symbolTable: SymbolTable
   private environment: unknown
@@ -77,7 +79,7 @@ export default class Simplify {
   process(expression: string, ST: Tree, symbolTable: SymbolTable, environment: unknown, nodeReplacementSystem: NodeReplacementSystem, options: Partial<SimplifyOptions> = {}) {
     this._options(options) // default options
 
-    this.expression = expression
+    this.originalExpression = expression
     this.ST = ST
     this.symbolTable = symbolTable
     this.environment = environment
@@ -99,6 +101,7 @@ export default class Simplify {
     const order: Node[] = []
     postOrder(tree.root, node => order.push(node))
     for (const node of order) {
+      node.tree = tree
       const newNode = this.nodeReplacementSystem.exec(node)
 
       if (newNode === KEEP_NODE) {
@@ -108,6 +111,38 @@ export default class Simplify {
       } else if (newNode instanceof Node) tree.replaceWith(node, newNode)
       else throw new Error(`Invalid node replacement action`)
     }
+
+    // tree.root.debug()
+
+    // TODO: Improve this method to recalculate ranges
+    let modifiedExpression = ``
+
+    // recalculate ranges and final expression
+    let cursor = 0
+    inOrder(tree.root, (node, token, ignorable) => {
+      if (ignorable) debugger
+
+      if (node._range) debugger
+
+      if (!token) {
+        debugger
+      } else {
+        const length = token.interval.length
+        modifiedExpression += token.lexeme
+
+        assert(length === token.lexeme.length, `Length mismatch`)
+
+        token.updateInterval(Interval.fromLength(cursor, length))
+        cursor += length
+      }
+    })
+
+    // update local expression for all tokens
+    tree.root._range = Range.fromLength(0, modifiedExpression.length).addEntry(new Point(0)).addEntry(new Point(modifiedExpression.length))
+    tree.expression = modifiedExpression
+    postOrder(tree.root, node => node.tokens.map(token => token.updateExpression(modifiedExpression)))
+
+    // tree.root.debug()
 
     return tree
   }
@@ -122,8 +157,8 @@ export default class Simplify {
 
     // 1. Print expression
     console.log(` `)
-    logger.add(paint.gray(range(0, this.expression.length).join(` `))).info()
-    logger.add(paint.gray([...this.expression].join(` `))).info()
+    logger.add(paint.gray(range(0, this.originalExpression.length).join(` `))).info()
+    logger.add(paint.gray([...this.originalExpression].join(` `))).info()
     console.log(` `)
 
     // 3. Print Scope

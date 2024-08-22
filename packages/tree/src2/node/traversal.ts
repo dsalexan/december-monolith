@@ -132,7 +132,7 @@ export function interleavedInOrder(node: Node, iteratee: TraversalIteratee, maxD
   const lockedTokens = node.tokens.filter(token => token.attributes.traversalIndex !== undefined)
 
   // 1. Add tokens in-place (taking their index as reference)
-  for (const [i, token] of reverse([...inPlaceTokens.entries()])) targets.splice(i, 0, token)
+  for (const [i, token] of reverse([...inPlaceTokens.entries()])) targets.splice(i + 1, 0, token)
 
   // 2. Add tokens in their locked index to buffer
   const buffer: (Token | undefined)[] = []

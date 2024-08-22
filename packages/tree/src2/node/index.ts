@@ -3,7 +3,7 @@ import { push } from "@december/utils"
 
 export * as Search from "./search"
 
-import { cloneDeep, identity, indexOf, isArray, isNil, isString, orderBy, reverse, uniq, uniqBy } from "lodash"
+import { cloneDeep, identity, indexOf, isArray, isEmpty, isNil, isString, orderBy, reverse, uniq, uniqBy } from "lodash"
 import Token from "../token"
 
 import { v4 as uuidv4 } from "uuid"
@@ -18,6 +18,8 @@ import { isWrapper } from "../type/declarations/separator"
 import { Attributes } from "./attributes"
 import { inOrder, preOrder } from "./traversal"
 import { PolarCoordinates } from "mathjs"
+
+import type Tree from "../tree"
 
 export const NODE_BALANCING = {
   UNBALANCED: `UNBALANCED`,
@@ -43,6 +45,7 @@ export class NodeNumber {
 
 export default class Node {
   public id: string = uuidv4()
+  public tree: Tree
   //
   /**
    * MULTIPLE TOKENS
@@ -609,8 +612,11 @@ export default class Node {
     console.log(`======================================`)
     console.log(`\n`)
 
-    preOrder(this, (node, token) => {
-      console.log(`${` `.repeat(node.level * 2)}${node.name} ${token ? `<${token.lexeme}>` : ``}`)
+    preOrder(this, node => {
+      const lexeme = node.lexeme
+      const interval = node.tokens.length > 0 ? node.tokens.map(token => token.interval.toString()).join(`; `) : `—`
+      const range = node.range.toString()
+      console.log(`${` `.repeat(node.level * 2)}${node.name} ${!isNil(lexeme) && !isEmpty(lexeme) ? `<${lexeme}>` : ``}  ${interval}  =>  ${range}`)
     })
   }
 
