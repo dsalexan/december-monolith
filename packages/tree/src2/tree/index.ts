@@ -246,8 +246,10 @@ export default class Tree {
           this.addTo(target, nil)
         } else {
           //  target has children
+          //    target is just a collection, enlist all children of target
+          if (target.syntactical!.narity === Infinity) this.enlistChildren(target, 0, target.children.length - 1) // enlist all children of target
           //    target is not yet "full" (as per n-arity)
-          if (target.syntactical!.narity !== Infinity && target.children.length < target.syntactical!.narity) debugger
+          else if (target.children.length < target.syntactical!.narity) debugger
         }
 
         // add node in lastChild's place (as it's parent)

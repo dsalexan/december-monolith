@@ -7,7 +7,11 @@ import { TYPE, NODE } from "../../match/pattern"
 import { NodeReplacementSystem } from "../../nrs"
 import { MatchState, StateRuleMatch, Rule, match, get, offspring, position, offspringAt, getChild, firstChild, leftOperand, rightOperand } from "../../nrs/rule"
 import { KEEP_NODE } from "../../nrs/system"
-import type Node from "../../node"
+import Node from "../../node"
+import { MULTIPLICATION } from "../../type/declarations/operator"
+import assert from "assert"
+import Token from "../../token"
+import { NUMBER } from "../../type/declarations/literal"
 
 export const BASE_RULESET: Rule[] = []
 
@@ -53,14 +57,102 @@ BASE_RULESET.push(
   ),
 )
 
-//             addRule( new TARuleFromString( '_Literal2=0-_1', '_1=0-_Literal2' ) );
-
 //             addRule( new TARuleFromString( '1*_1', '_1' ) );
+BASE_RULESET.push(
+  new Rule(
+    [
+      (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`multiplication`)))), // "*"
+      (state: MatchState) => flow(offspringAt(1, 0), match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`1`))))), // "1"
+    ],
+    node => node.children[1],
+  ),
+)
+
 //             addRule( new TARuleFromString( '_1*1', '_1' ) );
+BASE_RULESET.push(
+  new Rule(
+    [
+      (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`multiplication`)))), // "*"
+      (state: MatchState) => flow(offspringAt(1, 1), match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`1`))))), // "1"
+    ],
+    node => node.children[0],
+  ),
+)
 
 //             addRule( new TARuleFromString( '_1+_1', '2*_1' ) );
+BASE_RULESET.push(
+  new Rule(
+    [
+      (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`addition`)))), // "+"
+    ],
+    node => {
+      if (node.children.length !== 2) return KEEP_NODE
+
+      // TODO: Improve this mess (it works thou)
+
+      const [left, right] = node.children
+      if (left.lexeme === right.lexeme) {
+        node.setType(MULTIPLICATION)
+
+        assert(node.tokens.length === 1, `Too many tokens`)
+        const [plus] = node.tokens
+
+        // @ts-ignore
+        let modifiedExpression = plus.expression
+        modifiedExpression = modifiedExpression.substring(0, plus.interval.start) + `*` + modifiedExpression.substring(plus.interval.length)
+        plus.updateExpression(modifiedExpression)
+
+        // @ts-ignore
+        const twoToken = new Token(plus.lexer, { start: left.range.column(`first`), length: 1, type: NUMBER })
+        modifiedExpression = modifiedExpression.substring(0, twoToken.interval.start) + `2` + modifiedExpression.substring(twoToken.interval.length)
+        twoToken.updateExpression(modifiedExpression)
+        const two = new Node(twoToken)
+
+        // tree.replaceWith(...)
+        node._removeChildAt(0, true) // remove left from node
+        node._addChild(two, 0) // add two to node as left
+
+        return node
+      }
+
+      return KEEP_NODE
+    },
+  ),
+)
 
 //             addRule( new TARuleFromString( '_1-_1', '0' ) );
+BASE_RULESET.push(
+  new Rule(
+    [
+      (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`subtraction`)))), // "-"
+    ],
+    node => {
+      if (node.children.length !== 2) return KEEP_NODE
+
+      // TODO: Improve this mess (it works thou)
+      // TODO: Probably should work on the calculations part (since comparing lexemes is not really what I want for this rule)
+
+      const [left, right] = node.children
+      if (left.lexeme === right.lexeme) {
+        const [minus] = node.tokens
+
+        // @ts-ignore
+        let modifiedExpression = minus.expression
+
+        // @ts-ignore
+        const zeroToken = new Token(minus.lexer, { start: left.range.column(`first`), length: 1, type: NUMBER })
+        modifiedExpression = modifiedExpression.substring(0, zeroToken.interval.start) + `0` + modifiedExpression.substring(zeroToken.interval.length)
+        zeroToken.updateExpression(modifiedExpression)
+        const zero = new Node(zeroToken)
+
+        return zero
+      }
+
+      return KEEP_NODE
+    },
+  ),
+)
+
 //             addRule( new TARuleFromString( '_1/_1', '1' ) );
 
 //             // Rate = (pow((EndValue / BeginValue), (1 / (EndYear - BeginYear)))-1) * 100

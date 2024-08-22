@@ -64,6 +64,13 @@ expression = `1 = 2 + 3`
 expression = `10=0-999`
 expression = `1+0`
 expression = `(1/2) + 0`
+expression = `1*20`
+expression = `20*1`
+expression = `1+3`
+expression = `3+3`
+expression = `(10 + 5)`
+expression = `(10 + 5) + (10 + 5)`
+expression = `20-20`
 
 const grammar = new Grammar()
 grammar.add(...WHITESPACES)

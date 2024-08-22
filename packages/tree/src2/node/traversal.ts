@@ -115,13 +115,13 @@ export function narityInOrder(node: Node, iteratee: TraversalIteratee, maxDepth 
 }
 
 export function wrapperInOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
-  assert(node.tokens.length === 2, `Wrapper nodes must have 2 tokens (opener and closer)`)
+  assert(node.tokens.length >= 1 && node.tokens.length <= 2, `Wrapper nodes must have 1 or 2 tokens (opener and closer or unbalanced)`)
 
   const children = node.getChildren(maxDepth)
 
   iteratee(node, node.tokens[0])
   for (const child of children) inOrder(child, iteratee, maxDepth)
-  iteratee(node, node.tokens[1])
+  if (node.tokens[1]) iteratee(node, node.tokens[1])
 }
 
 export function interleavedInOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
