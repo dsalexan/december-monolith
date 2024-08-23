@@ -82,6 +82,16 @@ expression = `1*+2`
 expression = `1*-2`
 expression = `10=(0-10)*-1`
 expression = `0+(1 + a)`
+//
+//
+expression = `(")`
+expression = `("")`
+expression = `fn(0)`
+expression = `fn(0 + 1)`
+// expression = `1 + if("SK:Br awling::level" > 10) `
+// expression = `1 + if(15 > 10) + -@if(10)`
+// expression = `thr-1 + @if("SK:Brawling::level" > ST:DX+1 then @basethdice(ST:Bite) else 0) + -@if("DI:Weak Bite::level" = 1 then 2 * @basethdice(ST:Bite) else 0)`
+// expression = `$if("AD:Teeth (Sharp Teeth)::level" = 1 THEN "cut" ELSE $if("AD:Teeth (Sharp Beak)::level" = 1 THEN "pi+" ELSE $if("AD:Teeth (Fangs)::level" = 1 THEN "imp" ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr"))))`
 
 const options = defaultProcessingOptions({
   // general
@@ -145,13 +155,13 @@ parser.print({
 semantic.process(expression, parser.AST, SemanticNRS, options.semantic)
 semantic.print({})
 
-environment.print()
+// environment.print()
 
 // simplify.process(semantic.ST, environment, SimplifyNRS, options.simplify)
-// simplify.print({})
+// // simplify.print({})
 
-// reducer.process(simplify.SST, environment, options.reducer)
-// reducer.print({})
+// // reducer.process(simplify.SST, environment, options.reducer)
+// // reducer.print({})
 
-resolver.process(semantic.ST, environment, options.resolver)
-resolver.print({})
+// resolver.process(semantic.ST, environment, options.resolver)
+// resolver.print({})

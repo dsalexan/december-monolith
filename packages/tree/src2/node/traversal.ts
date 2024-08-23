@@ -137,11 +137,16 @@ export function interleavedInOrder(node: Node, iteratee: TraversalIteratee, maxD
   for (const [i, token] of reverse([...inPlaceTokens.entries()])) targets.splice(i + 1, 0, token)
 
   // 2. Add tokens in their locked index to buffer
-  const buffer: (Token | undefined)[] = []
-  for (const token of lockedTokens) buffer[token.attributes.traversalIndex!] = token
+  const fromStart: (Token | undefined)[] = []
+  const fromEnd: (Token | undefined)[] = []
+  for (const token of lockedTokens) {
+    if (token.attributes.traversalIndex! >= 0) fromStart[token.attributes.traversalIndex!] = token
+    else fromEnd[-token.attributes.traversalIndex!] = token
+  }
 
   // 3. Add from buffer to targets
-  for (const [i, token] of reverse([...buffer.entries()])) if (token) targets.splice(i, 0, token)
+  for (const [i, token] of reverse([...fromStart.entries()])) if (token) targets.splice(i, 0, token)
+  for (const [i, token] of [...fromEnd.entries()]) if (token) targets.splice(targets.length - i + 1, 0, token)
 
   // 4. Traverse targets
   for (const target of targets) {

@@ -169,7 +169,7 @@ export default class Grid {
 
         for (const entry of simplifiedRange.getEntries()) {
           if (entry instanceof Point) columns += this.imaginary[entry.index] || 1
-          else if (entry instanceof Interval) columns += sum(range(entry.start, entry.end + 1).map(c => this.columns[c]))
+          else if (entry instanceof Interval) columns += sum(range(entry.start, entry.end + 1).map(c => 1)) // this.columns[c]
           else throw new Error(`Unimplemented entry type`)
         }
 

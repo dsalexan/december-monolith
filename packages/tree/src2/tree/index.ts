@@ -195,7 +195,7 @@ export default class Tree {
 
   /** Inserts node in sub-tree starting at target */
   insert(target: Node, node: Node) {
-    const __DEBUG = true // COMMENT
+    const __DEBUG = false // COMMENT
     global.__DEBUG_LABEL = `${node.lexeme}->${target.name}` // COMMENT
 
     if (__DEBUG) {
@@ -261,7 +261,7 @@ export default class Tree {
         this.addAsParent(node, lastChild)
 
         // since we inserted it between current and its last child, return current as new target
-      } else if (target.children.length < target.syntactical!.narity) {
+      } else if (target.children.length <= target.syntactical!.narity) {
         // basically handling negative/positive signs
 
         // ERROR: How to handle it?
@@ -522,7 +522,7 @@ export default class Tree {
     inOrder(this.root, (node, token, ignorable) => {
       if (ignorable) debugger
 
-      if (node._range) debugger
+      // if (node._range) debugger
 
       if (!token) {
         debugger

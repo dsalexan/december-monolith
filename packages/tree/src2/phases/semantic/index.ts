@@ -138,6 +138,7 @@ export default class Semantic {
 
   /** Process tokenized expression into an AST */
   private _process() {
+    // TODO: Weave NRS and reorganization together. There is a edge case where I need FUNCTION first then the list collapsing
     this.ST = this._processAbstractTree(this.AST)
     this._reorganizeSemanticTree(this.ST)
 

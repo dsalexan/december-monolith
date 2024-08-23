@@ -33,13 +33,13 @@ export default class TreePrinter {
     let formatIndex = 0
 
     // 0. Headers
-    // rows.push({
-    //   formats: [
-    //     header(tree, true, { index: 0, ignoreSpacing: style.ignoreSpacing }, { ...options.sequence, showBrackets: false }), //
-    //     header(tree, false, { index: 1, ignoreSpacing: style.ignoreSpacing }, { ...options.sequence, showBrackets: false }),
-    //   ],
-    //   rows: [formatIndex, (formatIndex += 2)],
-    // })
+    rows.push({
+      formats: [
+        header(tree, true, { index: 0, ignoreSpacing: style.ignoreSpacing }, { ...options.sequence, showBrackets: false }), //
+        header(tree, false, { index: 1, ignoreSpacing: style.ignoreSpacing }, { ...options.sequence, showBrackets: false }),
+      ],
+      rows: [formatIndex, (formatIndex += 2)],
+    })
 
     rows.push(`BREAKLINE`)
 

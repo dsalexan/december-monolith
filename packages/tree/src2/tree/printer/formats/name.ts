@@ -60,6 +60,7 @@ export function formatName(level: number, node: Node, token: Token | undefined, 
 export default function name(tree: Tree, level: number, format: TokenFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
   return {
     fn: () => {
+      // if (global.__DEBUG_LABEL === `"->ρ1.a` && level === 2) debugger
       const tokens = tree.root.tokenize(level)
 
       const sequences: Grid.Sequence.Sequence[] = []

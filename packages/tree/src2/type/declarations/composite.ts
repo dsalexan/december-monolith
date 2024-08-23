@@ -5,6 +5,7 @@ import Node, { Search } from "../../node"
 import { isNil, range } from "lodash"
 import { OriginalChildrenTracking } from "../rules/semantical"
 import { IDENTIFIER } from "./identifier"
+import { interleavedInOrder } from "../../node/traversal"
 
 /**
  * Lower Priority means less nodes can be parent of this node
@@ -54,7 +55,7 @@ export const FUNCTION = new Type(`composite`, `function`, `f`)
       if (parenthesis.children.length === 1) {
         const child = parenthesis.children[0]
 
-        if (isOperand(child.type.id)) child._addToParent(fn, null, true).setAttributes({ tags: [`argument`] })
+        if (child.type.id !== `separator`) child._addToParent(fn, null, true).setAttributes({ tags: [`argument`] })
         else if (child.type.name === `comma`) {
           // inject comma tokens
           const commas = child.tokens
@@ -83,6 +84,7 @@ export const FUNCTION = new Type(`composite`, `function`, `f`)
     },
   )
   .deriveSyntactical(Infinity)
+  .setInOrderBehaviour(interleavedInOrder)
 
 // WARN: Always update this list when adding a new recipe
 export const COMPOSITES = [FUNCTION]
