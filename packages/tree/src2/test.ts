@@ -14,7 +14,8 @@ import Lexer from "./phases/lexer"
 import Parser from "./phases/parser"
 import Semantic, { NRS as SemanticNRS } from "./phases/semantic"
 import Simplify, { NRS as SimplifyNRS } from "./phases/simplify"
-import Executor from "./phases/executor"
+import Reducer from "./phases/reducer"
+import Resolver from "./phases/resolver"
 
 import { LITERALS, NUMBER, STRING } from "./type/declarations/literal"
 import { OPERATORS, DEFAULT_OPERATORS, ALGEBRAIC_OPERATORS } from "./type/declarations/operator"
@@ -22,6 +23,7 @@ import { DEFAULT_SEPARATORS, SEPARATORS } from "./type/declarations/separator"
 import { WHITESPACES } from "./type/declarations/whitespace"
 import { COMPOSITES } from "./type/declarations/composite"
 import { defaultProcessingOptions } from "./options"
+import Environment from "./environment"
 
 let expression = `1 + 2`
 expression = `1 a`
@@ -79,10 +81,15 @@ expression = `10=0-999`
 expression = `1*+2`
 expression = `1*-2`
 expression = `10=(0-10)*-1`
+expression = `0+(1 + a)`
 
 const options = defaultProcessingOptions({
   // general
   scope: { root: `math` },
+  //
+  resolver: {
+    SNRS: SimplifyNRS,
+  },
 })
 
 const grammar = new Grammar()
@@ -99,7 +106,10 @@ const lexer = new Lexer(grammar)
 const parser = new Parser(grammar)
 const semantic = new Semantic(grammar)
 const simplify = new Simplify(grammar)
-const executor = new Executor()
+const reducer = new Reducer(grammar)
+const resolver = new Resolver(simplify, reducer)
+
+const environment = new Environment()
 
 // 1. Print expression
 console.log(` `)
@@ -135,8 +145,13 @@ parser.print({
 semantic.process(expression, parser.AST, SemanticNRS, options.semantic)
 semantic.print({})
 
-// simplify.process(expression, semantic.ST, semantic.symbolTable, {}, SimplifyNRS, options.simplify)
+environment.print()
+
+// simplify.process(semantic.ST, environment, SimplifyNRS, options.simplify)
 // simplify.print({})
 
-executor.process(semantic.ST, semantic.symbolTable, {}, options.executor)
-executor.print({})
+// reducer.process(simplify.SST, environment, options.reducer)
+// reducer.print({})
+
+resolver.process(semantic.ST, environment, options.resolver)
+resolver.print({})

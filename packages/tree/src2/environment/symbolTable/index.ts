@@ -1,11 +1,12 @@
 import assert from "assert"
 
-import churchill, { Block, paint, Paint } from "../../../logger"
+import churchill, { Block, paint, Paint } from "../../logger"
 
-import type Tree from "../../../tree"
-import type Node from "../../../node"
-import { BY_TYPE } from "../../../type/styles"
+import Tree from "../../tree"
+import type Node from "../../node"
+import { BY_TYPE } from "../../type/styles"
 import { isString, max, sum } from "lodash"
+import { getMasterScope, ScopeManager } from "../../node/scope"
 
 export const _logger = churchill.child(`tree`, undefined, { separator: `` })
 
@@ -21,9 +22,9 @@ export default class SymbolTable {
 
   constructor() {}
 
-  static from(tree: Tree) {
+  static from(tree: Tree, scopeManager: ScopeManager) {
     const table = new SymbolTable()
-    table.from(tree)
+    table.from(tree, scopeManager)
 
     return table
   }
@@ -53,13 +54,22 @@ export default class SymbolTable {
     throw new Error(`Type ${type} not implemented for searching symbol table`)
   }
 
-  from(tree: Tree) {
+  from(tree: Tree, scopeManager: ScopeManager) {
     this.reset()
 
     this.tree = tree
 
     tree.traverse(node => {
-      const isSymbol = node.type.id === `identifier` || node.type.id === `literal`
+      const scope = node.scope(scopeManager)
+      const master = getMasterScope(scope)
+
+      const isIdentifier = node.type.id === `identifier`
+      const isNonNumericLiteral = node.type.id === `literal` && ![`number`, `signed_number`].includes(node.type.name)
+
+      let isSymbol = false
+      if (master === `math`) {
+        isSymbol = isIdentifier || isNonNumericLiteral
+      } else throw new Error(`Unimplemented master scope "${master}"`)
 
       if (!isSymbol) return
 

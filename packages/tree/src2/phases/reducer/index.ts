@@ -1,5 +1,5 @@
 import assert from "assert"
-import { filter, isNil, range } from "lodash"
+import { filter, isBoolean, isNil, isNumber, isString, range } from "lodash"
 import { Interval, Point, Range } from "@december/utils"
 
 import churchill, { Block, paint, Paint } from "../../logger"
@@ -10,10 +10,15 @@ import Node from "../../node"
 
 import type { BaseProcessingOptions } from "../../options"
 
-import SymbolTable from "../semantic/symbolTable"
 import Environment from "../../environment"
 import { postOrder } from "../../node/traversal"
 import { getMasterScope, MasterScope, Scope } from "../../node/scope"
+import { BOOLEAN, NUMBER, STRING } from "../../type/declarations/literal"
+import Token from "../../token"
+import Grammar from "../../type/grammar"
+import SymbolTable from "../../environment/symbolTable"
+import { IDENTIFIER } from "../../type/declarations/identifier"
+import Type from "../../type/base"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -44,23 +49,26 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
  *
  * */
 
-export interface BaseExecutorOptions {}
+export interface BaseReducerOptions {}
 
-export type ExecutorOptions = BaseExecutorOptions & BaseProcessingOptions
+export type ReducerOptions = BaseReducerOptions & BaseProcessingOptions
 
-export default class Executor {
-  public options: ExecutorOptions
+export default class Reducer {
+  public options: ReducerOptions
+  public grammar: Grammar
   //
-  private tree: Tree
   private symbolTable: SymbolTable
   private environment: Environment
-  public result: any
+  private T: Tree
+  public RT: Tree
   //
 
-  constructor() {}
+  constructor(grammar: Grammar) {
+    this.grammar = grammar
+  }
 
   /** Defaults options for parser */
-  _options(options: Partial<ExecutorOptions>) {
+  _options(options: Partial<ReducerOptions>) {
     this.options = {
       logger: options.logger ?? _logger,
       scope: options.scope!,
@@ -70,20 +78,19 @@ export default class Executor {
   }
 
   /** Process tokenized expression into an Abstract Syntax Tree (AST) */
-  process(tree: Tree, symbolTable: SymbolTable, environment: Environment, options: Partial<ExecutorOptions> = {}) {
+  process(tree: Tree, environment: Environment, options: Partial<ReducerOptions> = {}) {
     this._options(options) // default options
 
-    this.tree = tree
-    this.symbolTable = symbolTable
+    this.T = tree
     this.environment = environment
 
     this._process()
 
-    return this.result
+    return this.RT
   }
 
   /** Process Node into some value */
-  private _processNode(node: Node) {
+  private _processNode(node: Node): Node | number | string | boolean {
     assert(node, `Node must be defined`)
 
     const scope = node.scope(this.options.scope)
@@ -100,14 +107,34 @@ export default class Executor {
       assert(node.children.length === 1, `Root node must have exactly one child`) // confirm unarity
 
       return PROCESS_CHILD()
+    } else if (node.type.id === `identifier`) {
+      const identifier = node.content!
+
+      const isSymbol = this.symbolTable.has(identifier)
+
+      assert(isSymbol, `Identifier "${node.content}" is not defined in Symbol Table`)
+
+      return this.environment.has(identifier) ? GET_VALUE(`any`) : PASS()
     } else if (node.type.id === `literal`) {
       // TODO: Implement literality function in Environment
 
       if (master !== `math`) debugger
 
       if (node.type.name === `number` || node.type.name === `signed_number`) return GET_VALUE(`number`)
-      else if (node.type.name === `string` || node.type.name === `string_collection`) throw new Error(`Unimplemented string type`)
-      else throw new Error(`Unimplemented literal type "${node.type.name}"`)
+      else if (node.type.name === `string` || node.type.name === `string_collection`) {
+        const identifier = node.content!
+        const isSymbol = this.symbolTable.has(identifier)
+
+        // if node is a symbol
+        if (isSymbol) {
+          // first try to get value from Environment
+          //    if it is not in Environment, transform it into a identifier
+
+          return this.environment.has(identifier) ? GET_VALUE(`any`, true) : NORMALIZE(IDENTIFIER)
+        }
+
+        debugger
+      } else throw new Error(`Unimplemented literal type "${node.type.name}"`)
       //
     } else if (node.type.id === `operator`) {
       if (master !== `math`) throw new Error(`Unimplemented NON-MATH operator type "${node.type.name}"`)
@@ -127,12 +154,35 @@ export default class Executor {
   }
 
   /** Effectivelly process node + instruction */
-  private _processNodeInstruction(instruction: NodeInstruction, node: Node, { master, all: scope }: { master: MasterScope; all: Scope[] }) {
-    if (instruction.protocol === `process-child`) return this._processNode(node.children[0])
-    else if (instruction.protocol === `get-value`) {
-      const stringValue = node.content! as string
+  private _processNodeInstruction(instruction: NodeInstruction, node: Node, { master, all: scope }: { master: MasterScope; all: Scope[] }): Node | number | string | boolean {
+    if (instruction.protocol === `pass`) return node
+    else if (instruction.protocol === `process-child`) return this._processNode(node.children[0])
+    else if (instruction.protocol === `normalize`) {
+      node.setType(instruction.type) // change node type
 
-      if (instruction.type === `string`) return stringValue
+      // flat all its children into a string
+      const content = node.content!
+      const token = new Token(this.grammar, { start: 0, length: content.length, type: instruction.type })
+      token.updateExpression(content)
+
+      node.clearTokens()
+      node.addToken(token)
+
+      return node
+    } else if (instruction.protocol === `get-value`) {
+      let stringValue = node.content! as string
+
+      const asIdentifier = instruction.asIdentifier ?? node.type.id === `identifier`
+
+      if (asIdentifier) {
+        const identifier = stringValue
+        assert(this.environment.has(identifier), `Identifier "${identifier}" is not defined in Environment`)
+
+        stringValue = this.environment.get(identifier) as any
+      }
+
+      if (instruction.type === `any`) return stringValue
+      else if (instruction.type === `string`) return stringValue
       else if (instruction.type === `number`) {
         const numericValue: number = parseFloat(stringValue)
 
@@ -146,8 +196,22 @@ export default class Executor {
 
       const [_left, _right] = node.children
 
-      const left = this._processNode(_left)
-      const right = this._processNode(_right)
+      let left = this._processNode(_left) as number | Node
+      let right = this._processNode(_right) as number | Node
+
+      if (left instanceof Node || right instanceof Node) {
+        if (!(left instanceof Node)) {
+          left = Node.fromValue(this.grammar, left.toString(), NUMBER)
+          node._replaceWith(0, left)
+        }
+
+        if (!(right instanceof Node)) {
+          right = Node.fromValue(this.grammar, right.toString(), NUMBER)
+          node._replaceWith(1, right)
+        }
+
+        return node
+      }
 
       // TODO: Probably check if both operands are of the same type???
 
@@ -167,37 +231,39 @@ export default class Executor {
 
   /** Process tree with data from environment */
   private _process() {
-    this.result = this._processNode(this.tree.root)
+    this.symbolTable = SymbolTable.from(this.T, this.options.scope)
+    const result = this._processNode(this.T.root)
+
+    // encapsulate processed return into a tree
+    const tree = new Tree(``)
+
+    if (result instanceof Node) {
+      tree.root._addChild(result)
+    } else if (isString(result) || isNumber(result) || isBoolean(result)) {
+      const type = isString(result) ? STRING : isNumber(result) ? NUMBER : BOOLEAN
+
+      const literal = Node.fromValue(this.grammar, result.toString(), type)
+
+      tree.root._addChild(literal)
+    } else throw new Error(`Unimplemented result treatment`)
+
+    // recalculate ranges and final expression
+    tree.recalculate()
+
+    this.RT = tree
   }
 
   print(options: PrintOptions = {}) {
     const logger = _logger
 
-    // 1. Print expression
-    console.log(` `)
-    logger.add(paint.gray(range(0, this.tree.expression.length).join(` `))).info()
-    logger.add(paint.gray([...this.tree.expression].join(` `))).info()
-    console.log(` `)
-
-    // 3. Print Scope
-    console.log(`\n`)
+    // 1. Print  Tree
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
     _logger
-      .add(paint.grey(`ENVIRONMENT`)) //
+      .add(paint.grey(`REDUCED TREE`)) //
       .info()
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
 
-    console.log(this.environment)
-
-    // 3. Print Abstract Tree
-    console.log(`\n`)
-    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
-    _logger
-      .add(paint.grey(`RESULT`)) //
-      .info()
-    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
-
-    _logger.add(paint.white(this.result)).info()
+    this.RT.print(this.RT.root, options)
   }
 }
 
@@ -206,18 +272,26 @@ interface BaseNodeInstruction {
 }
 
 interface GenericNodeInstruction extends BaseNodeInstruction {
-  protocol: `process-child` | `elementary-algebra`
+  protocol: `process-child` | `elementary-algebra` | `pass`
 }
 
 interface GetValueNodeInstruction extends BaseNodeInstruction {
   protocol: `get-value`
-  type: `string` | `number` | `boolean`
+  type: `string` | `number` | `boolean` | `any`
+  asIdentifier?: boolean
 }
 
-type NodeInstruction = GenericNodeInstruction | GetValueNodeInstruction
+interface TypeNodeInstruction extends BaseNodeInstruction {
+  protocol: `normalize`
+  type: Type
+}
+
+type NodeInstruction = GenericNodeInstruction | GetValueNodeInstruction | TypeNodeInstruction
 
 type TNodeInstructionFactory<TInstruction extends NodeInstruction = NodeInstruction> = (...args: any[]) => TInstruction
 
-const GET_VALUE: TNodeInstructionFactory<GetValueNodeInstruction> = (type: GetValueNodeInstruction[`type`]) => ({ protocol: `get-value`, type })
+const PASS: TNodeInstructionFactory<GenericNodeInstruction> = () => ({ protocol: `pass` })
+const GET_VALUE: TNodeInstructionFactory<GetValueNodeInstruction> = (type: GetValueNodeInstruction[`type`], asIdentifier) => ({ protocol: `get-value`, type, asIdentifier })
 const PROCESS_CHILD: TNodeInstructionFactory<GenericNodeInstruction> = () => ({ protocol: `process-child` })
 const ELEMENTARY_ALGEBRA: TNodeInstructionFactory<GenericNodeInstruction> = () => ({ protocol: `elementary-algebra` })
+const NORMALIZE: TNodeInstructionFactory<TypeNodeInstruction> = type => ({ protocol: `normalize`, type })

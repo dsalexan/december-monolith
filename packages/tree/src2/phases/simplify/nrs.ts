@@ -244,6 +244,6 @@ BASE_RULESET.push(
 //             addRule( new TARuleFromString( '_literal1 / _NonLiteral = _literal2', '_literal1 * _literal2 = _NonLiteral' ) );
 
 const NRS = new NodeReplacementSystem()
-NRS.addRuleSet(BASE_RULESET.slice(-1))
+NRS.addRuleSet(BASE_RULESET.slice(0))
 
 export default NRS

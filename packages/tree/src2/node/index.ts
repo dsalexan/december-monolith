@@ -1,4 +1,4 @@
-import { push } from "@december/utils"
+import { Interval, push } from "@december/utils"
 // AST: Abstract Syntax Tree
 
 export * as Search from "./search"
@@ -16,12 +16,14 @@ import { numberToLetters } from "../utils"
 import { isWrapper } from "../type/declarations/separator"
 
 import { Attributes } from "./attributes"
-import { inOrder, preOrder } from "./traversal"
+import { inOrder, postOrder, preOrder } from "./traversal"
 import { PolarCoordinates } from "mathjs"
 
 import type Tree from "../tree"
 import { Scope, ScopeEvaluator, ScopeManager } from "./scope"
 import { NIL } from "../type/declarations/literal"
+import Lexer from "../phases/lexer"
+import Grammar from "../type/grammar"
 
 export const NODE_BALANCING = {
   UNBALANCED: `UNBALANCED`,
@@ -256,6 +258,16 @@ export default class Node {
     return new Node(NIL, Range.fromPoint(range.column(`first`)))
   }
 
+  static fromValue(grammar: Grammar, value: string, type: Type, interval?: Interval) {
+    interval ??= Interval.fromLength(0, value.length)
+
+    const token = new Token(grammar, { type, start: interval.start, length: interval.length })
+    token.updateExpression(value)
+    const node = new Node(token)
+
+    return node
+  }
+
   // #endregion
 
   // #region Proxy
@@ -374,6 +386,16 @@ export default class Node {
     return this
   }
 
+  _replaceWith(index: number, node: Node) {
+    // remove target from parent
+    const removedNode = this._removeChildAt(index, true)
+
+    // add node to parent at that index
+    this._addChild(node, index)
+
+    return removedNode
+  }
+
   // #endregion
 
   /** Returns the nth ancestor of node */
@@ -475,6 +497,15 @@ export default class Node {
     inOrder(this, (node, token, ignorable) => !ignorable && list.push({ node, token: token || undefined }), level)
 
     return list
+  }
+
+  repr() {
+    const tokenized = this.tokenize()
+    const allTokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
+
+    const string = allTokens.map(token => token.lexeme).join(``)
+
+    return string
   }
 
   /** Traverse sub tree from this.

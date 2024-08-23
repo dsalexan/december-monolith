@@ -7,13 +7,15 @@ import { MasterScope, ScopeEvaluator, ScopeManager, GenericScope } from "./node/
 import { BaseParserOptions } from "./phases/parser"
 import { BaseSemanticOptions } from "./phases/semantic"
 import { BaseSimplifyOptions } from "./phases/simplify"
-import { BaseExecutorOptions } from "./phases/executor"
+import { BaseReducerOptions } from "./phases/reducer"
+import { BaseResolverOptions } from "./phases/resolver"
 
 export interface PhaseProcessingOptions {
-  parser: BaseParserOptions
-  semantic: BaseSemanticOptions
-  simplify: BaseSimplifyOptions
-  executor: BaseExecutorOptions
+  parser?: BaseParserOptions
+  semantic?: BaseSemanticOptions
+  simplify?: BaseSimplifyOptions
+  reducer?: BaseReducerOptions
+  resolver: BaseResolverOptions
 }
 
 export interface InputProcessingOptions {
@@ -31,7 +33,7 @@ export interface BaseProcessingOptions {
 
 export type ProcessingOptions = BaseProcessingOptions & PhaseProcessingOptions
 
-export function defaultProcessingOptions(options: InputProcessingOptions & Partial<PhaseProcessingOptions>): ProcessingOptions {
+export function defaultProcessingOptions(options: InputProcessingOptions & PhaseProcessingOptions): ProcessingOptions {
   const rootScope = Array.isArray(options.scope.root) ? options.scope.root : [options.scope.root]
   const scopeManager = new ScopeManager(...rootScope)
   scopeManager.addEvaluator(...(options.scope.evaluators ?? []))
@@ -41,24 +43,37 @@ export function defaultProcessingOptions(options: InputProcessingOptions & Parti
     scope: scopeManager,
   }
 
+  const parser = {
+    ...base,
+    ...(options.parser ?? {}),
+  }
+  const semantic = {
+    ...base,
+    ...(options.semantic ?? {}),
+  }
+  const simplify = {
+    ...base,
+    ...(options.simplify ?? {}),
+  }
+  const reducer = {
+    ...base,
+    ...(options.reducer ?? {}),
+  }
+
+  const resolver = {
+    ...base,
+    simplify,
+    reducer,
+    ...(options.resolver ?? {}),
+  }
+
   return {
     ...base,
     //
-    parser: {
-      ...base,
-      ...(options.parser ?? {}),
-    },
-    semantic: {
-      ...base,
-      ...(options.semantic ?? {}),
-    },
-    simplify: {
-      ...base,
-      ...(options.simplify ?? {}),
-    },
-    executor: {
-      ...base,
-      ...(options.executor ?? {}),
-    },
+    parser,
+    semantic,
+    simplify,
+    reducer,
+    resolver,
   }
 }

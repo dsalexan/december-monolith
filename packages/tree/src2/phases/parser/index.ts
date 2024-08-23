@@ -1,5 +1,4 @@
 import Token from "../../token"
-import SymbolTable from "../semantic/symbolTable"
 
 /**
  * SYNTATIC ANALYSIS
@@ -88,7 +87,6 @@ export default class Parser {
   private expression: string
   private tokens: Token[]
   public AST: Tree
-  public symbolTable: SymbolTable
   //
 
   constructor(grammar: Grammar) {

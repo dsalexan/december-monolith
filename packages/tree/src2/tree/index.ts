@@ -4,7 +4,7 @@ import { isOperand } from "../type/base"
 import { isWrapper, LIST } from "../type/declarations/separator"
 import { isString, last, sortedIndex, sortedIndexBy } from "lodash"
 
-import { Point, Range } from "@december/utils"
+import { Interval, Point, Range } from "@december/utils"
 import { Grid } from "@december/logger"
 import churchill, { Block, paint, Paint } from "../logger"
 import { PartialDeep } from "type-fest"
@@ -12,6 +12,7 @@ import { PartialDeep } from "type-fest"
 import TreePrinter, { PrintOptions } from "./printer"
 import { BY_TYPE } from "../type/styles"
 import { NIL } from "../type/declarations/literal"
+import { inOrder, postOrder } from "../node/traversal"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -509,5 +510,38 @@ export default class Tree {
         queue.push(node)
       }
     }
+  }
+
+  recalculate() {
+    // TODO: Improve this method to recalculate ranges
+
+    let expression = ``
+
+    // recalculate ranges and final expression
+    let cursor = 0
+    inOrder(this.root, (node, token, ignorable) => {
+      if (ignorable) debugger
+
+      if (node._range) debugger
+
+      if (!token) {
+        debugger
+      } else {
+        const length = token.interval.length
+        expression += token.lexeme
+
+        assert(length === token.lexeme.length, `Length mismatch`)
+
+        token.updateInterval(Interval.fromLength(cursor, length))
+        cursor += length
+      }
+    })
+
+    // update local expression for all tokens
+    this.root._range = Range.fromLength(0, expression.length).addEntry(new Point(0)).addEntry(new Point(expression.length))
+    this.expression = expression
+    postOrder(this.root, node => node.tokens.map(token => token.updateExpression(expression)))
+
+    return expression
   }
 }

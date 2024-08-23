@@ -1,6 +1,5 @@
 import { filter, isNil, range } from "lodash"
 import churchill, { Block, paint, Paint } from "../../logger"
-import SymbolTable from "./symbolTable"
 
 import Type, { isOperand } from "../../type/base"
 import Grammar from "../../type/grammar"
@@ -16,6 +15,7 @@ import { NodeReplacementSystem } from "../../nrs"
 import { KEEP_NODE, REMOVE_NODE } from "../../nrs/system"
 
 import type { BaseProcessingOptions } from "../../options"
+import SymbolTable from "../../environment/symbolTable"
 
 export { default as NRS } from "./nrs"
 
@@ -33,7 +33,6 @@ export default class Semantic {
   private expression: string
   private AST: Tree
   public ST: Tree
-  public symbolTable: SymbolTable
   //
   private nodeReplacementSystem: NodeReplacementSystem
   //
@@ -144,9 +143,6 @@ export default class Semantic {
 
     // TODO: Validate AST
     // TODO: Print errors found in AST
-    // TODO: Build symbol table
-
-    this.symbolTable = SymbolTable.from(this.ST)
   }
 
   print(options: PrintOptions = {}) {
@@ -168,8 +164,8 @@ export default class Semantic {
 
     this.ST.print(this.ST.root, options)
 
-    // 3. Print symbol table
-    console.log(`\n`)
-    this.symbolTable.print()
+    // 3. Build and print Symbol Table
+    const symbolTable = SymbolTable.from(this.ST, this.options.scope)
+    symbolTable.print()
   }
 }

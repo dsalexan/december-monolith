@@ -37,6 +37,7 @@ export const NON_EVALUATED_LEXICAL_TOKEN = Symbol.for(`NON_EVALUATED_LEXICAL_TOK
 
 export default class Token<TValue = any> {
   private lexer: Lexer
+  private _grammar: Grammar
   private _expression: string
   //
   private _interval: Interval
@@ -66,7 +67,7 @@ export default class Token<TValue = any> {
   }
 
   public get grammar(): Grammar {
-    return this.lexer.grammar
+    return this._grammar ?? this.lexer.grammar
   }
 
   public get type() {
@@ -87,8 +88,9 @@ export default class Token<TValue = any> {
 
   // #endregion
 
-  constructor(lexer: Lexer, lexeme: Lexeme) {
-    this.lexer = lexer
+  constructor(lexerOrGrammar: Lexer | Grammar, lexeme: Lexeme) {
+    if (lexerOrGrammar instanceof Grammar) this._grammar = lexerOrGrammar
+    else this.lexer = lexerOrGrammar
 
     this._interval = Interval.fromLength(lexeme.start, lexeme.length)
     this._type = lexeme.type.name
@@ -127,9 +129,10 @@ export default class Token<TValue = any> {
   }
 
   clone(lexeme?: Lexeme, attributes?: Partial<Attributes<TValue>>) {
-    lexeme ??= { start: this.interval.start, length: this.interval.length, type: this.type }
+    lexeme ??= { start: this.interval.start, length: this.interval.length, type: { name: this._type } as any }
 
-    const token = new Token(this.lexer, lexeme)
+    const token = new Token(this.lexer ?? this._grammar, lexeme)
+    token._expression = this._expression
 
     token._attributes = cloneDeep(attributes ?? this._attributes)
 

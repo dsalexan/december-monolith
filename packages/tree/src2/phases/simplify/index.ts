@@ -11,13 +11,14 @@ import Tree from "../../tree"
 import { STRING_COLLECTION } from "../../type/declarations/literal"
 import Node from "../../node"
 import { OriginalChildrenTracking, ReorganizationStatus } from "../../type/rules/semantical"
-import SymbolTable from "../semantic/symbolTable"
+
 import { inOrder, postOrder } from "../../node/traversal"
 
 import { NodeReplacementSystem } from "../../nrs"
 import { KEEP_NODE, REMOVE_NODE } from "../../nrs/system"
 
 import type { BaseProcessingOptions } from "../../options"
+import Environment from "../../environment"
 
 export { default as NRS } from "./nrs"
 
@@ -59,11 +60,10 @@ export default class Simplify {
   //
   public grammar: Grammar
   // Semantic Tree + environment -> Simplified Semantic Tree
-  private originalExpression: string
+  // private originalExpression: string
   private ST: Tree
-  private symbolTable: SymbolTable
-  private environment: unknown
-  private SST: Tree
+  private environment: Environment
+  public SST: Tree
   //
   private nodeReplacementSystem: NodeReplacementSystem
   //
@@ -78,12 +78,10 @@ export default class Simplify {
   }
 
   /** Process tokenized expression into an Abstract Syntax Tree (AST) */
-  process(expression: string, ST: Tree, symbolTable: SymbolTable, environment: unknown, nodeReplacementSystem: NodeReplacementSystem, options: Partial<SimplifyOptions> = {}) {
+  process(ST: Tree, environment: Environment, nodeReplacementSystem: NodeReplacementSystem, options: Partial<SimplifyOptions> = {}) {
     this._options(options) // default options
 
-    this.originalExpression = expression
     this.ST = ST
-    this.symbolTable = symbolTable
     this.environment = environment
 
     this.nodeReplacementSystem = nodeReplacementSystem
@@ -94,7 +92,7 @@ export default class Simplify {
   }
 
   /** Simplify Semantic Tree based on environment */
-  private _simplifySemanticTree(ST: Tree, symbolTable: SymbolTable, environment: unknown) {
+  private _simplifySemanticTree(ST: Tree, environment: Environment) {
     const __DEBUG = true // COMMENT
 
     const tree = ST.clone()
@@ -116,33 +114,7 @@ export default class Simplify {
 
     // tree.root.debug()
 
-    // TODO: Improve this method to recalculate ranges
-    let modifiedExpression = ``
-
-    // recalculate ranges and final expression
-    let cursor = 0
-    inOrder(tree.root, (node, token, ignorable) => {
-      if (ignorable) debugger
-
-      if (node._range) debugger
-
-      if (!token) {
-        debugger
-      } else {
-        const length = token.interval.length
-        modifiedExpression += token.lexeme
-
-        assert(length === token.lexeme.length, `Length mismatch`)
-
-        token.updateInterval(Interval.fromLength(cursor, length))
-        cursor += length
-      }
-    })
-
-    // update local expression for all tokens
-    tree.root._range = Range.fromLength(0, modifiedExpression.length).addEntry(new Point(0)).addEntry(new Point(modifiedExpression.length))
-    tree.expression = modifiedExpression
-    postOrder(tree.root, node => node.tokens.map(token => token.updateExpression(modifiedExpression)))
+    tree.recalculate()
 
     // tree.root.debug()
 
@@ -151,30 +123,13 @@ export default class Simplify {
 
   /** Process tokenized expression into an AST */
   private _process() {
-    this.SST = this._simplifySemanticTree(this.ST, this.symbolTable, this.environment)
+    this.SST = this._simplifySemanticTree(this.ST, this.environment)
   }
 
   print(options: PrintOptions = {}) {
     const logger = _logger
 
-    // 1. Print expression
-    console.log(` `)
-    logger.add(paint.gray(range(0, this.originalExpression.length).join(` `))).info()
-    logger.add(paint.gray([...this.originalExpression].join(` `))).info()
-    console.log(` `)
-
-    // 3. Print Scope
-    console.log(`\n`)
-    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
-    _logger
-      .add(paint.grey(`ENVIRONMENT`)) //
-      .info()
-    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
-
-    console.log(this.environment)
-
-    // 3. Print Abstract Tree
-    console.log(`\n`)
+    // 1. Print Tree
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
     _logger
       .add(paint.grey(`SIMPLIFIED SEMANTIC TREE`)) //

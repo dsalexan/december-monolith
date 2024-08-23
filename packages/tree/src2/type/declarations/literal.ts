@@ -25,12 +25,13 @@ export const SIGNED_NUMBER = new Type(`literal`, `signed_number`, `N`).addSemant
 export const STRING = new Type(`literal`, `string`, `s`).addLexical(LITERAL_PRIORITY + 1, Match.Value.REGEX(/^[0-9A-Za-z_$@:\.]+$/)).deriveSyntactical(0)
 export const STRING_COLLECTION = new Type(`literal`, `string_collection`, `S`).addSemantical(LITERAL_PRIORITY + 0.9)
 
+export const BOOLEAN = new Type(`literal`, `boolean`, `b`).addSyntactical(LITERAL_PRIORITY + 0.5, 0)
 export const NIL = new Type(`literal`, `nil`, `⌀`).addSyntactical(LITERAL_PRIORITY + 0, 0)
 export const UNKNOWN = new Type(`literal`, `unknown`, `?`).addSyntactical(LITERAL_PRIORITY - 1, 0)
 
 // WARN: Always update this list when adding a new recipe
-export const LITERALS = [NUMBER, STRING, UNKNOWN, NIL]
-export const LITERAL_NAMES = [`number`, `signed_number`, `string`, `string_collection`, `unknown`, `nil`] as const
+export const LITERALS = [NUMBER, SIGNED_NUMBER, STRING, STRING_COLLECTION, BOOLEAN, UNKNOWN, NIL]
+export const LITERAL_NAMES = [`number`, `signed_number`, `string`, `string_collection`, `boolean`, `unknown`, `nil`] as const
 export type LiteralTypeName = (typeof LITERAL_NAMES)[number]
 
 export const LITERALS_BY_NAME = LITERALS.reduce((acc, recipe) => ({ ...acc, [recipe.name]: recipe }), {})
