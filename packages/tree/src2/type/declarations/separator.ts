@@ -19,7 +19,7 @@ import { interleavedInOrder, wrapperInOrder } from "../../node/traversal"
 const SEPARATOR_PRIORITY = 10
 
 export function isWrapper(type: Type): type is (typeof WRAPPER_SEPARATORS)[number] {
-  return type.id === `separator` && WRAPPER_SEPARATOR_NAMES.includes(type.name as WrapperSeparatorTypeName)
+  return type.id === `separator` && type.modules.includes(`wrapper`) // WRAPPER_SEPARATOR_NAMES.includes(type.name as WrapperSeparatorTypeName)
 }
 
 export function openerAndCloserAreTheSame(pattern: ContainedInSetPattern) {
@@ -62,23 +62,23 @@ export const PIPE = new Type(`separator`, `pipe`, `P`)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(interleavedInOrder)
 
-export const PARENTHESIS = new Type(`separator`, `parenthesis`, `ρ`)
+export const PARENTHESIS = new Type(`separator`, `parenthesis`, `ρ`, [`wrapper`])
   .addLexical(SEPARATOR_PRIORITY + 7, CONTAINED_IN([`(`, `)`]), WrapperEvaluator)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(wrapperInOrder)
-export const BRACES = new Type(`separator`, `braces`, `γ`)
+export const BRACES = new Type(`separator`, `braces`, `γ`, [`wrapper`])
   .addLexical(SEPARATOR_PRIORITY + 6, CONTAINED_IN([`{`, `}`]), WrapperEvaluator)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(wrapperInOrder)
-export const BRACKETS = new Type(`separator`, `brackets`, `β`)
+export const BRACKETS = new Type(`separator`, `brackets`, `β`, [`wrapper`])
   .addLexical(SEPARATOR_PRIORITY + 5, CONTAINED_IN([`[`, `]`]), WrapperEvaluator)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(wrapperInOrder)
-export const QUOTES = new Type(`separator`, `quotes`, `κ`)
+export const QUOTES = new Type(`separator`, `quotes`, `κ`, [`wrapper`])
   .addLexical(SEPARATOR_PRIORITY + 4, CONTAINED_IN([`"`, `"`]), WrapperEvaluator)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(wrapperInOrder)
-export const PERCENTAGE = new Type(`separator`, `percentage`, `τ`)
+export const PERCENTAGE = new Type(`separator`, `percentage`, `τ`, [`wrapper`])
   .addLexical(SEPARATOR_PRIORITY + 3, CONTAINED_IN([`%`, `%`]), WrapperEvaluator)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(wrapperInOrder)

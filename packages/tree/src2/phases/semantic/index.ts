@@ -15,16 +15,18 @@ import { postOrder } from "../../node/traversal"
 import { NodeReplacementSystem } from "../../nrs"
 import { KEEP_NODE, REMOVE_NODE } from "../../nrs/system"
 
+import type { BaseProcessingOptions } from "../../options"
+
 export { default as NRS } from "./nrs"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-export interface SemanticOptions {
-  logger?: typeof _logger
-}
+export interface BaseSemanticOptions {}
+
+export type SemanticOptions = BaseSemanticOptions & BaseProcessingOptions
 
 export default class Semantic {
-  public options: Partial<SemanticOptions>
+  public options: SemanticOptions
   //
   public grammar: Grammar
   // tokenized expression -> AT
@@ -42,7 +44,12 @@ export default class Semantic {
 
   /** Defaults options for parser */
   _options(options: Partial<SemanticOptions>) {
-    return options
+    this.options = {
+      logger: options.logger ?? _logger,
+      scope: options.scope!,
+    }
+
+    return this.options
   }
 
   /** Process tokenized expression into an Abstract Syntax Tree (AST) */
@@ -66,15 +73,7 @@ export default class Semantic {
     const order: Node[] = []
     postOrder(tree.root, node => order.push(node))
     for (const node of order) {
-      // TODO: Impprove scope detection.
-      const scope = node.scope(node => {
-        if (node.type.name === `quotes`) return [`string`]
-        if (node.type.name === `string`) return [`string`]
-
-        return []
-      })
-
-      node._preCalculatedScope = scope
+      node._preCalculatedScope = node.scope(this.options.scope)
 
       const newNode = this.nodeReplacementSystem.exec(node)
 

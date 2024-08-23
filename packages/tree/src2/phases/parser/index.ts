@@ -72,12 +72,13 @@ import { Range } from "@december/utils"
 import * as Formats from "../../tree/printer/formats"
 import { PrintOptions } from "../../tree/printer"
 import { STRING, STRING_COLLECTION } from "../../type/declarations/literal"
+import type { BaseProcessingOptions } from "../../options"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-export interface ParserOptions {
-  logger?: typeof _logger
-}
+export interface BaseParserOptions {}
+
+export type ParserOptions = BaseParserOptions & BaseProcessingOptions
 
 export default class Parser {
   public options: Partial<ParserOptions>

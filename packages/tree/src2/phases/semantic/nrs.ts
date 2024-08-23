@@ -3,13 +3,13 @@ import { flow } from "fp-ts/lib/function"
 import { BasePattern } from "@december/utils/match/base"
 import { EQUALS } from "@december/utils/match/value"
 import { CONTAINS } from "@december/utils/match/set"
-import { AND } from "@december/utils/match/logical"
+import { AND, OR } from "@december/utils/match/logical"
 import { TYPE, NODE } from "../../match/pattern"
 
 import { NodeReplacementSystem } from "../../nrs"
 import { MatchState, StateRuleMatch, Rule, match, get, offspring, position, offspringAt, getChild, firstChild, leftOperand, rightOperand } from "../../nrs/rule"
 import { KEEP_NODE, REMOVE_NODE } from "../../nrs/system"
-import { NIL, STRING_COLLECTION } from "../../type/declarations/literal"
+import { NIL, SIGNED_NUMBER, STRING_COLLECTION } from "../../type/declarations/literal"
 import assert from "assert"
 import Node from "../../node"
 
@@ -62,6 +62,28 @@ BASE_RULESET.push(
       string.addToken(tokens.slice(1))
 
       return string
+    },
+  ),
+)
+
+// 3. Transform nil addition/subtraction into signed literal:number
+BASE_RULESET.push(
+  new Rule( //
+    [
+      state => flow(match(state)(OR(TYPE.NAME(EQUALS(`addition`)), TYPE.NAME(EQUALS(`subtraction`))))), // "+" or "-"
+      state => flow(leftOperand, match(state)(TYPE.NAME(EQUALS(`nil`)))), // nil
+    ],
+    node => {
+      const [left, right] = node.children
+
+      assert(node.tokens.length === 1, `Addition/Subtraction should have only one token`)
+
+      const signed = new Node(node.tokens[0])
+      signed.setType(SIGNED_NUMBER)
+
+      signed.addToken(right.tokens)
+
+      return signed
     },
   ),
 )

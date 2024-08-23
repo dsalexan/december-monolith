@@ -30,7 +30,7 @@ export function formatName(level: number, node: Node, token: Token | undefined, 
     repr = ` `
     color = paint.gray
   } else if (node.type.id === `literal` || node.type.name === `identifier`) {
-    if (node.type.name === `number` || node.type.name === `string_collection` || node.type.name === `identifier`) repr = `${node.type.prefix}${numberToLetters(node.number.level)}`
+    if (node.type.name === `number` || node.type.name === `signed_number` || node.type.name === `string_collection` || node.type.name === `identifier`) repr = `${node.type.prefix}${numberToLetters(node.number.level)}`
     else if (node.type.name === `string`) repr = `${numberToLetters(node.number.level)}`
     else if (node.type.name === `nil`) repr = `${node.type.prefix}`
   } else if (node.type.name === `list`) {

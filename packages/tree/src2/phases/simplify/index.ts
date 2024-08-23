@@ -17,6 +17,8 @@ import { inOrder, postOrder } from "../../node/traversal"
 import { NodeReplacementSystem } from "../../nrs"
 import { KEEP_NODE, REMOVE_NODE } from "../../nrs/system"
 
+import type { BaseProcessingOptions } from "../../options"
+
 export { default as NRS } from "./nrs"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
@@ -48,9 +50,9 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
  *
  * */
 
-export interface SimplifyOptions {
-  logger?: typeof _logger
-}
+export interface BaseSimplifyOptions {}
+
+export type SimplifyOptions = BaseSimplifyOptions & BaseProcessingOptions
 
 export default class Simplify {
   public options: Partial<SimplifyOptions>

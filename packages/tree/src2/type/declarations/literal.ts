@@ -20,6 +20,7 @@ export const NUMBER = new Type(`literal`, `number`, `n`)
     return { value }
   })
   .deriveSyntactical(0)
+export const SIGNED_NUMBER = new Type(`literal`, `signed_number`, `N`).addSemantical(LITERAL_PRIORITY + 1.9)
 
 export const STRING = new Type(`literal`, `string`, `s`).addLexical(LITERAL_PRIORITY + 1, Match.Value.REGEX(/^[0-9A-Za-z_$@:\.]+$/)).deriveSyntactical(0)
 export const STRING_COLLECTION = new Type(`literal`, `string_collection`, `S`).addSemantical(LITERAL_PRIORITY + 0.9)
@@ -29,7 +30,7 @@ export const UNKNOWN = new Type(`literal`, `unknown`, `?`).addSyntactical(LITERA
 
 // WARN: Always update this list when adding a new recipe
 export const LITERALS = [NUMBER, STRING, UNKNOWN, NIL]
-export const LITERAL_NAMES = [`number`, `string`, `string_collection`, `unknown`, `nil`] as const
+export const LITERAL_NAMES = [`number`, `signed_number`, `string`, `string_collection`, `unknown`, `nil`] as const
 export type LiteralTypeName = (typeof LITERAL_NAMES)[number]
 
 export const LITERALS_BY_NAME = LITERALS.reduce((acc, recipe) => ({ ...acc, [recipe.name]: recipe }), {})

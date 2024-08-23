@@ -53,6 +53,8 @@ export function inOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infi
 
   const behaviour = node.type.inOrderBehaviour || defaultInOrderBehaviour
 
+  // if (global.__DEBUG_LABEL === `-->×1.a` && node.name === `×1.a`) debugger
+
   behaviour(node, iteratee, maxDepth)
 }
 

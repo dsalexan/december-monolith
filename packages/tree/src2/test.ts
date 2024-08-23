@@ -14,12 +14,14 @@ import Lexer from "./phases/lexer"
 import Parser from "./phases/parser"
 import Semantic, { NRS as SemanticNRS } from "./phases/semantic"
 import Simplify, { NRS as SimplifyNRS } from "./phases/simplify"
+import Executor from "./phases/executor"
 
 import { LITERALS, NUMBER, STRING } from "./type/declarations/literal"
 import { OPERATORS, DEFAULT_OPERATORS, ALGEBRAIC_OPERATORS } from "./type/declarations/operator"
 import { DEFAULT_SEPARATORS, SEPARATORS } from "./type/declarations/separator"
 import { WHITESPACES } from "./type/declarations/whitespace"
 import { COMPOSITES } from "./type/declarations/composite"
+import { defaultProcessingOptions } from "./options"
 
 let expression = `1 + 2`
 expression = `1 a`
@@ -71,6 +73,17 @@ expression = `3+3`
 expression = `(10 + 5)`
 expression = `(10 + 5) + (10 + 5)`
 expression = `20-20`
+expression = `20-10.5`
+expression = `10=0-999`
+// expression = `10 * 5 - 10 * 5`
+expression = `1*+2`
+expression = `1*-2`
+expression = `10=(0-10)*-1`
+
+const options = defaultProcessingOptions({
+  // general
+  scope: { root: `math` },
+})
 
 const grammar = new Grammar()
 grammar.add(...WHITESPACES)
@@ -86,6 +99,7 @@ const lexer = new Lexer(grammar)
 const parser = new Parser(grammar)
 const semantic = new Semantic(grammar)
 const simplify = new Simplify(grammar)
+const executor = new Executor()
 
 // 1. Print expression
 console.log(` `)
@@ -106,7 +120,7 @@ console.log(` `)
 lexer.process(expression)
 lexer.print()
 
-parser.process(expression, lexer.tokens)
+parser.process(expression, lexer.tokens, options.parser)
 parser.print({
   sequence: {
     // minimumSizeForBracket: 0,
@@ -118,8 +132,11 @@ parser.print({
   style: {},
 })
 
-semantic.process(expression, parser.AST, SemanticNRS)
+semantic.process(expression, parser.AST, SemanticNRS, options.semantic)
 semantic.print({})
 
-simplify.process(expression, semantic.ST, semantic.symbolTable, {}, SimplifyNRS, {})
-simplify.print({})
+// simplify.process(expression, semantic.ST, semantic.symbolTable, {}, SimplifyNRS, options.simplify)
+// simplify.print({})
+
+executor.process(semantic.ST, semantic.symbolTable, {}, options.executor)
+executor.print({})

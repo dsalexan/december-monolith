@@ -194,7 +194,7 @@ export default class Tree {
 
   /** Inserts node in sub-tree starting at target */
   insert(target: Node, node: Node) {
-    const __DEBUG = false // COMMENT
+    const __DEBUG = true // COMMENT
     global.__DEBUG_LABEL = `${node.lexeme}->${target.name}` // COMMENT
 
     if (__DEBUG) {
@@ -213,7 +213,7 @@ export default class Tree {
       console.log(`\n`)
     }
 
-    // if (global.__DEBUG_LABEL === `+->=1.a`) debugger
+    // if (global.__DEBUG_LABEL === `-->×2.b`) debugger
 
     assert(node.type.syntactical, `Type "${node.type.name}" has no syntactical rules`)
 
@@ -229,7 +229,10 @@ export default class Tree {
     } else if (node.type.id === `operator`) {
       // TODO: Upon inserting an binary operator, all nodes before should be enlisted as the left-side parameter
 
-      if (node.syntactical!.priority > target.syntactical!.priority) {
+      const nodePriority = node.syntactical!.priority
+      const targetPriority = target.syntactical!.priority
+
+      if (nodePriority > targetPriority) {
         // node AS PRIORITARY OR MORE than current
         //    insert node between TARGET and its last child
         //    i.e. last child becomes child of new node, new node becomes last child of current
@@ -257,6 +260,17 @@ export default class Tree {
         this.addAsParent(node, lastChild)
 
         // since we inserted it between current and its last child, return current as new target
+      } else if (target.children.length < target.syntactical!.narity) {
+        // basically handling negative/positive signs
+
+        // ERROR: How to handle it?
+        if (![`addition`, `subtraction`].includes(node.type.name)) debugger
+
+        this.addTo(target, node) // add node as child of target
+
+        // add NIL as left operant of node
+        const nil = node.NIL()
+        this.addTo(node, nil)
       } else {
         // node IS LESS PRIORITARY than current
         //    we need to insert it higher in the tree
@@ -384,7 +398,7 @@ export default class Tree {
     // if (global.__DEBUG_LABEL === `]->L5.b`) debugger
 
     if (__DEBUG) {
-      // if (global.__DEBUG_LABEL === `,->root`) debugger
+      // if (global.__DEBUG_LABEL === `-->×1.a`) debugger
 
       this.print(this.root, {
         sequence: {

@@ -20,6 +20,8 @@ import { inOrder, preOrder } from "./traversal"
 import { PolarCoordinates } from "mathjs"
 
 import type Tree from "../tree"
+import { Scope, ScopeEvaluator, ScopeManager } from "./scope"
+import { NIL } from "../type/declarations/literal"
 
 export const NODE_BALANCING = {
   UNBALANCED: `UNBALANCED`,
@@ -56,7 +58,7 @@ export default class Node {
   private _type: Type | null
   public _range: Range // this is only returned in "get range()" if node is tokenless AND childless
   private _attributes: Attributes
-  public _preCalculatedScope: string[] = null as any // pre-calculated scope for this node, usually a scope is calculated externally and then assigned here
+  public _preCalculatedScope: Scope[] = null as any // pre-calculated scope for this node, usually a scope is calculated externally and then assigned here
 
   public get tokens() {
     return this._tokens
@@ -251,7 +253,7 @@ export default class Node {
 
   NIL(range?: Range) {
     range ??= this.range
-    return new Node(ROOT, Range.fromPoint(range.column(`first`)))
+    return new Node(NIL, Range.fromPoint(range.column(`first`)))
   }
 
   // #endregion
@@ -454,20 +456,8 @@ export default class Node {
     return null
   }
 
-  scope(predicate: (node: Node) => string[]) {
-    const scopes: string[] = []
-
-    let ancestor: Node | null = this
-
-    while (ancestor) {
-      const result = predicate(ancestor)
-
-      for (const tag of result) if (!scopes.includes(tag)) scopes.push(tag)
-
-      ancestor = ancestor.parent
-    }
-
-    return scopes
+  scope(scopeManager: ScopeManager) {
+    return scopeManager.evaluate(this)
   }
 
   addToken(token: Token | Token[], index?: number) {

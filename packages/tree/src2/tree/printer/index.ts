@@ -33,13 +33,13 @@ export default class TreePrinter {
     let formatIndex = 0
 
     // 0. Headers
-    rows.push({
-      formats: [
-        header(tree, true, { index: 0, ignoreSpacing: style.ignoreSpacing }, { ...options.sequence, showBrackets: false }), //
-        header(tree, false, { index: 1, ignoreSpacing: style.ignoreSpacing }, { ...options.sequence, showBrackets: false }),
-      ],
-      rows: [formatIndex, (formatIndex += 2)],
-    })
+    // rows.push({
+    //   formats: [
+    //     header(tree, true, { index: 0, ignoreSpacing: style.ignoreSpacing }, { ...options.sequence, showBrackets: false }), //
+    //     header(tree, false, { index: 1, ignoreSpacing: style.ignoreSpacing }, { ...options.sequence, showBrackets: false }),
+    //   ],
+    //   rows: [formatIndex, (formatIndex += 2)],
+    // })
 
     rows.push(`BREAKLINE`)
 
@@ -126,6 +126,8 @@ export default class TreePrinter {
         // add prefix
         if (k === 0 && !!spec.prefix?.length) row.addPrefix(...spec.prefix)
 
+        if (global.__DEBUG_LABEL === `-->×1.a` && k === 2) debugger
+
         // format to sequences
         const sequences = format.fn()
         row.add(...sequences)
@@ -201,7 +203,7 @@ export default class TreePrinter {
 
         // print each sequence in row
         for (const [k, sequence] of row.entries()) {
-          // if (global.__DEBUG_LABEL === `,->root` && sequence.__debug?.node?.name === `root`) debugger
+          // if (global.__DEBUG_LABEL === `-->×1.a` && sequence.__debug?.node?.name === `root`) debugger
           // if (sequence.__debug?.node?.name === `C1.a` && sequence.__debug?.format === `name`) debugger
           // if (sequence.__debug?.index === 1 && sequence.__debug?.format === `header`) debugger
 
