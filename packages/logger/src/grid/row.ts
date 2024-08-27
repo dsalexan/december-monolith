@@ -58,4 +58,8 @@ export default class Row {
 
     return this
   }
+
+  debug() {
+    return this.sequences.map(sequence => sequence.debug())
+  }
 }

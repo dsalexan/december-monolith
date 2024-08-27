@@ -155,8 +155,12 @@ export default class Grid {
   balance() {
     // stretch columns where needed
     for (const [r, row] of this.rows.entries()) {
+      // if (r === 1) debugger
+
       // for each sequence in row
       for (const [i, sequence] of row.sequences.entries()) {
+        // if (r === 11 && i === 2) debugger
+
         const length = sequence.length // space ocuppied by sequence content
 
         // const ranges = sequence.range.split()
@@ -173,9 +177,18 @@ export default class Grid {
           else throw new Error(`Unimplemented entry type`)
         }
 
+        // calculate current width
+        let currentWidth = 0
+
+        for (const entry of simplifiedRange.getEntries()) {
+          if (entry instanceof Point) currentWidth += this.imaginary[entry.index]
+          else if (entry instanceof Interval) currentWidth += sum(range(entry.start, entry.end + 1).map(c => this.columns[c])) //
+          else throw new Error(`Unimplemented entry type`)
+        }
+
         // const columns = sum(ranges.flatMap(r => (r.isPoint() ? this.imaginary[r.x] || 1 : range(r.x, r.y + 1).map(c => this.columns[c])))) // full width availble (number of columns available, both discreet and imaginary)
 
-        const diff = length - columns // SEQUENCE_CONTENT - COLUMNS
+        const diff = length - currentWidth // SEQUENCE_CONTENT - COLUMNS
 
         // measure full size and check if it is bigger than range
         if (diff > 0) {

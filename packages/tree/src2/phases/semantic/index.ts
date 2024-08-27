@@ -1,4 +1,4 @@
-import { filter, isNil, range } from "lodash"
+import { filter, isNil, range, reverse } from "lodash"
 import churchill, { Block, paint, Paint } from "../../logger"
 
 import Type, { isOperand } from "../../type/base"
@@ -65,7 +65,53 @@ export default class Semantic {
     return this.ST
   }
 
-  private _processAbstractTree(AST: Tree) {
+  _processAbstractSyntaxTree(AST: Tree) {
+    const MAX_STACK_OVERFLOW = this.nodeReplacementSystem.ruleset.length * 10 + 100
+
+    const tree = AST.clone()
+
+    // post order so we change children before parents
+    const order: Node[] = []
+    postOrder(tree.root, node => order.push(node))
+    for (const node of order) {
+      global.__DEBUG_LABEL = node.name // COMMENT
+
+      let loopAgain = false
+      let i = 0
+      do {
+        node._preCalculatedScope = node.scope(this.options.scope)
+
+        // if (global.__DEBUG_LABEL === `L1.a`) debugger // COMMENT
+
+        const newNode = this.nodeReplacementSystem.exec(node)
+
+        loopAgain = false
+        if (newNode === KEEP_NODE) {
+          // do nothing
+        } else if (newNode === REMOVE_NODE) tree.remove(node)
+        else if (newNode instanceof Node) tree.replaceWith(node, newNode)
+        else if (newNode.type === `REPLACE_NODES_AT`) {
+          for (const index of reverse(newNode.indexes)) node._removeChildAt(index, true)
+          tree.addTo(node, newNode.node, newNode.indexes[0])
+
+          // nodes were replaced at lower levels, so we need to reprocess this node
+          loopAgain = true
+        } else if (newNode.type === `ADD_NODE_AT`) {
+          tree.addTo(node, newNode.node, newNode.index)
+
+          // nodes were replaced at lower levels, so we need to reprocess this node
+          loopAgain = true
+        } else throw new Error(`Invalid node replacement action`)
+
+        i++
+        if (i > MAX_STACK_OVERFLOW) throw new Error(`Stack overflow`)
+      } while (loopAgain)
+    }
+
+    return tree
+  }
+
+  private _processAbstractTree_old(AST: Tree) {
     const tree = AST.clone()
 
     // post order so we change children before parents
@@ -136,11 +182,48 @@ export default class Semantic {
     }
   }
 
+  /**  */
+  _processAbstractSyntaxTree_other(AST: Tree) {
+    const tree = AST.clone()
+
+    // post order so we analyse the three from the bottom up
+    postOrder(tree.root, parent => {
+      // we always reorganize a node's children (but never the node itself)
+      //    leaves needs not to be reorganized
+
+      // if parent already had its children reorganized, skip
+      if (parent.attributes.reorganized) return
+
+      const tracking = new OriginalChildrenTracking(parent.children)
+
+      let children: Node[] = [...parent.children]
+      let matches: ReturnType<Grammar[`matchSemantical`]> = []
+
+      // 1. Try to match with every semantical type (sorted by priority)
+
+      // ERROR: No child is changed OR all children are accounted for
+      if (!tracking.validate()) debugger
+
+      // if there was some change, reset parent children and add new ones
+      if (tracking.doUpdateChildren()) {
+        parent.removeAllChildren()
+        for (const child of children) parent._addChild(child)
+      }
+
+      // inform node was already reorganized
+      parent.setAttributes({ reorganized: true })
+    })
+
+    return tree
+  }
+
   /** Process tokenized expression into an AST */
   private _process() {
     // TODO: Weave NRS and reorganization together. There is a edge case where I need FUNCTION first then the list collapsing
-    this.ST = this._processAbstractTree(this.AST)
-    this._reorganizeSemanticTree(this.ST)
+    // this.ST = this._processAbstractTree(this.AST)
+    // this._reorganizeSemanticTree(this.ST)
+
+    this.ST = this._processAbstractSyntaxTree(this.AST)
 
     // TODO: Validate AST
     // TODO: Print errors found in AST

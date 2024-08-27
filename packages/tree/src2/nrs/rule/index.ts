@@ -1,54 +1,55 @@
 import { BasePattern } from "@december/utils/match/base"
-
-import { flow } from "fp-ts/lib/function"
-import { isNodePattern, NodePattern } from "../../match/pattern"
 import type Node from "../../node"
+import assert from "assert"
 
-import { MatchState, StateMaybe, StateReliant } from "./base"
+export { default as Rule } from "./rule"
 
-export { Rule } from "./base"
-export type { StateRuleMatch, MatchState, StateReliant } from "./base"
+export { RuleMatchState } from "./match"
+
+export { KEEP_NODE, REMOVE_NODE, REPLACE_NODES_AT, ADD_NODE_AT } from "./replacement"
+export { type IReplacementCommand } from "./replacement"
+
+// export type RuleMatchResult = boolean
+// export type RuleMatchFunction = (node: Node) => RuleMatchResult
+
+type Nullable<T> = T | null
+type Maybe<T> = T | undefined
+
+// #region Generics
+
+type TPredicate = (predicate: (node: Node) => boolean) => (node: Nullable<Node>) => Nullable<Node>
+type TFilter = (fn: (node: Node) => Nullable<Node>) => (nodes: Node[]) => Node[]
+
+export const predicate: TPredicate = predicate => node => (node && predicate(node) ? node : null)
+export const filter: TFilter = fn => nodes =>
+  nodes.filter(node => {
+    const test = fn(node)
+
+    return test !== null
+  })
+
+// #endregion
 
 // #region Node Pattern
 
-type TPattern_Match = (pattern: BasePattern, name?: string) => (node: Node | null) => Node | null
-type TPattern_Filter = (pattern: BasePattern) => (nodes: Node[]) => Node[]
+type TMatch_Node = (pattern: BasePattern) => (node: Nullable<Node>) => Nullable<Node>
+type TMatch_InChildren = (pattern: BasePattern) => (node: Nullable<Node>) => Node[]
 
-export const match: StateMaybe<TPattern_Match> =
-  state =>
-  (pattern, name, optional = false) =>
-  node => {
-    const isMatch = !!node && pattern.match(node)
-
-    // registering match in state
-    if (state) {
-      const index = state._matches.length
-
-      if (!isMatch) state._matches.push(null)
-      else {
-        state._matches.push({ name, pattern, node, optional })
-        if (name) state.matches[name] = index - 1
-      }
-
-      if (!optional) state.mandatoryMatches[index] = isMatch
-    }
-
-    return isMatch ? node : null
-  }
-export const filter: TPattern_Filter = pattern => nodes => nodes.filter(node => pattern.match(node))
+export const match: TMatch_Node = pattern => node => (node && pattern.match(node) ? node : null)
+export const matchInChildren: TMatch_InChildren = pattern => node => node?.children.filter(match(pattern)) ?? []
 
 // #endregion
 
 // #region Node Hierarchy
 
-type TAncestor = (level: number) => (node: Node | null) => Node | null
-type TPosition = (position: number) => (nodes: Node[]) => Node | null
-type TOffspring = (level: number) => (node: Node | null) => Node[]
-type TOffspring_At = (level: number, position: number) => (node: Node | null) => Node | null
-type TFirstChild = (node: Node | null) => Node | null
+type TAncestor = (level: number) => (node: Nullable<Node>) => Nullable<Node>
+type TPosition = (position: number) => (nodes: Node[]) => Nullable<Node>
+type TOffspring = (level: number) => (node: Nullable<Node>) => Node[]
+type TOffspring_At = (level: number, position: number) => (node: Nullable<Node>) => Nullable<Node>
+type TFirstChild = (node: Nullable<Node>) => Nullable<Node>
 
-type TLeftOperand = (node: Node | null) => Node | null
-type TRightOperand = (node: Node | null) => Node | null
+type TLeftOperand = (node: Nullable<Node>) => Nullable<Node>
+type TRightOperand = (node: Nullable<Node>) => Nullable<Node>
 
 export const ancestor: TAncestor = level => node => node?.ancestor(level) ?? null
 export const position: TPosition = position => nodes => nodes[position]
@@ -58,18 +59,17 @@ export const firstChild: TFirstChild = offspringAt(1, 0)
 export const leftOperand: TLeftOperand = firstChild
 export const rightOperand: TRightOperand = offspringAt(1, 1)
 
+type TNextSibling = (node: Nullable<Node>) => Nullable<Node>
+
+export const nextSibling: TNextSibling = node => {
+  const parent = node?.parent
+
+  assert(parent, `Node should have a parent to have a sibling`)
+
+  const index = parent.children.indexOf(node)
+  assert(index === node.index, `Node index should be correct`)
+
+  return parent.children[index + 1] ?? null
+}
+
 // #endregion
-
-// #region Match Access
-
-type TMatch_Index = (index: number) => (node: Node | null) => Node | null
-type TMatch_Name = (name: string) => (node: Node | null) => Node | null
-type TMatch_Child = (index: number) => (childIndex: number) => (node: Node | null) => Node | null
-
-export const get: StateReliant<TMatch_Index> = state => index => node => state._matches[index]?.node ?? null
-export const getName: StateReliant<TMatch_Name> = state => name => node => state._matches[state.matches[name]]?.node ?? null
-export const getChild: StateReliant<TMatch_Child> = state => index => childIndex => flow(get(state)(index), offspringAt(1, childIndex))
-
-// #endregion
-
-type Composables = (state: MatchState) => (node: Node | null) => any

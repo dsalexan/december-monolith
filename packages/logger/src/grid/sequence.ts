@@ -234,6 +234,22 @@ export class Sequence {
 
     return blocks
   }
+
+  debug() {
+    let origin = ``
+    if (this.__debug?.format) {
+      origin = `${this.__debug.format}(${this.__debug?.node?.name ?? ``})`
+    } else if (this.alignment === `FILL`) {
+      origin = `fill()`
+    } else {
+      // TODO: Implement debug for this scenario
+      debugger
+    }
+
+    const content = this.content.map(block => block._data).join(``)
+
+    return `${origin.padEnd(20)}  ${this.range.toString()}  >${content}<`
+  }
 }
 
 interface Padding {

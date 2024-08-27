@@ -48,4 +48,8 @@ export function CONTAINS<TValue = any>(value: TValue, negate?: boolean): Contain
   return new ContainsSetPattern(value, { negate })
 }
 
+export function NOT_CONTAINS<TValue = any>(value: TValue): ContainsSetPattern<TValue> {
+  return CONTAINS<TValue>(value, true)
+}
+
 // #endregion

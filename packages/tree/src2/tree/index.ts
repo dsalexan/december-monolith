@@ -24,7 +24,9 @@ export default class Tree {
 
   constructor(expression: string, root?: Node) {
     this.expression = expression
-    this.root = root ?? Node.ROOT(Range.fromLength(0, expression.length).addEntry(new Point(0)).addEntry(new Point(expression.length)))
+    // const totality = Range.fromLength(0, expression.length).addEntry(new Point(0)).addEntry(new Point(expression.length))
+    const totality = Range.fromLength(0, expression.length)
+    this.root = root ?? Node.ROOT(totality)
   }
 
   get height() {
@@ -233,6 +235,8 @@ export default class Tree {
       const nodePriority = node.syntactical!.priority
       const targetPriority = target.syntactical!.priority
 
+      // if (nodePriority === targetPriority && target.type.id === `operator`) {
+
       if (nodePriority > targetPriority) {
         // node AS PRIORITARY OR MORE than current
         //    insert node between TARGET and its last child
@@ -246,7 +250,9 @@ export default class Tree {
           //  there are no children to enlist
           //    create and add a nil token as last (and, well, only) child
 
-          const nil = new Node(NIL, Range.fromPoint(target.range.column(`first`)))
+          const imaginary = target.range.column(`first`, -0.5)
+          const fallbackRange = Range.fromPoint(target.type.name === `root` ? 0 : Math.ceil(imaginary + 0.5)) // if root, always get firstmost imaginary column
+          const nil = new Node(NIL, fallbackRange)
           this.addTo(target, nil)
         } else {
           //  target has children
@@ -261,7 +267,7 @@ export default class Tree {
         this.addAsParent(node, lastChild)
 
         // since we inserted it between current and its last child, return current as new target
-      } else if (target.children.length <= target.syntactical!.narity) {
+      } else if (target.children.length < target.syntactical!.narity) {
         // basically handling negative/positive signs
 
         // ERROR: How to handle it?

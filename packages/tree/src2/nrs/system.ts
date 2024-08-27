@@ -1,10 +1,9 @@
 import Node from "../node"
 
-import { Rule, MatchState } from "./rule"
+import { Rule, IReplacementCommand, RuleMatchState, KEEP_NODE } from "./rule"
+import { RuleSet } from "./rule/rule"
 
-export const REMOVE_NODE = Symbol.for(`NRS:REMOVE_NODE`)
-export const KEEP_NODE = Symbol.for(`NRS:KEEP_NODE`)
-export type NRSAction = typeof REMOVE_NODE | typeof KEEP_NODE
+export { KEEP_NODE, REMOVE_NODE, REPLACE_NODES_AT } from "./rule"
 
 export default class NodeReplacementSystem {
   ruleset: Rule[]
@@ -17,26 +16,31 @@ export default class NodeReplacementSystem {
     this.ruleset.push(rule)
   }
 
-  addRuleSet(ruleset: Rule[]) {
+  addRuleSet(ruleset: Rule[] | RuleSet) {
+    if (ruleset instanceof RuleSet) ruleset = ruleset.list
+
     for (const rule of ruleset) this.addRule(rule)
   }
 
-  exec(originalNode: Node) {
-    let changes: { rule: Rule; state: MatchState }[] = []
-    let node: Node | NRSAction = originalNode
+  exec(originalNode: Node): IReplacementCommand {
+    const changes: { rule: Rule; state: RuleMatchState }[] = []
 
-    for (const [i, rule] of this.ruleset.entries()) {
+    let node: IReplacementCommand = originalNode
+    for (let i = 0; i < this.ruleset.length; i++) {
+      // if (i === 4) debugger
+
+      const rule = this.ruleset[i]
       const match = rule.match(node)
 
-      const allMandatoryMatched = Object.values(match.mandatoryMatches).every(Boolean)
-      if (allMandatoryMatched) {
-        // TODO: Implement a "flat toString" for node, showing a inline name representation for the node
-        // TODO: Store this inline flat toString in changes
-        changes.push({ rule, state: match })
-        node = rule.replace(node, match)
+      if (!match.result) continue
 
-        if (!(node instanceof Node)) break
-      }
+      // TODO: Implement a "flat toString" for node, showing a inline name representation for the node
+      // TODO: Store this inline flat toString in changes
+
+      changes.push({ rule, state: match }) // register the change
+      node = rule.replace(node, match) // replace current node with the new node
+
+      if (!(node instanceof Node)) break
     }
 
     return changes.length > 0 ? node : KEEP_NODE

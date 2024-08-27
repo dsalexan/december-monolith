@@ -87,8 +87,13 @@ expression = `0+(1 + a)`
 expression = `(")`
 expression = `("")`
 expression = `fn(0)`
-expression = `fn(0 + 1)`
-// expression = `1 + if("SK:Br awling::level" > 10) `
+expression = `(-1)`
+expression = `fn(-1 )`
+expression = `-1`
+expression = `-0+1`
+expression = `0+-1`
+expression = `fn(-0 + "1")`
+expression = `1 + if("SK:Br awling::level" > 10) `
 // expression = `1 + if(15 > 10) + -@if(10)`
 // expression = `thr-1 + @if("SK:Brawling::level" > ST:DX+1 then @basethdice(ST:Bite) else 0) + -@if("DI:Weak Bite::level" = 1 then 2 * @basethdice(ST:Bite) else 0)`
 // expression = `$if("AD:Teeth (Sharp Teeth)::level" = 1 THEN "cut" ELSE $if("AD:Teeth (Sharp Beak)::level" = 1 THEN "pi+" ELSE $if("AD:Teeth (Fangs)::level" = 1 THEN "imp" ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr"))))`
