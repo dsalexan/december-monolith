@@ -4,167 +4,150 @@ import { flow } from "fp-ts/lib/function"
 
 import { EQUALS } from "@december/utils/match/value"
 import { AND } from "@december/utils/match/logical"
+import { MULTIPLICATION } from "../../type/declarations/operator"
+import { NUMBER } from "../../type/declarations/literal"
 import { TYPE, NODE } from "../../match/pattern"
 
 import { NodeReplacementSystem } from "../../nrs"
-import { MatchState, StateRuleMatch, Rule, match, get, offspring, position, offspringAt, getChild, firstChild, leftOperand, rightOperand } from "../../nrs/rule"
-import { KEEP_NODE } from "../../nrs/system"
-import Node from "../../node"
-import { MULTIPLICATION } from "../../type/declarations/operator"
+import { KEEP_NODE, REMOVE_NODE, REPLACE_NODES_AT } from "../../nrs/system"
+import { Rule, leftOperand, match, matchInChildren, nextSibling, predicate, filter, ADD_NODE_AT, offspringAt, rightOperand } from "../../nrs/rule"
+import { RuleMatch } from "../../nrs/rule/match"
+import { RuleSet } from "../../nrs/rule/rule"
+
+import { RuleSet } from "../../nrs/rule/rule"
 import assert from "assert"
 import Token from "../../token"
-import { NUMBER } from "../../type/declarations/literal"
+import Node from "../../node"
 
-export const BASE_RULESET: Rule[] = []
+// export const BASE_RULESET: Rule[] = []
+export const RULESET = new RuleSet()
 
-// //             addRule( new TARuleFromString( '0+_1', '_1' ) );
-// BASE_RULESET.push(
-//   new Rule(
-//     [
-//       flow(match(TYPE.NAME(EQUALS(`addition`)))), // "+"
-//       flow(getChild(0)(0), match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`))))), // "0"
-//     ],
-//     node => node.children[1],
-//   ),
-// )
+//             addRule( new TARuleFromString( '0+_1', '_1' ) );
+RULESET.add(
+  flow(
+    match(TYPE.NAME(EQUALS(`addition`))), // "+"
+    leftOperand,
+    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`)))), // left === "0"
+  ),
+  node => node.children[1],
+)
 
-// //             addRule( new TARuleFromString( '0+_1', '_1' ) );
-// BASE_RULESET.push(
-//   new Rule(
-//     [
-//       (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`addition`)))), // "+"
-//       (state: MatchState) => flow(getChild(state)(0)(0), match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`))))), // "0"
-//     ],
-//     node => node.children[1],
-//   ),
-// )
+//             addRule( new TARuleFromString( '_Literal2=0-_1', '_1=0-_Literal2' ) );
+//                push literal to rightmost
+RULESET.add(
+  [
+    flow(match(TYPE.NAME(EQUALS(`equals`)))), // "="
+    flow(leftOperand, match(TYPE.ID(EQUALS(`literal`)))), // left === _Literal2
+    flow(rightOperand, match(TYPE.NAME(EQUALS(`subtraction`)))), // right === "-"
+    flow(
+      rightOperand, // right >
+      leftOperand, // right > left
+      match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`)))), // right > left === "0"
+    ),
+  ],
+  // _Literal2 = 0 - XXXXXXXXX
+  (node: Node, state) => {
+    node.tree.swap(node.children[0], node.children[1].children[1])
 
-// //             addRule( new TARuleFromString( '_Literal2=0-_1', '_1=0-_Literal2' ) );
-// //                push literal to rightmost
-// BASE_RULESET.push(
-//   new Rule(
-//     [
-//       state => flow(match(state)(TYPE.NAME(EQUALS(`equals`)))), // "="
-//       state => flow(leftOperand, match(state)(TYPE.ID(EQUALS(`literal`)))), // _Literal2
-//       state => flow(rightOperand, match(state)(TYPE.NAME(EQUALS(`subtraction`)))), // "-"
-//       state => flow(rightOperand, leftOperand, match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`))))), // "0"
-//       // _Literal2 = 0 - XXXXXXXXX
-//     ],
-//     // node => node.children[1].children[1],
-//     (node: Node) => {
-//       node.tree.swap(node.children[0], node.children[1].children[1])
+    return KEEP_NODE
+  },
+)
 
-//       return KEEP_NODE
-//     },
-//   ),
-// )
+//             addRule( new TARuleFromString( '_1+0', '_1' ) );
+RULESET.add(
+  flow(
+    match(TYPE.NAME(EQUALS(`addition`))), // "+"
+    rightOperand,
+    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`)))), // right === "0"
+  ),
+  node => node.children[0],
+)
 
-// //             addRule( new TARuleFromString( '_1+0', '_1' ) );
-// BASE_RULESET.push(
-//   new Rule(
-//     [
-//       (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`addition`)))), // "+"
-//       (state: MatchState) => flow(offspringAt(1, 1), match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`))))), // "0"
-//     ],
-//     node => node.children[0],
-//   ),
-// )
+//             addRule( new TARuleFromString( '1*_1', '_1' ) );
+RULESET.add(
+  flow(
+    match(TYPE.NAME(EQUALS(`multiplication`))), // "*"
+    leftOperand,
+    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`1`)))), // left === "1"
+  ),
+  node => node.children[1],
+)
 
-// //             addRule( new TARuleFromString( '1*_1', '_1' ) );
-// BASE_RULESET.push(
-//   new Rule(
-//     [
-//       (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`multiplication`)))), // "*"
-//       (state: MatchState) => flow(offspringAt(1, 0), match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`1`))))), // "1"
-//     ],
-//     node => node.children[1],
-//   ),
-// )
+//             addRule( new TARuleFromString( '_1*1', '_1' ) );
+RULESET.add(
+  flow(
+    match(TYPE.NAME(EQUALS(`multiplication`))), // "*"
+    rightOperand,
+    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`1`)))), // right === "1"
+  ),
+  node => node.children[0],
+)
 
-// //             addRule( new TARuleFromString( '_1*1', '_1' ) );
-// BASE_RULESET.push(
-//   new Rule(
-//     [
-//       (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`multiplication`)))), // "*"
-//       (state: MatchState) => flow(offspringAt(1, 1), match(state)(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`1`))))), // "1"
-//     ],
-//     node => node.children[0],
-//   ),
-// )
+//             addRule( new TARuleFromString( '_1+_1', '2*_1' ) );
+RULESET.add(
+  flow(
+    match(TYPE.NAME(EQUALS(`addition`))), // "+"
+    predicate(node => node.children.length === 2), // two operands
+    predicate(node => node.children[0].content === node.children[1].content), // left === right
+  ),
+  node => {
+    // TODO: Improve this mess (it works thou)
 
-// //             addRule( new TARuleFromString( '_1+_1', '2*_1' ) );
-// BASE_RULESET.push(
-//   new Rule(
-//     [
-//       (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`addition`)))), // "+"
-//     ],
-//     node => {
-//       if (node.children.length !== 2) return KEEP_NODE
+    const [left, right] = node.children
 
-//       // TODO: Improve this mess (it works thou)
+    node.setType(MULTIPLICATION) // "+" -> "*"
 
-//       const [left, right] = node.children
-//       if (left.lexeme === right.lexeme) {
-//         node.setType(MULTIPLICATION)
+    assert(node.tokens.length === 1, `Too many tokens`)
+    const [plus] = node.tokens
 
-//         assert(node.tokens.length === 1, `Too many tokens`)
-//         const [plus] = node.tokens
+    const originalExpression = plus.expression
 
-//         // @ts-ignore
-//         let modifiedExpression = plus.expression
-//         modifiedExpression = modifiedExpression.substring(0, plus.interval.start) + `*` + modifiedExpression.substring(plus.interval.length)
-//         plus.updateExpression(modifiedExpression)
+    // 1. Update expression (partial only to correct for operator change)
+    const before1 = originalExpression.substring(0, plus.interval.start)
+    const after1 = originalExpression.substring(plus.interval.start + plus.interval.length)
+    const newExpression1 = before1 + `*` + after1
+    plus.updateExpression(newExpression1)
 
-//         // @ts-ignore
-//         const twoToken = new Token(plus.lexer, { start: left.range.column(`first`), length: 1, type: NUMBER })
-//         modifiedExpression = modifiedExpression.substring(0, twoToken.interval.start) + `2` + modifiedExpression.substring(twoToken.interval.length)
-//         twoToken.updateExpression(modifiedExpression)
-//         const two = new Node(twoToken)
+    const twoToken = new Token(plus.grammar, { start: left.range.column(`first`), length: 1, type: NUMBER })
+    const before2 = originalExpression.substring(0, twoToken.interval.start)
+    const after2 = originalExpression.substring(plus.interval.start + plus.interval.length)
+    const newExpression2 = before2 + `2` + `*` + after2
+    twoToken.updateExpression(newExpression2)
 
-//         // tree.replaceWith(...)
-//         node._removeChildAt(0, true) // remove left from node
-//         node._addChild(two, 0) // add two to node as left
+    const two = new Node(twoToken)
 
-//         return node
-//       }
+    // tree.replaceWith(...)
+    node._removeChildAt(0, true) // remove left from node
+    node._addChild(two, 0) // add two to node as left
 
-//       return KEEP_NODE
-//     },
-//   ),
-// )
+    return node
+  },
+)
 
-// //             addRule( new TARuleFromString( '_1-_1', '0' ) );
-// BASE_RULESET.push(
-//   new Rule(
-//     [
-//       (state: MatchState) => flow(match(state)(TYPE.NAME(EQUALS(`subtraction`)))), // "-"
-//     ],
-//     node => {
-//       if (node.children.length !== 2) return KEEP_NODE
+//             addRule( new TARuleFromString( '_1-_1', '0' ) );
+RULESET.add(
+  flow(
+    match(TYPE.NAME(EQUALS(`subtraction`))), // "-"
+    predicate(node => node.children.length === 2), // two operands
+    predicate(node => node.children[0].content === node.children[1].content), // left === right
+  ),
+  node => {
+    // TODO: Improve this mess (it works thou)
+    // TODO: Probably should work on the calculations part (since comparing lexemes is not really what I want for this rule)
 
-//       // TODO: Improve this mess (it works thou)
-//       // TODO: Probably should work on the calculations part (since comparing lexemes is not really what I want for this rule)
+    const [left, right] = node.children
+    const [minus] = node.tokens
 
-//       const [left, right] = node.children
-//       if (left.lexeme === right.lexeme) {
-//         const [minus] = node.tokens
+    let modifiedExpression = minus.expression
 
-//         // @ts-ignore
-//         let modifiedExpression = minus.expression
+    const zeroToken = new Token(minus.lexer, { start: left.range.column(`first`), length: 1, type: NUMBER })
+    modifiedExpression = modifiedExpression.substring(0, zeroToken.interval.start) + `0` + modifiedExpression.substring(zeroToken.interval.length)
+    zeroToken.updateExpression(modifiedExpression)
+    const zero = new Node(zeroToken)
 
-//         // @ts-ignore
-//         const zeroToken = new Token(minus.lexer, { start: left.range.column(`first`), length: 1, type: NUMBER })
-//         modifiedExpression = modifiedExpression.substring(0, zeroToken.interval.start) + `0` + modifiedExpression.substring(zeroToken.interval.length)
-//         zeroToken.updateExpression(modifiedExpression)
-//         const zero = new Node(zeroToken)
-
-//         return zero
-//       }
-
-//       return KEEP_NODE
-//     },
-//   ),
-// )
+    return zero
+  },
+)
 
 //             addRule( new TARuleFromString( '_1/_1', '1' ) );
 
@@ -257,6 +240,6 @@ export const BASE_RULESET: Rule[] = []
 //             addRule( new TARuleFromString( '_literal1 / _NonLiteral = _literal2', '_literal1 * _literal2 = _NonLiteral' ) );
 
 const NRS = new NodeReplacementSystem()
-NRS.addRuleSet(BASE_RULESET.slice(0))
+NRS.addRuleSet(RULESET)
 
 export default NRS

@@ -35,11 +35,14 @@ export default class Rule {
       matches.push({ result, out, match })
     }
 
-    const overallMandatory = matches.map(({ result, match }) => (result ? true : match.optional ? null : false)).filter(result => result === true)
+    const mandatory = matches.filter(({ result, match }) => !match.optional)
+    const optional = matches.filter(({ result, match }) => match.optional)
+
+    const result = mandatory.length === 0 ? optional.some(({ result }) => result === true) : mandatory.every(({ result }) => result === true)
 
     return {
       matches,
-      result: overallMandatory.length > 0,
+      result,
     }
   }
 }

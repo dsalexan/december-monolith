@@ -9,6 +9,8 @@ import { AND, OR } from "@december/utils/match/logical"
 
 import Node from "../../node"
 import { NIL, SIGNED_NUMBER, STRING_COLLECTION } from "../../type/declarations/literal"
+import { FUNCTION } from "../../type/declarations/composite"
+import { IDENTIFIER } from "../../type/declarations/identifier"
 
 import { TYPE, NODE } from "../../match/pattern"
 
@@ -17,8 +19,6 @@ import { KEEP_NODE, REMOVE_NODE, REPLACE_NODES_AT } from "../../nrs/system"
 import { Rule, leftOperand, match, matchInChildren, nextSibling, predicate, filter, ADD_NODE_AT } from "../../nrs/rule"
 import { RuleMatch } from "../../nrs/rule/match"
 import { RuleSet } from "../../nrs/rule/rule"
-import { FUNCTION } from "../../type/declarations/composite"
-import { IDENTIFIER } from "../../type/declarations/identifier"
 
 const RULESET = new RuleSet()
 
