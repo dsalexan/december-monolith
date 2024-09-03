@@ -2,28 +2,34 @@ import type { InOrderBehaviour } from "./../node/traversal"
 import { Stage } from "../stage"
 import { isString } from "lodash"
 import { TypeName } from "./declarations/name"
-import LexicalRule, { LexicalRuleAdder } from "./rules/lexical"
-import SyntacticalRule, { SyntacticalRuleAdder, SyntacticalRuleDeriver } from "./rules/syntactical"
+import LexicalRule, { LexicalRuleAdder, LexicalRuleDeriver } from "./rules/lexical"
+import SyntacticalRule, { defaultSyntacticalRule, SyntacticalRuleAdder, SyntacticalRuleDeriver } from "./rules/syntactical"
 import SemanticalRule, { SemanticalRuleAdder, SemanticalRuleDeriver } from "./rules/semantical"
+import assert from "assert"
 
-export type TypeID = `structural` | `literal` | `whitespace` | `separator` | `operator` | `identifier` | `composite`
+type Maybe<T> = T | undefined
+
+export type TypeID = `structural` | `literal` | `whitespace` | `separator` | `enclosure` | `operator` | `identifier` | `composite` | `keyword`
+
+export type TypeModule = `default` | `operand` | `logical` | `arithmetic` | `wrapper` | `context:break` | `identifier`
 
 export default class Type {
   public id: TypeID
   public name: TypeName
-  public modules: string[]
+  public modules: TypeModule[]
 
   getFullName() {
     return `${this.id}:${this.name}`
   }
 
-  public lexical?: LexicalRule
-  public syntactical?: SyntacticalRule
-  public semantical?: SemanticalRule
+  public _lexical?: LexicalRule
+  public _syntactical?: SyntacticalRule
+  public _semantical?: SemanticalRule
 
   public inOrderBehaviour: InOrderBehaviour
 
   declare addLexical: typeof LexicalRuleAdder
+  declare deriveLexical: typeof LexicalRuleDeriver
   declare addSyntactical: typeof SyntacticalRuleAdder
   declare deriveSyntactical: typeof SyntacticalRuleDeriver
   declare addSemantical: typeof SemanticalRuleAdder
@@ -32,7 +38,7 @@ export default class Type {
   // debug/printing shit
   public prefix: string
 
-  constructor(id: TypeID, name: TypeName, prefix: string, modules: string[] = [`default`]) {
+  constructor(id: TypeID, name: TypeName, prefix: string, modules: TypeModule[] = [`default`]) {
     this.id = id
     this.name = name
     this.prefix = prefix
@@ -40,10 +46,23 @@ export default class Type {
 
     // inject adders
     this.addLexical = LexicalRuleAdder
+    this.deriveLexical = LexicalRuleDeriver
     this.addSyntactical = SyntacticalRuleAdder
     this.deriveSyntactical = SyntacticalRuleDeriver
     this.addSemantical = SemanticalRuleAdder
     this.deriveSemantical = SemanticalRuleDeriver
+  }
+
+  get lexical() {
+    return this._lexical
+  }
+
+  get syntactical() {
+    return this._syntactical ?? defaultSyntacticalRule(this)
+  }
+
+  get semantical() {
+    return this._semantical
   }
 
   setInOrderBehaviour(behaviour: InOrderBehaviour) {
@@ -55,8 +74,8 @@ export default class Type {
   toString() {
     return `${this.id}:${this.name}`
   }
-}
 
-export function isOperand(id: TypeID): id is `literal` | `identifier` {
-  return [`literal`, `identifier`, `whitespace`].includes(id)
+  makeIdentifier(name: string): symbol {
+    return Symbol.for(`${this.getFullName()}:${name}`)
+  }
 }

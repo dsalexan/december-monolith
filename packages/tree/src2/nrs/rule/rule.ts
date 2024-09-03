@@ -2,8 +2,9 @@ import assert from "assert"
 import Node from "../../node"
 
 import { BindingResult, RuleMatch, RuleMatchFunction, RuleMatchResult, RuleMatchState } from "./match"
-import { IReplacementCommand, IRuleReplacement } from "./replacement"
+import { IReplacementCommand, IRuleReplacement, ReplacementContext } from "./replacement"
 import { isArray } from "lodash"
+import Type from "../../type/base"
 
 export default class Rule {
   matchingFunctions: RuleMatch[]
@@ -14,10 +15,10 @@ export default class Rule {
     this.replacementFunction = replacementFunction
   }
 
-  replace(node: Node, match: RuleMatchState): IReplacementCommand {
+  replace(node: Node, match: RuleMatchState, context: ReplacementContext): IReplacementCommand {
     assert(match.result, `Rule should only be executed if all mandatory matches are true`)
 
-    const newNode = this.replacementFunction(node, match)
+    const newNode = this.replacementFunction(node, match, context)
 
     assert(newNode !== undefined, `Replacement function should return a node or null`)
 
@@ -48,14 +49,16 @@ export default class Rule {
 }
 
 export class RuleSet {
-  list: Rule[]
+  rules: Rule[]
+  grammar: Type[]
 
   constructor() {
-    this.list = []
+    this.rules = []
+    this.grammar = []
   }
 
   addRule(rule: Rule): this {
-    this.list.push(rule)
+    this.rules.push(rule)
 
     return this
   }
@@ -74,6 +77,12 @@ export class RuleSet {
     } else {
       this.addFunctions(isArray(ruleOrMatchingFunctions) ? ruleOrMatchingFunctions : [ruleOrMatchingFunctions], replacementFunction!)
     }
+
+    return this
+  }
+
+  addGrammar(...types: Type[]) {
+    this.grammar.push(...types)
 
     return this
   }

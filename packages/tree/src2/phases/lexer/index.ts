@@ -21,6 +21,7 @@ import { UNKNOWN } from "../../type/declarations/literal"
 import Grammar from "../../type/grammar"
 import { EvaluatorOptions } from "./evaluation"
 import { TypeName } from "../../type/declarations/name"
+import { ProvidedString, StringProvider } from "../../string"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -56,7 +57,7 @@ interface ProtoToken {
 export default class Lexer {
   public options: Partial<LexerOptions>
   //
-  public expression: string
+  private stringProvider: StringProvider
   private cursor: number // current cursor position (index of character in expression)
   //
   public grammar: Grammar
@@ -64,6 +65,11 @@ export default class Lexer {
 
   constructor(grammar: LexicalGrammar) {
     this.grammar = grammar
+    this.stringProvider = new StringProvider(``)
+  }
+
+  get expression() {
+    return this.stringProvider.value
   }
 
   /** Defaults options for lexer */
@@ -75,7 +81,7 @@ export default class Lexer {
   process(text: string, options: Partial<LexerOptions> = {}) {
     this._options(options) // default options
 
-    this.expression = text
+    this.stringProvider.update(text)
     this.tokens = []
 
     this._process()
@@ -192,7 +198,7 @@ export default class Lexer {
         // store lexemes by priority
         for (const type of types) {
           // const type = types[0]
-          const lexeme = { start: this.cursor, length: sequence.length, type }
+          const lexeme: Lexeme = { start: this.cursor, length: sequence.length, type }
           lexemes.push(lexeme)
         }
       }
@@ -219,7 +225,7 @@ export default class Lexer {
 
         // if character has no recognized type, return it as an unknown lexeme
         if (types.length === 0) {
-          const lexeme = { start: this.cursor, length: 1, type: UNKNOWN }
+          const lexeme: Lexeme = { start: this.cursor, length: 1, type: UNKNOWN }
           lexemes.push(lexeme)
 
           break
@@ -233,17 +239,25 @@ export default class Lexer {
     }
 
     // determine lexeme
-    const sorted = orderBy(lexemes, [`priority`, `length`], [`asc`, `desc`])
+    const sorted = orderBy(lexemes, [`type.priority`, `length`], [`asc`, `desc`])
     const lexeme = sorted[0]
 
     // advance cursor
     this.cursor += lexeme.length
 
-    return lexeme
+    return omit(lexeme, `priority`)
   }
 
   private _evaluate(lexeme: Lexeme) {
-    const token = new Token(this, lexeme)
+    const string: ProvidedString = {
+      type: `provided`,
+      //
+      start: lexeme.start,
+      length: lexeme.length,
+      //
+      provider: this.stringProvider,
+    }
+    const token = new Token(string, lexeme.type)
 
     // evaluate lexeme into token
     token.evaluate(this.options)

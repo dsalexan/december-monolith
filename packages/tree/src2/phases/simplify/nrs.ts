@@ -2,7 +2,7 @@
 
 import { flow } from "fp-ts/lib/function"
 
-import { EQUALS } from "@december/utils/match/value"
+import { EQUALS } from "@december/utils/match/element"
 import { AND } from "@december/utils/match/logical"
 import { MULTIPLICATION } from "../../type/declarations/operator"
 import { NUMBER } from "../../type/declarations/literal"
@@ -27,9 +27,9 @@ RULESET.add(
   flow(
     match(TYPE.NAME(EQUALS(`addition`))), // "+"
     leftOperand,
-    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`)))), // left === "0"
+    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.CONTENT(EQUALS(`0`)))), // left === "0"
   ),
-  node => node.children[1],
+  node => node.children.nodes[1],
 )
 
 //             addRule( new TARuleFromString( '_Literal2=0-_1', '_1=0-_Literal2' ) );
@@ -42,12 +42,13 @@ RULESET.add(
     flow(
       rightOperand, // right >
       leftOperand, // right > left
-      match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`)))), // right > left === "0"
+      match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.CONTENT(EQUALS(`0`)))), // right > left === "0"
     ),
   ],
   // _Literal2 = 0 - XXXXXXXXX
   (node: Node, state) => {
-    node.tree.swap(node.children[0], node.children[1].children[1])
+    // node.tree.swap(node.children.nodes[0], node.children.nodes[1].children.nodes[1])
+    node.children.nodes[0].swapWith(node.children.nodes[1].children.nodes[1])
 
     return KEEP_NODE
   },
@@ -58,9 +59,9 @@ RULESET.add(
   flow(
     match(TYPE.NAME(EQUALS(`addition`))), // "+"
     rightOperand,
-    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`0`)))), // right === "0"
+    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.CONTENT(EQUALS(`0`)))), // right === "0"
   ),
-  node => node.children[0],
+  node => node.children.nodes[0],
 )
 
 //             addRule( new TARuleFromString( '1*_1', '_1' ) );
@@ -68,9 +69,9 @@ RULESET.add(
   flow(
     match(TYPE.NAME(EQUALS(`multiplication`))), // "*"
     leftOperand,
-    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`1`)))), // left === "1"
+    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.CONTENT(EQUALS(`1`)))), // left === "1"
   ),
-  node => node.children[1],
+  node => node.children.nodes[1],
 )
 
 //             addRule( new TARuleFromString( '_1*1', '_1' ) );
@@ -78,9 +79,9 @@ RULESET.add(
   flow(
     match(TYPE.NAME(EQUALS(`multiplication`))), // "*"
     rightOperand,
-    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.LEXEME(EQUALS(`1`)))), // right === "1"
+    match(AND(TYPE.FULL(EQUALS(`literal:number`)), NODE.CONTENT(EQUALS(`1`)))), // right === "1"
   ),
-  node => node.children[0],
+  node => node.children.nodes[0],
 )
 
 //             addRule( new TARuleFromString( '_1+_1', '2*_1' ) );
@@ -88,7 +89,7 @@ RULESET.add(
   flow(
     match(TYPE.NAME(EQUALS(`addition`))), // "+"
     predicate(node => node.children.length === 2), // two operands
-    predicate(node => node.children[0].content === node.children[1].content), // left === right
+    predicate(node => node.children.nodes[0].content === node.children.nodes[1].content), // left === right
   ),
   node => {
     // TODO: Improve this mess (it works thou)
@@ -129,7 +130,7 @@ RULESET.add(
   flow(
     match(TYPE.NAME(EQUALS(`subtraction`))), // "-"
     predicate(node => node.children.length === 2), // two operands
-    predicate(node => node.children[0].content === node.children[1].content), // left === right
+    predicate(node => node.children.nodes[0].content === node.children.nodes[1].content), // left === right
   ),
   node => {
     // TODO: Improve this mess (it works thou)
@@ -239,7 +240,4 @@ RULESET.add(
 //             addRule( new TARuleFromString( '_literal1 - _NonLiteral = _literal2', '_literal1 - _literal2 = _NonLiteral' ) );
 //             addRule( new TARuleFromString( '_literal1 / _NonLiteral = _literal2', '_literal1 * _literal2 = _NonLiteral' ) );
 
-const NRS = new NodeReplacementSystem()
-NRS.addRuleSet(RULESET)
-
-export default NRS
+export default [RULESET]

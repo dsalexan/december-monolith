@@ -1,12 +1,10 @@
 import assert from "assert"
-import { filter, isBoolean, isNil, isNumber, isString, range } from "lodash"
+import { filter, isBoolean, isFunction, isNil, isNumber, isString, range } from "lodash"
 import { Interval, Point, Range } from "@december/utils"
 
 import churchill, { Block, paint, Paint } from "../../logger"
 
-import { PrintOptions } from "../../tree/printer"
-import Tree from "../../tree"
-import Node from "../../node"
+import Node, { PrintOptions, print, SubTree } from "../../node"
 
 import type { BaseProcessingOptions } from "../../options"
 
@@ -59,8 +57,8 @@ export default class Reducer {
   //
   private symbolTable: SymbolTable
   private environment: Environment
-  private T: Tree
-  public RT: Tree
+  private T: SubTree
+  public RT: SubTree
   //
 
   constructor(grammar: Grammar) {
@@ -78,7 +76,7 @@ export default class Reducer {
   }
 
   /** Process tokenized expression into an Abstract Syntax Tree (AST) */
-  process(tree: Tree, environment: Environment, options: Partial<ReducerOptions> = {}) {
+  process(tree: SubTree, environment: Environment, options: Partial<ReducerOptions> = {}) {
     this._options(options) // default options
 
     this.T = tree
@@ -93,7 +91,7 @@ export default class Reducer {
   private _processNode(node: Node): Node | number | string | boolean {
     assert(node, `Node must be defined`)
 
-    const scope = node.scope(this.options.scope)
+    const scope = this.options.scope.evaluate(node)
     const master = getMasterScope(scope)
 
     const instruction = this._getNodeInstruction(node, { master, all: scope })
@@ -104,7 +102,7 @@ export default class Reducer {
   /** Get instruction for node processing based on scope */
   private _getNodeInstruction(node: Node, { master, all: scope }: { master: MasterScope; all: Scope[] }): NodeInstruction {
     if (node.type.name === `root`) {
-      assert(node.children.length === 1, `Root node must have exactly one child`) // confirm unarity
+      assert(node.children.length === 1, `Root node must have exactly one child`) // confirm uarity
 
       return PROCESS_CHILD()
     } else if (node.type.id === `identifier`) {
@@ -141,8 +139,9 @@ export default class Reducer {
 
       if (node.type.modules.includes(`arithmetic`)) return ELEMENTARY_ALGEBRA()
       else if (node.type.modules.includes(`logical`)) return ELEMENTARY_ALGEBRA()
-    } else if (node.type.id === `separator`) {
-      if (master !== `math`) throw new Error(`Unimplemented NON-MATH separator type "${node.type.name}"`)
+    } else if (node.type.name === `function`) return APPLY_ARGUMENTS(1)
+    else if (node.type.id === `enclosure`) {
+      if (master !== `math`) throw new Error(`Unimplemented NON-MATH enclosure type "${node.type.name}"`)
 
       if (node.type.modules.includes(`wrapper`)) {
         if (node.children.length === 1) return PROCESS_CHILD()
@@ -156,20 +155,21 @@ export default class Reducer {
   /** Effectivelly process node + instruction */
   private _processNodeInstruction(instruction: NodeInstruction, node: Node, { master, all: scope }: { master: MasterScope; all: Scope[] }): Node | number | string | boolean {
     if (instruction.protocol === `pass`) return node
-    else if (instruction.protocol === `process-child`) return this._processNode(node.children[0])
+    else if (instruction.protocol === `process-child`) return this._processNode(node.children.nodes[0])
     else if (instruction.protocol === `normalize`) {
       node.setType(instruction.type) // change node type
 
       // flat all its children into a string
       const content = node.content!
-      const token = new Token(this.grammar, { start: 0, length: content.length, type: instruction.type })
-      token.updateExpression(content)
+      const token = new Token({ type: `concrete`, value: content }, instruction.type)
 
       node.clearTokens()
       node.addToken(token)
 
       return node
     } else if (instruction.protocol === `get-value`) {
+      // get type accurate value from node
+
       let stringValue = node.content! as string
 
       const asIdentifier = instruction.asIdentifier ?? node.type.id === `identifier`
@@ -192,22 +192,22 @@ export default class Reducer {
       } else if (instruction.type === `boolean`) return stringValue.toLowerCase() === `true` || stringValue === `1` ? true : false
       //
     } else if (instruction.protocol === `elementary-algebra`) {
-      assert(node.syntactical!.narity === 2, `Elementary algebra requires two operands`)
+      assert(node.type.syntactical!.arity === 2, `Elementary algebra requires two operands`)
 
-      const [_left, _right] = node.children
+      const [_left, _right] = node.children.nodes
 
       let left = this._processNode(_left) as number | Node
       let right = this._processNode(_right) as number | Node
 
       if (left instanceof Node || right instanceof Node) {
         if (!(left instanceof Node)) {
-          left = Node.fromValue(this.grammar, left.toString(), NUMBER)
-          node._replaceWith(0, left)
+          left = Node.fromToken(left.toString(), NUMBER)
+          node.syntactical.replaceAt(0, left)
         }
 
         if (!(right instanceof Node)) {
-          right = Node.fromValue(this.grammar, right.toString(), NUMBER)
-          node._replaceWith(1, right)
+          right = Node.fromToken(right.toString(), NUMBER)
+          node.syntactical.replaceAt(1, right)
         }
 
         return node
@@ -222,8 +222,30 @@ export default class Reducer {
       else if (node.type.name === `division`) return left / right
       // logical operations
       if (node.type.name === `equals`) return left === right
+      else if (node.type.name === `greater`) return left > right
+      else if (node.type.name === `smaller`) return left < right
+      else if (node.type.name === `greater_or_equal`) return left >= right
+      else if (node.type.name === `smaller_or_equal`) return left <= right
       //
       else throw new Error(`Unimplemented elementary algebra operation "${node.type.name}"`)
+    } else if (instruction.protocol === `apply-arguments`) {
+      const _name = node.children.nodes[0]
+      const _arguments = node.children.nodes.slice(1)
+
+      const listOfArguments = _arguments.map((arg, i) => this._processNode(arg))
+      const fn = this._processNode(_name) as Node
+
+      assert(isFunction(fn), `identifier "${_name.content}" is not pointing to a function in ENVIRONMENT`)
+
+      if (listOfArguments.some(arg => arg instanceof Node)) {
+        // TODO: How to handle when arguments are not yet processed?
+        debugger
+      } else {
+        const value = fn(...listOfArguments)
+
+        debugger
+        return value
+      }
     }
 
     throw new Error(`Unimplemented processing protocol "${instruction.protocol}"`)
@@ -235,25 +257,26 @@ export default class Reducer {
     const result = this._processNode(this.T.root)
 
     // encapsulate processed return into a tree
-    const tree = new Tree(``)
+    const root = Node.ROOT(Range.fromLength(0, 1))
+    const tree = new SubTree(root)
 
     if (result instanceof Node) {
-      tree.root._addChild(result)
+      tree.root.children.add(result)
     } else if (isString(result) || isNumber(result) || isBoolean(result)) {
       const type = isString(result) ? STRING : isNumber(result) ? NUMBER : BOOLEAN
 
-      const literal = Node.fromValue(this.grammar, result.toString(), type)
+      const literal = Node.fromToken(result.toString(), type)
 
-      tree.root._addChild(literal)
+      tree.root.children.add(literal)
     } else throw new Error(`Unimplemented result treatment`)
 
-    // recalculate ranges and final expression
-    tree.recalculate()
+    // verify expression (and recalculate if necessary)
+    tree.expression()
 
     this.RT = tree
   }
 
-  print(options: PrintOptions = {}) {
+  print(options: PrintOptions) {
     const logger = _logger
 
     // 1. Print  Tree
@@ -263,7 +286,7 @@ export default class Reducer {
       .info()
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
 
-    this.RT.print(this.RT.root, options)
+    print(this.RT.root, options)
   }
 }
 
@@ -285,8 +308,12 @@ interface TypeNodeInstruction extends BaseNodeInstruction {
   protocol: `normalize`
   type: Type
 }
+interface ApplyArgumentsNodeInstruction extends BaseNodeInstruction {
+  protocol: `apply-arguments`
+  index: number
+}
 
-type NodeInstruction = GenericNodeInstruction | GetValueNodeInstruction | TypeNodeInstruction
+type NodeInstruction = GenericNodeInstruction | GetValueNodeInstruction | TypeNodeInstruction | ApplyArgumentsNodeInstruction
 
 type TNodeInstructionFactory<TInstruction extends NodeInstruction = NodeInstruction> = (...args: any[]) => TInstruction
 
@@ -295,3 +322,4 @@ const GET_VALUE: TNodeInstructionFactory<GetValueNodeInstruction> = (type: GetVa
 const PROCESS_CHILD: TNodeInstructionFactory<GenericNodeInstruction> = () => ({ protocol: `process-child` })
 const ELEMENTARY_ALGEBRA: TNodeInstructionFactory<GenericNodeInstruction> = () => ({ protocol: `elementary-algebra` })
 const NORMALIZE: TNodeInstructionFactory<TypeNodeInstruction> = type => ({ protocol: `normalize`, type })
+const APPLY_ARGUMENTS: TNodeInstructionFactory<ApplyArgumentsNodeInstruction> = (index: number = 0) => ({ protocol: `apply-arguments`, index })

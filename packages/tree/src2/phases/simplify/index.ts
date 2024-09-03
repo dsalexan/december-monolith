@@ -1,20 +1,18 @@
 import { filter, isNil, range } from "lodash"
+import assert from "assert"
+
 import { Interval, Point, Range } from "@december/utils"
 
 import churchill, { Block, paint, Paint } from "../../logger"
 
-import Type, { isOperand } from "../../type/base"
+import Type from "../../type/base"
 import Grammar from "../../type/grammar"
-import assert from "assert"
-import { PrintOptions } from "../../tree/printer"
-import Tree from "../../tree"
 import { STRING_COLLECTION } from "../../type/declarations/literal"
-import Node from "../../node"
-import { OriginalChildrenTracking, ReorganizationStatus } from "../../type/rules/semantical"
+import Node, { PrintOptions, print, SubTree } from "../../node"
 
 import { inOrder, postOrder } from "../../node/traversal"
 
-import { NodeReplacementSystem } from "../../nrs"
+import { exec, RuleSet } from "../../nrs"
 import { KEEP_NODE, REMOVE_NODE } from "../../nrs/system"
 
 import type { BaseProcessingOptions } from "../../options"
@@ -61,11 +59,11 @@ export default class Simplify {
   public grammar: Grammar
   // Semantic Tree + environment -> Simplified Semantic Tree
   // private originalExpression: string
-  private ST: Tree
+  private ST: SubTree
   private environment: Environment
-  public SST: Tree
+  public SST: SubTree
   //
-  private nodeReplacementSystem: NodeReplacementSystem
+  private NRS: RuleSet[]
   //
 
   constructor(grammar: Grammar) {
@@ -78,13 +76,13 @@ export default class Simplify {
   }
 
   /** Process tokenized expression into an Abstract Syntax Tree (AST) */
-  process(ST: Tree, environment: Environment, nodeReplacementSystem: NodeReplacementSystem, options: Partial<SimplifyOptions> = {}) {
+  process(ST: SubTree, environment: Environment, NRS: RuleSet[], options: Partial<SimplifyOptions> = {}) {
     this._options(options) // default options
 
     this.ST = ST
     this.environment = environment
 
-    this.nodeReplacementSystem = nodeReplacementSystem
+    this.NRS = [...NRS]
 
     this._process()
 
@@ -92,7 +90,7 @@ export default class Simplify {
   }
 
   /** Simplify Semantic Tree based on environment */
-  private _simplifySemanticTree(ST: Tree, environment: Environment) {
+  private _simplifySemanticTree(ST: SubTree, environment: Environment) {
     const __DEBUG = true // COMMENT
 
     const tree = ST.clone()
@@ -101,20 +99,19 @@ export default class Simplify {
     const order: Node[] = []
     postOrder(tree.root, node => order.push(node))
     for (const node of order) {
-      node.tree = tree
-      const newNode = this.nodeReplacementSystem.exec(node)
+      const newNode = exec(this.NRS, node, { grammar: this.grammar })
 
       if (newNode === KEEP_NODE) {
         // do nothing
       } else if (newNode === REMOVE_NODE) {
         debugger
-      } else if (newNode instanceof Node) tree.replaceWith(node, newNode)
+      } else if (newNode instanceof Node) node.syntactical.replaceWith(newNode)
       else throw new Error(`Invalid node replacement action`)
     }
 
     // tree.root.debug()
 
-    tree.recalculate()
+    tree.expression()
 
     // tree.root.debug()
 
@@ -126,7 +123,7 @@ export default class Simplify {
     this.SST = this._simplifySemanticTree(this.ST, this.environment)
   }
 
-  print(options: PrintOptions = {}) {
+  print(options: PrintOptions) {
     const logger = _logger
 
     // 1. Print Tree
@@ -136,6 +133,6 @@ export default class Simplify {
       .info()
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
 
-    this.SST.print(this.SST.root, options)
+    print(this.SST.root, options)
   }
 }

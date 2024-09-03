@@ -1,4 +1,5 @@
 import { difference } from "lodash"
+
 import { Grid, paint } from "@december/logger"
 import { Range } from "@december/utils"
 
@@ -9,8 +10,7 @@ import { PartialDeep } from "type-fest"
 import { FormatFunction, TokenFormatOptions } from "./base"
 import assert from "assert"
 
-import type Node from "../../../node"
-import type Tree from "../.."
+import { Node } from "../../node/base"
 
 export function formatContent(level: number, node: Node, token: Token | undefined, { ...options }: TokenFormatOptions): Grid.Sequence.Sequence[] {
   const sequences: Grid.Sequence.Sequence[] = []
@@ -31,12 +31,17 @@ export function formatContent(level: number, node: Node, token: Token | undefine
     let repr = token ? token.lexeme : leaf.lexeme
 
     let color = BY_TYPE(node.type)
-    if (options?.alternateColors ?? true) color = BY_ALTERNATING_NUMBER_AND_TYPE(node.number.non_whitespace, node.type.name)
+    if (options?.alternateColors ?? true) color = BY_ALTERNATING_NUMBER_AND_TYPE(node.indexing.non_whitespace, node.type.name)
 
     if (higherContent) color = paint.grey
-    else if (node.id === leaf.id) color = color.bold
+    else if (node.id === leaf.id && node.type.name !== `keyword_group`) color = color.bold
 
-    if (node.type.id === `operator`) {
+    if (node.type.id === `enclosure` && node.type.name !== `list` && !node.type.modules.includes(`wrapper`)) {
+      if (node.id !== leaf.id && leaf.type.id !== `keyword`) color = color.dim
+      else color = color.bold
+    } else if (node.type.name === `keyword_group`) {
+      if (node.id === leaf.id) color = color.dim
+    } else if (node.type.id === `operator`) {
       if (node.id !== leaf.id) color = color.dim
     } else if (node.type.id === `separator`) {
       if (node.id !== leaf.id) color = color.dim
@@ -56,12 +61,12 @@ export function formatContent(level: number, node: Node, token: Token | undefine
   return sequences
 }
 
-export default function content(tree: Tree, level: number, format: TokenFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
+export default function content(root: Node, level: number, format: TokenFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
   return {
     fn: () => {
       // if (level === 3) debugger
 
-      const tokens = tree.root.tokenize(level)
+      const tokens = root.tokenize(level)
 
       const sequences: Grid.Sequence.Sequence[] = []
 

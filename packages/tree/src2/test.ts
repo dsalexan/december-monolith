@@ -9,6 +9,7 @@ import { range } from "lodash"
 
 import logger, { paint } from "./logger"
 
+import { StringProvider } from "./string"
 import Grammar from "./type/grammar"
 import Lexer from "./phases/lexer"
 import Parser from "./phases/parser"
@@ -20,8 +21,10 @@ import Resolver from "./phases/resolver"
 import { LITERALS, NUMBER, STRING } from "./type/declarations/literal"
 import { OPERATORS, DEFAULT_OPERATORS, ALGEBRAIC_OPERATORS } from "./type/declarations/operator"
 import { DEFAULT_SEPARATORS, SEPARATORS } from "./type/declarations/separator"
+import { ENCLOSURES } from "./type/declarations/enclosure"
 import { WHITESPACES } from "./type/declarations/whitespace"
-import { COMPOSITES } from "./type/declarations/composite"
+import { KEYWORDS } from "./type/declarations/keyword"
+
 import { defaultProcessingOptions } from "./options"
 import Environment from "./environment"
 
@@ -100,7 +103,8 @@ expression = `2+0`
 expression = `1*(X-300)`
 expression = `(X-199)*1`
 expression = `(X-2)+(X-2)`
-expression = `(X-2)-(X-2)`
+// expression = `(X-2)-(X-2)`
+expression = `if(1=2 then 9999 else 0)`
 // expression = `1 + if("SK:Br awling::level" > 10) `
 // expression = `1 + if(15 > 10) + -@if(10)`
 // expression = `thr-1 + @if("SK:Brawling::level" > ST:DX+1 then @basethdice(ST:Bite) else 0) + -@if("DI:Weak Bite::level" = 1 then 2 * @basethdice(ST:Bite) else 0)`
@@ -111,17 +115,18 @@ const options = defaultProcessingOptions({
   scope: { root: `math` },
   //
   resolver: {
-    SNRS: SimplifyNRS,
+    SimplifyNRS,
   },
 })
 
 const grammar = new Grammar()
 grammar.add(...WHITESPACES)
 grammar.add(...LITERALS)
-grammar.add(...SEPARATORS)
+// grammar.add(...SEPARATORS)
 grammar.add(...DEFAULT_SEPARATORS)
+grammar.add(...ENCLOSURES)
 grammar.add(...OPERATORS)
-grammar.add(...COMPOSITES)
+grammar.add(...KEYWORDS)
 
 grammar.print()
 
@@ -155,6 +160,7 @@ lexer.print()
 
 parser.process(expression, lexer.tokens, options.parser)
 parser.print({
+  expression,
   sequence: {
     // minimumSizeForBracket: 0,
     // minimumSizeForPipe: 1,
@@ -163,18 +169,24 @@ parser.print({
     // filling: { character: `▮` },
   },
   style: {},
+  // name: false,
 })
 
-semantic.process(expression, parser.AST, SemanticNRS, options.semantic)
-semantic.print({})
+semantic.process(parser.AST, SemanticNRS, options.semantic)
+semantic.print({ expression })
 
 environment.print()
 
-simplify.process(semantic.ST, environment, SimplifyNRS, options.simplify)
-simplify.print({})
+global.__DEBUG_EXPRESSION = expression
 
-// // reducer.process(simplify.SST, environment, options.reducer)
-// // reducer.print({})
+// simplify.process(semantic.ST, environment, SimplifyNRS, options.simplify)
+// simplify.print({
+// expression})
+
+// reducer.process(simplify.SST, environment, options.reducer)
+// reducer.print({
+// expression})
 
 // resolver.process(semantic.ST, environment, options.resolver)
-// resolver.print({})
+// resolver.print({
+// expression})

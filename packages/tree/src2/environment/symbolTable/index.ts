@@ -2,11 +2,12 @@ import assert from "assert"
 
 import churchill, { Block, paint, Paint } from "../../logger"
 
-import Tree from "../../tree"
 import type Node from "../../node"
+import type { SubTree } from "../../node"
 import { BY_TYPE } from "../../type/styles"
 import { isString, max, sum } from "lodash"
 import { getMasterScope, ScopeManager } from "../../node/scope"
+import { byLevel } from "../../node/traversal"
 
 export const _logger = churchill.child(`tree`, undefined, { separator: `` })
 
@@ -16,13 +17,13 @@ export interface Simbol {
 }
 
 export default class SymbolTable {
-  public tree: Tree
+  public tree: SubTree
   public symbols: Map<string, Simbol> = new Map()
   private reverse_content: Map<string, string> = new Map() // content -> key
 
   constructor() {}
 
-  static from(tree: Tree, scopeManager: ScopeManager) {
+  static from(tree: SubTree, scopeManager: ScopeManager) {
     const table = new SymbolTable()
     table.from(tree, scopeManager)
 
@@ -54,17 +55,18 @@ export default class SymbolTable {
     throw new Error(`Type ${type} not implemented for searching symbol table`)
   }
 
-  from(tree: Tree, scopeManager: ScopeManager) {
+  from(tree: SubTree, scopeManager: ScopeManager) {
     this.reset()
 
     this.tree = tree
 
-    tree.traverse(node => {
-      const scope = node.scope(scopeManager)
+    byLevel(tree.root, node => {
+      const scope = scopeManager.evaluate(node)
       const master = getMasterScope(scope)
 
       const isIdentifier = node.type.id === `identifier`
       const isNonNumericLiteral = node.type.id === `literal` && ![`number`, `signed_number`].includes(node.type.name)
+      const isOperand = node.type.modules.includes(`operand`)
 
       let isSymbol = false
       if (master === `math`) {

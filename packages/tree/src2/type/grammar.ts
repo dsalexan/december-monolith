@@ -7,12 +7,12 @@ import { filter, orderBy } from "lodash"
 import { TypeName } from "./declarations/name"
 import Type from "./base"
 
-import type Node from "../node"
-import { SemanticalMatch } from "./rules/semantical"
+import { Interval } from "@december/utils"
+
+import { RuleSet } from "../nrs/rule/rule"
 
 export default class Grammar {
   types: Map<TypeName, Type>
-  typesByModule: Map<string, TypeName[]>
 
   constructor() {
     this.types = new Map()
@@ -48,33 +48,30 @@ export default class Grammar {
     }
 
     // sort by priority (lower is worse)
-    const sorted = orderBy(matches, [`priority`], [`desc`])
+    const sorted = orderBy(matches, [`lexical.priority`], [`desc`])
 
     return sorted
   }
 
-  matchSemantical(parent: Node, children: Node[]) {
-    const _types = [...this.types.values()]
-    const types = filter(_types, (type: Type) => !!type.semantical?.match)
+  getRuleSets(): RuleSet[] {
+    const types = [...this.types.values()]
+    const semanticalTypes = filter(types, type => !!type.semantical?.ruleset)
+    const sorted = orderBy(semanticalTypes, [`semantical.priority`], [`desc`])
 
-    const matches: { type: Type; result: ReturnType<SemanticalMatch> }[] = []
-    for (const type of types) {
-      assert(type.semantical?.match, `Type lacks semantical (or semantical match)`)
+    return sorted.map(type => type.semantical!.ruleset!)
+  }
 
-      const { match } = type.semantical!
+  clone(types: Type[] = []) {
+    const grammar = new Grammar()
 
-      const result = match!(parent, children)
-      if (result) matches.push({ type, result })
-    }
+    for (const type of this.types.values()) grammar.add(type)
+    grammar.add(...types)
 
-    // sort matches
-    const sortedMatches = orderBy(matches, ({ type }) => type.semantical!.priority, `desc`)
-
-    return sortedMatches
+    return grammar
   }
 
   print() {
     const types = this.types.values()
-    const sorted = orderBy(types, [`priority`], [`asc`])
+    const sorted = orderBy(types, [`lexical.priority`], [`asc`])
   }
 }

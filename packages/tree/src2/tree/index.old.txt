@@ -2,7 +2,7 @@ import assert from "assert"
 import Node, { NODE_BALANCING, NodeCloningOptions } from "../node"
 import { isOperand } from "../type/base"
 import { isWrapper, LIST } from "../type/declarations/separator"
-import { isString, last, sortedIndex, sortedIndexBy } from "lodash"
+import { isNil, isString, last, sortedIndex, sortedIndexBy } from "lodash"
 
 import { Interval, Point, Range } from "@december/utils"
 import { Grid } from "@december/logger"
@@ -27,6 +27,7 @@ export default class Tree {
     // const totality = Range.fromLength(0, expression.length).addEntry(new Point(0)).addEntry(new Point(expression.length))
     const totality = Range.fromLength(0, expression.length)
     this.root = root ?? Node.ROOT(totality)
+    this.root.tree = this
   }
 
   get height() {
@@ -80,11 +81,11 @@ export default class Tree {
   }
 
   /** Adds node to parent at index, but respecting syntactical rules (like n-arity) */
-  addTo(parent: Node, child: Node, index?: number) {
+  addTo(parent: Node, child: Node, index?: number, preserveSubtrees = false) {
     assert(parent.type.syntactical, `Type "${parent.type.name}" has no syntactical rules`)
 
+    // 2. Add to parent using n-arity rules
     const { narity } = parent.type.syntactical!
-
     assert(narity > 0, `Type "${parent.type.name}" is nullary, it should have no children`)
 
     if (narity === Infinity) {
@@ -230,8 +231,6 @@ export default class Tree {
       // target continues to be the same
       newTarget = target
     } else if (node.type.id === `operator`) {
-      // TODO: Upon inserting an binary operator, all nodes before should be enlisted as the left-side parameter
-
       const nodePriority = node.syntactical!.priority
       const targetPriority = target.syntactical!.priority
 
@@ -291,7 +290,7 @@ export default class Tree {
       }
 
       newTarget = node
-    } else if (node.type.id === `separator` && isWrapper(node.type)) {
+    } else if (node.type.id === `separator` && node.type.modules.includes(`wrapper`)) {
       let variant = node.tokenAttributes!.variant
 
       // if variant is opener-and-closer, we need to determine if it's an opener or closer based on ancestry

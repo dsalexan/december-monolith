@@ -1,8 +1,8 @@
 import { PartialDeep } from "type-fest"
-import type Token from "../../../token"
-import type Node from "../../../node"
-import Tree from "../.."
+
 import { Grid } from "@december/logger"
+
+import { Node } from "../../node/base"
 
 export interface BaseFormatOptions {
   index: number // index of format within row spec

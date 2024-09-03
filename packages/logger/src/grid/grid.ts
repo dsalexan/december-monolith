@@ -1,4 +1,4 @@
-import { isNil, isString, last, range, sortedIndex, sortedIndexBy, sum } from "lodash"
+import { first, isNil, isString, last, range, sortedIndex, sortedIndexBy, sum } from "lodash"
 import { Sequence } from "./sequence"
 import assert from "assert"
 import { Interval, Point, Range, RANGE_COMPARISON } from "@december/utils"
@@ -153,96 +153,93 @@ export default class Grid {
 
   /** Balance grid, stretching all columns to fit content */
   balance() {
+    const allSequences = [...this.rows.values()].map(row => [...row.sequences.values()]).flat()
+
+    // 1. Assign imaginary columns for sequences with POINTS
+    for (const sequence of allSequences) {
+      for (const entry of Range.simplify(sequence.range, 0.5).getEntries()) if (entry instanceof Point) this.imaginary[entry.index] = 1
+    }
+
     // stretch columns where needed
-    for (const [r, row] of this.rows.entries()) {
-      // if (r === 1) debugger
+    for (const sequence of allSequences) {
+      // if (r === 11 && i === 2) debugger
+      // if (global.__DEBUG_LABEL === `then->=1.0*` && sequence.__debug?.format === `name` && sequence.__debug.node.content === `then`) debugger
+      // if (sequence.__debug?.format === `name` && sequence.__debug.node.name === `L4.a`) debugger
 
-      // for each sequence in row
-      for (const [i, sequence] of row.sequences.entries()) {
-        // if (r === 11 && i === 2) debugger
+      const length = sequence.length // space ocuppied by sequence content
 
-        const length = sequence.length // space ocuppied by sequence content
+      // const ranges = sequence.range.split()
+      const simplifiedRange = Range.simplify(sequence.range, 0.5)
+      const entries = [...simplifiedRange.getEntries()]
 
-        // const ranges = sequence.range.split()
-        const simplifiedRange = Range.simplify(sequence.range, 0.5)
+      // calculate available space
+      const available = sum(entries.map(entry => (entry instanceof Point ? this.imaginary[entry.index] : sum(range(entry.start, entry.end + 1).map(c => this.columns[c])))))
 
-        if (simplifiedRange.toString() !== sequence.range.toString()) debugger
+      const diff = length - available // SEQUENCE_CONTENT - COLUMNS
 
-        // calculate full column space ("full width")
-        let columns = 0
+      // measure full size and check if it is bigger than range
+      if (diff > 0) {
+        // if (entries.some(entry => entry instanceof Point) && this.imaginary.some(i => i > 0)) debugger
 
-        for (const entry of simplifiedRange.getEntries()) {
-          if (entry instanceof Point) columns += this.imaginary[entry.index] || 1
-          else if (entry instanceof Interval) columns += sum(range(entry.start, entry.end + 1).map(c => 1)) // this.columns[c]
-          else throw new Error(`Unimplemented entry type`)
+        const columns: { type: `imaginary` | `column`; index: number }[] = []
+        for (const entry of entries) {
+          if (entry instanceof Point) columns.push({ type: `imaginary`, index: entry.index })
+          else range(entry.start, entry.end + 1).map(index => columns.push({ type: `column`, index }))
         }
 
-        // calculate current width
-        let currentWidth = 0
+        // const average = Math.floor(_average)
+        const average = length / columns.length
+        const floor = Math.floor(average)
+        const ceil = Math.ceil(average)
+        const decimal = average - floor
+        const d = Math.max(1, Math.ceil(decimal * columns.length))
 
-        for (const entry of simplifiedRange.getEntries()) {
-          if (entry instanceof Point) currentWidth += this.imaginary[entry.index]
-          else if (entry instanceof Interval) currentWidth += sum(range(entry.start, entry.end + 1).map(c => this.columns[c])) //
-          else throw new Error(`Unimplemented entry type`)
+        const averages: number[] = []
+        for (const [i, { type, index }] of columns.entries()) averages.push(i < d ? ceil : floor)
+        const sumOfAverages = sum(averages)
+
+        assert(sumOfAverages === length, `Average sum is incorrect`)
+
+        // stretch all columns by average
+        for (const [i, { type, index }] of columns.entries()) {
+          const average = averages[i]
+          const target = type === `column` ? this.columns[index] : this.imaginary[index]
+
+          const newSize = Math.max(target, average)
+
+          // no need to stretch
+          if (newSize === target) continue
+
+          assert(newSize > 0, `Column size should be greater than 0`)
+          assert(!isNaN(newSize), `Column size should be a number`)
+          assert(newSize !== Infinity && newSize !== -Infinity, `Column size should be finite`)
+
+          // if (isImaginary) debugger
+
+          if (type === `imaginary`) this.imaginary[index] = newSize
+          else this.columns[index] = newSize
         }
-
-        // const columns = sum(ranges.flatMap(r => (r.isPoint() ? this.imaginary[r.x] || 1 : range(r.x, r.y + 1).map(c => this.columns[c])))) // full width availble (number of columns available, both discreet and imaginary)
-
-        const diff = length - currentWidth // SEQUENCE_CONTENT - COLUMNS
-
-        // measure full size and check if it is bigger than range
-        if (diff > 0) {
-          const average = Math.floor(length / (columns || 1))
-          const firstAverage = average * columns < length ? length - average * columns : average
-
-          // if it is, stretch all columns inside full range by average
-          for (const entry of simplifiedRange.getEntries()) {
-            const isImaginary = entry instanceof Point
-
-            const i0 = isImaginary ? entry.index : entry.start
-            const iN = isImaginary ? entry.index : entry.end
-
-            for (let i = i0; i <= iN; i++) {
-              const target = !isImaginary ? this.columns[i] : this.imaginary[i]
-              const localAverage = i === i0 ? firstAverage : average
-
-              const newSize = Math.max(target, localAverage)
-
-              // no need to stretch
-              if (newSize === target) continue
-
-              assert(newSize > 0, `Column size should be greater than 0`)
-              assert(!isNaN(newSize), `Column size should be a number`)
-              assert(newSize !== Infinity && newSize !== -Infinity, `Column size should be finite`)
-
-              // if (isImaginary) debugger
-
-              if (isImaginary) this.imaginary[i] = newSize
-              else this.columns[i] = newSize
-            }
-          }
-        }
-
-        // calculate spacing
-        const before = !simplifiedRange.columnIsPoint(`first`) ? simplifiedRange.column(`first`) * 2 : (simplifiedRange.column(`first`) - 1) * 2 + 1
-        const after = !simplifiedRange.columnIsPoint(`first`) ? simplifiedRange.column(`last`) * 2 + 1 : simplifiedRange.column(`last`) * 2
-
-        const ignoreBefore = before < 0
-        const ignoreAfter = after >= this.spacing.length
-
-        if (sequence.spacing.includes(`BEFORE`) && !ignoreBefore) {
-          this.spacing[before] = Math.max(this.spacing[before], 1)
-          assert(!isNaN(this.spacing[before]), `Spacing should be a number`)
-        }
-
-        if (sequence.spacing.includes(`AFTER`) && !ignoreAfter) {
-          this.spacing[after] = Math.max(this.spacing[after], 1)
-          assert(!isNaN(this.spacing[after]), `Spacing should be a number`)
-        }
-
-        // ERROR: Unimplemented
-        if (sequence.spacing.includes(`BETWEEN_COLUMNS`)) debugger
       }
+
+      // calculate spacing
+      const before = !simplifiedRange.columnIsPoint(`first`) ? simplifiedRange.column(`first`) * 2 : (simplifiedRange.column(`first`) - 1) * 2 + 1
+      const after = !simplifiedRange.columnIsPoint(`first`) ? simplifiedRange.column(`last`) * 2 + 1 : simplifiedRange.column(`last`) * 2
+
+      const ignoreBefore = before < 0
+      const ignoreAfter = after >= this.spacing.length
+
+      if (sequence.spacing.includes(`BEFORE`) && !ignoreBefore) {
+        this.spacing[before] = Math.max(this.spacing[before], 1)
+        assert(!isNaN(this.spacing[before]), `Spacing should be a number`)
+      }
+
+      if (sequence.spacing.includes(`AFTER`) && !ignoreAfter) {
+        this.spacing[after] = Math.max(this.spacing[after], 1)
+        assert(!isNaN(this.spacing[after]), `Spacing should be a number`)
+      }
+
+      // ERROR: Unimplemented
+      if (sequence.spacing.includes(`BETWEEN_COLUMNS`)) debugger
     }
 
     // remove double spacing if there is no imaginary content
@@ -276,6 +273,28 @@ export default class Grid {
       assert(!isNaN(prefix), `Prefix should be a number`)
 
       this.prefix = Math.max(this.prefix, prefix)
+    }
+  }
+
+  /** Balance grid, stretching all columns to fit content */
+  balance1() {
+    // 1. Assign imaginary columns for sequences with POINTS
+    for (const [r, row] of this.rows.entries()) {
+      // for each sequence in row
+      for (const [i, sequence] of row.sequences.entries()) {
+        // if (r === 11 && i === 2) debugger
+        // if (global.__DEBUG_LABEL === `then->=1.0*` && sequence.__debug?.format === `name` && sequence.__debug.node.content === `then`) debugger
+
+        const length = sequence.length // space ocuppied by sequence content
+
+        const simplifiedRange = Range.simplify(sequence.range, 0.5)
+        if (simplifiedRange.toString() !== sequence.range.toString()) debugger
+
+        // calculate available space
+        let columns = sum(simplifiedRange.getEntries().map(entry => (entry instanceof Point ? this.imaginary[entry.index] : sum(range(entry.start, entry.end + 1).map(c => this.columns[c])))))
+
+        debugger
+      }
     }
   }
 

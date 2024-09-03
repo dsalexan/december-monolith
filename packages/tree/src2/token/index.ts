@@ -1,6 +1,12 @@
+import { Interval } from "@december/utils"
+
 import { Lexeme } from "./lexeme"
-import { TypeName } from "../type/declarations/name"
 import { Attributes } from "./attributes"
+import { cloneString, ConcreteString, ProvidedString } from "../string"
+import Type from "../type/base"
+import assert from "assert"
+import { EvaluatorOptions } from "../phases/lexer/evaluation"
+import { cloneDeep } from "lodash"
 /**
  * | Token name                                                                                                    | Explanation                                            | Sample token values                                |
  * | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------- |
@@ -13,13 +19,6 @@ import { Attributes } from "./attributes"
  * | [whitespace](https://en.wikipedia.org/wiki/Whitespace_character "Whitespace character")                       | Groups of non-printable characters. Usually discarded. | –                                                  |
  *
  */
-
-import type Lexer from "../phases/lexer"
-import assert from "assert"
-import { EvaluatorOptions } from "../phases/lexer/evaluation"
-import Grammar from "../type/grammar"
-import { Interval } from "@december/utils"
-import { cloneDeep } from "lodash"
 
 /**
  * IDENTIFIER — basically a variable
@@ -36,82 +35,52 @@ import { cloneDeep } from "lodash"
 export const NON_EVALUATED_LEXICAL_TOKEN = Symbol.for(`NON_EVALUATED_LEXICAL_TOKEN`)
 
 export default class Token<TValue = any> {
-  private lexer: Lexer
-  private _grammar: Grammar
-  private _expression: string
+  private string: ProvidedString | ConcreteString
   //
-  private _interval: Interval
-  private _type: TypeName
-
-  // evaluated attributes from base lexeme during evaluation
-  private _attributes: Partial<Attributes<TValue>> | typeof NON_EVALUATED_LEXICAL_TOKEN = NON_EVALUATED_LEXICAL_TOKEN
-
-  // #region GETTERS and SETTERS
-
-  /** Returns initial character of lexeme in original expression */
-  public get start() {
-    return this._interval.start
-  }
-
-  /** Returns interval (initial and final indexes) of lexeme in original expression */
+  public type: Type
+  protected _interval: Interval | null
   public get interval() {
+    assert(this._interval, `Interval must be set for a token`)
+
     return this._interval
   }
 
-  private get expression() {
-    return this._expression ?? this.lexer.expression
+  public updateInterval(interval: Interval) {
+    this._interval = interval
   }
 
-  public get lexeme(): string {
-    return this.substring(this._interval.start, this._interval.length)
+  public updateString(string: ProvidedString | ConcreteString) {
+    this.string = string
   }
 
-  public get grammar(): Grammar {
-    return this._grammar ?? this.lexer.grammar
-  }
-
-  public get type() {
-    return this.grammar.get(this._type)!
-  }
-
+  // evaluated attributes from base lexeme during evaluation
+  private _attributes: Partial<Attributes<TValue>> | typeof NON_EVALUATED_LEXICAL_TOKEN = NON_EVALUATED_LEXICAL_TOKEN
   public get attributes(): Attributes<TValue> {
     if (typeof this._attributes === `symbol` && this._attributes === NON_EVALUATED_LEXICAL_TOKEN) throw new Error(`Token not evaluated yet`)
 
     return this._attributes as Attributes<TValue>
   }
 
-  public get value(): TValue {
-    const value = this.attributes[`value`]
-
-    return value as TValue
+  get provider() {
+    return this.string.type === `concrete` ? null : this.string.provider
   }
 
-  // #endregion
-
-  constructor(lexerOrGrammar: Lexer | Grammar, lexeme: Lexeme) {
-    if (lexerOrGrammar instanceof Grammar) this._grammar = lexerOrGrammar
-    else this.lexer = lexerOrGrammar
-
-    this._interval = Interval.fromLength(lexeme.start, lexeme.length)
-    this._type = lexeme.type.name
+  get signature() {
+    return this.string.type === `concrete` ? null : this.string.provider.signature
   }
 
-  private substring(start: number, length: number, strict = true) {
-    if (strict) {
-      assert(start >= 0 && start < this.expression.length, `Invalid start index`)
-      assert(length >= 0, `Invalid length`)
-      assert(length <= this.expression.length - start, `Invalid length`)
-    }
-
-    return this.expression.slice(start, start + length)
+  get lexeme(): string {
+    if (this.string.type === `concrete`) return this.string.value
+    return this.string.provider.value.slice(this.string.start, this.string.start + this.string.length)
   }
 
-  updateExpression(expression: string) {
-    this._expression = expression
-  }
+  constructor(string: ProvidedString | ConcreteString, type: Type) {
+    this.string = string
+    this.type = type
 
-  updateInterval(interval: Interval) {
-    this._interval = interval
+    // Concrete strings dont have intervals. They must be defined later, by calling recalculate() in a SubTree context
+
+    if (this.string.type === `provided`) this._interval = Interval.fromLength(this.string.start, this.string.length)
   }
 
   _evaluateOptions(options: Partial<EvaluatorOptions>) {
@@ -128,18 +97,15 @@ export default class Token<TValue = any> {
     this._attributes = this.type.lexical!.evaluate(this, options) ?? {}
   }
 
-  clone(lexeme?: Lexeme, attributes?: Partial<Attributes<TValue>>) {
-    lexeme ??= { start: this.interval.start, length: this.interval.length, type: { name: this._type } as any }
-
-    const token = new Token(this.lexer ?? this._grammar, lexeme)
-    token._expression = this._expression
-
+  clone(attributes?: Partial<Attributes<TValue>>) {
+    const token = new Token(cloneString(this.string), this.type)
+    token._interval = this._interval
     token._attributes = cloneDeep(attributes ?? this._attributes)
 
     return token
   }
 
   toString() {
-    return `"${this.lexeme}" ${this._interval}`
+    return `"${this.lexeme}" ${this.interval.toString()}`
   }
 }

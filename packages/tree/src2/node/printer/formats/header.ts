@@ -4,7 +4,6 @@ import { Range } from "@december/utils"
 
 import { BY_ALTERNATING_NUMBER_AND_TYPE, BY_TYPE, BY_TYPE_ID, BY_TYPE_NAME } from "../../../type/styles"
 
-import type Token from "../../../token"
 import { PartialDeep } from "type-fest"
 import type { BaseFormatOptions, ExpressionFormatOptions, FormatFunction } from "./base"
 import assert from "assert"
@@ -39,9 +38,9 @@ export function formatHeader(expression: string, printIndex: boolean, { ...optio
 }
 
 // (tree: Tree, options: TokenFormatOptions) => Grid.Sequence.Sequence[]
-export default function header(tree: Tree, printIndex: boolean, format: ExpressionFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
+export default function header(expression: string, printIndex: boolean, format: ExpressionFormatOptions, print: PartialDeep<Grid.Sequence.PrintOptions>): FormatFunction {
   return {
-    fn: () => formatHeader(tree.expression, printIndex, format),
+    fn: () => formatHeader(expression, printIndex, format),
     printingOptions: print,
   }
 }

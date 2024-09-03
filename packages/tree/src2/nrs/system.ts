@@ -1,35 +1,22 @@
 import Node from "../node"
+import type Grammar from "../type/grammar"
 
 import { Rule, IReplacementCommand, RuleMatchState, KEEP_NODE } from "./rule"
+import { ReplacementContext } from "./rule/replacement"
 import { RuleSet } from "./rule/rule"
 
 export { KEEP_NODE, REMOVE_NODE, REPLACE_NODES_AT } from "./rule"
 
-export default class NodeReplacementSystem {
-  ruleset: Rule[]
+export default function exec(rulesets: RuleSet[], originalNode: Node, context: ReplacementContext): IReplacementCommand {
+  const changes: { rule: Rule; state: RuleMatchState }[] = []
+  let replacements = 0
 
-  constructor() {
-    this.ruleset = []
-  }
+  let node: IReplacementCommand = originalNode
 
-  addRule(rule: Rule) {
-    this.ruleset.push(rule)
-  }
+  for (const ruleset of rulesets) {
+    const localGrammar = ruleset.grammar.length ? context.grammar.clone(ruleset.grammar) : context.grammar
 
-  addRuleSet(ruleset: Rule[] | RuleSet) {
-    if (ruleset instanceof RuleSet) ruleset = ruleset.list
-
-    for (const rule of ruleset) this.addRule(rule)
-  }
-
-  exec(originalNode: Node): IReplacementCommand {
-    const changes: { rule: Rule; state: RuleMatchState }[] = []
-
-    let node: IReplacementCommand = originalNode
-    for (let i = 0; i < this.ruleset.length; i++) {
-      // if (i === 4) debugger
-
-      const rule = this.ruleset[i]
+    for (const rule of ruleset.rules) {
       const match = rule.match(node)
 
       if (!match.result) continue
@@ -38,11 +25,16 @@ export default class NodeReplacementSystem {
       // TODO: Store this inline flat toString in changes
 
       changes.push({ rule, state: match }) // register the change
-      node = rule.replace(node, match) // replace current node with the new node
+      const replaceResult = rule.replace(node, match, { ...context, grammar: localGrammar }) // replace current node with the new node
+
+      if (replaceResult !== KEEP_NODE) node = replaceResult
+      else replacements++
 
       if (!(node instanceof Node)) break
     }
 
-    return changes.length > 0 ? node : KEEP_NODE
+    if (!(node instanceof Node)) break
   }
+
+  return changes.length > 0 ? node : KEEP_NODE
 }

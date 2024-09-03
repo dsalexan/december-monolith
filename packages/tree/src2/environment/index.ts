@@ -4,14 +4,22 @@ import churchill, { Block, paint, Paint } from "../logger"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
+export interface EnvironmentIdentifier<TValue = any> {
+  name: string
+  value: TValue
+}
+
 export default class Environment {
   has(identifier: string) {
     // TODO: Implement Environment
     return true
   }
 
-  get(identifier: string) {
-    return 999
+  get(identifier: string): EnvironmentIdentifier {
+    return {
+      name: identifier,
+      value: 1,
+    }
   }
 
   print() {

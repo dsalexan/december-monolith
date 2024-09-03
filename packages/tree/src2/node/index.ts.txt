@@ -1,0 +1,471 @@
+import { Interval, push } from "@december/utils"
+// AST: Abstract Syntax Tree
+
+export * as Search from "./search"
+
+import { cloneDeep, identity, indexOf, isArray, isEmpty, isNil, isString, orderBy, range, reverse, uniq, uniqBy } from "lodash"
+import Token from "../token"
+
+import { v4 as uuidv4 } from "uuid"
+import assert from "assert"
+import Type from "../type/base"
+import { ROOT } from "../type/declarations/structural"
+import { Point, Range } from "@december/utils"
+import { numberToLetters } from "../utils"
+
+import { LIST } from "../type/declarations/separator"
+
+import { Attributes } from "./attributes"
+import { GenericTraversal, inOrder, postOrder, preOrder } from "./traversal"
+import { PolarCoordinates } from "mathjs"
+
+import type Tree from "../tree"
+import { Scope, ScopeEvaluator, ScopeManager } from "./scope"
+import { NIL } from "../type/declarations/literal"
+import Lexer from "../phases/lexer"
+
+import Grammar from "../type/grammar"
+
+import NodeOperations from "./operations"
+import SubTree from "./subtree"
+import Printer from "./printer"
+
+export const NODE_BALANCING = {
+  UNBALANCED: -1,
+  NON_APPLICABLE: 0,
+  BALANCED: 1,
+} as const
+
+export type NodeBalancing = (typeof NODE_BALANCING)[keyof typeof NODE_BALANCING]
+
+export class NodeNumber {
+  level: number
+  non_whitespace: number
+
+  constructor() {
+    this.reset()
+  }
+
+  reset() {
+    this.level = -1
+    this.non_whitespace = -1
+  }
+}
+
+export default class Node {
+  public id: string = uuidv4()
+  public tree: Tree
+  public _: NodeOperations
+  //
+  /**
+   * MULTIPLE TOKENS
+   *
+   * Multiple tokens per node are only a thing for wrapper separators (at least for now)
+   */
+  private _tok1ens: Token[]
+  private _type: Type | null
+  public _range: Range // this is only returned in "get range()" if node is tokenless AND childless
+  private _attributes: Attributes
+  public _preCalculatedScope: Scope[] = null as any // pre-calculated scope for this node, usually a scope is calculated externally and then assigned here
+  //
+
+  public get tok1ens() {
+    return this._tokens
+  }
+
+  private _defaultAttributes() {
+    this._attributes ??= {
+      tags: [],
+    }
+  }
+
+  public get attributes() {
+    this._defaultAttributes()
+    return this._attributes!
+  }
+
+  public setAttributes(attributes: Partial<Attributes>) {
+    this._defaultAttributes()
+
+    this._attributes = {
+      ...this._attributes,
+      ...attributes,
+    }
+
+    return this
+  }
+
+  public get tokenAttributes() {
+    // TODO: Implement for multiple tokens
+    if (this._tokens.length > 1) debugger
+
+    return this._tokens[0].attributes
+  }
+
+  public get balancing(): NodeBalancing {
+    // node is only balanced/unbalanced if its type is wrapper separator AND it lacks 2 tokens
+    if (this.type.modules.includes(`wrapper`)) return this._tokens.length === 1 ? NODE_BALANCING.UNBALANCED : NODE_BALANCING.BALANCED
+
+    return NODE_BALANCING.NON_APPLICABLE
+  }
+
+  public get type(): Type {
+    assert(this._type || this._tokens.length > 0, `Node has no type or token`)
+
+    if (this._type) return this._type
+
+    const tokens = this._tokens.map(token => token?.type).filter(type => !isNil(type))
+    const uniqueTokens = uniqBy(tokens, token => token.name)
+
+    assert(uniqueTokens.length > 0, `Node has multiple token types`)
+
+    return uniqueTokens[0]
+  }
+  public setType(type: Type) {
+    this._type = type
+  }
+
+  public children: Node[] = []
+
+  getChildren(maxDepth: number) {
+    if (this.level >= maxDepth) return []
+    return this.children
+  }
+
+  get root(): Node {
+    const root = this.parent ? this.parent.root : this
+
+    assert(root.type.name === `root`, `Root node not found`)
+
+    return root
+  }
+
+  private _parent: Node | null = null
+  public get parent() {
+    return this._parent
+  }
+
+  public setParent(parent: Node) {
+    this._parent = parent
+    return this
+  }
+
+  public removeParent() {
+    if (this._parent) {
+      this._parent = null
+      this._index = -1
+
+      this.number.reset()
+    }
+  }
+
+  private _index: number = -1
+  public get index() {
+    return this._index
+  }
+
+  public updateIndex(index: number) {
+    this._index = index
+  }
+
+  public number: NodeNumber = new NodeNumber()
+
+  public get level(): number {
+    return this.parent ? this.parent.level + 1 : 0
+  }
+
+  public get height() {
+    return this.children.reduce((acc, child) => Math.max(acc, child.height), 0) + 1
+  }
+
+  public get name() {
+    if (this.type.name === `root`) return `root`
+
+    const number = this.number.level === -1 ? `${this.index === -1 ? `` : this.index}*` : numberToLetters(this.number.level)
+
+    return `${this.type.prefix}${this.level}.${number}`
+  }
+
+  public get lexeme() {
+    if (this.tokens.length === 0 && this.children.length === 0) return ``
+
+    if (this.tokens.length === 0) return this.children.map(child => child.lexeme).join(``)
+
+    return this._tokens.map(token => token.lexeme).join(``)
+
+    // return this._tokens[0].lexeme
+  }
+
+  /** Non-overflowable content */
+  public get _content(): string | null {
+    // TODO: Implement for tokenless and childless nodes that are not points
+    if (this._tokens.length === 0 && this.children.length === 0 && !this._range.columnIsPoint(`first`)) debugger
+
+    if (this._tokens.length) return this._tokens.map(token => token.lexeme).join(``)
+
+    return null
+  }
+
+  public get content(): string | null {
+    if (this._tokens.length === 0 && this.children.length === 0) return null
+
+    const strings: string[] = []
+
+    const tokens = this.tokenize()
+    for (const { node, token } of tokens) {
+      if (token) strings.push(token.lexeme)
+      else {
+        const content = node._content
+        if (content !== null) strings.push(content)
+      }
+    }
+
+    return strings.join(``)
+  }
+
+  public get range(): Range {
+    if (this.type.name === `root`) return this._range
+
+    if (this._tokens.length === 0 && this.children.length === 0) return this._range
+
+    if (this.children.length === 0) return new Range(...this.tokens.map(token => token.interval))
+
+    const range = new Range()
+
+    const tokens = this.tokenize()
+    for (const { node, token } of tokens) range.addEntry(...(token ? [token.interval] : node.range.getEntries()))
+
+    // inOrder(this, (node, token) => {
+    //   if (token === null) return
+    //   else if (token === undefined) range.addEntry(...node.range.getEntries())
+    //   else range.addEntry(token.interval)
+    // })
+
+    return range
+  }
+
+  public get path(): string[] {
+    return this.parent ? [...this.parent.path, this.name] : [`root`]
+  }
+
+  constructor(type: Type, range: Range)
+  constructor(token: Token, range?: Range)
+  constructor(tokenOrType: Token | Type, range?: Range) {
+    this._tokens = tokenOrType instanceof Token ? [tokenOrType] : []
+    this._type = tokenOrType instanceof Type ? tokenOrType : null
+
+    if (tokenOrType instanceof Type && range) this._range = range
+
+    this._ = new NodeOperations(this)
+  }
+
+  // #region Factories
+
+  static ROOT(range: Range) {
+    return new Node(ROOT, range)
+  }
+
+  NIL(range?: Range) {
+    range ??= this.range
+    return new Node(NIL, Range.fromPoint(range.column(`first`)))
+  }
+
+  LIST(range: Range) {
+    return new Node(LIST, range)
+  }
+
+  static fromValue(grammar: Grammar, value: string, type: Type, interval?: Interval) {
+    interval ??= Interval.fromLength(0, value.length)
+
+    const token = new Token(grammar, { type, start: interval.start, length: interval.length })
+    token.updateExpression(value)
+    const node = new Node(token)
+
+    return node
+  }
+
+  // #endregion
+
+  // #region Proxy
+
+  //    #region Type
+
+  public get lexical() {
+    return this.type.lexical
+  }
+
+  public get syntactical() {
+    return this.type.syntactical
+  }
+
+  //    #endregion
+
+  // #endregion
+
+  /** Returns the nth ancestor of node */
+  ancestor(offset: number = 0) {
+    let ancestor: Node | null = this.parent
+
+    while (ancestor && offset > 0) {
+      ancestor = ancestor.parent
+      offset--
+    }
+
+    return ancestor
+  }
+
+  /** Returns offspring at height N from node */
+  offspring(offset: number): Node[] {
+    const offspring: Node[] = []
+
+    let queue: Node[] = [this]
+
+    while (queue.length > 0) {
+      const node = queue.shift()!
+
+      if (node.level === this.level + offset) offspring.push(node)
+      else queue.push(...node.children)
+    }
+
+    // TODO: test this
+    if (offspring.length !== this.children.length) {
+      const _test = {
+        levels: offspring.map(node => node.level),
+        parents: offspring.map(node => node.parent!.name),
+      }
+      debugger
+    }
+
+    return offspring
+  }
+
+  /** Returns the nth sibling of node */
+  sibling(offset: number) {
+    if (!this.parent) return null
+
+    const _index = this.parent.children.findIndex(child => child.id === this.id)
+    assert(this.index + offset !== _index, `Node internal index doesn't match it's position in parent.children[...]`)
+
+    return this.parent.children[this.index + offset]
+  }
+
+  findAncestor(predicate: (node: Node) => boolean | null): Node | null {
+    let ancestor: Node | null = this
+
+    while (ancestor) {
+      const result = predicate(ancestor)
+      if (result) return ancestor
+      if (result === null) break
+
+      ancestor = ancestor.parent
+    }
+
+    return null
+  }
+
+  find(name: string): Node | null
+  find(predicate: (node: Node) => boolean): Node | null
+  find(nameOrPredicate: string | ((node: Node) => boolean)): Node | null {
+    let predicate: (node: Node) => boolean = nameOrPredicate as any
+    if (isString(nameOrPredicate)) predicate = node => node.name === nameOrPredicate
+
+    if (predicate(this)) return this
+
+    for (const child of this.children) {
+      const found = child.find(predicate)
+      if (found) return found
+    }
+
+    return null
+  }
+
+  findByTraversal(traversal: GenericTraversal, predicate: (node: Node) => boolean): Node | null {
+    let found: Node | null = null
+
+    traversal(this, (node, token) => {
+      if (predicate(node)) {
+        found = node
+        return
+      }
+    })
+
+    return found
+  }
+
+  scope(scopeManager: ScopeManager) {
+    return scopeManager.evaluate(this)
+  }
+
+  addToken(token: Token | Token[], index?: number) {
+    const tokens = isArray(token) ? token : [token]
+    this._tokens.splice(index ?? this._tokens.length, 0, ...tokens)
+  }
+
+  clearTokens() {
+    this._tokens.splice(0, this._tokens.length)
+  }
+
+  tokenize(level?: number): { node: Node; token?: Token }[] {
+    const list: { node: Node; token?: Token }[] = []
+
+    inOrder(this, (node, token, ignorable) => !ignorable && list.push({ node, token: token || undefined }), level)
+
+    return list
+  }
+
+  repr() {
+    const tokenized = this.tokenize()
+    const allTokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
+
+    const string = allTokens.map(token => token.lexeme).join(``)
+
+    return string
+  }
+
+  clone(options: Partial<NodeCloningOptions> = {}) {
+    const node = new Node(this._type!, this._range ? this._range.clone() : this._range)
+
+    node.id = this.id
+    node._tokens = this._tokens.map(token => token.clone())
+    if (this._attributes) node._attributes = cloneDeep(this._attributes)
+
+    if (options?.cloneSubTree) {
+      for (const child of this.children) {
+        const clone = child.clone(options)
+        node._._addChild(clone, null)
+      }
+    }
+
+    return node
+  }
+
+  toString() {
+    const _tags = this.attributes.tags.length ? ` [${this.attributes.tags.join(`,`)}]` : ``
+    return `${this.name}${_tags}`
+  }
+
+  debug() {
+    console.log(`======================================`)
+    console.log(`                DEBUG `)
+    console.log(` ${this.name} `)
+    console.log(` ${this.id} `)
+    console.log(`======================================`)
+    console.log(`\n`)
+
+    preOrder(this, node => {
+      const lexeme = node.lexeme
+      const interval = node.tokens.length > 0 ? node.tokens.map(token => token.interval.toString()).join(`; `) : `—`
+      const range = node.range.toString()
+      console.log(`${` `.repeat(node.level * 2)}${node.name} ${!isNil(lexeme) && !isEmpty(lexeme) ? `<${lexeme}>` : ``}  ${interval}  =>  ${range}`)
+    })
+  }
+
+  // #region Traversal
+
+  // #endregion
+}
+
+export interface NodeCloningOptions {
+  registerOriginalNodes: boolean
+  cloneSubTree: boolean
+}

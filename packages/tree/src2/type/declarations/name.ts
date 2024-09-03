@@ -3,7 +3,8 @@ import type { WhitespaceTypeName } from "./whitespace"
 import type { LiteralTypeName } from "./literal"
 import type { OperatorTypeName } from "./operator"
 import type { SeparatorTypeName } from "./separator"
-import type { CompositeTypeName } from "./composite"
+import type { EnclosureTypeName } from "./enclosure"
 import type { IdentifierTypeName } from "./identifier"
+import type { KeywordTypeName } from "./keyword"
 
-export type TypeName = WhitespaceTypeName | LiteralTypeName | OperatorTypeName | SeparatorTypeName | StructuralTypeName | CompositeTypeName | IdentifierTypeName
+export type TypeName = WhitespaceTypeName | LiteralTypeName | OperatorTypeName | SeparatorTypeName | StructuralTypeName | EnclosureTypeName | IdentifierTypeName | KeywordTypeName

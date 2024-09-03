@@ -1,7 +1,10 @@
 import assert from "assert"
+
+import { EQUALS as _EQUALS, IS_ELEMENT_OF, IsElementOfSetPattern } from "@december/utils/match/element"
+
 import Type from "../base"
-import { Match } from "@december/utils"
-import { narityInOrder } from "../../node/traversal"
+
+import { arityInOrder } from "../../node/traversal"
 
 /**
  * Lower Priority means less nodes can be parent of this node
@@ -10,57 +13,57 @@ import { narityInOrder } from "../../node/traversal"
  *    OPERANDS have the highest priority, so no other node can be children of it
  */
 
-const OPERATOR_PRIORITY = 1000
+const OPERATOR_PRIORITY = 10 ** 6
 
 // LOGICAL
 export const _OR = new Type(`operator`, `or`, `|`)
-  .addLexical(OPERATOR_PRIORITY + 102, Match.Value.EQUALS(`|`))
+  .addLexical(OPERATOR_PRIORITY + 102, _EQUALS(`|`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 export const _AND = new Type(`operator`, `and`, `$`)
-  .addLexical(OPERATOR_PRIORITY + 101, Match.Value.EQUALS(`&`))
+  .addLexical(OPERATOR_PRIORITY + 101, _EQUALS(`&`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 
 // RELATIONAL
 export const EQUALS = new Type(`operator`, `equals`, `=`, [`logical`])
-  .addLexical(OPERATOR_PRIORITY + 5, Match.Value.EQUALS(`=`))
+  .addLexical(OPERATOR_PRIORITY + 5, _EQUALS(`=`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 export const GREATER_OR_EQUAL = new Type(`operator`, `greater_or_equal`, `>=`, [`logical`])
-  .addLexical(OPERATOR_PRIORITY + 2, Match.Value.EQUALS(`>=`))
+  .addLexical(OPERATOR_PRIORITY + 2, _EQUALS(`>=`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 export const SMALLER_OR_EQUAL = new Type(`operator`, `smaller_or_equal`, `<=`, [`logical`])
-  .addLexical(OPERATOR_PRIORITY + 2, Match.Value.EQUALS(`<=`))
+  .addLexical(OPERATOR_PRIORITY + 2, _EQUALS(`<=`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 export const GREATER = new Type(`operator`, `greater`, `>`, [`logical`])
-  .addLexical(OPERATOR_PRIORITY + 1, Match.Value.EQUALS(`>`))
+  .addLexical(OPERATOR_PRIORITY + 1, _EQUALS(`>`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 export const SMALLER = new Type(`operator`, `smaller`, `<`, [`logical`])
-  .addLexical(OPERATOR_PRIORITY + 1, Match.Value.EQUALS(`<`))
+  .addLexical(OPERATOR_PRIORITY + 1, _EQUALS(`<`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 
 // ALGEBRAIC
 export const MULTIPLICATION = new Type(`operator`, `multiplication`, `×`, [`arithmetic`])
-  .addLexical(OPERATOR_PRIORITY + 17, Match.Value.EQUALS(`*`))
+  .addLexical(OPERATOR_PRIORITY + 17, _EQUALS(`*`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 export const DIVISION = new Type(`operator`, `division`, `÷`, [`arithmetic`])
-  .addLexical(OPERATOR_PRIORITY + 17, Match.Value.EQUALS(`/`))
+  .addLexical(OPERATOR_PRIORITY + 17, _EQUALS(`/`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 export const ADDITION = new Type(`operator`, `addition`, `+`, [`arithmetic`])
-  .addLexical(OPERATOR_PRIORITY + 15, Match.Value.EQUALS(`+`))
+  .addLexical(OPERATOR_PRIORITY + 15, _EQUALS(`+`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 export const SUBTRACTION = new Type(`operator`, `subtraction`, `-`, [`arithmetic`])
-  .addLexical(OPERATOR_PRIORITY + 15, Match.Value.EQUALS(`-`))
+  .addLexical(OPERATOR_PRIORITY + 15, _EQUALS(`-`))
   .deriveSyntactical(2)
-  .setInOrderBehaviour(narityInOrder)
+  .setInOrderBehaviour(arityInOrder)
 
 // WARN: Always update this list when adding a new recipe
 export const LOGICAL_OPERATORS = [_AND, _OR]

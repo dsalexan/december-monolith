@@ -1,7 +1,8 @@
 import assert from "assert"
-import type Node from "./."
+import type { Node } from "./node/base"
 import Token from "../token"
-import { isNil, reverse } from "lodash"
+import { isNil, iteratee, reverse } from "lodash"
+import { NODE_BALANCING } from "./node/type"
 
 /**
  * ===================================
@@ -19,8 +20,12 @@ import { isNil, reverse } from "lodash"
  * An "iteratee" is the function be called on each node during a traversal.
  */
 
+export type GenericTraversal = (node: Node, iteratee: TraversalIteratee) => void
 export type TraversalIteratee = (node: Node, token: Token | null, ignorable?: boolean) => void
 
+// #region Node Order
+
+/** Bottom Up */
 export function postOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
   const children = node.getChildren(maxDepth)
 
@@ -28,6 +33,7 @@ export function postOrder(node: Node, iteratee: TraversalIteratee, maxDepth = In
   iteratee(node, null)
 }
 
+/** Up Bottom */
 export function preOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
   iteratee(node, null)
 
@@ -36,7 +42,7 @@ export function preOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Inf
   for (const child of children) preOrder(child, iteratee, maxDepth)
 }
 
-export function inOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
+export function inOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity, behaviour?: InOrderBehaviour) {
   /**
    * By convention, a in-order traversal of a n-ary tree is:
    *  - traverse all children BUT the last
@@ -51,12 +57,14 @@ export function inOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infi
   // If we reached the max depth, we don't need to traverse the children (there will be none)
   if (node.level >= maxDepth) return iteratee(node, null)
 
-  const behaviour = node.type.inOrderBehaviour || defaultInOrderBehaviour
+  behaviour ??= node.type.inOrderBehaviour || defaultInOrderBehaviour
 
   // if (global.__DEBUG_LABEL === `-->×1.a` && node.name === `×1.a`) debugger
 
   behaviour(node, iteratee, maxDepth)
 }
+
+// #region InOrder Behaviours
 
 export type InOrderBehaviour = (node: Node, iteratee: TraversalIteratee, maxDepth: number) => void
 
@@ -74,8 +82,8 @@ export function defaultInOrderBehaviour(node: Node, iteratee: TraversalIteratee,
 }
 
 export function unaryInOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
-  const { narity } = node.type.syntactical!
-  assert(narity === 1, `Unary In-Order Behaviour can only be used with unary nodes`)
+  const { arity } = node.type.syntactical!
+  assert(arity === 1, `Unary In-Order Behaviour can only be used with unary nodes`)
 
   //
 
@@ -89,8 +97,8 @@ export function unaryInOrder(node: Node, iteratee: TraversalIteratee, maxDepth =
 }
 
 export function binaryInOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
-  const { narity } = node.type.syntactical!
-  assert(narity === 2, `Binary In-Order Behaviour can only be used with binary nodes`)
+  const { arity } = node.type.syntactical!
+  assert(arity === 2, `Binary In-Order Behaviour can only be used with binary nodes`)
 
   //
 
@@ -106,14 +114,14 @@ export function binaryInOrder(node: Node, iteratee: TraversalIteratee, maxDepth 
   if (right) inOrder(right, iteratee, maxDepth)
 }
 
-export function narityInOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
-  const { narity } = node.type.syntactical!
-  assert(!isNil(narity), `N-arity In-Order Behaviour needs a narity`)
+export function arityInOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
+  const { arity } = node.type.syntactical!
+  assert(!isNil(arity), `N-arity In-Order Behaviour needs a arity`)
 
-  if (narity === 1) unaryInOrder(node, iteratee, maxDepth)
-  else if (narity === 2) binaryInOrder(node, iteratee, maxDepth)
-  else if (narity === Infinity) defaultInOrderBehaviour(node, iteratee, maxDepth)
-  else throw new Error(`Unimplemented narity: ${narity}`)
+  if (arity === 1) unaryInOrder(node, iteratee, maxDepth)
+  else if (arity === 2) binaryInOrder(node, iteratee, maxDepth)
+  else if (arity === Infinity) defaultInOrderBehaviour(node, iteratee, maxDepth)
+  else throw new Error(`Unimplemented arity: ${arity}`)
 }
 
 export function wrapperInOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
@@ -152,5 +160,74 @@ export function interleavedInOrder(node: Node, iteratee: TraversalIteratee, maxD
   for (const target of targets) {
     if (target instanceof Token) iteratee(node, target)
     else inOrder(target, iteratee, maxDepth)
+  }
+}
+
+// #endregion
+
+// #endregion
+
+/** Traverse upwards the tree, minDepth is 0 (root) by default */
+export function inContext(node: Node, iteratee: TraversalIteratee, minDepth = 0) {
+  // const children = node.getChildren(maxDepth)
+  // for (const child of children) postOrder(child, iteratee, maxDepth)
+  // iteratee(node, null)
+
+  // check if we should stop
+  if (node.level < minDepth) return
+
+  // check context break
+  //    only consider nodes in POSITIVE balancing (for now just N/A or BALANCED)
+  if (node.type.modules.includes(`context:break`) && node.balancing >= NODE_BALANCING.NON_APPLICABLE) return
+
+  iteratee(node, null) // run iteratee
+
+  // call for parent
+  if (node.parent!) inContext(node.parent!, iteratee, minDepth)
+}
+
+/** Traverse all nodes in tree by level */
+export function byLevel1(root: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
+  const queue: Node[] = [this.root]
+
+  iteratee(root, null)
+
+  while (queue.length) {
+    const levelNodes: Node[] = []
+
+    // loop through all nodes in the queue for current level (since we could add new shit to the queue in the loop)
+    let size = queue.length
+    while (size) {
+      const node = queue.shift()!
+
+      if (node.level >= maxDepth) continue
+
+      levelNodes.push(node) // collect to iterate later
+      node.children.map(child => queue.push(child)) // queue to check children after iterating
+
+      size--
+    }
+
+    levelNodes.map(node => iteratee(node, null))
+  }
+}
+
+/** Traverse all nodes in tree by level */
+export function byLevel(root: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
+  if (root.level > maxDepth) return
+
+  iteratee(root, null)
+
+  const queue: Node[] = [root]
+
+  while (queue.length) {
+    const parent = queue.shift()!
+    if (parent.level > maxDepth) continue
+
+    for (const node of parent.children.nodes) {
+      iteratee(node, null)
+
+      queue.push(node)
+    }
   }
 }

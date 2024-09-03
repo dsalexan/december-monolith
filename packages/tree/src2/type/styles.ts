@@ -12,14 +12,16 @@ export interface Style {
 export const BY_TYPE_ID: Partial<Record<TypeID, Paint>> = {
   literal: paint.blue,
   separator: paint.green,
+  enclosure: paint.magenta,
   operator: paint.white,
-  composite: paint.magenta,
+  keyword: paint.cyan,
 }
 
 export const BY_TYPE_NAME: Partial<Record<TypeName, Paint>> = {
   unknown: paint.yellow,
   whitespace: paint.bgGray,
   nil: paint.gray,
+  list: paint.green,
 }
 
 export function BY_TYPE(type: Type): Paint {

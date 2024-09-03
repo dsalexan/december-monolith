@@ -1,18 +1,19 @@
 import { BasePattern, BasePatternOptions } from "@december/utils/match/base"
-import { ValuePattern } from "@december/utils/match/value"
+import { ElementPattern } from "@december/utils/match/element"
+import { SetPattern } from "@december/utils/match/set"
+
 import type Node from "../node"
 
 import { TypeName } from "../type/declarations/name"
 
 import assert from "assert"
-import { ContainedInSetPattern, ContainsSetPattern, SetPattern } from "../../../utils/src/match/set"
 
 export interface BaseNodePatternOptions extends BasePatternOptions {
   bypass?: BaseNodePattern
 }
 
-export class BaseNodePattern<TValue = string | number | boolean> extends BasePattern {
-  pattern: ValuePattern<TValue> | SetPattern<TValue>
+export class BaseNodePattern extends BasePattern {
+  pattern: BasePattern
   /**
    * A list of nodes to bypass while matching
    * "Bypassing" is to ignore the node by itself and check its children
@@ -22,7 +23,7 @@ export class BaseNodePattern<TValue = string | number | boolean> extends BasePat
    */
   bypass?: BaseNodePattern
 
-  constructor(type: string, pattern: ValuePattern<TValue> | SetPattern<TValue>, options: Partial<BaseNodePatternOptions> = {}) {
+  constructor(type: string, pattern: BasePattern, options: Partial<BaseNodePatternOptions> = {}) {
     super(type, options)
     this.pattern = pattern
     if (options.bypass) this.bypass = options.bypass
@@ -51,11 +52,11 @@ export class BaseNodePattern<TValue = string | number | boolean> extends BasePat
   }
 }
 
-export class NodeTypeNamePattern extends BaseNodePattern<TypeName> {
+export class NodeTypeNamePattern extends BaseNodePattern {
   declare type: `node:type:name`
-  declare pattern: ValuePattern<TypeName>
+  declare pattern: ElementPattern<TypeName>
 
-  constructor(pattern: ValuePattern<TypeName>, options: Partial<BaseNodePatternOptions> = {}) {
+  constructor(pattern: ElementPattern<TypeName>, options: Partial<BaseNodePatternOptions> = {}) {
     super(`type:name`, pattern, options)
   }
 
@@ -64,18 +65,18 @@ export class NodeTypeNamePattern extends BaseNodePattern<TypeName> {
   }
 }
 
-export class NodePrimitivePattern extends BaseNodePattern<string | number | boolean> {
-  declare type: `node:type:id` | `node:type:full` | `node:lexeme`
-  declare pattern: ValuePattern<string | number | boolean>
+export class NodePrimitivePattern extends BaseNodePattern {
+  declare type: `node:type:id` | `node:type:full` | `node:content`
+  declare pattern: ElementPattern<string | number | boolean>
 
-  constructor(type: `node:type:id` | `node:type:full` | `node:lexeme`, pattern: ValuePattern<string | number | boolean>, options: Partial<BaseNodePatternOptions> = {}) {
+  constructor(type: `node:type:id` | `node:type:full` | `node:content`, pattern: ElementPattern<string | number | boolean>, options: Partial<BaseNodePatternOptions> = {}) {
     super(type, pattern, options)
   }
 
   getValue(node: Node): string | number | boolean {
     if (this.type === `node:type:id`) return node.type.id
     else if (this.type === `node:type:full`) return node.type.getFullName()
-    else if (this.type === `node:lexeme`) return node.lexeme
+    else if (this.type === `node:content`) return node.content!
 
     assert(false, `Unimplemented node pattern value evaluation for "${this.type}"`)
   }
@@ -87,14 +88,14 @@ export class NodePrimitivePattern extends BaseNodePattern<string | number | bool
 
 export class NodeScopePattern extends BaseNodePattern {
   declare type: `node:scope`
-  declare pattern: ContainsSetPattern<string>
+  declare pattern: SetPattern<string[]>
 
-  constructor(pattern: ContainsSetPattern<string>, options: Partial<BaseNodePatternOptions> = {}) {
+  constructor(pattern: SetPattern<string[]>, options: Partial<BaseNodePatternOptions> = {}) {
     super(`node:scope`, pattern, options)
   }
 
   override _match(node: Node): boolean {
-    return this.pattern.match(node._preCalculatedScope)
+    return this.pattern.match(node.scope)
   }
 }
 
@@ -103,14 +104,14 @@ export type NodePattern = NodeTypeNamePattern | NodePrimitivePattern | NodeScope
 // #region Proxies
 
 export const TYPE = {
-  NAME: (pattern: ValuePattern<TypeName>): NodeTypeNamePattern => new NodeTypeNamePattern(pattern),
-  ID: (pattern: ValuePattern<string>): NodePrimitivePattern => new NodePrimitivePattern(`node:type:id`, pattern),
-  FULL: (pattern: ValuePattern<string>): NodePrimitivePattern => new NodePrimitivePattern(`node:type:full`, pattern),
+  NAME: (pattern: ElementPattern<TypeName>): NodeTypeNamePattern => new NodeTypeNamePattern(pattern),
+  ID: (pattern: ElementPattern<string>): NodePrimitivePattern => new NodePrimitivePattern(`node:type:id`, pattern),
+  FULL: (pattern: ElementPattern<string>): NodePrimitivePattern => new NodePrimitivePattern(`node:type:full`, pattern),
 }
 
 export const NODE = {
-  LEXEME: (pattern: ValuePattern<string | number | boolean>): NodePrimitivePattern => new NodePrimitivePattern(`node:lexeme`, pattern),
-  SCOPE: (pattern: ContainsSetPattern<string>): NodeScopePattern => new NodeScopePattern(pattern),
+  CONTENT: (pattern: ElementPattern<string | number | boolean>): NodePrimitivePattern => new NodePrimitivePattern(`node:content`, pattern),
+  SCOPE: (pattern: SetPattern<string[]>): NodeScopePattern => new NodeScopePattern(pattern),
 }
 
 // #endregion

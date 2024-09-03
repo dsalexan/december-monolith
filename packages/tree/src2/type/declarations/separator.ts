@@ -1,8 +1,8 @@
 import assert from "assert"
 import { isNil } from "lodash"
 
-import { EQUALS } from "@december/utils/match/value"
-import { CONTAINED_IN, ContainedInSetPattern } from "@december/utils/match/set"
+import { EQUALS, IS_ELEMENT_OF, IsElementOfSetPattern } from "@december/utils/match/element"
+// import { CONTAINED_IN, ContainedInSetPattern } from "@december/utils/match/set"
 
 import Type from "../base"
 import type Token from "../../token"
@@ -16,14 +16,10 @@ import { interleavedInOrder, wrapperInOrder } from "../../node/traversal"
  *    OPERANDS have the highest priority, so no other node can be children of it
  */
 
-const SEPARATOR_PRIORITY = 10
+const SEPARATOR_PRIORITY = 10 ** 3
 
-export function isWrapper(type: Type): type is (typeof WRAPPER_SEPARATORS)[number] {
-  return type.id === `separator` && type.modules.includes(`wrapper`) // WRAPPER_SEPARATOR_NAMES.includes(type.name as WrapperSeparatorTypeName)
-}
-
-export function openerAndCloserAreTheSame(pattern: ContainedInSetPattern) {
-  return pattern.type === `contained_in` && pattern.superset[0] === pattern.superset[1]
+export function openerAndCloserAreTheSame(pattern: IsElementOfSetPattern) {
+  return pattern.type === `is_element_of` && pattern.superset[0] === pattern.superset[1]
 }
 
 export function WrapperEvaluator(token: Token, options: EvaluatorOptions) {
@@ -37,7 +33,7 @@ export function WrapperEvaluator(token: Token, options: EvaluatorOptions) {
   const value = token.lexeme
 
   if (pattern.type === `equals`) variant = `intermediary`
-  else if (pattern.type === `contained_in`) {
+  else if (pattern.type === `is_element_of`) {
     if (openerAndCloserAreTheSame(pattern) && value === pattern.superset[0]) variant = `opener-and-closer`
     else if (value === pattern.superset[0]) variant = `opener`
     else if (value === pattern.superset[1]) variant = `closer`
@@ -48,7 +44,6 @@ export function WrapperEvaluator(token: Token, options: EvaluatorOptions) {
   return { value, variant }
 }
 
-export const LIST = new Type(`separator`, `list`, `L`).addSyntactical(SEPARATOR_PRIORITY + 16, Infinity) // list of "nodes", has no lexical equivalent
 export const COMMA = new Type(`separator`, `comma`, `C`)
   .addLexical(SEPARATOR_PRIORITY + 15, EQUALS(`,`))
   .deriveSyntactical(Infinity)
@@ -62,24 +57,24 @@ export const PIPE = new Type(`separator`, `pipe`, `P`)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(interleavedInOrder)
 
-export const PARENTHESIS = new Type(`separator`, `parenthesis`, `ρ`, [`wrapper`])
-  .addLexical(SEPARATOR_PRIORITY + 7, CONTAINED_IN([`(`, `)`]), WrapperEvaluator)
+export const PARENTHESIS = new Type(`separator`, `parenthesis`, `ρ`, [`wrapper`, `context:break`])
+  .addLexical(SEPARATOR_PRIORITY + 7, IS_ELEMENT_OF([`(`, `)`]), WrapperEvaluator)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(wrapperInOrder)
-export const BRACES = new Type(`separator`, `braces`, `γ`, [`wrapper`])
-  .addLexical(SEPARATOR_PRIORITY + 6, CONTAINED_IN([`{`, `}`]), WrapperEvaluator)
+export const BRACES = new Type(`separator`, `braces`, `γ`, [`wrapper`, `context:break`])
+  .addLexical(SEPARATOR_PRIORITY + 6, IS_ELEMENT_OF([`{`, `}`]), WrapperEvaluator)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(wrapperInOrder)
-export const BRACKETS = new Type(`separator`, `brackets`, `β`, [`wrapper`])
-  .addLexical(SEPARATOR_PRIORITY + 5, CONTAINED_IN([`[`, `]`]), WrapperEvaluator)
+export const BRACKETS = new Type(`separator`, `brackets`, `β`, [`wrapper`, `context:break`])
+  .addLexical(SEPARATOR_PRIORITY + 5, IS_ELEMENT_OF([`[`, `]`]), WrapperEvaluator)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(wrapperInOrder)
-export const QUOTES = new Type(`separator`, `quotes`, `κ`, [`wrapper`])
-  .addLexical(SEPARATOR_PRIORITY + 4, CONTAINED_IN([`"`, `"`]), WrapperEvaluator)
+export const QUOTES = new Type(`separator`, `quotes`, `κ`, [`wrapper`, `context:break`])
+  .addLexical(SEPARATOR_PRIORITY + 4, IS_ELEMENT_OF([`"`, `"`]), WrapperEvaluator)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(wrapperInOrder)
-export const PERCENTAGE = new Type(`separator`, `percentage`, `τ`, [`wrapper`])
-  .addLexical(SEPARATOR_PRIORITY + 3, CONTAINED_IN([`%`, `%`]), WrapperEvaluator)
+export const PERCENTAGE = new Type(`separator`, `percentage`, `τ`, [`wrapper`, `context:break`])
+  .addLexical(SEPARATOR_PRIORITY + 3, IS_ELEMENT_OF([`%`, `%`]), WrapperEvaluator)
   .deriveSyntactical(Infinity)
   .setInOrderBehaviour(wrapperInOrder)
 

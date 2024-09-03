@@ -1,6 +1,9 @@
-import { isString } from "lodash"
-import type Node from "."
 import assert from "assert"
+import { isString } from "lodash"
+
+import { inContext } from "./traversal"
+
+import { Node } from "./node/base"
 
 export const MASTER_SCOPES = [`math`, `text-processing`] as const
 
@@ -42,9 +45,13 @@ export class ScopeManager {
   public evaluate(node: Node): Scope[] {
     const scopes: Scope[] = []
 
-    let ancestor: Node | null = node
+    const nodes: Node[] = []
+    inContext(node, node => nodes.push(node))
 
-    while (ancestor) {
+    // artifically add root node if necessary
+    if (!nodes.find(node => node.type.name === `root`)) nodes.push(node.root)
+
+    for (const ancestor of nodes) {
       // for eache evaluator in manager
       for (const evaluator of this.evaluators) {
         const evaluations = evaluator(ancestor)
@@ -59,8 +66,6 @@ export class ScopeManager {
           } else throw new Error(`Invalid instruction type "${instruction.type}"`)
         }
       }
-
-      ancestor = ancestor.parent // continue climbing
     }
 
     return scopes

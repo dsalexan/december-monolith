@@ -1,5 +1,5 @@
 import assert from "assert"
-import { difference, last, orderBy } from "lodash"
+import { difference, isArray, last, orderBy } from "lodash"
 
 export class Point {
   index: number
@@ -179,8 +179,8 @@ export default class Range {
     this.addEntry(..._entries)
   }
 
-  static fromPoint(index: number) {
-    return new Range(new Point(index))
+  static fromPoint(index: number | Point) {
+    return new Range(index instanceof Point ? index : new Point(index))
   }
 
   static fromInterval(start: number, end: number) {
@@ -564,7 +564,63 @@ export default class Range {
     const _intervals: (Point | Interval)[] = []
     for (const SE of intervals) _intervals.push(...Range.fromOffsetPoints(SE, OFFSET).getEntries())
 
-    return new Range(..._intervals)
+    const simplifiedRange = new Range(..._intervals)
+
+    // // TODO: Probably remove this
+    // assert(simplifiedRange.toString() === range.toString(), `Range mismatch`)
+
+    return simplifiedRange
+  }
+
+  static point(ranges: Range | Range[], axis: `internal` | `external`, column: `first` | `last`, ROOT_CONTINGENCY = false): Point {
+    const OFFSET = 0.5
+
+    /**
+     * EXAMPLE: Node[0:8]
+     *
+     *   0   1   2   3   4   5   6   7   8
+     * 0   1   2   3   4   5   6   7   8   9
+     *   |----------- node --------------|
+     *   |-------- [start, end] ---------|
+     *     |--------- internal --------|       => {1, [1:7], 8}
+     * |------------- external ------------|   => {0, [0:8], 9}
+     *
+     * EXAMPLE: Node{1, [1:4], 5}
+     *
+     *    0   1   2   3   4   5
+     *  0   1   2   3   4   5   6
+     * -.5 0.5 1.5 2.5 3.5 4.5 5.5
+     *      |----- node ----|
+     *    |--- [start, end] --|
+     *      |--- internal --|
+     *      |--- external --|
+     */
+
+    const first = isArray(ranges) ? ranges[0] : ranges
+    const last = isArray(ranges) ? ranges[ranges.length - 1] : ranges
+
+    assert(first, `No first node`)
+    assert(last, `No last node`)
+
+    const INTERNAL_NON_IMAGINARY = +(axis === `internal`)
+    const EXTERNAL_NON_IMAGINARY = +(axis === `external`)
+
+    const start = first.column(`first`) + (first.columnIsPoint(`first`) ? 0 : INTERNAL_NON_IMAGINARY)
+    const end = last.column(`last`) + (last.columnIsPoint(`last`) ? 0 : EXTERNAL_NON_IMAGINARY)
+
+    // 3. Return point
+    let imaginary = column === `first` ? start : end
+    // if (first.type.name === `root`)
+    if (ROOT_CONTINGENCY) imaginary = column === `first` ? 0 : Math.ceil(first.column(`last`, OFFSET))
+
+    // const column = `first`
+
+    // // TODO: Probably this depends on the internal organization of tokens, but for now it's fine
+    // let imaginary = node.column(`last`)
+    // if (children.length > 0) imaginary = children[0].column(column)
+
+    // const _imaginary = Math.ceil(imaginary)
+    return new Point(imaginary)
   }
 }
 

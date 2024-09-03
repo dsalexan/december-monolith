@@ -1,6 +1,8 @@
 import assert from "assert"
+
+import { REGEX } from "@december/utils/match/element"
+
 import Type from "../base"
-import { Match } from "@december/utils"
 
 /**
  * Lower Priority means less nodes can be parent of this node
@@ -10,7 +12,7 @@ import { Match } from "@december/utils"
  *    WHITESPACE is the highest priority ever, like, inifinity
  */
 
-export const W = new Type(`whitespace`, `whitespace`, `w`).addLexical(Infinity, Match.Value.REGEX(/^ +$/)).deriveSyntactical(0)
+export const W = new Type(`whitespace`, `whitespace`, `w`, [`operand`]).addLexical(Infinity, REGEX(/^ +$/)).deriveSyntactical(0)
 
 // WARN: Always update this list when adding a new recipe
 export const WHITESPACES = [W]

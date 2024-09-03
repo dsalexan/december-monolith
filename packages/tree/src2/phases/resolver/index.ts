@@ -5,9 +5,7 @@ import { Interval, Point, Range } from "@december/utils"
 
 import churchill, { Block, paint, Paint } from "../../logger"
 
-import { PrintOptions } from "../../tree/printer"
-import Tree from "../../tree"
-import Node from "../../node"
+import Node, { PrintOptions, print, SubTree } from "../../node"
 
 import type { BaseProcessingOptions } from "../../options"
 
@@ -16,12 +14,12 @@ import { postOrder } from "../../node/traversal"
 import { getMasterScope, MasterScope, Scope } from "../../node/scope"
 import Simplify, { SimplifyOptions } from "../simplify"
 import Reducer, { ReducerOptions } from "../reducer"
-import { NodeReplacementSystem } from "../../nrs"
+import { exec, RuleSet } from "../../nrs"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export interface BaseResolverOptions {
-  SNRS: NodeReplacementSystem
+  SimplifyNRS: RuleSet[]
   //
   simplify?: SimplifyOptions
   reducer?: ReducerOptions
@@ -34,9 +32,9 @@ export default class Resolver {
   private simplify: Simplify
   private reducer: Reducer
   //
-  private tree: Tree
+  private tree: SubTree
   private environment: Environment
-  public result: Tree
+  public result: SubTree
   //
 
   constructor(simplify: Simplify, reducer: Reducer) {
@@ -51,14 +49,14 @@ export default class Resolver {
       logger: options.logger ?? _logger,
       scope: options.scope!,
       //
-      SNRS: options.SNRS!,
+      SimplifyNRS: options.SimplifyNRS!,
     }
 
     return this.options
   }
 
   /** Start Resolution Loop with tree + environment */
-  process(tree: Tree, environment: Environment, options: Partial<ResolverOptions> = {}) {
+  process(tree: SubTree, environment: Environment, options: Partial<ResolverOptions> = {}) {
     this._options(options) // default options
 
     this.tree = tree
@@ -76,36 +74,38 @@ export default class Resolver {
     this.result = this.tree
 
     // 1. Resolve tree
-    let lastExpression = ``
+    let lastExpression = this.result.expression()
     while (i < STACK_OVERFLOW_PROTECTION) {
       this.result = this._resolve(this.result, i)
 
       // check if we can stop
-      if (this.tree.expression === lastExpression) break
+      const newExpression = this.result.expression()
+      if (newExpression === lastExpression) break
 
-      lastExpression = this.tree.expression
+      lastExpression = newExpression
       i++
     }
   }
 
-  private _resolve(tree: Tree, i: number) {
+  private _resolve(tree: SubTree, i: number) {
     const __DEBUG = true // COMMENT
 
     // 1. Simplify expression
     global.__DEBUG_LABEL = `[${i}].simplify` // COMMENT
 
-    const beforeSimplify = tree.expression
+    const beforeSimplify = tree.expression()
 
-    this.simplify.process(tree, this.environment, this.options.SNRS, this.options.simplify)
+    this.simplify.process(tree, this.environment, this.options.SimplifyNRS, this.options.simplify)
 
     // if there were no changes, stop
-    if (beforeSimplify === this.simplify.SST.expression) return this.simplify.SST
+    if (beforeSimplify === this.simplify.SST.expression()) return this.simplify.SST
 
     if (__DEBUG) {
       console.log(`\n`)
       _logger.add(paint.grey(global.__DEBUG_LABEL)).info()
 
-      this.simplify.print({})
+      const expression = this.simplify.SST.expression()
+      this.simplify.print({ expression })
     }
 
     // 2. Reduce expression
@@ -116,13 +116,14 @@ export default class Resolver {
       console.log(`\n`)
       _logger.add(paint.grey(global.__DEBUG_LABEL)).info()
 
-      this.reducer.print({})
+      const expression = this.reducer.RT.expression()
+      this.reducer.print({ expression })
     }
 
     return this.reducer.RT
   }
 
-  print(options: PrintOptions = {}) {
+  print(options: PrintOptions) {
     const logger = _logger
 
     // 1. Print Scope
@@ -143,8 +144,7 @@ export default class Resolver {
       .info()
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
 
-    this.result.print(this.result.root, options)
-    // _logger.add(paint.white(this.tree)).info()
+    print(this.result.root, options)
   }
 }
 

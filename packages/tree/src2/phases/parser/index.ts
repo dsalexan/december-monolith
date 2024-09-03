@@ -58,18 +58,14 @@ import Token from "../../token"
  */
 
 import churchill, { Block, paint, Paint } from "../../logger"
-import Node from "../../node"
-import { isOperand } from "../../type/base"
+import Node, { SubTree, PrintOptions, print } from "../../node"
 import Grammar from "../../type/grammar"
 import assert from "assert"
-import Tree from "../../tree"
 
 import { range, sum } from "lodash"
 
 import { Grid } from "@december/logger"
 import { Range } from "@december/utils"
-import * as Formats from "../../tree/printer/formats"
-import { PrintOptions } from "../../tree/printer"
 import { STRING, STRING_COLLECTION } from "../../type/declarations/literal"
 import type { BaseProcessingOptions } from "../../options"
 
@@ -84,9 +80,9 @@ export default class Parser {
   //
   public grammar: Grammar
   // tokenized expression -> AT
-  private expression: string
+  private totality: Range
   private tokens: Token[]
-  public AST: Tree
+  public AST: SubTree
   //
 
   constructor(grammar: Grammar) {
@@ -102,7 +98,7 @@ export default class Parser {
   process(expression: string, tokens: Token[], options: Partial<ParserOptions> = {}) {
     this._options(options) // default options
 
-    this.expression = expression
+    this.totality = Range.fromLength(0, expression.length)
     this.tokens = tokens
 
     this._process()
@@ -119,39 +115,33 @@ export default class Parser {
   }
 
   /** Parses the tokenized expression into an abstract tree */
-  private _abstractTree(start = 0) {
-    const tree = new Tree(this.expression)
+  private _abstractTree() {
+    const root = Node.ROOT(this.totality)
 
     // consume tokens until the end of the token list
-    let current: Node = tree.root
+    let current: Node = root
 
-    let cursor = start
+    let cursor = 0
     while (cursor < this.tokens.length) {
       const token = this.tokens[cursor]
       const node = new Node(token)
 
       // insert node (starting at current's subtree), and update current after
-      current = tree.insert(current, node)
+      current = new SubTree(current).insert(node)
 
       // advance to next token
       cursor++
     }
 
-    return tree
+    return new SubTree(root)
   }
 
   // #region DEBUG
 
-  print(options: PrintOptions = {}) {
+  print(options: PrintOptions) {
     const logger = _logger
 
-    // 1. Print expression
-    console.log(` `)
-    logger.add(paint.gray(range(0, this.expression.length).join(` `))).info()
-    logger.add(paint.gray([...this.expression].join(` `))).info()
-    console.log(` `)
-
-    // 2. Print Abstract Tree
+    // 1. Print Abstract Tree
     console.log(`\n`)
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
     _logger
@@ -160,7 +150,7 @@ export default class Parser {
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
     console.log(``)
 
-    this.AST.print(this.AST.root, options)
+    print(this.AST.root, options)
   }
 
   // #endregion

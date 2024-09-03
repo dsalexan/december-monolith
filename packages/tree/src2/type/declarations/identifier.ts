@@ -9,9 +9,9 @@ import { Match } from "@december/utils"
  *    OPERANDS have the highest priority, so no other node can be children of it
  */
 
-const IDENTIFIER_PRIORITY = 10000000
+const IDENTIFIER_PRIORITY = 10 ** 9
 
-export const IDENTIFIER = new Type(`identifier`, `identifier`, `v`).addSemantical(IDENTIFIER_PRIORITY + 10)
+export const IDENTIFIER = new Type(`identifier`, `identifier`, `v`, [`operand`]).addSemantical(IDENTIFIER_PRIORITY + 10)
 
 // WARN: Always update this list when adding a new recipe
 export const IDENTIFIERS = [IDENTIFIER]

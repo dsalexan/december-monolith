@@ -1,4 +1,5 @@
 import Node from "../../node"
+import type Grammar from "../../type/grammar"
 
 import { RuleMatchState } from "./match"
 
@@ -22,4 +23,8 @@ export const ADD_NODE_AT = (node: Node, index: number) => ({ type: `ADD_NODE_AT`
 
 export type IReplacementCommand = Node | typeof REMOVE_NODE | typeof KEEP_NODE | ReplaceNodesAt | AddNodeAt
 
-export type IRuleReplacement = (originalNode: Node, match: RuleMatchState) => IReplacementCommand
+export type IRuleReplacement = (originalNode: Node, match: RuleMatchState, context: ReplacementContext) => IReplacementCommand
+
+export interface ReplacementContext {
+  grammar: Grammar
+}
