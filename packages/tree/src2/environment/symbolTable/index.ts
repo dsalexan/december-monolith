@@ -5,7 +5,7 @@ import churchill, { Block, paint, Paint } from "../../logger"
 import type Node from "../../node"
 import type { SubTree } from "../../node"
 import { BY_TYPE } from "../../type/styles"
-import { isString, max, orderBy, sum } from "lodash"
+import { groupBy, isString, max, orderBy, sum } from "lodash"
 import { getMasterScope, ScopeManager } from "../../node/scope"
 import { byLevel } from "../../node/traversal"
 import Type from "../../type/base"
@@ -134,33 +134,48 @@ export default class SymbolTable {
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
 
     // 2. Print mock environment object
-    const identifiers: Record<string, Type[]> = {}
+    const identifiers: Record<string, Node[]> = {}
     for (const symbol of this.symbols.values()) {
       identifiers[symbol.content] ??= []
+      identifiers[symbol.content].push(symbol.node)
 
-      const type = symbol.node.type.getFullName()
-
-      if (!identifiers[symbol.content].find(t => t.getFullName() === type)) identifiers[symbol.content].push(symbol.node.type)
+      // if (!identifiers[symbol.content].find(node => node.id === symbol.node.id)) identifiers[symbol.content].push(symbol.node)
     }
 
-    let _identifiers = Object.entries(identifiers) as [string, Type[]][]
+    let _identifiers = Object.entries(identifiers) as [string, Node[]][]
     _identifiers = orderBy(_identifiers, ([identifier]) => identifier.length, `desc`)
 
     _logger.add(`\n`).add(` `.repeat(26)).add(paint.grey.dim(`{\n`))
-    for (const [identifier, types] of _identifiers) {
+    for (const [identifier, nodes] of _identifiers) {
+      // 1. compile types
+      const nodesByType = groupBy(nodes, node => node.type.getFullName())
+
+      // 2. Print types
+      _logger.add(` `.repeat(30)) //
+      for (const [, nodes] of Object.entries(nodesByType)) {
+        const type = nodes[0].type
+
+        let color = BY_TYPE(type)
+
+        _logger
+          .add(paint.grey.dim(`// `))
+          .add(paint.white(` `.repeat(identifier.length + 1)))
+          .add(color.dim(type.id + `:`))
+          .add(color.dim.bold(type.name))
+          .add(paint.grey(`, `))
+      }
+      _logger.add(`\n`)
+
+      // 3. Print identifier
       _logger
         .add(` `.repeat(30)) //
         .add(paint.grey.dim(`"`))
         .add(paint.white(`${identifier}`))
         .add(paint.grey.dim(`": undefined, // `))
 
-      for (const type of types) {
-        let color = BY_TYPE(type)
-
-        _logger
-          .add(color.dim(type.id + `:`))
-          .add(color.bold(type.name))
-          .add(paint.grey(`, `))
+      // 3. Print lexemes
+      for (const node of Object.values(nodesByType).flat()) {
+        _logger.add(paint.grey(node.name)).add(paint.grey.dim(`, `))
       }
 
       _logger.add(`\n`)

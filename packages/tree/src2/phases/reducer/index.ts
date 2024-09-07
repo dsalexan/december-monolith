@@ -22,6 +22,7 @@ import { IDENTIFIER } from "../../type/declarations/identifier"
 import Type from "../../type/base"
 import { getType } from "../../type"
 import { ProcessedNode } from "../../type/rules/reducer"
+import { TypeName } from "../../type/declarations/name"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -52,7 +53,9 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
  *
  * */
 
-export interface BaseReducerOptions {}
+export interface BaseReducerOptions {
+  ignoreTypes: TypeName[]
+}
 
 export type ReducerOptions = BaseReducerOptions & BaseProcessingOptions
 
@@ -75,6 +78,7 @@ export default class Reducer {
     this.options = {
       logger: options.logger ?? _logger,
       scope: options.scope!,
+      ignoreTypes: options.ignoreTypes ?? [],
     }
 
     return this.options
@@ -167,6 +171,8 @@ export default class Reducer {
 
   /** Effectivelly process node + instruction */
   _processNodeInstruction(instruction: NodeInstruction, node: Node, { master, all: scope }: { master: MasterScope; all: Scope[] }): ProcessedNode {
+    const dontReduce = this.options.ignoreTypes.includes(node.type.name)
+
     if (instruction.protocol === `pass`) return node
     else if (instruction.protocol === `process-child`) return this._processNode(node.children.nodes[0])
     else if (instruction.protocol === `normalize`) {

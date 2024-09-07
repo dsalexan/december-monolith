@@ -181,6 +181,8 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
   .addReduce(
     (node, { master }) => CUSTOM(),
     function (instruction, node, { master }) {
+      const dontReduce = this.options.ignoreTypes.includes(node.type.name)
+
       assert(node.type.syntactical!.arity === 3, `Conditional requires three operands`)
 
       const [_condition, _consequent, _alternative] = node.children.nodes
@@ -192,6 +194,14 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
       let condition = this._processNode(_condition) as boolean | Node
       let consequent = this._processNode(_consequent)
       let alternative = this._processNode(_alternative)
+
+      if (dontReduce && !(condition instanceof Node)) {
+        _condition.children.removeAll()
+
+        const type = getType(typing.getType(condition)!)
+        condition = Node.fromToken(condition.toString(), type)
+        _condition.syntactical.addNode(condition)
+      }
 
       // just wrap consequent and alternative into nodes and assign as children of if
       if (condition instanceof Node) {

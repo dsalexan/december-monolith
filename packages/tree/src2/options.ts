@@ -14,7 +14,7 @@ export interface PhaseProcessingOptions {
   parser?: BaseParserOptions
   semantic?: BaseSemanticOptions
   simplify?: BaseSimplifyOptions
-  reducer?: BaseReducerOptions
+  reducer: BaseReducerOptions
   resolver: BaseResolverOptions
 }
 

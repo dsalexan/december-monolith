@@ -126,6 +126,9 @@ const options = defaultProcessingOptions({
   // general
   scope: { root: `math` },
   //
+  reducer: {
+    ignoreTypes: [`conditional`],
+  },
   resolver: {
     SimplifyNRS,
   },
@@ -150,6 +153,16 @@ const reducer = new Reducer(grammar)
 const resolver = new Resolver(simplify, reducer)
 
 const environment = new Environment()
+environment.addObjectSource(`test`, {
+  //                               literal:string_collection,
+  "AD:Teeth (Sharp Teeth)::level": 1, // S4.a,
+  //                              literal:string_collection,
+  "AD:Teeth (Sharp Beak)::level": 1, // S6.a,
+  //                         literal:string_collection,
+  "AD:Teeth (Fangs)::level": 1, // S8.a,
+  //                         literal:string_collection,
+  "AD:Vampiric Bite::level": 1, // S10.a,
+})
 
 // 1. Print expression
 console.log(` `)
