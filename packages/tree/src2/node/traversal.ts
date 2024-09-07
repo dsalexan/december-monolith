@@ -60,8 +60,17 @@ export function inOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infi
   behaviour ??= node.type.inOrderBehaviour || defaultInOrderBehaviour
 
   // if (global.__DEBUG_LABEL === `-->×1.a` && node.name === `×1.a`) debugger
+  // if (node.type.name === `conditional`) debugger
 
   behaviour(node, iteratee, maxDepth)
+}
+
+export function ancestry(node: Node, iteratee: TraversalIteratee, minDepth = -Infinity) {
+  if (node.level < minDepth) return
+
+  iteratee(node, null)
+
+  if (node.parent) ancestry(node.parent, iteratee, minDepth)
 }
 
 // #region InOrder Behaviours
@@ -153,7 +162,7 @@ export function interleavedInOrder(node: Node, iteratee: TraversalIteratee, maxD
   }
 
   // 3. Add from buffer to targets
-  for (const [i, token] of reverse([...fromStart.entries()])) if (token) targets.splice(i, 0, token)
+  for (const [i, token] of [...fromStart.entries()]) if (token) targets.splice(i, 0, token)
   for (const [i, token] of [...fromEnd.entries()]) if (token) targets.splice(targets.length - i + 1, 0, token)
 
   // 4. Traverse targets
@@ -163,12 +172,20 @@ export function interleavedInOrder(node: Node, iteratee: TraversalIteratee, maxD
   }
 }
 
+export function tokenCollectionInOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity) {
+  assert(node.children.length === 0, `Token Collection nodes should't have children`)
+  assert(node.tokens.length > 0, `Token Collection nodes SHOULD have tokens`)
+
+  // for (const token of node.tokens) iteratee(node, token)
+  iteratee(node, null)
+}
+
 // #endregion
 
 // #endregion
 
 /** Traverse upwards the tree, minDepth is 0 (root) by default */
-export function inContext(node: Node, iteratee: TraversalIteratee, minDepth = 0) {
+export function inContext(node: Node, iteratee: TraversalIteratee, minDepth = -Infinity) {
   // const children = node.getChildren(maxDepth)
   // for (const child of children) postOrder(child, iteratee, maxDepth)
   // iteratee(node, null)
@@ -176,11 +193,14 @@ export function inContext(node: Node, iteratee: TraversalIteratee, minDepth = 0)
   // check if we should stop
   if (node.level < minDepth) return
 
-  // check context break
-  //    only consider nodes in POSITIVE balancing (for now just N/A or BALANCED)
-  if (node.type.modules.includes(`context:break`) && node.balancing >= NODE_BALANCING.NON_APPLICABLE) return
-
   iteratee(node, null) // run iteratee
+
+  // i dont think this is really necessary
+  // //    only consider nodes in POSITIVE balancing (for now just N/A or BALANCED) for context breaking
+  // if (node.type.modules.includes(`context:break`) && node.balancing < NODE_BALANCING.NON_APPLICABLE) debugger
+
+  // check context break
+  if (node.type.modules.includes(`context:break`)) return
 
   // call for parent
   if (node.parent!) inContext(node.parent!, iteratee, minDepth)

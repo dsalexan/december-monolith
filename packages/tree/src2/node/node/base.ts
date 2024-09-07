@@ -15,7 +15,7 @@ import { removeParent, setParent, getChildren } from "./children"
 import NodeCollection from "./collection"
 import { ancestor, offspring, sibling } from "./hierarchy"
 import { find, findAncestor, findByTraversal } from "./find"
-import { setType, NodeBalancing, balancing } from "./type"
+import { setType, NodeBalancing, balancing, comparePriority } from "./type"
 import { addToken, clearTokens, tokenize, content, range as __range } from "./token"
 import { Attributes, createAttributes, setAttributes } from "./attributes"
 import { toString, repr, debug } from "./repr"
@@ -119,6 +119,17 @@ export class Node {
     const number = this.indexing.level === -1 ? `${this.index === -1 ? `` : this.index}*` : numberToLetters(this.indexing.level)
 
     return `${this.type.prefix}${this.level}.${number}`
+  }
+
+  public comparePriority = comparePriority
+
+  static sortByPriority(nodes: Node[], rule: `lexical` | `syntactical`, order = `asc`): Node[] {
+    const sorted = nodes
+      .map((node, index) => ({ node, index })) // map index
+      .sort((a, b) => a.node.comparePriority(b.node, rule) * (order === `desc` ? -1 : 1) || a.index - b.index) // sort by priority
+      .map(({ node }) => node)
+
+    return sorted
   }
 
   // TOKEN

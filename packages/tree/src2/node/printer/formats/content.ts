@@ -11,6 +11,7 @@ import { FormatFunction, TokenFormatOptions } from "./base"
 import assert from "assert"
 
 import { Node } from "../../node/base"
+import { NODE_BALANCING } from "../../node/type"
 
 export function formatContent(level: number, node: Node, token: Token | undefined, { ...options }: TokenFormatOptions): Grid.Sequence.Sequence[] {
   const sequences: Grid.Sequence.Sequence[] = []
@@ -32,6 +33,7 @@ export function formatContent(level: number, node: Node, token: Token | undefine
 
     let color = BY_TYPE(node.type)
     if (options?.alternateColors ?? true) color = BY_ALTERNATING_NUMBER_AND_TYPE(node.indexing.non_whitespace, node.type.name)
+    if (node.balancing === NODE_BALANCING.UNBALANCED) color = paint.red
 
     if (higherContent) color = paint.grey
     else if (node.id === leaf.id && node.type.name !== `keyword_group`) color = color.bold

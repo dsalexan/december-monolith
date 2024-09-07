@@ -6,6 +6,8 @@ export { getTypes, isOfType, isTyped } from "./custom"
 
 export type { VariableType } from "./types"
 export type Primitive = string | number | boolean | symbol | null | undefined
+export type Maybe<T> = T | undefined
+export type Nullable<T> = T | null
 
 export type Indexed<T> = T & { _index: number }
 

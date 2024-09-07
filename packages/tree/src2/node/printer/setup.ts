@@ -9,7 +9,7 @@ import { Node } from "../node/base"
 
 import { TokenFormatOptions } from "./formats/base"
 import { PartialObjectDeep } from "type-fest/source/partial-deep"
-import { header, content, name, RowSpec } from "./formats"
+import { header, content, name, RowSpec, id } from "./formats"
 
 import { PrintOptions } from "./options"
 import { byLevel } from "../traversal"
@@ -30,6 +30,7 @@ export interface PrintSetup {
   padding: {
     prefix: number
   }
+  maxWidth: number
   // eslint-disable-next-line @typescript-eslint/ban-types
   sequence: PartialObjectDeep<Grid.Sequence.PrintOptions, {}> | undefined // PartialDeep<Grid.Sequence.PrintOptions>
   style: {
@@ -109,6 +110,20 @@ export function setup(root: Node, options: PrintOptions): PrintSetup {
         ),
       )
 
+    if (options.id ?? false)
+      spec.formats.push(
+        id(
+          root,
+          level,
+          { index: 1, ignoreSpacing: style.ignoreSpacing, alternateColors: style.alternateColors, underlineFn: options.style?.underlineFn },
+          {
+            ...options.sequence,
+            //
+            showBrackets: false,
+          },
+        ),
+      )
+
     if (spec.formats.length > 0) {
       spec.rows[0] = formatIndex
       spec.rows[1] = formatIndex += spec.formats.length
@@ -127,6 +142,7 @@ export function setup(root: Node, options: PrintOptions): PrintSetup {
       height: root.height,
     },
     rows,
+    maxWidth: 310, // 230
     //
     padding: {
       prefix: 2,

@@ -5,9 +5,10 @@ import churchill, { Block, paint, Paint } from "../../logger"
 import type Node from "../../node"
 import type { SubTree } from "../../node"
 import { BY_TYPE } from "../../type/styles"
-import { isString, max, sum } from "lodash"
+import { isString, max, orderBy, sum } from "lodash"
 import { getMasterScope, ScopeManager } from "../../node/scope"
 import { byLevel } from "../../node/traversal"
+import Type from "../../type/base"
 
 export const _logger = churchill.child(`tree`, undefined, { separator: `` })
 
@@ -130,5 +131,40 @@ export default class SymbolTable {
     }
 
     console.log(``)
+    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
+
+    // 2. Print mock environment object
+    const identifiers: Record<string, Type[]> = {}
+    for (const symbol of this.symbols.values()) {
+      identifiers[symbol.content] ??= []
+
+      const type = symbol.node.type.getFullName()
+
+      if (!identifiers[symbol.content].find(t => t.getFullName() === type)) identifiers[symbol.content].push(symbol.node.type)
+    }
+
+    let _identifiers = Object.entries(identifiers) as [string, Type[]][]
+    _identifiers = orderBy(_identifiers, ([identifier]) => identifier.length, `desc`)
+
+    _logger.add(`\n`).add(` `.repeat(26)).add(paint.grey.dim(`{\n`))
+    for (const [identifier, types] of _identifiers) {
+      _logger
+        .add(` `.repeat(30)) //
+        .add(paint.grey.dim(`"`))
+        .add(paint.white(`${identifier}`))
+        .add(paint.grey.dim(`": undefined, // `))
+
+      for (const type of types) {
+        let color = BY_TYPE(type)
+
+        _logger
+          .add(color.dim(type.id + `:`))
+          .add(color.bold(type.name))
+          .add(paint.grey(`, `))
+      }
+
+      _logger.add(`\n`)
+    }
+    _logger.add(`\n`).add(` `.repeat(26)).add(paint.grey.dim(`}\n`)).info()
   }
 }

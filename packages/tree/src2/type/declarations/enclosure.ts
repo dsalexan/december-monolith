@@ -2,7 +2,7 @@ import assert from "assert"
 import { isNil, last } from "lodash"
 import { flow } from "fp-ts/lib/function"
 
-import { Match, Range } from "@december/utils"
+import { Match, Range, typing } from "@december/utils"
 import { BasePattern } from "@december/utils/match/base"
 import { EQUALS, IS_ELEMENT_OF, IsElementOfSetPattern } from "@december/utils/match/element"
 import { AND, OR } from "@december/utils/match/logical"
@@ -11,13 +11,15 @@ import { AND, OR } from "@december/utils/match/logical"
 import Type from "../base"
 import Node, { SubTree } from "../../node"
 import type Token from "../../token"
+import { getType } from "../../type"
 import { EvaluatorOptions } from "../../phases/lexer/evaluation"
 import { interleavedInOrder, wrapperInOrder } from "../../node/traversal"
 import { RuleSet } from "../../nrs"
 
-import { TYPE, NODE } from "../../match/pattern"
+import { TYPE, NODE, TREE } from "../../match/pattern"
 import { Rule, leftOperand, match, matchInChildren, nextSibling, predicate, filter, ADD_NODE_AT, firstChild, KEEP_NODE } from "../../nrs/rule"
 import { KEYWORD_GROUP } from "./keyword"
+import { CUSTOM } from "../../phases/reducer/instruction"
 
 /**
  * Lower Priority means less nodes can be parent of this node
@@ -91,27 +93,28 @@ export const FUNCTION = new Type(`enclosure`, `function`, `f`, [`context:break`]
 
 const CONDITION_CONDITION = new Type(`keyword`, `conditional:condition` as any, `ifC`)
   .addSemantical(KEYWORD_PRIORITY + 4) //
-  .deriveSyntactical(1, { parent: TYPE.NAME(EQUALS(`conditional`)) })
+  .deriveSyntactical(1, { parent: TYPE.NAME(EQUALS(`conditional`)), pattern: TREE.IN_CONTEXT(TYPE.NAME(EQUALS(`conditional`))) })
 
 const CONDITION_THEN = new Type(`keyword`, `conditional:then` as any, `ifT`)
   .addSemantical(KEYWORD_PRIORITY + 3)
   .deriveLexical(EQUALS(`then`, true))
-  .deriveSyntactical(1, { parent: TYPE.NAME(EQUALS(`conditional`)) })
+  .deriveSyntactical(1, { parent: TYPE.NAME(EQUALS(`conditional`)), pattern: TREE.IN_CONTEXT(TYPE.NAME(EQUALS(`conditional`))) })
 
 const CONDITION_ELSE = new Type(`keyword`, `conditional:else` as any, `ifE`)
   .addSemantical(KEYWORD_PRIORITY + 2)
   .deriveLexical(EQUALS(`else`, true))
-  .deriveSyntactical(1, { parent: TYPE.NAME(EQUALS(`conditional`)) })
+  .deriveSyntactical(1, { parent: TYPE.NAME(EQUALS(`conditional`)), pattern: TREE.IN_CONTEXT(TYPE.NAME(EQUALS(`conditional`))) })
 
 export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:break`])
   .addSyntactical(ENCLOSURE_PRIORITY + 20, 3)
   .setInOrderBehaviour(interleavedInOrder)
   .deriveSemantical(
-    new RuleSet().addGrammar(CONDITION_CONDITION, CONDITION_THEN, CONDITION_ELSE).add(
+    new RuleSet(`conditional`).addGrammar(CONDITION_CONDITION, CONDITION_THEN, CONDITION_ELSE).add(
+      `compose-conditional`,
       flow(
         match(TYPE.NAME(EQUALS(`function`))), // fn
         firstChild,
-        match(NODE.CONTENT(IS_ELEMENT_OF([`if`, `@if`]))), // firstChild === "if"
+        match(NODE.CONTENT(IS_ELEMENT_OF([`if`, `@if`, `$if`]))), // firstChild === "if"
       ),
       (node, state, { grammar }) => {
         node.setType(CONDITIONAL)
@@ -119,13 +122,19 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
         // pass "if" as a token, not as name (if don't have first child as name)
         const ifNode = node.children.remove(0, { refreshIndexing: false })
         const openerParenthesis = node.tokens[0]
-        node.addToken(ifNode.tokens)
+
+        assert(ifNode.tokens.length === 1, `Conditional "IF" should be a single token`)
+
+        const _if = ifNode.tokens[0]
+        _if.attributes.traversalIndex = 0
+        node.addToken(_if, 0)
 
         const start = node.children.nodes[0].range.column(`first`)
         const end = last(node.children.nodes)!.range.column(`last`)
         const _range = Range.fromInterval(start, end)
 
-        const tokens = node.children.map(child => child.tokenize()).flat()
+        const tokensByChild = node.children.map(child => [child, child.tokenize()] as const)
+        const _tokensByChild = tokensByChild.map(([child, tokens]) => child.name)
 
         node.children.removeAll({ refreshIndexing: false })
 
@@ -141,40 +150,72 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
         // global.__DEBUG = true // COMMENT
 
         // basically re-parse tokens
-        for (const { token } of tokens) {
-          assert(token, `Token should be present`)
+        for (const [child, tokens] of tokensByChild) {
+          if (child.type.name === `string_collection`) debugger
+          if (child.type.name === `sign`) debugger
 
-          // re-match token in grammar (since semantical grammar could have new shit)
-          const types = grammar.match(token.lexeme)
+          for (const { node: originalNode, token } of tokens) {
+            let node: Node
 
-          // TODO: Untested
-          if (types.length === 0) debugger
+            if (!token) node = originalNode.clone({ cloneSubTree: true })
+            else {
+              // re-match token in grammar (since grammar could have new shit)
+              const types = grammar.syntacticalMatch(token.lexeme, current)
+              assert(types.length > 0, `How can it be?`)
 
-          let _token: Token = token
-          if (types[0].name !== token.type.name) {
-            _token = token.clone()
-            _token.type = types[0]
+              // if prioritary type differs, clone token and update type
+              const newType = types[0].name !== token.type.name
+              const _token = newType ? token.clone().setType(types[0]) : token
+
+              node = new Node(_token)
+            }
+
+            current = new SubTree(current).insert(node, { refreshIndexing: false })
           }
-
-          const node = new Node(_token)
-          current = new SubTree(current).insert(node, { refreshIndexing: false })
         }
-
-        // 3. Move children to node (from root)
-        // for (const child of root.children.nodes) node.children.add(child, null, { refreshIndexing: false })
 
         return node
       },
     ),
-    // .add(
-    //   flow(
-    //     match(TYPE.NAME(EQUALS(`conditional`))), // if
-    //   ),
-    //   (node, state, { grammar }) => {
-    //     debugger
-    //     return KEEP_NODE
-    //   },
-    // ),
+  )
+  .addReduce(
+    (node, { master }) => CUSTOM(),
+    function (instruction, node, { master }) {
+      assert(node.type.syntactical!.arity === 3, `Conditional requires three operands`)
+
+      const [_condition, _consequent, _alternative] = node.children.nodes
+
+      // verify conditional keywords (TODO: move this to semantic)
+      assert(_consequent.type.name === `keyword_group`, `Consequent must be a keyword_group`)
+      assert(_alternative.type.name === `keyword_group`, `Alternative must be a keyword_group`)
+
+      let condition = this._processNode(_condition) as boolean | Node
+      let consequent = this._processNode(_consequent)
+      let alternative = this._processNode(_alternative)
+
+      // just wrap consequent and alternative into nodes and assign as children of if
+      if (condition instanceof Node) {
+        if (!(consequent instanceof Node)) {
+          _consequent.children.removeAll()
+
+          const type = getType(typing.getType(consequent)!)
+          consequent = Node.fromToken(consequent.toString(), type)
+          _consequent.syntactical.addNode(consequent)
+        }
+
+        if (!(alternative instanceof Node)) {
+          _alternative.children.removeAll()
+
+          const type = getType(typing.getType(alternative)!)
+          alternative = Node.fromToken(alternative.toString(), type)
+          _alternative.syntactical.addNode(alternative)
+        }
+
+        return node
+      }
+
+      return condition ? consequent : alternative
+    },
   )
 
 // TODO: Add resolver rule to conditional (algorithim to "resolve" node into a value)

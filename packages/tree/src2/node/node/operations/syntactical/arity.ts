@@ -62,6 +62,13 @@ export function addToBinary(binary: Node, child: Node, index?: number, options: 
   // if node already has two children
   //    transform last child into a list node AND add child to that list
   if (binary.children.length === 2) parent = binary.groupChildren([1, 1], undefined, options)
+  // else if (binary.children.length === 1) {
+  //   const fallbackRange = Range.fromPoint(Range.point(binary.range, `internal`, `last`))
+  //   const list = binary.LIST(fallbackRange)
+  //   parent.children.add(list, undefined, { refreshIndexing: false })
+
+  //   parent = list
+  // }
 
   parent.children.add(child, index, options) // add child to parent (be that binary or its last child-list)
 }

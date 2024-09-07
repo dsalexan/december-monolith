@@ -53,6 +53,12 @@ export default class Token<TValue = any> {
     this.string = string
   }
 
+  public setType(type: Type) {
+    this.type = type
+
+    return this
+  }
+
   // evaluated attributes from base lexeme during evaluation
   private _attributes: Partial<Attributes<TValue>> | typeof NON_EVALUATED_LEXICAL_TOKEN = NON_EVALUATED_LEXICAL_TOKEN
   public get attributes(): Attributes<TValue> {

@@ -58,11 +58,15 @@ export const DIVISION = new Type(`operator`, `division`, `÷`, [`arithmetic`])
   .setInOrderBehaviour(arityInOrder)
 export const ADDITION = new Type(`operator`, `addition`, `+`, [`arithmetic`])
   .addLexical(OPERATOR_PRIORITY + 15, _EQUALS(`+`))
-  .deriveSyntactical(2)
+  .deriveSyntactical(2, { incompleteArity: true })
   .setInOrderBehaviour(arityInOrder)
 export const SUBTRACTION = new Type(`operator`, `subtraction`, `-`, [`arithmetic`])
   .addLexical(OPERATOR_PRIORITY + 15, _EQUALS(`-`))
-  .deriveSyntactical(2)
+  .deriveSyntactical(2, { incompleteArity: true })
+  .setInOrderBehaviour(arityInOrder)
+
+export const SIGN = new Type(`operator`, `sign`, `g`, [`arithmetic`]) //
+  .addSyntactical(OPERATOR_PRIORITY + 19, 1)
   .setInOrderBehaviour(arityInOrder)
 
 // WARN: Always update this list when adding a new recipe
@@ -74,8 +78,8 @@ export const RELATIONAL_OPERATORS = [EQUALS, GREATER, SMALLER, GREATER_OR_EQUAL,
 export const RELATIONAL_OPERATOR_NAMES = [`equals`, `greater`, `smaller`, `greater_or_equal`, `smaller_or_equal`] as const
 export type RelationalOperatorTypeName = (typeof RELATIONAL_OPERATOR_NAMES)[number]
 
-export const ALGEBRAIC_OPERATORS = [MULTIPLICATION, DIVISION, ADDITION, SUBTRACTION]
-export const ALGEBRAIC_OPERATOR_NAMES = [`multiplication`, `division`, `addition`, `subtraction`] as const
+export const ALGEBRAIC_OPERATORS = [MULTIPLICATION, DIVISION, ADDITION, SUBTRACTION, SIGN]
+export const ALGEBRAIC_OPERATOR_NAMES = [`multiplication`, `division`, `addition`, `subtraction`, `sign`] as const
 export type AlgebraicOperatorTypeName = (typeof ALGEBRAIC_OPERATOR_NAMES)[number]
 
 export const OPERATORS = [...LOGICAL_OPERATORS, ...RELATIONAL_OPERATORS, ...ALGEBRAIC_OPERATORS]

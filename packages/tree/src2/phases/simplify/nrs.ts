@@ -1,3 +1,4 @@
+import { simplify } from "mathjs"
 // @ts-nocheck
 
 import { flow } from "fp-ts/lib/function"
@@ -8,11 +9,8 @@ import { MULTIPLICATION } from "../../type/declarations/operator"
 import { NUMBER } from "../../type/declarations/literal"
 import { TYPE, NODE } from "../../match/pattern"
 
-import { NodeReplacementSystem } from "../../nrs"
 import { KEEP_NODE, REMOVE_NODE, REPLACE_NODES_AT } from "../../nrs/system"
 import { Rule, leftOperand, match, matchInChildren, nextSibling, predicate, filter, ADD_NODE_AT, offspringAt, rightOperand } from "../../nrs/rule"
-import { RuleMatch } from "../../nrs/rule/match"
-import { RuleSet } from "../../nrs/rule/rule"
 
 import { RuleSet } from "../../nrs/rule/rule"
 import assert from "assert"
@@ -20,10 +18,11 @@ import Token from "../../token"
 import Node from "../../node"
 
 // export const BASE_RULESET: Rule[] = []
-export const RULESET = new RuleSet()
+export const RULESET = new RuleSet(`simplify`)
 
 //             addRule( new TARuleFromString( '0+_1', '_1' ) );
 RULESET.add(
+  `0+_1 -> _1`, //
   flow(
     match(TYPE.NAME(EQUALS(`addition`))), // "+"
     leftOperand,
@@ -35,6 +34,7 @@ RULESET.add(
 //             addRule( new TARuleFromString( '_Literal2=0-_1', '_1=0-_Literal2' ) );
 //                push literal to rightmost
 RULESET.add(
+  `_Literal2=0-_1 -> _1=0-_Literal2`, //
   [
     flow(match(TYPE.NAME(EQUALS(`equals`)))), // "="
     flow(leftOperand, match(TYPE.ID(EQUALS(`literal`)))), // left === _Literal2
@@ -50,12 +50,13 @@ RULESET.add(
     // node.tree.swap(node.children.nodes[0], node.children.nodes[1].children.nodes[1])
     node.children.nodes[0].swapWith(node.children.nodes[1].children.nodes[1])
 
-    return KEEP_NODE
+    return KEEP_NODE()
   },
 )
 
 //             addRule( new TARuleFromString( '_1+0', '_1' ) );
 RULESET.add(
+  `_1 -> 0+_1`, //
   flow(
     match(TYPE.NAME(EQUALS(`addition`))), // "+"
     rightOperand,
@@ -66,6 +67,7 @@ RULESET.add(
 
 //             addRule( new TARuleFromString( '1*_1', '_1' ) );
 RULESET.add(
+  `1*_1 -> _1`, //
   flow(
     match(TYPE.NAME(EQUALS(`multiplication`))), // "*"
     leftOperand,
@@ -76,6 +78,7 @@ RULESET.add(
 
 //             addRule( new TARuleFromString( '_1*1', '_1' ) );
 RULESET.add(
+  `_1*1 -> _1`, //
   flow(
     match(TYPE.NAME(EQUALS(`multiplication`))), // "*"
     rightOperand,
@@ -86,6 +89,7 @@ RULESET.add(
 
 //             addRule( new TARuleFromString( '_1+_1', '2*_1' ) );
 RULESET.add(
+  `_1+_1 -> 2*_1`, //
   flow(
     match(TYPE.NAME(EQUALS(`addition`))), // "+"
     predicate(node => node.children.length === 2), // two operands
@@ -94,32 +98,34 @@ RULESET.add(
   node => {
     // TODO: Improve this mess (it works thou)
 
-    const [left, right] = node.children
+    const [left, right] = node.children.nodes
 
     node.setType(MULTIPLICATION) // "+" -> "*"
 
     assert(node.tokens.length === 1, `Too many tokens`)
     const [plus] = node.tokens
 
-    const originalExpression = plus.expression
+    debugger
 
-    // 1. Update expression (partial only to correct for operator change)
-    const before1 = originalExpression.substring(0, plus.interval.start)
-    const after1 = originalExpression.substring(plus.interval.start + plus.interval.length)
-    const newExpression1 = before1 + `*` + after1
-    plus.updateExpression(newExpression1)
+    // const originalExpression = plus.expression
 
-    const twoToken = new Token(plus.grammar, { start: left.range.column(`first`), length: 1, type: NUMBER })
-    const before2 = originalExpression.substring(0, twoToken.interval.start)
-    const after2 = originalExpression.substring(plus.interval.start + plus.interval.length)
-    const newExpression2 = before2 + `2` + `*` + after2
-    twoToken.updateExpression(newExpression2)
+    // // 1. Update expression (partial only to correct for operator change)
+    // const before1 = originalExpression.substring(0, plus.interval.start)
+    // const after1 = originalExpression.substring(plus.interval.start + plus.interval.length)
+    // const newExpression1 = before1 + `*` + after1
+    // plus.updateExpression(newExpression1)
 
-    const two = new Node(twoToken)
+    // const twoToken = new Token(plus.grammar, { start: left.range.column(`first`), length: 1, type: NUMBER })
+    // const before2 = originalExpression.substring(0, twoToken.interval.start)
+    // const after2 = originalExpression.substring(plus.interval.start + plus.interval.length)
+    // const newExpression2 = before2 + `2` + `*` + after2
+    // twoToken.updateExpression(newExpression2)
 
-    // tree.replaceWith(...)
-    node._removeChildAt(0, true) // remove left from node
-    node._addChild(two, 0) // add two to node as left
+    // const two = new Node(twoToken)
+
+    // // tree.replaceWith(...)
+    // node._removeChildAt(0, true) // remove left from node
+    // node._addChild(two, 0) // add two to node as left
 
     return node
   },
@@ -127,6 +133,7 @@ RULESET.add(
 
 //             addRule( new TARuleFromString( '_1-_1', '0' ) );
 RULESET.add(
+  `_1-_1 -> 0`, //
   flow(
     match(TYPE.NAME(EQUALS(`subtraction`))), // "-"
     predicate(node => node.children.length === 2), // two operands
@@ -136,17 +143,19 @@ RULESET.add(
     // TODO: Improve this mess (it works thou)
     // TODO: Probably should work on the calculations part (since comparing lexemes is not really what I want for this rule)
 
-    const [left, right] = node.children
+    const [left, right] = node.children.nodes
     const [minus] = node.tokens
 
-    let modifiedExpression = minus.expression
+    let modifiedExpression = minus.provider!.value
 
-    const zeroToken = new Token(minus.lexer, { start: left.range.column(`first`), length: 1, type: NUMBER })
-    modifiedExpression = modifiedExpression.substring(0, zeroToken.interval.start) + `0` + modifiedExpression.substring(zeroToken.interval.length)
-    zeroToken.updateExpression(modifiedExpression)
-    const zero = new Node(zeroToken)
+    debugger
 
-    return zero
+    // const zeroToken = new Token(minus.lexer, { start: left.range.column(`first`), length: 1, type: NUMBER })
+    // modifiedExpression = modifiedExpression.substring(0, zeroToken.interval.start) + `0` + modifiedExpression.substring(zeroToken.interval.length)
+    // zeroToken.updateExpression(modifiedExpression)
+    // const zero = new Node(zeroToken)
+
+    return `zero` as any
   },
 )
 

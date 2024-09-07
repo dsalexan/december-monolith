@@ -8,9 +8,10 @@ import { CONTAINS, NOT_CONTAINS } from "@december/utils/match/set"
 import { AND, OR } from "@december/utils/match/logical"
 
 import Node from "../../node"
-import { NIL, SIGNED_NUMBER, STRING_COLLECTION } from "../../type/declarations/literal"
+import { NIL, STRING_COLLECTION } from "../../type/declarations/literal"
 import { FUNCTION } from "../../type/declarations/enclosure"
 import { IDENTIFIER } from "../../type/declarations/identifier"
+import { SIGN } from "../../type/declarations/operator"
 
 import { TYPE, NODE } from "../../match/pattern"
 
@@ -18,33 +19,48 @@ import { RuleSet } from "../../nrs"
 import { KEEP_NODE, REMOVE_NODE, REPLACE_NODES_AT } from "../../nrs/system"
 import { Rule, leftOperand, match, matchInChildren, nextSibling, predicate, filter, ADD_NODE_AT } from "../../nrs/rule"
 import { RuleMatch } from "../../nrs/rule/match"
+import { isNil } from "lodash"
+import { NODE_BALANCING } from "../../node/node/type"
+import { REPLACE_NODE } from "../../nrs/rule/replacement"
 
-const RULESET = new RuleSet()
+const RULESET = new RuleSet(`semantic`)
 
 // 0. Ignore whitespaces in any non-string context
 RULESET.add(
+  `ignore-whitespace`,
   match(AND<BasePattern>(TYPE.NAME(EQUALS(`whitespace`)), NODE.SCOPE(NOT_CONTAINS(`string`)))), //
-  node => REMOVE_NODE,
+  node => REMOVE_NODE(),
 )
 
-// 0. Remove tokens from keyword groups
-RULESET.add(match(TYPE.NAME(EQUALS(`keyword_group`))), node => {
-  // TODO: Create matcher for "hasProperty" or sumfin
-  if (!node.attributes.group) return KEEP_NODE
+// 0. Remove unbalanced shit
+// RULESET.add(
+//   `remove-unbalanced`,
+//   predicate(node => node.balancing === NODE_BALANCING.UNBALANCED), //
+//   node => {
+//     if (node.type.id === `literal`) return REMOVE_NODE()
+//     else if (node.type.id === `enclosure`) {
+//       debugger
+//       node.balancing
+//       assert(node.children.length === 1, `Unimplemented for enclosure with anything but ONE children`)
 
-  // TODO: Make this work. Probably by re-running all "non-mutating" AFTER a change
-  debugger
-  return KEEP_NODE
-})
+//       return REPLACE_NODE(node.children.nodes[0], false)
+//     }
+
+//     debugger
+
+//     return KEEP_NODE()
+//   },
+// )
 
 // 1. Collapse no/single child lists
 RULESET.add(
+  `collapse-lists`, //
   flow(
     match(TYPE.NAME(EQUALS(`list`))),
     predicate(node => node.children.length <= 1),
   ),
   node => {
-    // if (global.__DEBUG_LABEL === `L1.a`) debugger // COMMENT
+    // if (global.__DEBUG_LABEL === `L4.c`) debugger // COMMENT
 
     assert(node.tokens.length === 0, `List should not have tokens`)
 
@@ -57,6 +73,7 @@ RULESET.add(
 
 // 2. collapse quotes into a string
 RULESET.add(
+  `collapse-quotes`, //
   flow(
     match(TYPE.NAME(EQUALS(`quotes`))), //
     predicate(node => node.children.length > 0), // TODO: How to collapse empty string?
@@ -68,6 +85,8 @@ RULESET.add(
 
     // TODO: Use collapse centralized function
     const tokenized = node.tokenize()
+    const _tokenized = node.tokenize().map(({ node, token }) => (token ? token.lexeme : node.lexeme))
+
     const allTokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
     const tokens = WITH_QUOTES ? allTokens : allTokens.slice(1, -1)
 
@@ -80,8 +99,9 @@ RULESET.add(
   },
 )
 
-// 3. Transform nil addition/subtraction into signed literal:number
+// 3. Transform nil addition/subtraction into operator:sign
 RULESET.add(
+  `signed-number`, //
   flow(
     match(OR(TYPE.NAME(EQUALS(`addition`)), TYPE.NAME(EQUALS(`subtraction`)))), // "+" or "-"
     leftOperand,
@@ -94,17 +114,21 @@ RULESET.add(
 
     assert(node.tokens.length === 1, `Addition/Subtraction should have only one token`)
 
-    const signed = new Node(node.tokens[0])
-    signed.setType(SIGNED_NUMBER)
+    node.setType(SIGN)
+    node.children.remove(0)
 
-    signed.addToken(right.tokens)
+    // const signed = new Node(node.tokens[0])
+    // signed.setType(SIGNED_NUMBER)
 
-    return signed
+    // signed.addToken(right.tokens)
+
+    return node
   },
 )
 
 // 4. Compose basic function struction (name + arguments)
 RULESET.add(
+  `compose-function`, //
   // originalNode === parent
   flow(
     matchInChildren(TYPE.NAME(EQUALS(`string`))), // function name
@@ -151,8 +175,6 @@ RULESET.add(
 
     fn.addToken([opener, closer])
 
-    assert(parenthesis.children.length <= 1, `Unimplemented for enclosure with multiple children`)
-
     if (parenthesis.children.length === 1) {
       const child = parenthesis.children.nodes[0]
 
@@ -171,12 +193,19 @@ RULESET.add(
           fn.children.add(grandchild, null, { refreshIndexing: false })
         }
       } else debugger
+    } else {
+      while (parenthesis.children.length) {
+        const child = parenthesis.children.nodes[0]
 
-      // TODO: Think a better way to handle this. This kills the immutability of the Semantic NRS
-      node.children.remove(parenthesis.index, { refreshIndexing: false })
+        child.setAttributes({ tags: [`argument`] })
+        fn.children.add(child, null, { refreshIndexing: false })
+      }
     }
 
-    return ADD_NODE_AT(fn, index)
+    // TODO: Think a better way to handle this. This kills the immutability of the Semantic NRS
+    node.children.remove(parenthesis.index, { refreshIndexing: false })
+
+    return ADD_NODE_AT(fn, index, `ignore`)
   },
 )
 

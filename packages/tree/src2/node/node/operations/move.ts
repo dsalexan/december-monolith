@@ -61,8 +61,10 @@ export function groupChildren(this: Node, [start, end]: [number, number], list?:
   // if the only child to enlist is already a list, then just return it
   if (onlyEnlistOneChild && isFirstChildAList) return this.children.nodes[start]
 
+  // if (global.__DEBUG_LABEL === `+->=3.a`) debugger // COMMENT
+
   // remove children from parent
-  const children: Node[] = range(start, end + 1).map(i => this.children.remove(i, options))
+  const children: Node[] = reverse(range(start, end + 1)).map(i => this.children.remove(i, options))
 
   // create new list if necessary
   if (!list) {
@@ -73,7 +75,7 @@ export function groupChildren(this: Node, [start, end]: [number, number], list?:
   this.syntactical.addNode(list, start, options) // add list to parent
 
   // transfer children
-  for (const child of children) list.syntactical.addNode(child, undefined, options)
+  for (const child of reverse(children)) list.syntactical.addNode(child, undefined, options)
 
   return list
 }

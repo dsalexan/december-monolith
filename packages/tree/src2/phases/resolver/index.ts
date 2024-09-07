@@ -14,7 +14,7 @@ import { postOrder } from "../../node/traversal"
 import { getMasterScope, MasterScope, Scope } from "../../node/scope"
 import Simplify, { SimplifyOptions } from "../simplify"
 import Reducer, { ReducerOptions } from "../reducer"
-import { exec, RuleSet } from "../../nrs"
+import { process, RuleSet } from "../../nrs"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 

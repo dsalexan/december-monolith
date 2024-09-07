@@ -2,9 +2,9 @@ import { PartialDeep } from "type-fest"
 import { isString, sum } from "lodash"
 
 import { Range } from "@december/utils"
-import { Grid } from "@december/logger"
+import { Grid, Block } from "@december/logger"
 
-import churchill, { Block, paint, Paint } from "../../logger"
+import churchill, { paint, Paint } from "../../logger"
 import { baseAlphabet } from "../../utils"
 
 import { Node } from "../node/base"
@@ -15,6 +15,7 @@ import { PartialObjectDeep } from "type-fest/source/partial-deep"
 import { PrintOptions } from "./options"
 import { PrintSetup, setup as _setup } from "./setup"
 import { center } from "./utils"
+import assert from "assert"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -117,7 +118,7 @@ function debug(grid: Grid.Grid, setup: PrintSetup) {
 
 /** Print rows */
 function _print(grid: Grid.Grid, setup: PrintSetup) {
-  const { logger, tree } = setup
+  const { logger, tree, maxWidth } = setup
 
   const rootSpan = tree.root.range.split()
   for (const [i, spec] of setup.rows.entries()) {
@@ -136,22 +137,91 @@ function _print(grid: Grid.Grid, setup: PrintSetup) {
 
       const row = grid.fill(raw.sequences, rootSpan) // fill gaps in row
 
-      // print prefix (padded by grid)
-      const prefix = sum(raw.prefix?.map(p => String(p._data).length) ?? [0])
-      if (prefix > 0) logger.add(...raw.prefix)
-      if (grid.prefix > prefix) logger.add(` `.repeat(grid.prefix - prefix))
-
-      // print each sequence in row
+      // list each sequence in row
+      const line: Block[] = []
       for (const [k, sequence] of row.entries()) {
         // if (global.__DEBUG_LABEL === `-->×1.a` && sequence.__debug?.node?.name === `root`) debugger
         // if (sequence.__debug?.node?.name === `C1.a` && sequence.__debug?.format === `name`) debugger
         // if (sequence.__debug?.index === 1 && sequence.__debug?.format === `header`) debugger
 
         const blocks = sequence.print(grid, format.printingOptions)
-        logger.add(...blocks)
+        line.push(...blocks)
       }
 
-      logger.info()
+      // breakline to maxWidth
+      let lines = -1
+      let cursor = 0
+      let buffer: { block: Block; index: number } | undefined = undefined
+      for (const block of line) {
+        // print prefix (padded by grid) (since cursor === 0 equates to new line)
+        if (cursor === 0) {
+          lines++
+
+          if (lines === 0) {
+            const prefix = sum(raw.prefix?.map(p => String(p._data).length) ?? [0])
+            if (prefix > 0) logger.add(...raw.prefix)
+            if (grid.prefix > prefix) logger.add(` `.repeat(grid.prefix - prefix))
+          } else if (grid.prefix > 0) logger.add(` `.repeat(grid.prefix))
+        }
+
+        // there is a buffer from previous line
+        if (buffer) {
+          // fix length
+          const bufferLength = String(buffer.block._data).length - buffer.index
+          const remainder = maxWidth - (cursor + bufferLength)
+
+          let length = bufferLength + (remainder > 0 ? 0 : remainder)
+
+          // clone buffer to print now
+          const newBlock = buffer.block._clone()
+          newBlock._data = String(buffer.block._data).slice(buffer.index, buffer.index + length)
+
+          if (remainder < 0) buffer.index += length
+          else buffer = undefined // reset buffer
+
+          // add to logger
+          logger.add(newBlock)
+          cursor += String(newBlock._data).length
+        }
+
+        // max width reached
+        assert(cursor <= maxWidth, `Cursor should be AT MOST at max width`)
+
+        // add block to logger
+        const length = String(block._data).length
+        if (cursor + length <= maxWidth) {
+          // there is space in line for this block, just add it
+
+          logger.add(block)
+          cursor += length
+
+          continue
+        }
+
+        // there is space in line for this block, but it will overflow
+        const remainder = maxWidth - cursor
+        if (remainder > 0) {
+          // create partial block
+          const data = String(block._data).slice(0, remainder)
+          const newBlock = block._clone()
+          newBlock._data = data
+
+          // add to logger
+          logger.add(newBlock)
+          cursor += remainder
+
+          // save the rest for next line
+          buffer = { block, index: remainder }
+        }
+
+        // max width reached
+        assert(cursor <= maxWidth, `Cursor should be AT MOST at max width`)
+
+        logger.info() // print whatever is in logger
+        cursor = 0 // reset cursor
+      }
+
+      if (logger.blocks.length) logger.info()
     }
   }
 }

@@ -69,7 +69,8 @@ export const nextSibling: TNextSibling = node => {
   const index = parent.children.findIndex(child => child.id === node.id)
   assert(index === node.index, `Node index should be correct`)
 
-  return parent.children.nodes[index + 1] ?? null
+  const sibling = parent.children.nodes[index + 1]
+  return sibling ?? null
 }
 
 // #endregion

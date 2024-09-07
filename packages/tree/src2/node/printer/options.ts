@@ -9,7 +9,6 @@ import { Node } from "../node/base"
 
 import { TokenFormatOptions } from "./formats/base"
 import { PartialObjectDeep } from "type-fest/source/partial-deep"
-import { RowSpec } from "../../tree/printer/formats"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -27,6 +26,7 @@ export interface PartialPrintOptions {
   }
   headers: boolean
   name: boolean
+  id: boolean
   content: boolean
 }
 

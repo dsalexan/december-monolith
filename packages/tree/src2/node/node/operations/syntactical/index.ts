@@ -31,7 +31,7 @@ export class SyntacticalOperations {
   replaceAt(index: number, node: Node, options: Partial<NodeTreeOperationOptions> = {}) {
     assert(this.node.children.nodes[index], `Node does not exist at index ${index}`)
 
-    return replaceWith(this.node.children.nodes[0], node, options)
+    return replaceWith(this.node.children.nodes[index], node, options)
   }
 }
 

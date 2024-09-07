@@ -1,3 +1,4 @@
+import { offspring } from "./../nrs/rule_old/index"
 import { BasePattern, BasePatternOptions } from "@december/utils/match/base"
 import { ElementPattern } from "@december/utils/match/element"
 import { SetPattern } from "@december/utils/match/set"
@@ -7,6 +8,9 @@ import type Node from "../node"
 import { TypeName } from "../type/declarations/name"
 
 import assert from "assert"
+import { ancestry, inContext, preOrder } from "../node/traversal"
+
+// #region Node Patterns
 
 export interface BaseNodePatternOptions extends BasePatternOptions {
   bypass?: BaseNodePattern
@@ -101,6 +105,75 @@ export class NodeScopePattern extends BaseNodePattern {
 
 export type NodePattern = NodeTypeNamePattern | NodePrimitivePattern | NodeScopePattern
 
+// #endregion
+
+// #region Tree Patterns
+
+export interface BaseTreePatternOptions extends BasePatternOptions {}
+
+export class BaseTreePattern extends BasePattern {
+  pattern: NodePattern
+
+  constructor(type: string, pattern: NodePattern, options: Partial<BaseTreePatternOptions> = {}) {
+    super(type, options)
+    this.pattern = pattern
+  }
+}
+
+export class TargetTreePattern extends BaseTreePattern {
+  _target: `parent`
+
+  constructor(type: string, target: `parent`, pattern: NodePattern, options: Partial<BaseTreePatternOptions> = {}) {
+    super(type, pattern, options)
+    this._target = target
+  }
+
+  public target(node: Node) {
+    if (this._target === `parent`) return node.parent
+
+    throw new Error(`Unimplemented tree pattern target "${this._target}"`)
+  }
+
+  override _match(node: Node): boolean {
+    const target = this.target(node)
+
+    return !!target && this.pattern.match(target)
+  }
+}
+
+export class TraversalTreePattern extends BaseTreePattern {
+  direction: `ancestry` | `offspring` | `in-context`
+
+  constructor(type: string, direction: `ancestry` | `offspring` | `in-context`, pattern: NodePattern, options: Partial<BaseTreePatternOptions> = {}) {
+    super(type, pattern, options)
+    this.direction = direction
+  }
+
+  override _match(node: Node): boolean {
+    let result = false
+
+    const traversal = this.traversal
+
+    traversal(node, node => {
+      if (this.pattern.match(node)) result = true
+    })
+
+    return result
+  }
+
+  public get traversal() {
+    if (this.direction === `ancestry`) return ancestry
+    else if (this.direction === `offspring`) return preOrder
+    else if (this.direction === `in-context`) return inContext
+
+    throw new Error(`Unimplemented tree pattern traversal direction "${this.direction}"`)
+  }
+}
+
+export type TreePattern = TraversalTreePattern | TargetTreePattern
+
+// #endregion
+
 // #region Proxies
 
 export const TYPE = {
@@ -114,8 +187,19 @@ export const NODE = {
   SCOPE: (pattern: SetPattern<string[]>): NodeScopePattern => new NodeScopePattern(pattern),
 }
 
+export const TREE = {
+  ANCESTOR: (pattern: NodePattern): TraversalTreePattern => new TraversalTreePattern(`tree:ancestor`, `ancestry`, pattern),
+  OFFSPRING: (pattern: NodePattern): TraversalTreePattern => new TraversalTreePattern(`tree:offspring`, `offspring`, pattern),
+  IN_CONTEXT: (pattern: NodePattern): TraversalTreePattern => new TraversalTreePattern(`tree:in-context`, `in-context`, pattern),
+  PARENT: (pattern: NodePattern): TargetTreePattern => new TargetTreePattern(`tree:parent`, `parent`, pattern),
+}
+
 // #endregion
 
-export function isNodePattern(pattern: BaseNodePattern): pattern is NodePattern {
+export function isNodePattern(pattern: BasePattern): pattern is NodePattern {
   return pattern.type.startsWith(`node:`)
+}
+
+export function isTreePattern(pattern: BasePattern): pattern is TreePattern {
+  return pattern.type.startsWith(`tree:`)
 }

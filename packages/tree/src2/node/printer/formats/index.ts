@@ -3,11 +3,13 @@ import { Block, Grid } from "@december/logger"
 import content from "./content"
 import name from "./name"
 import header from "./header"
+import id from "./id"
 import { ExpressionFormatOptions, FormatFunction, TokenFormatOptions } from "./base"
 
 export type { FormatFunction } from "./base"
 
 export { default as name } from "./name"
+export { default as id } from "./id"
 export { default as content } from "./content"
 
 export { default as header } from "./header"

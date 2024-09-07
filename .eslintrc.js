@@ -78,6 +78,7 @@ module.exports = {
     // ],
     //
     //
+    "@typescript-eslint/ban-types": [`off`],
     "@typescript-eslint/ban-ts-comment": [`warn`],
     "@typescript-eslint/no-unsafe-call": [`off`],
     "@typescript-eslint/no-unsafe-return": [`off`],

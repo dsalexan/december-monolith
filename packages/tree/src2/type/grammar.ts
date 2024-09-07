@@ -3,13 +3,14 @@
  */
 
 import { assert } from "console"
-import { filter, orderBy } from "lodash"
+import { filter, identity, orderBy } from "lodash"
 import { TypeName } from "./declarations/name"
 import Type from "./base"
 
 import { Interval } from "@december/utils"
 
 import { RuleSet } from "../nrs/rule/rule"
+import Node from "../node"
 
 export default class Grammar {
   types: Map<TypeName, Type>
@@ -27,7 +28,7 @@ export default class Grammar {
     return this.types.get(name)
   }
 
-  /** Matches a sequence of characters to a lexical type */
+  /** Matches a sequence of characters to a lexical type. It is "lexical" by default (requires no tree structure, just the lexeme) */
   match(sequence: string, fn?: (type: Type) => boolean): Type[] {
     const matches: Type[] = []
 
@@ -48,15 +49,48 @@ export default class Grammar {
     }
 
     // sort by priority (lower is worse)
-    const sorted = orderBy(matches, [`lexical.priority`], [`desc`])
+    // const sorted = orderBy(matches, [`lexical.priority`], [`desc`])
+    const sorted = Type.orderByPriority(`lexical`, matches, [identity], [`desc`])
 
     return sorted
+  }
+
+  /** Matches a sequence of characters to a lexical type, BUT within a syntactical context (a "tree") */
+  syntacticalMatch(sequence: string, tree: Node): Type[] {
+    const matches: Type[] = []
+
+    // get all types with lexical patterns
+    let types = [...this.types.values()].filter(type => type.lexical && type.lexical.patterns.length > 0)
+
+    for (const type of types) {
+      const lexical = type.lexical!
+      const [pattern] = lexical.patterns
+
+      // ERROR: Unimplemented many patterns
+      assert(lexical.patterns.length === 1, `Unimplemented multiple patterns`)
+
+      if (pattern.match(sequence)) matches.push(type)
+    }
+
+    // sort by priority (lower is worse)
+    const sorted = Type.orderByPriority(`syntactical`, matches, [identity], [`desc`])
+
+    // filter by tree pattern (if it exists)
+    const filtered: Type[] = []
+    for (const type of sorted) {
+      const pattern = type.syntactical.pattern
+      if (pattern === undefined) filtered.push(type)
+      else if (pattern.match(tree)) filtered.push(type)
+    }
+
+    return filtered
   }
 
   getRuleSets(): RuleSet[] {
     const types = [...this.types.values()]
     const semanticalTypes = filter(types, type => !!type.semantical?.ruleset)
-    const sorted = orderBy(semanticalTypes, [`semantical.priority`], [`desc`])
+    // const sorted = orderBy(semanticalTypes, [`semantical.priority`], [`desc`])
+    const sorted = Type.orderByPriority(`semantical`, semanticalTypes, [identity], [`desc`])
 
     return sorted.map(type => type.semantical!.ruleset!)
   }
@@ -71,7 +105,8 @@ export default class Grammar {
   }
 
   print() {
-    const types = this.types.values()
-    const sorted = orderBy(types, [`lexical.priority`], [`asc`])
+    const types = [...this.types.values()]
+    // const sorted = orderBy(types, [`lexical.priority`], [`asc`])
+    // const sorted = Type.orderByPriority(`lexical`, types, [identity], [`asc`])
   }
 }

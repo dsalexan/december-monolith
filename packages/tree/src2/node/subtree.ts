@@ -12,7 +12,7 @@ import { Node } from "./node/base"
 
 import { inContext, inOrder, postOrder, preOrder } from "./traversal"
 import { NODE_BALANCING } from "./node/type"
-import { NIL } from "../type/declarations/literal"
+import { NIL, STRING } from "../type/declarations/literal"
 import { LIST } from "../type/declarations/enclosure"
 
 import { NodeCloningOptions } from "./node/factories"
@@ -26,6 +26,10 @@ type Nullable<T> = T | null
 
 export interface TreeCloningOptions extends NodeCloningOptions {}
 
+export interface InsertOptions extends NodeCollectionOperationOptions {
+  ignoreSyntacticalParent: boolean
+}
+
 export default class SubTree {
   public root: Node
 
@@ -34,7 +38,7 @@ export default class SubTree {
   }
 
   /** Inserts a node in subtree */
-  insert(node: Node, options: Partial<NodeCollectionOperationOptions> = {}) {
+  insert(node: Node, options: Partial<InsertOptions> = {}) {
     // global.__DEBUG = true // COMMENT
     global.__DEBUG_LABEL = `${node.lexeme}->${this.root.name}` // COMMENT
 
@@ -54,7 +58,7 @@ export default class SubTree {
       console.log(`\n`)
     }
 
-    // if (global.__DEBUG_LABEL === `else->if0.*`) debugger
+    // if (global.__DEBUG_LABEL === `+->=3.a`) debugger
 
     assert(node.type.syntactical, `Type "${node.type.name}" has no syntactical rules`)
 
@@ -64,10 +68,19 @@ export default class SubTree {
     //                       PROPERLY INSERTING NODE IN SUBTREE
     // ===============================================================================
 
-    // TODO: Implement this
-    if (node.type.id !== `keyword` && node.type.syntactical.parent) debugger
+    if (!options.ignoreSyntacticalParent && node.type.syntactical.parent) {
+      // ERROR: Untested
+      if (node.type.id !== `keyword`) debugger
 
-    if (node.type.modules.includes(`operand`)) nextTarget = insertOperand(this.root, node, options)
+      // try to find an ancestor matching parent
+      const ancestor = this.root.findAncestor(ancestor => node.type.syntactical.parent!.match(ancestor))
+
+      if (ancestor) return new SubTree(ancestor).insert(node, { ...options, ignoreSyntacticalParent: true })
+    }
+
+    // TODO: Implement this
+
+    if (node.type.modules.includes(`operand`) || options.asOperand) nextTarget = insertOperand(this.root, node, options)
     else if (node.type.id === `operator`) nextTarget = insertOperator(this.root, node, options)
     else if (node.type.id === `separator`) nextTarget = insertSeparator(this.root, node, options)
     else if (node.type.id === `enclosure`) {
@@ -116,14 +129,14 @@ export default class SubTree {
   }
 
   /** Verify and return resulting expression from subtree */
-  expression() {
+  expression(recompileProviders = false) {
     // 1. Verify that all tokens have the same provider signature
     const providers: Nullable<StringProvider>[] = []
     preOrder(this.root, node => {
       for (const token of node.tokens) if (!providers.find(provider => provider && provider.signature === token.provider?.signature)) providers.push(token.provider)
     })
 
-    assert(providers.length === 1, `All tokens must have the same signature (and, thus, only one provider)`)
+    if (!recompileProviders) assert(providers.length === 1, `All tokens must have the same signature (and, thus, only one provider)`)
 
     // 1. Verify that all tokens have an assigned interval
     let thereAreTokensLackingInterval = false
@@ -134,10 +147,9 @@ export default class SubTree {
 
     assert(!thereAreTokensLackingInterval, `All tokens must have an assigned interval`)
 
-    if (providers[0] !== null && !thereAreTokensLackingInterval) return providers[0].value
+    if (providers.length === 1 && providers[0] !== null && !thereAreTokensLackingInterval) return providers[0].value
 
     // 2. Recalculate expression (because not all tokens have the same provider OR some tokens are lacking interval)
-    debugger
 
     let expression = ``
     let cursor = 0
@@ -145,11 +157,11 @@ export default class SubTree {
       if (ignorable) debugger
 
       if (token) {
+        // if (token.provider) debugger
+
         const lexeme = token.lexeme
 
         expression += lexeme
-        // @ts-ignore
-        if (token._interval) debugger
         token.updateInterval(Interval.fromLength(cursor, lexeme.length))
 
         cursor += lexeme.length
@@ -259,8 +271,8 @@ export default class SubTree {
 }
 
 /** Inserts an operand in subtree */
-function insertOperand(subtree: Node, operand: Node, options: Partial<NodeCollectionOperationOptions> = {}): Nullable<Node> {
-  assert(operand.type.modules.includes(`operand`), `Node is not an operand`)
+function insertOperand(subtree: Node, operand: Node, options: Partial<InsertOptions> = {}): Nullable<Node> {
+  assert(operand.type.modules.includes(`operand`) || options.asOperand, `Node is not an operand`)
 
   // append it to subTree as a child, priority is kind of irrelevant
   //    but operands always have the HIGHEST priorities among all types (whitespace is ∞, literal is like 10^10)
@@ -271,14 +283,26 @@ function insertOperand(subtree: Node, operand: Node, options: Partial<NodeCollec
 }
 
 /** Inserts an operator in subtree */
-function insertOperator(subtree: Node, operator: Node, options: Partial<NodeCollectionOperationOptions> = {}): Nullable<Node> {
+function insertOperator(subtree: Node, operator: Node, options: Partial<InsertOptions> = {}): Nullable<Node> {
   const { priority: subTreePriority, arity: subtreeArity } = subtree.type.syntactical!
   const { priority: operatorPriority, arity, incompleteArity } = operator.type.syntactical!
 
-  // if (global.__DEBUG_LABEL === `=->ρ1.a`) debugger // COMMENT
+  const subTreeRelevantChildren = subtree.children.filter(child => {
+    if (subtree.type.modules.includes(`arithmetic`) || subtree.type.modules.includes(`logical`)) {
+      if (child.type.name === `whitespace`) return false
+      if (child.type.name === `list` && child.children.every(grandchild => grandchild.type.name === `whitespace`)) return false
+    }
+
+    return true
+  })
+
+  // if (global.__DEBUG_LABEL === `+->L2.b`) debugger // COMMENT
+
+  const priorityComparison = operator.comparePriority(subtree, `syntactical`)
 
   // subtree MORE PRIORITARY than node
-  if (operatorPriority > subTreePriority) {
+  //    operatorPriority > subTreePriority
+  if (priorityComparison === 1) {
     // insert node between TARGET and its last child
     //    i.e. last child becomes child of new node, new node becomes last child of current
     //    i.e².
@@ -287,7 +311,8 @@ function insertOperator(subtree: Node, operator: Node, options: Partial<NodeColl
     if (arity !== 2) debugger
 
     // handle subtree children
-    if (subtree.children.length === 0) {
+    if (subtree.type.modules.includes(`arithmetic`)) debugger
+    if (subTreeRelevantChildren.length === 0) {
       //  subtree are no children to enlist
       //    create and add a nil token as last (and, well, only) child
 
@@ -300,9 +325,16 @@ function insertOperator(subtree: Node, operator: Node, options: Partial<NodeColl
       //    subtree is just a collection, enlist all children of subtree
 
       //    subtree is not yet "full" (as per n-arity)
-      // if (subtreeArity !== Infinity && subtree.children.length < subtreeArity) debugger
+      // if (subtreeArity !== Infinity && subTreeRelevantChildren.length < subtreeArity) debugger
 
-      subtree.groupChildren([0, subtree.children.length - 1], undefined, options) // enlist all children of target
+      //    but... subtree IS NOT a collection proper (it has some arity)
+      if (subtreeArity !== Infinity) {
+        if (subTreeRelevantChildren.length < subtreeArity) debugger
+        if (subTreeRelevantChildren.length > subtreeArity) debugger
+
+        // so just group its last child
+        subtree.groupChildren([subtree.children.length - 1, subtree.children.length - 1], undefined, options)
+      } else subtree.groupChildren([0, subtree.children.length - 1], undefined, options) // enlist all children of target
     }
 
     // add node in lastChild's place (as it's parent)
@@ -312,7 +344,7 @@ function insertOperator(subtree: Node, operator: Node, options: Partial<NodeColl
 
     // since we inserted it between current and its last child, return current as new target
     //    return operator
-  } else if (subtree.children.length < subtreeArity) {
+  } else if (subTreeRelevantChildren.length < subtreeArity) {
     // basically handling negative/positive signs
     //    i.e. "-10" or "+1", operator without a left operand
 
@@ -321,15 +353,36 @@ function insertOperator(subtree: Node, operator: Node, options: Partial<NodeColl
     //    (if it is full it should not nest another operator)
 
     // operator is not "allowed" to have an incomplete arity (so maybe add it as a syntatical rule)
-    if (!incompleteArity) debugger
+    assert(incompleteArity, `Operator is not cleared for incomplete arity`)
 
     // TODO: Untested
     if (arity !== 2) debugger
-    if (subtreeArity === Infinity) debugger
 
-    subtree.syntactical.addNode(operator, undefined, options) // add operator as a child of subtree
+    let parent = subtree
+
+    // if we are here, it means that the subtree is not full (it has less children than its arity)
+    //    but the "children" count disregards whitespaces (or list > whitespaces) for arithmetic/logical operators
+    //    this is only applicable to FINITE arities
+
+    assert(subtreeArity !== Infinity, `Subtree arity is infinite`)
+
+    if (subtree.type.modules.includes(`arithmetic`) || subtree.type.modules.includes(`logical`)) {
+      const lastChild = subtree.children.nodes[subtree.children.length - 1]
+      const isWhitespace = lastChild.type.name === `whitespace`
+      const isDeepWhitespace = lastChild.type.name === `list` && lastChild.children.every(grandchild => grandchild.type.name === `whitespace`)
+
+      // if last child is a whitespace just group it AND add new operator to it
+      if (isWhitespace || isDeepWhitespace) {
+        // group last child
+        parent = subtree.groupChildren([subtree.children.length - 1, subtree.children.length - 1], undefined, options)
+      }
+    }
+
+    parent.syntactical.addNode(operator, undefined, options) // add operator as a child of subtree (or last child of subtree in a VERY specific scenario)
     const nil = operator.NIL()
-    subtree.syntactical.addNode(nil, undefined, options) // add nil as left operand of operator // TODO: This would probably be different for any arity !== 2
+
+    // TODO: This would probably be different for any arity !== 2
+    operator.syntactical.addNode(nil, undefined, options) // add nil as left operand of operator
 
     // it is basically the same as before, we are just adding a nil as left operand
     //    and always adding operator as the NEXT child (not last)
@@ -354,12 +407,12 @@ function insertOperator(subtree: Node, operator: Node, options: Partial<NodeColl
 }
 
 /** Inserts an wrapper enclosure (enclosure with delimited opener and closer) in subtree */
-function insertWrapper(subtree: Node, wrapper: Node, options: Partial<NodeCollectionOperationOptions> = {}): Nullable<Node> {
+function insertWrapper(subtree: Node, wrapper: Node, options: Partial<InsertOptions> = {}): Nullable<Node> {
   // get contextualized variant
   let variant = getVariant(wrapper)
   if (variant === `opener-and-closer`) {
     // if variant is opener-and-closer, we need to determine if it's an opener or closer based on ancestry
-    const openerAncestor = wrapper.findAncestor(ancestor => ancestor.type.name === wrapper.type.name && getVariant(ancestor) === `opener-and-closer` && ancestor.balancing === NODE_BALANCING.UNBALANCED)
+    const openerAncestor = subtree.findAncestor(ancestor => ancestor.type.name === wrapper.type.name && ancestor.balancing === NODE_BALANCING.UNBALANCED && getVariant(ancestor) === `opener-and-closer`)
 
     variant = openerAncestor ? `closer` : `opener`
   }
@@ -375,19 +428,20 @@ function insertWrapper(subtree: Node, wrapper: Node, options: Partial<NodeCollec
     const openerAncestor = subtree.findAncestor(
       ancestor =>
         ancestor.type.name === wrapper.type.name && // same type
-        (getVariant(ancestor) === `opener` || getVariant(ancestor) === `opener-and-closer`) && // opener
-        ancestor.balancing === NODE_BALANCING.UNBALANCED, // unbalanced
+        ancestor.balancing === NODE_BALANCING.UNBALANCED && // unbalanced
+        (getVariant(ancestor) === `opener` || getVariant(ancestor) === `opener-and-closer`), // opener
     )
 
     // cant close wrapper, (probably an unbalanced character)
     if (!openerAncestor) {
-      // TODO: Probably just convert node to literal
-      throw new Error(`Unbalanced closer wrapper`)
+      // just convert node to literal
+      // throw new Error(`Unbalanced closer wrapper`)
 
-      // // climb up the tree until a unbalanced opener node of the same type is found
+      wrapper.setType(STRING)
+      wrapper.attributes.unbalanced = true
+      subtree.syntactical.addNode(wrapper, undefined, options)
 
-      // // return parent of correct target (since closer node is never added to the tree)
-      // return this.insert(subtree.parent!, wrapper)
+      return subtree
     }
 
     // closer dont need to be added to the tree
@@ -402,7 +456,7 @@ function insertWrapper(subtree: Node, wrapper: Node, options: Partial<NodeCollec
 }
 
 /** Inserts an separator in subtree */
-function insertSeparator(subtree: Node, separator: Node, options: Partial<NodeCollectionOperationOptions> = {}): Nullable<Node> {
+function insertSeparator(subtree: Node, separator: Node, options: Partial<InsertOptions> = {}): Nullable<Node> {
   // TODO: hum... weird
   if (separator.type.name === `list`) debugger
 
@@ -454,17 +508,11 @@ function insertSeparator(subtree: Node, separator: Node, options: Partial<NodeCo
 }
 
 /** Inserts a keyword in subtree */
-function insertKeyword(subTree: Node, keyword: Node, options: Partial<NodeCollectionOperationOptions> = {}): Nullable<Node> {
-  const { priority, parent: nodePattern } = keyword.type.syntactical!
-
-  // TODO: Implement
-  assert(nodePattern, `Keyword has no parent`)
-
-  // try to find an ancestor matching parent
-  const ancestor = subTree.findAncestor(ancestor => nodePattern.match(ancestor))
+function insertKeyword(subTree: Node, keyword: Node, options: Partial<InsertOptions> = {}): Nullable<Node> {
+  const { priority } = keyword.type.syntactical!
 
   // add keyword to matched ancestor (or subTree if no ancestor found)
-  const parent = ancestor ?? subTree
+  const parent = subTree
 
   // TODO: Untested
   if (parent.type.syntactical.arity !== 3) debugger

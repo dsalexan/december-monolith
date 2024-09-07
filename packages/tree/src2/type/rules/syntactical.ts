@@ -12,23 +12,24 @@ import type Type from "../base"
 import { EvaluateFunction } from "../../phases/lexer/evaluation"
 import assert from "assert"
 import { BasePattern } from "../../../../utils/src/match/base"
-import { NodePattern } from "../../match/pattern"
+import { NodePattern, TreePattern } from "../../match/pattern"
 
-export function SyntacticalRuleAdder(this: Type, priority: number, arity: number, { incompleteArity, parent }: Partial<SyntacticalRule> = {}) {
+export function SyntacticalRuleAdder(this: Type, priority: number, arity: number, { incompleteArity, pattern, parent }: Partial<SyntacticalRule> = {}) {
   this._syntactical = new SyntacticalRule()
 
   this._syntactical.priority = priority
   this._syntactical.arity = arity
   this._syntactical.incompleteArity = incompleteArity ?? false
+  this._syntactical.pattern = pattern
   this._syntactical.parent = parent
 
   return this
 }
 
-export function SyntacticalRuleDeriver(this: Type, arity: number, { priority, incompleteArity, parent }: Partial<SyntacticalRule> = {}) {
+export function SyntacticalRuleDeriver(this: Type, arity: number, { priority, incompleteArity, pattern, parent }: Partial<SyntacticalRule> = {}) {
   assert(this.lexical || this.semantical, `deriveSyntactical requires either a LexicalRule or SemanticalRule to derive from`)
 
-  this.addSyntactical(priority ?? this.lexical?.priority ?? this.syntactical?.priority, arity, { incompleteArity, parent })
+  this.addSyntactical(priority ?? this.lexical?.priority ?? this.syntactical?.priority, arity, { incompleteArity, pattern, parent })
 
   return this
 }
@@ -42,7 +43,8 @@ export default class SyntacticalRule {
   //    Infinity means that the syntax node can have any number of children (like a list of nodes; that is a thing when I need to group literals together without loosing original granularity of lexical tokens)
   public arity: number
   public incompleteArity: boolean
-  public parent?: NodePattern
+  public pattern?: TreePattern // matches to "allow" for a specific subtree, applied by grammar
+  public parent?: NodePattern // finds the correct ancestor to insert node at
 }
 
 export function defaultSyntacticalRule(type: Type) {

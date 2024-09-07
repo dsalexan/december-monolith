@@ -1,4 +1,5 @@
-import { isArray, isEmpty, isNil, set } from "lodash"
+import { isArray, isEmpty, isNil, mergeWith, set } from "lodash"
+import { isPrimitive } from "./typing"
 
 export * as compare from "./compare"
 export * as storage from "./storage"
@@ -275,4 +276,18 @@ export function conditionalSet<TObject extends object = object>(object: TObject,
   // set<TResult>(object: object, path: PropertyPath, value: any): TResult;
 
   return object
+}
+
+export function mergeWithDeep<TObject, TSource>(object: TObject, source: TSource, customizer: (currentValue: any, newValue: any) => unknown): TObject & TSource {
+  return mergeWith(object, source, (currentValue, newValue, key, object, source) => {
+    // TODO: Implement universal merger in utils
+    if (isPrimitive(newValue)) return newValue
+    if (currentValue === undefined || currentValue.length === 0) return newValue
+    if (currentValue.length === newValue.length) return newValue
+    if (isArray(currentValue) && isArray(newValue)) return [...currentValue, ...newValue]
+
+    debugger
+
+    return customizer(currentValue, newValue)
+  })
 }

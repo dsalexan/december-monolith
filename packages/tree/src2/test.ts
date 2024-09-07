@@ -96,6 +96,7 @@ expression = `-1`
 expression = `-0+1`
 expression = `0+-1`
 expression = `fn(-0 + "1")`
+expression = `1=0+1`
 //
 expression = `0+1`
 expression = `9999=0-(X * 100)`
@@ -104,11 +105,22 @@ expression = `1*(X-300)`
 expression = `(X-199)*1`
 expression = `(X-2)+(X-2)`
 // expression = `(X-2)-(X-2)`
-expression = `if(1=2 then 9999 else 0)`
-// expression = `1 + if("SK:Br awling::level" > 10) `
-// expression = `1 + if(15 > 10) + -@if(10)`
-// expression = `thr-1 + @if("SK:Brawling::level" > ST:DX+1 then @basethdice(ST:Bite) else 0) + -@if("DI:Weak Bite::level" = 1 then 2 * @basethdice(ST:Bite) else 0)`
-// expression = `$if("AD:Teeth (Sharp Teeth)::level" = 1 THEN "cut" ELSE $if("AD:Teeth (Sharp Beak)::level" = 1 THEN "pi+" ELSE $if("AD:Teeth (Fangs)::level" = 1 THEN "imp" ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr"))))`
+expression = `if(1=2 then 9999 else 0+(X+2))`
+expression = `"SK:Br awling::level"`
+expression = `if("SK:Br awling::level" > 10 then 1 else 0+(X+2))`
+expression = `1 +2-fn(x)`
+expression = `1 + -fn(x)`
+expression = `1 + -2`
+expression = `1 + fn(1) + 1`
+expression = `1 + if(15 > 10 then 1 else 2) + -@if(10 then 9 else 0)`
+expression = `monster fn(1) bastard`
+expression = `thr-1 + @if("SK:Brawling::level" > ST:DX+1 then @basethdice(ST:Bite) else 0) + -@if("DI:Weak Bite::level" = 1 then 2 * @basethdice(ST:Bite) else 0)`
+expression = `(1 + 2) + 3)`
+expression = `$if(1 THEN 9 ELSE $if(0 THEN 3 ELSE 8))`
+expression = `$if(1 THEN 9 ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr"))`
+expression = `$if("AD:Teeth (Fangs)::level" = 1 THEN "imp" ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr"))`
+expression = `$if("AD:Teeth (Sharp Beak)::level" = 1 THEN "pi+" ELSE $if("AD:Teeth (Fangs)::level" = 1 THEN "imp" ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr")))`
+expression = `$if("AD:Teeth (Sharp Teeth)::level" = 1 THEN "cut" ELSE $if("AD:Teeth (Sharp Beak)::level" = 1 THEN "pi+" ELSE $if("AD:Teeth (Fangs)::level" = 1 THEN "imp" ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr"))))`
 
 const options = defaultProcessingOptions({
   // general
@@ -169,24 +181,21 @@ parser.print({
     // filling: { character: `▮` },
   },
   style: {},
+  // headers: false,
   // name: false,
 })
 
 semantic.process(parser.AST, SemanticNRS, options.semantic)
 semantic.print({ expression })
 
-environment.print()
+// environment.print()
 
-global.__DEBUG_EXPRESSION = expression
+simplify.process(semantic.ST, environment, SimplifyNRS, options.simplify)
+simplify.print({ expression: simplify.SST.expression() })
+console.log(` `)
 
-// simplify.process(semantic.ST, environment, SimplifyNRS, options.simplify)
-// simplify.print({
-// expression})
-
-// reducer.process(simplify.SST, environment, options.reducer)
-// reducer.print({
-// expression})
+reducer.process(simplify.SST, environment, options.reducer)
+reducer.print({ expression: reducer.RT.expression() })
 
 // resolver.process(semantic.ST, environment, options.resolver)
-// resolver.print({
-// expression})
+// resolver.print({ expression: resolver.result.expression() })

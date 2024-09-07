@@ -1,9 +1,11 @@
 import assert from "assert"
 
 import { Node } from "./base"
+import { refreshIndexing } from "./indexing"
 
 export interface NodeCollectionOperationOptions {
   refreshIndexing: boolean
+  asOperand: boolean
 }
 
 export function applyOptions(node: Node, options: Partial<NodeCollectionOperationOptions>) {
@@ -49,6 +51,10 @@ export default class NodeCollection {
     return this.nodes.filter(callback)
   }
 
+  every(callback: (node: Node, index: number) => boolean) {
+    return this.nodes.every(callback)
+  }
+
   // ===============================================================================
 
   removeAll(options: Partial<NodeCollectionOperationOptions> = {}) {
@@ -88,7 +94,7 @@ export default class NodeCollection {
     if (index === null) index = this.length
 
     // remove from current parent
-    if (node.parent) node.parent.children.remove(node, options)
+    if (node.parent) node.parent.children.remove(node, { ...options, refreshIndexing: false })
 
     // add to list
     this.nodes.splice(index, 0, node)

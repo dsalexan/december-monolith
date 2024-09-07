@@ -239,7 +239,9 @@ export default class Lexer {
     }
 
     // determine lexeme
-    const sorted = orderBy(lexemes, [`type.priority`, `length`], [`asc`, `desc`])
+    // const sorted = orderBy(lexemes, [`type.priority`, `length`], [`asc`, `desc`])
+    let sorted = orderBy(lexemes, [`length`], [`desc`])
+    sorted = Type.orderByPriority(`lexical`, sorted, [(lexeme: Lexeme) => lexeme.type], [`desc`])
     const lexeme = sorted[0]
 
     // advance cursor

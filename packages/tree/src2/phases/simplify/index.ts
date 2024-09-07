@@ -12,8 +12,7 @@ import Node, { PrintOptions, print, SubTree } from "../../node"
 
 import { inOrder, postOrder } from "../../node/traversal"
 
-import { exec, RuleSet } from "../../nrs"
-import { KEEP_NODE, REMOVE_NODE } from "../../nrs/system"
+import { process, RuleSet } from "../../nrs"
 
 import type { BaseProcessingOptions } from "../../options"
 import Environment from "../../environment"
@@ -54,7 +53,7 @@ export interface BaseSimplifyOptions {}
 export type SimplifyOptions = BaseSimplifyOptions & BaseProcessingOptions
 
 export default class Simplify {
-  public options: Partial<SimplifyOptions>
+  public options: SimplifyOptions
   //
   public grammar: Grammar
   // Semantic Tree + environment -> Simplified Semantic Tree
@@ -72,7 +71,12 @@ export default class Simplify {
 
   /** Defaults options for parser */
   _options(options: Partial<SimplifyOptions>) {
-    return options
+    this.options = {
+      logger: options.logger ?? _logger,
+      scope: options.scope!,
+    }
+
+    return this.options
   }
 
   /** Process tokenized expression into an Abstract Syntax Tree (AST) */
@@ -94,20 +98,9 @@ export default class Simplify {
     const __DEBUG = true // COMMENT
 
     const tree = ST.clone()
+    process(this.NRS, tree.root, { operationOptions: { refreshIndexing: false }, scopeManager: this.options.scope, grammar: this.grammar, mutationTag: `simplify`, run: 1 })
 
-    // post order so we change children before parents
-    const order: Node[] = []
-    postOrder(tree.root, node => order.push(node))
-    for (const node of order) {
-      const newNode = exec(this.NRS, node, { grammar: this.grammar })
-
-      if (newNode === KEEP_NODE) {
-        // do nothing
-      } else if (newNode === REMOVE_NODE) {
-        debugger
-      } else if (newNode instanceof Node) node.syntactical.replaceWith(newNode)
-      else throw new Error(`Invalid node replacement action`)
-    }
+    tree.root.refreshIndexing()
 
     // tree.root.debug()
 

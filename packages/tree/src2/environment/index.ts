@@ -12,13 +12,13 @@ export interface EnvironmentIdentifier<TValue = any> {
 export default class Environment {
   has(identifier: string) {
     // TODO: Implement Environment
-    return true
+    return false
   }
 
   get(identifier: string): EnvironmentIdentifier {
     return {
       name: identifier,
-      value: 1,
+      value: 9,
     }
   }
 
