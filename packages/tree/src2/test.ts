@@ -155,7 +155,7 @@ const resolver = new Resolver(simplify, reducer)
 const environment = new Environment()
 environment.addObjectSource(`test`, {
   //                               literal:string_collection,
-  "AD:Teeth (Sharp Teeth)::level": 1, // S4.a,
+  "AD:Teeth (Sharp Teeth)::level": `level`, // S4.a,
   //                              literal:string_collection,
   "AD:Teeth (Sharp Beak)::level": 1, // S6.a,
   //                         literal:string_collection,

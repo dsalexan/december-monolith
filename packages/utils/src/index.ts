@@ -1,4 +1,4 @@
-import { isArray, isEmpty, isNil, mergeWith, set } from "lodash"
+import { isArray, isEmpty, isNil, mergeWith, range, set } from "lodash"
 import { isPrimitive } from "./typing"
 
 export * as compare from "./compare"
@@ -290,4 +290,15 @@ export function mergeWithDeep<TObject, TSource>(object: TObject, source: TSource
 
     return customizer(currentValue, newValue)
   })
+}
+
+export const ALPHABET = [`a`, `b`, `c`, `d`, `e`, `f`, `g`, `h`, `i`, `j`, `k`, `l`, `m`, `n`, `o`, `p`, `q`, `r`, `s`, `t`, `u`, `v`, `w`, `x`, `y`, `z`]
+
+export function numberToLetters(j: number) {
+  let i = j % ALPHABET.length
+  const f = Math.floor(j / ALPHABET.length)
+
+  return `${range(0, f)
+    .map(() => ALPHABET[0])
+    .join(``)}${ALPHABET[i]}`
 }

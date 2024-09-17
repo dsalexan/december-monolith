@@ -1,5 +1,6 @@
 import { isArray, isBoolean, isFunction, isNil, isNumber, isObjectLike, isString, isSymbol } from "lodash"
 import { VariableType } from "./types"
+import { AnyObject } from "tsdef"
 
 export type { ITyped } from "./custom"
 export { getTypes, isOfType, isTyped } from "./custom"
@@ -59,4 +60,19 @@ export function guessType(value: unknown): VariableType | undefined {
 
 export function isPrimitive(value: unknown): value is string | number | boolean | symbol | null | undefined {
   return isString(value) || isNumber(value) || isBoolean(value) || isSymbol(value) || isNil(value)
+}
+
+export function getDeepProperties(object: AnyObject, path = ``): string[] {
+  const entries = Object.entries(object)
+
+  const paths: string[] = []
+  for (const [key, value] of entries) {
+    const localPath = (path !== `` ? `${path}.` : ``) + key
+
+    paths.push(localPath)
+
+    if (!isPrimitive(value)) paths.push(...getDeepProperties(value, localPath))
+  }
+
+  return paths
 }

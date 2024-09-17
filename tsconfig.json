@@ -46,6 +46,8 @@
       "@december/gurps/*": ["./apps/gurps/src/*"],
       "@december/tree": ["packages/tree/src2"],
       "@december/tree/*": ["packages/tree/src2/*"],
+      "@december/compiler": ["packages/compiler/src2"],
+      "@december/compiler/*": ["packages/compiler/src2/*"],
     }
   },
   "exclude": ["node_modules"],

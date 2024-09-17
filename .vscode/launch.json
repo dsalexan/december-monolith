@@ -159,5 +159,17 @@
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },
+    
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "v4 (Compiler)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\compiler\\src\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
   ]
 }
