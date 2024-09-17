@@ -30,15 +30,18 @@ const rawObjects = [
 const manager = new ObjectManager()
 
 for (const raw of rawObjects) {
-  const object = manager.makeObject(raw.id)
-  manager.applyStrategy(object.reference(`id`), DEFAULT_STRATEGY)
+  const object = manager.makeObject(raw.id) // create object
+  manager.applyStrategy(object.reference(`id`), DEFAULT_STRATEGY) // assign strategy
+  manager.mutator.enqueue(object.reference(`id`), SET(`_.GCA`, raw)) // initialize data
 
-  manager.mutator.enqueue(object.reference(`id`), SET(`_.GCA`, raw))
+  // initialize alternative source of data
+  if (raw.id === `1`) manager.mutator.enqueue(object.reference(`id`), SET(`_.INPUT`, { name: `ManualA` }))
 }
 
 manager.mutator.run()
 
-debugger
+const data = manager.objects.byID.get(`1`)!.data
+console.log(JSON.stringify(data, null, 2))
 
 /**
  * 1. Enqueue initialization

@@ -1,5 +1,7 @@
 import assert from "assert"
 
+export { PropertyReferencePattern, ReferencePattern, isReferencePattern, REFERENCE, PROPERTY } from "./match"
+
 export class Reference<TType extends string = string, TValue extends string = string> {
   type: TType
   value: TValue

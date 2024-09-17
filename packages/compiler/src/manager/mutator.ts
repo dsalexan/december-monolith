@@ -58,13 +58,26 @@ export default class ObjectMutator {
     // if queue is running, create a new one
     if (lastQueue === this.live?.queue) queue = this.makeQueue(numberToLetters(this.queues.size).toUpperCase())
 
+    // TODO: Check if the tuple (object, mutations) is already in the queue
+
     logger
-      .add(paint.grey(`[enqueue] ${queue} `))
+      .add(paint.grey(`[`))
+      .add(paint.yellow.dim(`enqueue`))
+      .add(paint.grey(`] ${queue} `))
       .add(paint.bold(object.toString()))
       .add(paint.grey(` (`))
       .add(mutations.length)
       .add(paint.grey(` mutations)`))
-      .info()
+
+    logger
+      .add(` `)
+      .add(paint.bold(mutations[0].type))
+      .add(` `) //
+      .add(paint.dim(mutations[0].property))
+      .add(` `) //
+      .add(paint.grey.italic.dim(mutations[0].value))
+
+    logger.info()
 
     this._enqueue(queue, object, mutations)
   }
@@ -101,10 +114,23 @@ export default class ObjectMutator {
         this.live.command = i
 
         logger
-          .add(paint.grey(`[run] ${name} `))
+          .add(paint.grey(`[`))
+          .add(paint.green.dim.grey(`run`))
+          .add(paint.grey(`] ${name} `))
           .add(i)
           .add(paint.gray(`/${commands.length - 1}`))
-          .info()
+
+        logger
+          .add(` `)
+          .add(paint.bold(command.target.toString()))
+          .add(` `)
+          .add(paint.blue.bold.dim(command.mutations[0].type))
+          .add(` `) //
+          .add(paint.dim(command.mutations[0].property))
+          .add(` `) //
+          .add(paint.grey.italic.dim(command.mutations[0].value))
+
+        logger.info()
 
         this._runCommand(command)
       }

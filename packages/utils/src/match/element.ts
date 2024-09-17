@@ -75,4 +75,5 @@ export function EQUALS<TValue = any>(value: TValue, caseInsensitive: boolean = f
 export function REGEX(pattern: RegExp): RegexElementPattern {
   return new RegexElementPattern(pattern)
 }
+
 // #endregion

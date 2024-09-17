@@ -12,10 +12,7 @@ import { zip } from "lodash"
 import ObjectEventEmitter from "./events/emitter"
 import { Strategy } from "../strategy"
 import assert from "assert"
-
-export type ObjectPropertyReference = PropertyReference<ObjectReference>
-export type UniqueObjectPropertyReference = PropertyReference<UniqueObjectReference>
-export type StrictObjectPropertyReference = PropertyReference<StrictObjectReference>
+import { ObjectPropertyReference } from "../object/property"
 
 export default class ObjectManager extends EventEmitter {
   public objects: ObjectMap = new ObjectMap()

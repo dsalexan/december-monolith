@@ -109,15 +109,16 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
   }
 
   protected mutate(mutableData: TData, mutation: Mutation): MutationInstruction {
-    if (mutation.type === `SET`) return this.SET(mutableData, mutation)
+    if (mutation.type === `SET` || mutation.type === `OVERRIDE`) return this.SET(mutableData, mutation)
 
+    // @ts-ignore
     throw new Error(`Method "${mutation.type}" not implemented.`)
   }
 
-  protected SET(mutableData: TData, { property, value }: Mutation): MutationInstruction {
+  protected SET(mutableData: TData, { type, property, value }: Mutation): MutationInstruction {
     const currentValue = get(mutableData, property)
 
-    assert(currentValue === undefined, `Property "${property}" already exists in data`)
+    if (type !== `OVERRIDE`) assert(currentValue === undefined, `Property "${property}" already exists in data`)
     if (isEqual(currentValue, value)) return { type: `skip` } // property is already set
 
     set(mutableData, property, value) // mutate mutableData

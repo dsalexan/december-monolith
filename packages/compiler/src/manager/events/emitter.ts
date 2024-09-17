@@ -4,7 +4,7 @@ import { EventEmitter } from "@billjs/event-emitter"
 import type MutableObject from "../../object"
 
 import type ObjectManager from ".."
-import { Event, EventType } from "./events"
+import { Event_Handle, Event_Listen, EventType } from "./events"
 
 export type ListenerID = string
 
@@ -15,7 +15,7 @@ export interface ListenerFunctionContext {
 export type ListenerFunction = (context: ListenerFunctionContext) => void
 
 export type EventListener = {
-  event: Event
+  event: Event_Listen
   id: string
   listener: ListenerFunction
 }
@@ -29,7 +29,7 @@ export default class ObjectEventEmitter {
     this.manager = manager
   }
 
-  addListener(event: Event, id: string, listener: ListenerFunction) {
+  addListener(event: Event_Listen, id: string, listener: ListenerFunction) {
     this.listeners[event.type] ??= new Map()
 
     const listeners = this.listeners[event.type]
@@ -45,18 +45,18 @@ export default class ObjectEventEmitter {
     listeners.set(id, eventListener)
   }
 
-  on(event: Event, id: string, listener: ListenerFunction) {
+  on(event: Event_Listen, id: string, listener: ListenerFunction) {
     return this.addListener(event, id, listener)
   }
 
-  emit(event: Event) {
+  emit(event: Event_Handle) {
     const listenersOfType = this.listeners[event.type]
 
     if (!listenersOfType) return false
 
     for (const listener of listenersOfType.values()) {
-      const { property } = listener.event
-      if (!event.property.isEqual(property)) continue
+      const { properties } = listener.event
+      if (!properties.some(pattern => pattern.match(event.property))) continue
 
       const context: ListenerFunctionContext = {
         emitter: this,
