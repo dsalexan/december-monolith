@@ -19,5 +19,5 @@ export type Identifier = NamedIdentifier
 
 export interface IdentifiedValue<TValue = any> {
   name: string
-  value: TValue
+  getValue: () => TValue
 }

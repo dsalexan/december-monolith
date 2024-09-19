@@ -6,12 +6,19 @@ import { numberToLetters } from "@december/utils"
 
 import churchill, { Block, paint, Paint } from "../logger"
 import type ObjectManager from "."
+import { isArray } from "lodash"
 
 export const logger = churchill.child(`node`, undefined, { separator: `` })
 
+export interface MutationGenerator {
+  name: string
+  fn: () => Mutation | Mutation[]
+}
+
 export interface MutatorCommand {
+  id: string
   target: StrictObjectReference
-  mutations: Mutation[]
+  generator: MutationGenerator // MutationGenerator = (???) => Mutation[]
   //
   _: {
     stack: string
@@ -21,7 +28,7 @@ export interface MutatorCommand {
 
 export default class ObjectMutator {
   public manager: ObjectManager
-  public queues: Map<string, MutatorCommand[]> = new Map()
+  public queues: Map<string, Map<string, MutatorCommand>> = new Map()
   //
   public live: {
     queue: string
@@ -40,7 +47,7 @@ export default class ObjectMutator {
   public makeQueue(name: string) {
     assert(!this.queues.has(name), `Queue "${name}" already exists`)
 
-    this.queues.set(name, [])
+    this.queues.set(name, new Map())
 
     logger.add(paint.grey(`[queue] Making `)).add(paint.bold(name)).info()
 
@@ -48,7 +55,7 @@ export default class ObjectMutator {
   }
 
   /** Qeueue a mutation for an object */
-  public enqueue(object: ObjectReference, ...mutations: Mutation[]) {
+  public enqueue(object: ObjectReference, generator: MutationGenerator) {
     if (this.queues.size === 0) this.makeQueue(`A`)
 
     const lastQueue = Array.from(this.queues.keys()).pop()
@@ -58,31 +65,10 @@ export default class ObjectMutator {
     // if queue is running, create a new one
     if (lastQueue === this.live?.queue) queue = this.makeQueue(numberToLetters(this.queues.size).toUpperCase())
 
-    // TODO: Check if the tuple (object, mutations) is already in the queue
-
-    logger
-      .add(paint.grey(`[`))
-      .add(paint.yellow.dim(`enqueue`))
-      .add(paint.grey(`] ${queue} `))
-      .add(paint.bold(object.toString()))
-      .add(paint.grey(` (`))
-      .add(mutations.length)
-      .add(paint.grey(` mutations)`))
-
-    logger
-      .add(` `)
-      .add(paint.bold(mutations[0].type))
-      .add(` `) //
-      .add(paint.dim(mutations[0].property))
-      .add(` `) //
-      .add(paint.grey.italic.dim(mutations[0].value))
-
-    logger.info()
-
-    this._enqueue(queue, object, mutations)
+    this._enqueue(queue, object, generator)
   }
 
-  private _enqueue(name: string, object: ObjectReference, mutations: Mutation[]) {
+  private _enqueue(name: string, object: ObjectReference, generator: MutationGenerator) {
     assert(this.queues.has(name), `Queue "${name}" does not exist`)
 
     const queue = this.queues.get(name)!
@@ -92,14 +78,37 @@ export default class ObjectMutator {
     const command: MutatorCommand = {
       _: {
         stack: name,
-        index: queue.length,
+        index: queue.size,
       },
       //
+      id: `${target.toString()}:${generator.name}`,
       target,
-      mutations,
+      generator,
     }
 
-    queue.push(command)
+    if (queue.has(command.id)) {
+      logger
+        .add(paint.grey(`[`))
+        .add(paint.red.dim(`enqueue/skip`))
+        .add(paint.grey(`] ${name} `))
+        .add(paint.bold(object.toString()))
+        .add(paint.grey(` `))
+        .add(paint.white.bold.dim(generator.name))
+
+      logger.info()
+    } else {
+      logger
+        .add(paint.grey(`[`))
+        .add(paint.yellow.dim(`enqueue`))
+        .add(paint.grey(`] ${name} `))
+        .add(paint.bold(object.toString()))
+        .add(paint.grey(` `))
+        .add(paint.blue.bold.dim(generator.name))
+
+      logger.info()
+
+      queue.set(command.id, command)
+    }
   }
 
   /** Run queues  */
@@ -110,25 +119,24 @@ export default class ObjectMutator {
       this.live = { queue: name, command: -1 }
 
       const commands = [...queue.entries()]
+      let cursor = -1
       for (const [i, command] of commands) {
-        this.live.command = i
+        this.live.command = ++cursor
 
         logger
           .add(paint.grey(`[`))
-          .add(paint.green.dim.grey(`run`))
+          .add(paint.magenta.dim.grey(`run`))
           .add(paint.grey(`] ${name} `))
-          .add(i)
+          .add(cursor)
           .add(paint.gray(`/${commands.length - 1}`))
 
         logger
           .add(` `)
           .add(paint.bold(command.target.toString()))
+          .add(` `) //
+          .add(paint.blue.bold.dim(command.generator.name))
           .add(` `)
-          .add(paint.blue.bold.dim(command.mutations[0].type))
-          .add(` `) //
-          .add(paint.dim(command.mutations[0].property))
-          .add(` `) //
-          .add(paint.grey.italic.dim(command.mutations[0].value))
+          .add(paint.grey.dim.italic(command.id))
 
         logger.info()
 
@@ -142,6 +150,9 @@ export default class ObjectMutator {
   private _runCommand(command: MutatorCommand) {
     const object = this.manager.objects.getByStrictReference(command.target)!
 
-    object.update(command.mutations)
+    const _mutations = command.generator.fn()
+    const mutations: Mutation[] = isArray(_mutations) ? _mutations : [_mutations]
+
+    object.update(mutations)
   }
 }

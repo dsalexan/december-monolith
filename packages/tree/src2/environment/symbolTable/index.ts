@@ -182,4 +182,10 @@ export default class SymbolTable {
     }
     _logger.add(`\n`).add(` `.repeat(26)).add(paint.grey.dim(`}\n`)).info()
   }
+
+  filter(fn: (symbol: Simbol) => boolean) {
+    const symbols = this.symbols.values()
+
+    return [...symbols].filter(fn)
+  }
 }

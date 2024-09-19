@@ -4,4 +4,4 @@ import { Mutation } from "./mutation"
 export * as Mutation from "./mutation"
 
 export type { SetMutation } from "./mutation"
-export { SET } from "./mutation"
+export { SET, OVERRIDE } from "./mutation"

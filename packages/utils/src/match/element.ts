@@ -21,6 +21,10 @@ export class EqualsElementPattern<TElement = any> extends BasePattern {
     // @ts-ignore
     return this.element === value
   }
+
+  override _toString() {
+    return `="${this.element}"`
+  }
 }
 
 export class RegexElementPattern extends BasePattern {
@@ -35,6 +39,10 @@ export class RegexElementPattern extends BasePattern {
   override _match<TValue = any>(value: TValue): boolean {
     return this.regex.test(String(value))
   }
+
+  override _toString() {
+    return `${this.regex.toString()}`
+  }
 }
 
 export class IsElementOfSetPattern<TElementValue = unknown> extends BasePattern {
@@ -48,6 +56,10 @@ export class IsElementOfSetPattern<TElementValue = unknown> extends BasePattern 
 
   override _match<TTestElementValue = TElementValue>(value: TTestElementValue): boolean {
     return this.superset.includes(value as any)
+  }
+
+  override _toString() {
+    return `∈ {${this.superset.join(`, `)}}`
   }
 }
 

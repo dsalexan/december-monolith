@@ -14,12 +14,13 @@ export interface PhaseProcessingOptions {
   parser?: BaseParserOptions
   semantic?: BaseSemanticOptions
   simplify?: BaseSimplifyOptions
-  reducer: BaseReducerOptions
+  reducer?: BaseReducerOptions
   resolver: BaseResolverOptions
 }
 
 export interface InputProcessingOptions {
   logger?: typeof _logger
+  debug?: boolean
   scope: {
     root: MasterScope | MasterScope[]
     evaluators?: ScopeEvaluator[]
@@ -28,6 +29,7 @@ export interface InputProcessingOptions {
 
 export interface BaseProcessingOptions {
   logger?: typeof _logger
+  debug: boolean
   scope: ScopeManager
 }
 
@@ -40,6 +42,7 @@ export function defaultProcessingOptions(options: InputProcessingOptions & Phase
 
   const base: BaseProcessingOptions = {
     logger: options.logger ?? _logger,
+    debug: options.debug ?? false,
     scope: scopeManager,
   }
 

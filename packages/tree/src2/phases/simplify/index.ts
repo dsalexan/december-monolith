@@ -73,6 +73,7 @@ export default class Simplify {
   _options(options: Partial<SimplifyOptions>) {
     this.options = {
       logger: options.logger ?? _logger,
+      debug: options.debug ?? false,
       scope: options.scope!,
     }
 

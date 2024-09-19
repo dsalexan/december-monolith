@@ -1,9 +1,11 @@
+import { reverse } from "lodash"
 import Node from "../../node"
 import { NodeTreeOperationOptions } from "../../node/node/operations/syntactical"
 import { ScopeManager } from "../../node/scope"
 import type Grammar from "../../type/grammar"
 
 import { RuleMatchState } from "./match"
+import type Rule from "./rule"
 
 export interface ReplaceNodesAt {
   type: `REPLACE_NODES_AT`
@@ -48,4 +50,59 @@ export interface ReplacementContext {
   run: number
   operationOptions?: Partial<NodeTreeOperationOptions>
   scopeManager: ScopeManager
+}
+
+export interface NRSMutation {
+  ruleset: string
+  rule: Rule
+  command: IReplacementCommand
+  match: RuleMatchState
+}
+
+export const NODE_REMOVED = Symbol.for(`NODE_REMOVED`)
+
+/** Apply mutation to original Node. If any mutation was done, returns a node */
+export function mutate(originalNode: Node, mutation: NRSMutation, context: ReplacementContext): Node | null | typeof NODE_REMOVED {
+  // if (global.__DEBUG_LABEL === `L1.a`) debugger // COMMENT
+
+  const { operationOptions } = context
+  const { command } = mutation
+
+  if (command.type === `KEEP_NODE`) {
+    // do nothing
+  } else if (command.type === `REMOVE_NODE`) {
+    originalNode.parent!.children.remove(originalNode, operationOptions)
+
+    registerMutation(originalNode, mutation, context)
+
+    return NODE_REMOVED
+  } else if (command.type === `REPLACE_NODE`) {
+    originalNode.syntactical.replaceWith(command.node, { ...operationOptions, preserveExistingNode: command.refreshIndexing ?? operationOptions?.refreshIndexing })
+
+    registerMutation(originalNode, mutation, context)
+
+    return command.node
+  } else if (command.type === `REPLACE_NODES_AT`) {
+    for (const index of reverse(command.indexes)) originalNode.children.remove(index, { refreshIndexing: false })
+    originalNode.syntactical.addNode(command.node, command.indexes[0], operationOptions)
+
+    registerMutation(originalNode, mutation, context)
+
+    return originalNode
+  } else if (command.type === `ADD_NODE_AT`) {
+    originalNode.syntactical.addNode(command.node, command.index, { ...operationOptions, preserveExistingNode: command.preserveExistingNode ?? operationOptions?.preserveExistingNode })
+
+    registerMutation(originalNode, mutation, context)
+
+    return originalNode
+  } else throw new Error(`Invalid node replacement action "${(command as any).type}"`)
+
+  return null
+}
+
+function registerMutation(node: Node, mutation: NRSMutation, context: ReplacementContext) {
+  node.attributes.mutations ??= {}
+  node.attributes.mutations[context.mutationTag] ??= {}
+  node.attributes.mutations[context.mutationTag][mutation.ruleset] ??= {}
+  node.attributes.mutations[context.mutationTag][mutation.ruleset][mutation.rule.name] = mutation
 }

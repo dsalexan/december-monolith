@@ -24,6 +24,7 @@ export default class ObjectManager extends EventEmitter {
 
     this.objects.on(`reference:add`, ({ data: { reference, object } }: { data: { reference: ObjectReference; object: MutableObject } }) => {
       this.eventEmitter.emit({ type: `update:property`, property: new PropertyReference(reference, ANY_PROPERTY) })
+      this.eventEmitter.emit({ type: `reference:indexed`, reference: reference })
     })
 
     this.objects.on(`reference:removed`, ({ data: { reference, object } }: { data: { reference: ObjectReference; object: MutableObject } }) => {
@@ -42,7 +43,12 @@ export default class ObjectManager extends EventEmitter {
     if (STRICT_OBJECT_TYPES.includes(reference.type as any)) return reference as StrictObjectReference
     else if (reference.type === `alias`) {
       // TODO: Implement this, probably check gainst ObjectMap to find id
-      debugger
+      const objectIDs = this.objects.byAlias[reference.value]
+
+      assert(objectIDs.length === 1, `Multiple objects found for alias "${reference.value}"`)
+
+      const [objectID] = objectIDs
+      return new Reference(`id`, objectID) as StrictObjectReference
     }
 
     throw new Error(`Unimplemented strictification for reference type "${reference.type}"`)
@@ -75,6 +81,7 @@ export default class ObjectManager extends EventEmitter {
     //      A object could be listening for changes in itself (OBJECT LEVEL)
     //      A object A could be listening for changes in object B (MANAGER LEVEL)
     for (const reference of referencedProperties) {
+      // TODO: We don't want to RUN the listener immediately, we want to QUEUE it first
       this.eventEmitter.emit({
         type: `update:property`,
         property: reference,
@@ -84,17 +91,16 @@ export default class ObjectManager extends EventEmitter {
 
   /** Applies a Strategy (collection of listeners to compute a object) to a object (by it's reference to MAKE SURE everything is indexed within ObjectMap) */
   public applyStrategy(reference: ObjectReference, strategy: Strategy) {
+    // 1. Get object
     const objects = this.objects.getByReference(reference)
 
     assert(objects.length > 0, `No object found for reference "${reference}"`)
     assert(objects.length === 1, `Multiple objects found for reference "${reference}"`)
 
+    // 2. Generate listeners
     const [object] = objects
-    const eventListeners = strategy(object)
 
-    for (const { event, id: name, listener } of eventListeners) {
-      const id = `${object.id}:${name}`
-      this.eventEmitter.on(event, id, listener)
-    }
+    // 3. Apply Strategy
+    strategy.applyStrategy(object, this.eventEmitter)
   }
 }

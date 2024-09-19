@@ -4,6 +4,7 @@ import { SetPattern } from "@december/utils/match/set"
 
 import { ANY_PROPERTY, Property, PropertyReference, Reference, SymbolProperty } from "."
 import { isString, property } from "lodash"
+import assert from "assert"
 
 export interface ReferencePatternOptions extends BasePatternOptions {}
 
@@ -26,17 +27,23 @@ export class ReferencePattern<TReference extends Reference = Reference> extends 
 
     return typeMatch && valueMatch
   }
+
+  override _toString() {
+    return `(${this.typePattern.toString()}, ${this.valuePattern.toString()})`
+  }
 }
 
 export interface PropertyReferencePatternOptions extends BasePatternOptions {}
 
+export const PLACEHOLDER_SELF_REFERENCE = Symbol.for(`PLACEHOLDER_SELF_REFERENCE`)
+
 export class PropertyReferencePattern<TReference extends Reference = Reference> extends BasePattern {
   declare type: `property`
 
-  referencePattern: ReferencePattern<TReference>
+  referencePattern: ReferencePattern<TReference> | typeof PLACEHOLDER_SELF_REFERENCE
   propertyPattern: ElementPattern<string> | SymbolProperty
 
-  constructor(referencePattern: ReferencePattern<TReference> | TReference, propertyPattern: ElementPattern<string> | Property, options: Partial<PropertyReferencePatternOptions> = {}) {
+  constructor(referencePattern: ReferencePattern<TReference> | TReference | typeof PLACEHOLDER_SELF_REFERENCE, propertyPattern: ElementPattern<string> | Property, options: Partial<PropertyReferencePatternOptions> = {}) {
     super(`property`, options)
 
     this.referencePattern = referencePattern instanceof Reference ? new ReferencePattern(referencePattern.type, referencePattern.value) : referencePattern
@@ -47,6 +54,8 @@ export class PropertyReferencePattern<TReference extends Reference = Reference> 
   }
 
   override _match(propertyReference: PropertyReference): boolean {
+    assert(this.referencePattern !== PLACEHOLDER_SELF_REFERENCE, `PropertyReferencePattern cannot have a self reference as a reference pattern`)
+
     const referenceMatch = this.referencePattern.match(propertyReference.object)
 
     let propertyMatch = false
@@ -59,12 +68,16 @@ export class PropertyReferencePattern<TReference extends Reference = Reference> 
   override match(reference: PropertyReference): boolean {
     return super.match(reference)
   }
+
+  override _toString() {
+    return `(${this.referencePattern.toString()}, ${this.propertyPattern.toString()})`
+  }
 }
 
 // #region Proxies
 
 export const REFERENCE = (typePattern: BasePattern | Reference[`type`], valuePattern: BasePattern | Reference[`value`]) => new ReferencePattern(typePattern, valuePattern)
-export const PROPERTY = (referencePattern: ReferencePattern | Reference, propertyPattern: ElementPattern<string> | Property) => new PropertyReferencePattern(referencePattern, propertyPattern)
+export const PROPERTY = (referencePattern: ReferencePattern | Reference | typeof PLACEHOLDER_SELF_REFERENCE, propertyPattern: ElementPattern<string> | Property) => new PropertyReferencePattern(referencePattern, propertyPattern)
 
 // #endregion
 

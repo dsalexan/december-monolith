@@ -28,6 +28,17 @@ export class BasePattern {
 
     return this.negate ? !result : result
   }
+
+  toString() {
+    const negate = this.negate ? `!` : ``
+    const caseInsensitive = this.caseInsensitive ? `i` : ``
+
+    return `${negate}${caseInsensitive}${this._toString()}`
+  }
+
+  _toString() {
+    throw new Error(`Unimplemented toString`)
+  }
 }
 
 export interface BasePatternOptions {

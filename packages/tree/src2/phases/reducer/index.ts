@@ -54,7 +54,7 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
  * */
 
 export interface BaseReducerOptions {
-  ignoreTypes: TypeName[]
+  ignoreTypes?: TypeName[]
 }
 
 export type ReducerOptions = BaseReducerOptions & BaseProcessingOptions
@@ -77,6 +77,7 @@ export default class Reducer {
   _options(options: Partial<ReducerOptions>) {
     this.options = {
       logger: options.logger ?? _logger,
+      debug: options.debug ?? false,
       scope: options.scope!,
       ignoreTypes: options.ignoreTypes ?? [],
     }
@@ -171,7 +172,7 @@ export default class Reducer {
 
   /** Effectivelly process node + instruction */
   _processNodeInstruction(instruction: NodeInstruction, node: Node, { master, all: scope }: { master: MasterScope; all: Scope[] }): ProcessedNode {
-    const dontReduce = this.options.ignoreTypes.includes(node.type.name)
+    const dontReduce = this.options.ignoreTypes?.includes(node.type.name)
 
     if (instruction.protocol === `pass`) return node
     else if (instruction.protocol === `process-child`) return this._processNode(node.children.nodes[0])
@@ -197,7 +198,7 @@ export default class Reducer {
         const identifier = stringValue
         assert(this.environment.has(identifier), `Identifier "${identifier}" is not defined in Environment`)
 
-        stringValue = this.environment.get(identifier).value
+        stringValue = this.environment.get(identifier).getValue()
       }
 
       if (instruction.type === `any`) return stringValue

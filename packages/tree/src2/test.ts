@@ -121,6 +121,8 @@ expression = `$if(1 THEN 9 ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELS
 expression = `$if("AD:Teeth (Fangs)::level" = 1 THEN "imp" ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr"))`
 expression = `$if("AD:Teeth (Sharp Beak)::level" = 1 THEN "pi+" ELSE $if("AD:Teeth (Fangs)::level" = 1 THEN "imp" ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr")))`
 expression = `$if("AD:Teeth (Sharp Teeth)::level" = 1 THEN "cut" ELSE $if("AD:Teeth (Sharp Beak)::level" = 1 THEN "pi+" ELSE $if("AD:Teeth (Fangs)::level" = 1 THEN "imp" ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr"))))`
+//
+expression = `1 + SK:Teste`
 
 const options = defaultProcessingOptions({
   // general
@@ -203,12 +205,12 @@ semantic.print({ expression })
 
 // environment.print()
 
-simplify.process(semantic.ST, environment, SimplifyNRS, options.simplify)
-simplify.print({ expression: simplify.SST.expression() })
-console.log(` `)
+// simplify.process(semantic.ST, environment, SimplifyNRS, options.simplify)
+// simplify.print({ expression: simplify.SST.expression() })
+// console.log(` `)
 
-reducer.process(simplify.SST, environment, options.reducer)
-reducer.print({ expression: reducer.RT.expression() })
+// reducer.process(simplify.SST, environment, options.reducer)
+// reducer.print({ expression: reducer.RT.expression() })
 
 // resolver.process(semantic.ST, environment, options.resolver)
 // resolver.print({ expression: resolver.result.expression() })

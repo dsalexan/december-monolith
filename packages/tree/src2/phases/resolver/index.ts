@@ -47,6 +47,7 @@ export default class Resolver {
     this.options = {
       ...options,
       logger: options.logger ?? _logger,
+      debug: options.debug ?? false,
       scope: options.scope!,
       //
       SimplifyNRS: options.SimplifyNRS!,

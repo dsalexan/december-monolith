@@ -37,6 +37,10 @@ export default class SubTree {
     this.root = root
   }
 
+  get height() {
+    return this.root.height
+  }
+
   /** Inserts a node in subtree */
   insert(node: Node, options: Partial<InsertOptions> = {}) {
     // global.__DEBUG = true // COMMENT

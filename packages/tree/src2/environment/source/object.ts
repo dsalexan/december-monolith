@@ -17,7 +17,7 @@ export default class ObjectSource extends BaseSource {
   }
 
   public get(identifier: Identifier) {
-    if (identifier.type === `named`) return { name: identifier.name, value: this.object[identifier.name] }
+    if (identifier.type === `named`) return { name: identifier.name, getValue: () => this.object[identifier.name] }
 
     throw new Error(`Invalid identifier type "${identifier.type}" for object source getter`)
   }

@@ -39,6 +39,7 @@ export default class Semantic {
   _options(options: Partial<SemanticOptions>) {
     this.options = {
       logger: options.logger ?? _logger,
+      debug: options.debug ?? false,
       scope: options.scope!,
     }
 

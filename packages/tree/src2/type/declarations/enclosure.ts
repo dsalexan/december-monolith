@@ -181,7 +181,7 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
   .addReduce(
     (node, { master }) => CUSTOM(),
     function (instruction, node, { master }) {
-      const dontReduce = this.options.ignoreTypes.includes(node.type.name)
+      const dontReduce = this.options.ignoreTypes?.includes(node.type.name) // TODO: Implement this
 
       assert(node.type.syntactical!.arity === 3, `Conditional requires three operands`)
 

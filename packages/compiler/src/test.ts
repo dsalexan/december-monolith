@@ -1,7 +1,7 @@
 import ObjectManager from "./manager"
 import { SET } from "./mutation"
 import MutableObject from "./object"
-import { DEFAULT_STRATEGY } from "./strategy"
+import { DEFAULT_STRATEGY } from "./GCA"
 
 const rawObjects = [
   {
@@ -11,12 +11,18 @@ const rawObjects = [
       {
         id: `11`, //
         name: `Mode A`,
-        value: `1 + SK::TraitB`,
+        value: `1 + TR:Dos`,
       },
       {
         id: `12`, //
         name: `Mode B`,
-        bonus: [`+1 to SK::TraitB`],
+        bonus: [
+          {
+            target: `TR:Dos`,
+            affects: `level`,
+            value: `1`,
+          },
+        ],
       },
     ],
   },
@@ -32,16 +38,19 @@ const manager = new ObjectManager()
 for (const raw of rawObjects) {
   const object = manager.makeObject(raw.id) // create object
   manager.applyStrategy(object.reference(`id`), DEFAULT_STRATEGY) // assign strategy
-  manager.mutator.enqueue(object.reference(`id`), SET(`_.GCA`, raw)) // initialize data
+  object.update([SET(`_.GCA`, raw)]) // initialize data
 
   // initialize alternative source of data
-  if (raw.id === `1`) manager.mutator.enqueue(object.reference(`id`), SET(`_.INPUT`, { name: `ManualA` }))
+  if (raw.id === `1`) object.update([SET(`_.INPUT`, { name: `ManualA` })])
 }
 
 manager.mutator.run()
 
 const data = manager.objects.byID.get(`1`)!.data
 console.log(JSON.stringify(data, null, 2))
+
+const data2 = manager.objects.byID.get(`2`)!.data
+console.log(JSON.stringify(data2, null, 2))
 
 /**
  * 1. Enqueue initialization

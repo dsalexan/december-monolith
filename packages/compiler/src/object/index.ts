@@ -41,6 +41,8 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     this.data = Object.freeze(data)
   }
 
+  public metadata: Record<string, any> = {}
+
   constructor(manager: ObjectManager, id: ObjectID | typeof MUTABLE_OBJECT_RANDOM_ID = MUTABLE_OBJECT_RANDOM_ID) {
     super()
 
