@@ -100,7 +100,7 @@ export default class ObjectMutator {
     } else {
       logger
         .add(paint.grey(`[`))
-        .add(paint.yellow.dim(`unqueue/`))
+        .add(paint.yellow.dim(`unqueue`))
         .add(paint.grey(`] ${name} `))
         .add(commandIndex)
         .add(paint.gray(`/${queue.size - 1}`))

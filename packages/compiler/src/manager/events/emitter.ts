@@ -22,6 +22,7 @@ export interface ListenerFunctionContext<TEvent extends Event_Handle = Event_Han
   manager: ObjectManager
   event: TEvent
   listenerID: ListenerID
+  data: Record<string, any>
 }
 export type ListenerFunction = (context: ListenerFunctionContext) => void
 
@@ -112,6 +113,7 @@ export default class ObjectEventEmitter {
         manager: this.manager,
         event,
         listenerID: listener.id,
+        data: listeningEvent.data ?? {},
       }
 
       logger

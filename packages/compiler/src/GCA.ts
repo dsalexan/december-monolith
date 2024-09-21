@@ -93,7 +93,7 @@ export const DEFAULT_STRATEGY = new Strategy()
                   const propertyPatterns = missingReferenceIdentifiers.map(({ content }) => PROPERTY(REFERENCE(`alias`, content), `level`))
 
                   const proxy = strategy.proxy(object, manager.eventEmitter)
-                  proxy({ type: `update:property`, properties: propertyPatterns }, `compute:modes:process`).bindSignature([processorSignature])
+                  proxy({ type: `update:property`, properties: propertyPatterns, data: { index } }, `compute:modes:process`).bindSignature([processorSignature])
                 }
               }
             }
@@ -102,7 +102,7 @@ export const DEFAULT_STRATEGY = new Strategy()
               const target = bonus[0].target
 
               const proxy = strategy.proxy(object, manager.eventEmitter)
-              proxy({ type: `reference:indexed`, references: [REFERENCE(`alias`, target)] }, `compute:bonus`)
+              proxy({ type: `reference:indexed`, references: [REFERENCE(`alias`, target)], data: { modeIndex: index, bonusIndex: 0 } }, `compute:bonus`)
             }
 
             modes.push(mode)
@@ -121,12 +121,14 @@ export const DEFAULT_STRATEGY = new Strategy()
       fn: () => OVERRIDE(`name`, get(object.data, `_.INPUT.name`, object.data._.GCA.name)),
     })
   })
-  // TODO: Inject into context stuff about the match
-  .onUpdateProperty(`compute:modes:process`, [PROPERTY(PLACEHOLDER_SELF_REFERENCE, REGEX(/__.processing.(.*).signature/))], (object, strategy) => ({ manager }) => {
+  .onUpdateProperty(`compute:modes:process`, [PROPERTY(PLACEHOLDER_SELF_REFERENCE, REGEX(/__.processing.(.*).signature/))], (object, strategy) => ({ manager, data }) => {
     manager.mutator.enqueue(object.reference(`id`), {
       name: `compute:modes:process`,
       fn: () => {
-        const index = 0 // TODO: Get index from somewhere
+        const { index } = data
+
+        assert(!isNil(index), `Index "${index}" is not a number`)
+
         const path = `_.GCA.modes[${index}].value`
 
         const processorSignature = Signature.fromData(object.id, path, object.data)
@@ -164,7 +166,7 @@ export const DEFAULT_STRATEGY = new Strategy()
             const propertyPatterns = missingReferenceIdentifiers.map(({ content }) => PROPERTY(REFERENCE(`alias`, content), `level`))
 
             const proxy = strategy.proxy(object, manager.eventEmitter)
-            proxy({ type: `update:property`, properties: propertyPatterns }, `compute:modes:process`).bindSignature([processorSignature])
+            proxy({ type: `update:property`, properties: propertyPatterns, data: { index } }, `compute:modes:process`).bindSignature([processorSignature])
           }
 
           // nothing to set yet
@@ -181,15 +183,18 @@ export const DEFAULT_STRATEGY = new Strategy()
       },
     })
   })
-  .addFunction(`compute:bonus`, object => ({ manager, event }: ListenerFunctionContext<ReferenceIndexedEvent_Handle>) => {
+  .addFunction(`compute:bonus`, object => ({ manager, event, data }: ListenerFunctionContext<ReferenceIndexedEvent_Handle>) => {
     const [target] = manager.objects.getByReference(event.reference)
     if (!target) return
 
     manager.mutator.enqueue(event.reference, {
       name: `compute:bonus`,
       fn: () => {
-        const modeIndex = 1 // TODO: Get index from somewhere
-        const bonusIndex = 0
+        const { modeIndex, bonusIndex } = data
+
+        assert(!isNil(modeIndex), `Mode index "${modeIndex}" is not a number`)
+        assert(!isNil(bonusIndex), `Bonus index "${bonusIndex}" is not a number`)
+
         const mode = get(object.data, `_.GCA.modes[${modeIndex}]`)
 
         const bonus = parseInt(mode.bonus[bonusIndex].value)

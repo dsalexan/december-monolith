@@ -142,11 +142,13 @@ function fillEvent(event: Event_Listen, object: MutableObject): Event_Listen {
         if (property.referencePattern instanceof BasePattern) return property
         return PROPERTY(REFERENCE(`id`, object.id), property.propertyPattern)
       }),
+      data: event.data,
     }
   } else if (event.type === `reference:indexed`) {
     return {
       type: `reference:indexed`,
       references: event.references.map(reference => reference),
+      data: event.data,
     }
   }
 

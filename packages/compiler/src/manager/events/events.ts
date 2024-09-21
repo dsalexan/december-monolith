@@ -7,6 +7,11 @@ import { Signature, SignaturePattern, SignatureReference } from "./signature"
 
 export interface BaseEvent_Listen {
   type: string
+  data?: Record<string, any>
+}
+
+export interface BaseEvent_Handle {
+  type: string
 }
 
 export const EVENT_TYPES = [`update:property`, `reference:indexed`, `signature:added`, `signature:updated`] as const
@@ -34,22 +39,22 @@ export interface SignatureUpdatedEvent_Listen extends BaseEvent_Listen {
 
 export type Event_Listen = UpdatePropertyEvent_Listen | ReferenceIndexedEvent_Listen | SignatureAddedEvent_Listen | SignatureUpdatedEvent_Listen
 
-export interface UpdatePropertyEvent_Handle {
+export interface UpdatePropertyEvent_Handle extends BaseEvent_Handle {
   type: `update:property`
   property: ObjectPropertyReference
 }
 
-export interface ReferenceIndexedEvent_Handle {
+export interface ReferenceIndexedEvent_Handle extends BaseEvent_Handle {
   type: `reference:indexed`
   reference: ObjectReference
 }
 
-export interface SignatureAddedEvent_Handle {
+export interface SignatureAddedEvent_Handle extends BaseEvent_Handle {
   type: `signature:added`
   signature: SignatureReference
 }
 
-export interface SignatureUpdatedEvent_Handle {
+export interface SignatureUpdatedEvent_Handle extends BaseEvent_Handle {
   type: `signature:updated`
   id: string
   oldValue: string
