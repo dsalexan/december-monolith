@@ -42,7 +42,6 @@ export default class ObjectManager extends EventEmitter {
   public strictifyReference(reference: ObjectReference): StrictObjectReference {
     if (STRICT_OBJECT_TYPES.includes(reference.type as any)) return reference as StrictObjectReference
     else if (reference.type === `alias`) {
-      // TODO: Implement this, probably check gainst ObjectMap to find id
       const objectIDs = this.objects.byAlias[reference.value]
 
       assert(objectIDs.length === 1, `Multiple objects found for alias "${reference.value}"`)
@@ -64,6 +63,11 @@ export default class ObjectManager extends EventEmitter {
   public cascadeUpdate(reference: ObjectReference, properties: string[]) {
     const objects = this.objects.getByReference(reference)
 
+    // 0. Handle update of signatures
+    for (const object of objects) {
+      this.eventEmitter.handleSignatures(object)
+    }
+
     const referencedProperties: ObjectPropertyReference[] = []
     for (const object of objects) {
       const aliases = object.getAliases()
@@ -81,7 +85,6 @@ export default class ObjectManager extends EventEmitter {
     //      A object could be listening for changes in itself (OBJECT LEVEL)
     //      A object A could be listening for changes in object B (MANAGER LEVEL)
     for (const reference of referencedProperties) {
-      // TODO: We don't want to RUN the listener immediately, we want to QUEUE it first
       this.eventEmitter.emit({
         type: `update:property`,
         property: reference,

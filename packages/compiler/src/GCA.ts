@@ -2,7 +2,7 @@ import { get, isNil, set } from "lodash"
 
 import { ANY_PROPERTY, PROPERTY, PropertyReference, PropertyReferencePattern, REFERENCE, PLACEHOLDER_SELF_REFERENCE, Reference } from "@december/utils/access"
 import { OR } from "@december/utils/match/logical"
-import { REGEX } from "@december/utils/match/element"
+import { EQUALS, REGEX } from "@december/utils/match/element"
 import { BasePattern } from "@december/utils/match/base"
 
 import ObjectEventEmitter, { ListenerFunctionContext } from "./manager/events/emitter"
@@ -15,6 +15,7 @@ import makeProcessor, { Environment, ProcessedData, Processor } from "./tree"
 import { Event_Listen } from "./manager/events"
 import { Strategy } from "./strategy"
 import { ReferenceIndexedEvent_Handle } from "./manager/events/events"
+import { SIGNATURE, Signature } from "./manager/events/signature"
 
 /**
  * WHAT IS A STRATEGY?
@@ -71,10 +72,10 @@ export const DEFAULT_STRATEGY = new Strategy()
               //      i.e. "dynamic strategies" or somefin like that
               else {
                 const path = `_.GCA.modes[${index}].value`
-                const processorSignature = value
 
                 // 4.1. Store pre-processed tree (just signature, tree itself is metadata)
-                instructions.push(SET(`__.processing.['${path}'].signatures.processor`, processorSignature))
+                const processorSignature = new Signature(object.id, path, value)
+                instructions.push(processorSignature.instruction())
                 set(object.metadata, `processing['${path}'].processor`, processor)
 
                 // 4.2 Store "baseline" missing references (i.e. those references needed, at least initially, to finish processing the value)
@@ -90,9 +91,9 @@ export const DEFAULT_STRATEGY = new Strategy()
                 // 4.3 Proxy update:property to missing references into compute:modes
                 if (missingReferenceIdentifiers.length > 0) {
                   const propertyPatterns = missingReferenceIdentifiers.map(({ content }) => PROPERTY(REFERENCE(`alias`, content), `level`))
-                  // TODO: Remove this listener if processedValue's signature changes
+
                   const proxy = strategy.proxy(object, manager.eventEmitter)
-                  proxy({ type: `update:property`, properties: propertyPatterns }, `compute:modes:process`)
+                  proxy({ type: `update:property`, properties: propertyPatterns }, `compute:modes:process`).bindSignature([processorSignature])
                 }
               }
             }
@@ -121,12 +122,14 @@ export const DEFAULT_STRATEGY = new Strategy()
     })
   })
   // TODO: Inject into context stuff about the match
-  .onUpdateProperty(`compute:modes:process`, [PROPERTY(PLACEHOLDER_SELF_REFERENCE, REGEX(/__.processing.(.*).signatures.processor/))], (object, strategy) => ({ manager }) => {
+  .onUpdateProperty(`compute:modes:process`, [PROPERTY(PLACEHOLDER_SELF_REFERENCE, REGEX(/__.processing.(.*).signature/))], (object, strategy) => ({ manager }) => {
     manager.mutator.enqueue(object.reference(`id`), {
       name: `compute:modes:process`,
       fn: () => {
         const index = 0 // TODO: Get index from somewhere
         const path = `_.GCA.modes[${index}].value`
+
+        const processorSignature = Signature.fromData(object.id, path, object.data)
         const processor: Processor = get(object.metadata, `processing['${path}'].processor`)
 
         assert(processor, `Tree Processor not found for "${path}"`)
@@ -160,9 +163,8 @@ export const DEFAULT_STRATEGY = new Strategy()
           if (missingReferenceIdentifiers.length > 0) {
             const propertyPatterns = missingReferenceIdentifiers.map(({ content }) => PROPERTY(REFERENCE(`alias`, content), `level`))
 
-            // TODO: Remove this listener if processedValue's signature changes
             const proxy = strategy.proxy(object, manager.eventEmitter)
-            proxy({ type: `update:property`, properties: propertyPatterns }, `compute:modes:process`)
+            proxy({ type: `update:property`, properties: propertyPatterns }, `compute:modes:process`).bindSignature([processorSignature])
           }
 
           // nothing to set yet
@@ -173,7 +175,9 @@ export const DEFAULT_STRATEGY = new Strategy()
         const value = processedData.tree.expression()
 
         const computedPath = `modes[${index}].value`
-        return [OVERRIDE(computedPath, value)]
+
+        processorSignature.value = `aaaaa`
+        return [OVERRIDE(computedPath, value), processorSignature.instruction()]
       },
     })
   })

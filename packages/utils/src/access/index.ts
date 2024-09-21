@@ -2,7 +2,7 @@ import assert from "assert"
 
 export { PropertyReferencePattern, ReferencePattern, isReferencePattern, REFERENCE, PROPERTY, PLACEHOLDER_SELF_REFERENCE } from "./match"
 
-export class Reference<TType extends string = string, TValue extends string = string> {
+export class Reference<TType extends string = string, TValue = string> {
   type: TType
   value: TValue
 

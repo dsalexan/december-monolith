@@ -3,7 +3,7 @@ import { get, set } from "lodash"
 
 import { ANY_PROPERTY, PROPERTY, PropertyReference, PropertyReferencePattern, REFERENCE, PLACEHOLDER_SELF_REFERENCE } from "@december/utils/access"
 import { OR } from "@december/utils/match/logical"
-import { REGEX } from "@december/utils/match/element"
+import { ElementPattern, EQUALS, REGEX } from "@december/utils/match/element"
 import { BasePattern } from "@december/utils/match/base"
 
 import ObjectEventEmitter, { ListenerFunction, ListenerFunctionContext } from "./../manager/events/emitter"
@@ -14,6 +14,8 @@ import { Mutation } from "../mutation/mutation"
 import { MutationGenerator } from "../manager/mutator"
 import makeProcessor, { Environment, ProcessedData, Processor } from "../tree"
 import { Event_Listen } from "../manager/events"
+import { SIGNATURE, Signature, SignaturePattern } from "../manager/events/signature"
+import { SignatureUpdatedEvent_Handle } from "../manager/events/events"
 
 /**
  * WHAT IS A STRATEGY?
@@ -100,6 +102,34 @@ export class Strategy {
 
       const id = `${object.id}::(proxy):${name}`
       eventEmitter.on(fillEvent(event, object), { id, fn })
+
+      return {
+        bindSignature: (signatures: Signature[]) => {
+          const patterns = signatures.map(signature => SIGNATURE(signature.id, signature.value))
+          eventEmitter.on(
+            { type: `signature:updated`, signatures: patterns },
+            {
+              id: `${object.id}::(signature):${name}`,
+              fn: context => {
+                const signatureEvent = context.event as SignatureUpdatedEvent_Handle
+
+                const signatures = patterns.filter(pattern => pattern.match(signatureEvent.id))
+
+                // all relevant signatures should have the same value
+                const match = signatures.map(pattern => pattern.valuePattern.match(signatureEvent.value))
+
+                if (!match.every(Boolean)) {
+                  eventEmitter.off(event.type, id) // remove proxy listener event
+                  eventEmitter.off(signatureEvent.type, context.listenerID) // remove signature listener event (this one)
+
+                  // unqueue all related commands
+                  context.manager.mutator.unqueue(object.reference(`id`), name)
+                }
+              },
+            },
+          )
+        },
+      }
     }
   }
 }

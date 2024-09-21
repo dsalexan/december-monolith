@@ -31,6 +31,7 @@ export default class ObjectMutator {
   public queues: Map<string, Map<string, MutatorCommand>> = new Map()
   //
   public live: {
+    queueIndex: number
     queue: string
     command: number
   } | null = null
@@ -52,6 +53,68 @@ export default class ObjectMutator {
     logger.add(paint.grey(`[queue] Making `)).add(paint.bold(name)).info()
 
     return name
+  }
+
+  public unqueue(object: ObjectReference, generatorName: MutationGenerator[`name`]) {
+    if (this.queues.size === 0) return
+
+    const queues = [...this.queues.keys()]
+    for (const [queueIndex, queue] of queues.entries()) {
+      if (this.live && queueIndex < this.live.queueIndex) continue
+
+      this._unqueue(queue, object, generatorName)
+    }
+  }
+
+  public _unqueue(name: string, object: ObjectReference, generatorName: MutationGenerator[`name`]) {
+    assert(this.queues.has(name), `Queue "${name}" does not exist`)
+
+    const queue = this.queues.get(name)!
+    const currentCommandIndex = this.live?.queue === name ? this.live.command : -1
+
+    let target: StrictObjectReference = this.manager.strictifyReference(object)
+    const commandID = `${target.toString()}:${generatorName}`
+
+    const commandIndex = Array.from(queue.keys()).findIndex(id => id === commandID)
+
+    if (commandIndex === -1) return
+
+    if (commandIndex <= currentCommandIndex) {
+      logger
+        .add(paint.grey(`[`))
+        .add(paint.red.dim(`unqueue/`))
+        .add(paint.red.dim.bold(`skip`))
+        .add(paint.grey(`] ${name} `))
+        .add(commandIndex)
+        .add(paint.gray(`/${queue.size - 1}`))
+
+      logger
+        .add(` `)
+        .add(paint.bold(object.toString()))
+        .add(` `) //
+        .add(paint.blue.bold.dim(generatorName))
+        .add(` `)
+        .add(paint.italic.grey(`(command was already executed)`))
+
+      logger.info()
+    } else {
+      logger
+        .add(paint.grey(`[`))
+        .add(paint.yellow.dim(`unqueue/`))
+        .add(paint.grey(`] ${name} `))
+        .add(commandIndex)
+        .add(paint.gray(`/${queue.size - 1}`))
+
+      logger
+        .add(` `)
+        .add(paint.bold(object.toString()))
+        .add(` `) //
+        .add(paint.blue.bold.dim(generatorName))
+
+      logger.info()
+
+      queue.delete(commandID)
+    }
   }
 
   /** Qeueue a mutation for an object */
@@ -115,8 +178,9 @@ export default class ObjectMutator {
   public run() {
     logger.add(paint.grey(`[run] ${this.queues.size} queues`)).info()
 
+    let queueIndex = 0
     for (const [name, queue] of this.queues.entries()) {
-      this.live = { queue: name, command: -1 }
+      this.live = { queueIndex: queueIndex++, queue: name, command: -1 }
 
       const commands = [...queue.entries()]
       let cursor = -1
