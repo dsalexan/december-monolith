@@ -12,8 +12,9 @@ import { Metadata } from "./schema"
 import CharacterReactiveStrategy from "./character/strategy"
 import TraitReactiveStrategy from "./trait/strategy"
 import { RawTrait, Trait } from "./trait/schema/raw"
+import { AnyObject } from "tsdef"
 
-async function readXMLFile(path: string): Promise<unknown> {
+async function readXMLFile(path: string): Promise<AnyObject> {
   const content = fs.readFileSync(path, `utf8`)
 
   const parser = new xml2js.Parser(/* options */)

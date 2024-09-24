@@ -1,5 +1,7 @@
 // tsconfig => "module": "commonjs",
 
+import Builder from "./builder/index"
+
 export type { default as ILogger } from "./interface"
 
 // export { default as WinstonLogger } from "./winston"
@@ -14,3 +16,11 @@ export { default as paint } from "./paint"
 export type { Paint as Paint } from "./paint"
 
 export * as Grid from "./grid"
+
+export class WithLogger {
+  logger: Builder
+
+  constructor(logger: Builder) {
+    this.logger = logger
+  }
+}

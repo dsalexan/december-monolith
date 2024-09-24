@@ -171,5 +171,17 @@
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },
+    
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "v4 (simulator)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\apps\\december-simulator\\src\\index.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
   ]
 }

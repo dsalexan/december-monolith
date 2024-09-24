@@ -218,38 +218,4 @@ export default class ObjectEventEmitter {
       }
     }
   }
-
-  // onSignatureUpdated(reference: SignatureReference, removed = false) {
-  //   // if signature's value was changed, remove all listeners depending on ANY OTHER (name, value) tuple
-  //   const signatureID = `${reference.value.objectID}::${reference.value.name}`
-  //   const listeners = this.listenersBySignature[signatureID]
-
-  //   for (const [eventType, listenerID] of listeners) {
-  //     const [event, listener] = this.listeners[eventType]?.get(listenerID) ?? []
-
-  //     // if signature's value is the same, bail out
-  //     debugger
-  //     const eventSignatureValue = event?.signature?.value.value
-  //     const newSignatureValue = reference.value.value
-  //     if (!removed && eventSignatureValue === newSignatureValue) continue
-
-  //     logger
-  //       .add(paint.grey(`[`))
-  //       .add(paint.red.dim(`signature/off`))
-  //       .add(paint.grey(`] ${eventType} `))
-  //       .add(paint.bold(listenerID.toString()))
-  //       .add(paint.grey(` `))
-  //       .add(paint.white.bold.dim(reference.value.name))
-
-  //     if (!removed) logger.add(paint.grey.dim(` "${eventSignatureValue}" !== "${newSignatureValue}"`))
-  //     else logger.add(paint.grey.italic.dim(` (signature removed)`))
-
-  //     logger.info()
-
-  //     this.off(eventType, listenerID)
-
-  //     // TODO: Probably move unqueuing to strategy (since eventEmitter shouldnt care about mutator stuff)
-  //     // this.manager.mutator.dequeue(new Reference(`id`, reference.value.objectID), listenerID)
-  //   }
-  // }
 }
