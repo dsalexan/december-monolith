@@ -33,7 +33,7 @@ export default class ObjectMap extends EventEmitter {
 
     // 1. OBJECT ID -> OBJECT
     this.byID.set(object.id, object)
-    if (!options.skipReferenceEvents) this.fire(`reference:add`, { reference: new Reference(`id`, object.id), object })
+    if (!options.skipReferenceEvents) this.fire(`reference:added`, { reference: new Reference(`id`, object.id), object })
 
     this.update(object, options)
   }
@@ -55,14 +55,14 @@ export default class ObjectMap extends EventEmitter {
           if (index !== -1) this.byAlias[alias].splice(index, 1)
           if (this.byAlias[alias].length === 0) delete this.byAlias[alias]
 
-          if (!options.skipReferenceEvents) this.fire(`reference:remove`, { reference: new Reference(`alias`, alias), object })
+          if (!options.skipReferenceEvents) this.fire(`reference:removed`, { reference: new Reference(`alias`, alias), object })
         }
 
         for (const alias of ADD) {
           if (!this.byAlias[alias]) this.byAlias[alias] = []
           this.byAlias[alias].push(object.id)
 
-          if (!options.skipReferenceEvents) this.fire(`reference:add`, { reference: new Reference(`alias`, alias), object })
+          if (!options.skipReferenceEvents) this.fire(`reference:added`, { reference: new Reference(`alias`, alias), object })
         }
 
         // 1.2. OBJECT ID -> ALIASES
@@ -104,7 +104,7 @@ export default class ObjectMap extends EventEmitter {
     } else if (reference.type === `alias`) {
       const aliases = this.byAlias[reference.value]
 
-      if (aliases.length === 0) throw new Error(`Alias "${id}" not found`)
+      if (!aliases?.length) return []
 
       id = [...aliases]
     }
@@ -115,6 +115,10 @@ export default class ObjectMap extends EventEmitter {
   getByStrictReference(reference: StrictObjectReference) {
     assert(STRICT_OBJECT_TYPES.includes(reference.type), `Invalid strict reference type "${reference.type}"`)
 
-    return this.getByReference(reference)[0]
+    const [object] = this.getByReference(reference)
+
+    assert(object, `Object not found for reference "${reference.toString()}"`)
+
+    return object
   }
 }

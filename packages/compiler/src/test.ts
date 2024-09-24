@@ -12,6 +12,7 @@ const rawObjects = [
         id: `11`, //
         name: `Mode A`,
         value: `1 + TR:Dos`,
+        // value: `1 + TR:Dos + TR:Trese`,
       },
       {
         id: `12`, //

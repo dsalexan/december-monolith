@@ -290,7 +290,7 @@ export default class Reducer {
     if (result instanceof Node) {
       tree.root.children.add(result)
     } else if (isString(result) || isNumber(result) || isBoolean(result)) {
-      const type = getType(typing.getType(result)!)
+      const type = getType(typing.guessType(result)!)
       const literal = Node.fromToken(result.toString(), type)
 
       tree.root.children.add(literal)

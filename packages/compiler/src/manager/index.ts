@@ -13,6 +13,7 @@ import ObjectEventEmitter from "./events/emitter"
 import { Strategy } from "../strategy"
 import assert from "assert"
 import { ObjectPropertyReference } from "../object/property"
+import { ReferenceEventTrace } from "./events/events"
 
 export default class ObjectManager extends EventEmitter {
   public objects: ObjectMap = new ObjectMap()
@@ -22,13 +23,15 @@ export default class ObjectManager extends EventEmitter {
   constructor() {
     super()
 
-    this.objects.on(`reference:add`, ({ data: { reference, object } }: { data: { reference: ObjectReference; object: MutableObject } }) => {
-      this.eventEmitter.emit({ type: `update:property`, property: new PropertyReference(reference, ANY_PROPERTY) })
-      this.eventEmitter.emit({ type: `reference:indexed`, reference: reference })
-    })
+    this.objects.on(`reference:added`, ({ data: { reference, object } }: { data: { reference: ObjectReference; object: MutableObject } }) => {
+      const trace: ReferenceEventTrace = Object.freeze({
+        type: `reference`,
+        action: `added`,
+        reference,
+      })
 
-    this.objects.on(`reference:removed`, ({ data: { reference, object } }: { data: { reference: ObjectReference; object: MutableObject } }) => {
-      this.eventEmitter.emit({ type: `update:property`, property: new PropertyReference(reference, ANY_PROPERTY) })
+      this.eventEmitter.emit({ type: `update:property`, property: new PropertyReference(reference, ANY_PROPERTY), trace })
+      this.eventEmitter.emit({ type: `reference:indexed`, reference: reference, trace })
     })
   }
 
@@ -65,7 +68,14 @@ export default class ObjectManager extends EventEmitter {
 
     // 0. Handle update of signatures
     for (const object of objects) {
-      this.eventEmitter.handleSignatures(object)
+      this.eventEmitter.handleSignatures(
+        object,
+        Object.freeze({
+          type: `cascade-update`,
+          object: reference,
+          properties: properties,
+        }),
+      )
     }
 
     const referencedProperties: ObjectPropertyReference[] = []
@@ -84,10 +94,15 @@ export default class ObjectManager extends EventEmitter {
     // 3. Warn listeners of such changes
     //      A object could be listening for changes in itself (OBJECT LEVEL)
     //      A object A could be listening for changes in object B (MANAGER LEVEL)
-    for (const reference of referencedProperties) {
+    for (const propertyReference of referencedProperties) {
       this.eventEmitter.emit({
         type: `update:property`,
-        property: reference,
+        property: propertyReference,
+        trace: {
+          type: `cascade-update`,
+          object: reference,
+          properties: [propertyReference.property],
+        },
       })
     }
   }

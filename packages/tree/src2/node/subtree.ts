@@ -1,7 +1,7 @@
 import assert from "assert"
-import { last, subtract } from "lodash"
+import { isBoolean, isNumber, isString, last, subtract } from "lodash"
 
-import { Range, Interval, Point } from "@december/utils"
+import { Range, Interval, Point, typing } from "@december/utils"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
@@ -19,6 +19,7 @@ import { NodeCloningOptions } from "./node/factories"
 import { ProvidedString, StringProvider } from "../string"
 import { NodeCollectionOperationOptions } from "./node/collection"
 import { KEYWORD_GROUP } from "../type/declarations/keyword"
+import { getType } from "../type"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -199,6 +200,25 @@ export default class SubTree {
     })
 
     return expression
+  }
+
+  /** Verify and return resulting value from subtree */
+  value(recompileProviders = false) {
+    const result = this.expression(recompileProviders)
+
+    if (this.height === 2 && this.root.children.length === 1) {
+      const type = this.root.children.get(0).type
+      let targetType: typing.VariableType | null = null
+
+      if (type.name === `string`) targetType = `string`
+      else if (type.name === `number`) targetType = `number`
+      else if (type.name === `boolean`) targetType = `boolean`
+      else throw new Error(`Unimplemented type "${type.name}"`)
+
+      if (targetType) return typing.asType(result, targetType)
+    }
+
+    return result
   }
 
   // /** Recalculate ranges and expression */

@@ -1,6 +1,6 @@
 import assert from "assert"
 
-export { PropertyReferencePattern, ReferencePattern, isReferencePattern, REFERENCE, PROPERTY, PLACEHOLDER_SELF_REFERENCE } from "./match"
+export { PropertyReferencePattern, ReferencePattern, isReferencePattern, REFERENCE, PROPERTY, SELF_PROPERTY, PLACEHOLDER_SELF_REFERENCE } from "./match"
 
 export class Reference<TType extends string = string, TValue = string> {
   type: TType
@@ -46,10 +46,14 @@ export class PropertyReference<TReference extends Reference = Reference> {
   }
 
   toString() {
-    let property = this.property.toString()
-    if (property === ANY_PROPERTY.toString()) property = `*`
+    return PropertyReference.toString(this.object, this.property)
+  }
 
-    return `${this.object.toString()}:${property}`
+  static toString(object: Reference, property: Property) {
+    let _property = property.toString()
+    if (property === ANY_PROPERTY) _property = `*`
+
+    return `${object.toString()}:${_property}`
   }
 
   isEqual(other: PropertyReference) {

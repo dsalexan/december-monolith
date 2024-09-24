@@ -5,8 +5,12 @@ import { BaseSource, ObjectSource } from "./source"
 
 import churchill, { Block, paint, Paint } from "../logger"
 import { IdentifiedValue, BaseIdentifier, NamedIdentifier, Identifier } from "./identifier"
+import { ObjectSourceData } from "./source/object"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
+
+export { Simbol } from "./symbolTable"
+export { ObjectSourceData } from "./source/object"
 
 export default class Environment {
   public sources: Map<string, BaseSource> = new Map()
@@ -21,10 +25,10 @@ export default class Environment {
     this.sources.set(source.name, source)
   }
 
-  addObjectSource(name: string, object: Record<string, any>) {
+  addObjectSource(name: string, data: ObjectSourceData) {
     const source = new ObjectSource(name)
 
-    for (const [key, value] of Object.entries(object)) {
+    for (const [key, value] of Object.entries(data)) {
       source.object[key] = value
     }
 

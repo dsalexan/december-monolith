@@ -1,10 +1,12 @@
 import { BaseIdentifier, Identifier } from "../identifier"
 import BaseSource from "./base"
 
+export type ObjectSourceData = Record<string, any>
+
 export default class ObjectSource extends BaseSource {
   declare type: `object`
 
-  object: Record<string, any> = {}
+  object: ObjectSourceData = {}
 
   constructor(name: string) {
     super(`object`, name)

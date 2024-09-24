@@ -1,6 +1,7 @@
 import { isArray, isBoolean, isFunction, isNil, isNumber, isObjectLike, isString, isSymbol } from "lodash"
 import { VariableType } from "./types"
 import { AnyObject } from "tsdef"
+import assert from "assert"
 
 export type { ITyped } from "./custom"
 export { getTypes, isOfType, isTyped } from "./custom"
@@ -39,6 +40,21 @@ export function getType(value: unknown): VariableType | undefined {
 
   // ERROR: Unimplemented
   return undefined
+}
+
+export function asType(value: unknown, type: VariableType): Primitive {
+  if (type === `string`) return String(value)
+  else if (type === `number`) {
+    const number = Number(value)
+
+    assert(!isNaN(number), `Value "${value}" is not a number`)
+
+    return number
+  } else if (type === `boolean`) return isNil(value) || String(value) === `0` || String(value).toLowerCase() === `false` ? false : Boolean(value)
+  else if (type === `undefined`) return undefined
+  else if (type === `null`) return null
+
+  throw new Error(`Type "${type}" not implemented`)
 }
 
 export function guessType(value: unknown): VariableType | undefined {

@@ -8,7 +8,7 @@ import { getDeepProperties, isPrimitive } from "@december/utils/typing"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
-import { Mutation } from "../mutation/mutation"
+import { DeleteMutation, doesMutationHaveValue, Mutation, OverrideMutation, SetMutation } from "../mutation/mutation"
 import type ObjectManager from "../manager"
 import assert from "assert"
 import { AnyObject } from "tsdef"
@@ -82,10 +82,23 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
       if (instruction.type === `skip`) continue
       else if (instruction.type === `mutate`) {
         changedProperties.push(mutation.property) // root property was changed
-        // check all deep properties inside property
-        if (!isPrimitive(mutation.value)) {
-          const deepProperties = getDeepProperties(mutation.value as any)
-          changedProperties.push(...deepProperties.map(property => `${mutation.property}.${property}`))
+
+        // get deep properties of old value
+        if (!isPrimitive(instruction.oldValue)) {
+          const deepProperties = getDeepProperties(instruction.oldValue as AnyObject)
+          for (const property of deepProperties) {
+            const fullProperty = `${mutation.property}.${property}`
+            if (!changedProperties.includes(fullProperty)) changedProperties.push(fullProperty)
+          }
+        }
+
+        // get deep properties of new value
+        if (doesMutationHaveValue(mutation) && !isPrimitive(mutation.value)) {
+          const deepProperties = getDeepProperties(mutation.value as AnyObject)
+          for (const property of deepProperties) {
+            const fullProperty = `${mutation.property}.${property}`
+            if (!changedProperties.includes(fullProperty)) changedProperties.push(fullProperty)
+          }
         }
       }
       //
@@ -112,12 +125,13 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
 
   protected mutate(mutableData: TData, mutation: Mutation): MutationInstruction {
     if (mutation.type === `SET` || mutation.type === `OVERRIDE`) return this.SET(mutableData, mutation)
+    else if (mutation.type === `DELETE`) return this.DELETE(mutableData, mutation)
 
     // @ts-ignore
     throw new Error(`Method "${mutation.type}" not implemented.`)
   }
 
-  protected SET(mutableData: TData, { type, property, value }: Mutation): MutationInstruction {
+  protected SET(mutableData: TData, { type, property, value }: SetMutation | OverrideMutation): MutationInstruction {
     const currentValue = get(mutableData, property)
 
     if (type !== `OVERRIDE`) assert(currentValue === undefined, `Property "${property}" already exists in data`)
@@ -125,7 +139,15 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
 
     set(mutableData, property, value) // mutate mutableData
 
-    return { type: `mutate` }
+    return { type: `mutate`, oldValue: currentValue }
+  }
+
+  protected DELETE(mutableData: TData, { type, property }: DeleteMutation): MutationInstruction {
+    const currentValue = get(mutableData, property)
+
+    delete mutableData[property] // mutate mutableData
+
+    return { type: `mutate`, oldValue: currentValue }
   }
 }
 
@@ -139,6 +161,7 @@ export interface SkipMutationInstruction extends BaseMutationInstruction {
 
 export interface MutateMutationInstruction extends BaseMutationInstruction {
   type: `mutate`
+  oldValue: unknown
 }
 
 export type MutationInstruction = SkipMutationInstruction | MutateMutationInstruction

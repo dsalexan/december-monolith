@@ -7,7 +7,7 @@ import { Reference } from "@december/utils/access"
 import type MutableObject from "../../object"
 
 import type ObjectManager from ".."
-import { Event_Handle, Event_Listen, EventType, matchListeners, ReferenceIndexedEvent_Handle, UpdatePropertyEvent_Handle, UpdatePropertyEvent_Listen } from "./events"
+import { Event_Handle, Event_Listen, EventDispatched, EventTrace, EventType, matchListeners, ReferenceIndexedEvent_Handle, UpdatePropertyEvent_Handle, UpdatePropertyEvent_Listen } from "./events"
 
 import churchill, { Block, paint, Paint } from "../../logger"
 import { Signature, SignatureReference } from "./signature"
@@ -17,10 +17,10 @@ export const logger = churchill.child(`node`, undefined, { separator: `` })
 
 export type ListenerID = string
 
-export interface ListenerFunctionContext<TEvent extends Event_Handle = Event_Handle> {
+export interface ListenerFunctionContext<TEventHandle extends Event_Handle = Event_Handle, TEventListen extends Event_Listen = Event_Listen> {
   emitter: ObjectEventEmitter
   manager: ObjectManager
-  event: TEvent
+  event: EventDispatched<TEventHandle, TEventListen>
   listenerID: ListenerID
   data: Record<string, any>
 }
@@ -51,11 +51,13 @@ export default class ObjectEventEmitter {
 
     logger
       .add(paint.grey(`[`))
-      .add(paint.blue.dim(`on`))
+      .add(paint.blue.dim(`listen`))
       .add(paint.grey(`] ${event.type} `))
 
     if (event.type === `update:property`) logger.add(paint.white(event.properties.join(`, `)))
     else if (event.type === `reference:indexed`) logger.add(paint.white(event.references.join(`, `)))
+    else if (event.type === `signature:updated`) logger.add(paint.white(event.signatures.join(`, `)))
+    else throw new Error(`Unimplemented event type "${event.type}"`)
 
     logger //
       .add(paint.grey(` `))
@@ -88,6 +90,22 @@ export default class ObjectEventEmitter {
 
     listenersOfType.delete(listenerID)
 
+    logger
+      .add(paint.grey(`[`))
+      .add(paint.blue.dim(`unlisten`))
+      .add(paint.grey(`] ${event} `))
+
+    if (listener[0].type === `update:property`) logger.add(paint.white(listener[0].properties.join(`, `)))
+    else if (listener[0].type === `reference:indexed`) logger.add(paint.white(listener[0].references.join(`, `)))
+    else if (listener[0].type === `signature:updated`) logger.add(paint.white(listener[0].signatures.join(`, `)))
+    else throw new Error(`Unimplemented event type "${event}"`)
+
+    logger //
+      .add(paint.grey(` `))
+      .add(paint.blue.bold.dim(listenerID))
+
+    logger.info()
+
     // // Remove from signature index
     // if (listener[0].signature) {
     //   const signatureID = `${listener[0].signature.value.objectID}::${listener[0].signature.value.name}`
@@ -105,13 +123,13 @@ export default class ObjectEventEmitter {
     const listenersOfType = this.listeners[event.type]
     if (!listenersOfType) return false
 
-    const listeners = matchListeners(event, Array.from(listenersOfType.values()))
+    const listeners = matchListeners(event as Event_Handle, Array.from(listenersOfType.values()))
 
     for (const [listeningEvent, listener] of listeners) {
       const context: ListenerFunctionContext = {
         emitter: this,
         manager: this.manager,
-        event,
+        event: { ...event, dispatcher: listeningEvent },
         listenerID: listener.id,
         data: listeningEvent.data ?? {},
       }
@@ -123,6 +141,26 @@ export default class ObjectEventEmitter {
 
       if (event.type === `update:property`) logger.add(paint.white(event.property))
       else if (event.type === `reference:indexed`) logger.add(paint.white(event.reference))
+      else if (event.type === `signature:added`)
+        logger
+          .add(paint.grey.dim(`(`))
+          .add(paint.white(event.signature.value.id))
+          .add(paint.grey.dim(`)`))
+          .add(paint.grey.dim(` "`))
+          .add(paint.grey(`${event.signature.value.value}`))
+          .add(paint.grey.dim(`"`))
+      else if (event.type === `signature:updated`)
+        logger
+          .add(paint.grey(`(`))
+          .add(paint.white(event.id)) //
+          .add(paint.grey(`)`))
+          .add(paint.grey.dim(` "`))
+          .add(paint.grey(event.oldValue))
+          .add(paint.grey.dim(`"`))
+          .add(paint.grey.dim(` -> `))
+          .add(paint.grey.dim(`"`))
+          .add(paint.white(event.value))
+          .add(paint.grey.dim(`"`))
 
       logger //
         .add(paint.grey(` `))
@@ -136,7 +174,7 @@ export default class ObjectEventEmitter {
     return true
   }
 
-  handleSignatures(object: MutableObject) {
+  handleSignatures(object: MutableObject, trace: EventTrace) {
     const indexedSignatures = this.signatures[object.id] ?? {}
     const signatures = (get(object.data, Signature.basePath) as Record<string, string>) ?? {}
 
@@ -155,7 +193,7 @@ export default class ObjectEventEmitter {
           const oldValue = indexedSignatures[name]
           this.signatures[object.id][name] = value
 
-          this.emit({ type: `signature:updated`, id: reference.value.id, value, oldValue })
+          this.emit({ type: `signature:updated`, id: reference.value.id, value, oldValue, trace })
           // this.onSignatureUpdated(reference)
         }
       } else {
@@ -164,7 +202,7 @@ export default class ObjectEventEmitter {
         this.signatures[object.id] ??= {}
         this.signatures[object.id][name] = value
 
-        this.emit({ type: `signature:added`, signature: reference })
+        this.emit({ type: `signature:added`, signature: reference, trace })
       }
     }
 
@@ -175,7 +213,7 @@ export default class ObjectEventEmitter {
 
       if (!signatures[name]) {
         // signature was removed
-        this.emit({ type: `signature:updated`, id, oldValue: value, value: undefined })
+        this.emit({ type: `signature:updated`, id, oldValue: value, value: undefined, trace })
         // this.onSignatureUpdated(reference, true)
       }
     }
@@ -211,7 +249,7 @@ export default class ObjectEventEmitter {
   //     this.off(eventType, listenerID)
 
   //     // TODO: Probably move unqueuing to strategy (since eventEmitter shouldnt care about mutator stuff)
-  //     // this.manager.mutator.unqueue(new Reference(`id`, reference.value.objectID), listenerID)
+  //     // this.manager.mutator.dequeue(new Reference(`id`, reference.value.objectID), listenerID)
   //   }
   // }
 }

@@ -70,6 +70,7 @@ export class PropertyReferencePattern<TReference extends Reference = Reference> 
   }
 
   override _toString() {
+    if (this.referencePattern === PLACEHOLDER_SELF_REFERENCE) return `(self, ${this.propertyPattern.toString()})`
     return `(${this.referencePattern.toString()}, ${this.propertyPattern.toString()})`
   }
 }
@@ -78,6 +79,7 @@ export class PropertyReferencePattern<TReference extends Reference = Reference> 
 
 export const REFERENCE = (typePattern: BasePattern | Reference[`type`], valuePattern: BasePattern | Reference[`value`]) => new ReferencePattern(typePattern, valuePattern)
 export const PROPERTY = (referencePattern: ReferencePattern | Reference | typeof PLACEHOLDER_SELF_REFERENCE, propertyPattern: ElementPattern<string> | Property) => new PropertyReferencePattern(referencePattern, propertyPattern)
+export const SELF_PROPERTY = (propertyPattern: ElementPattern<string> | Property) => PROPERTY(PLACEHOLDER_SELF_REFERENCE, propertyPattern)
 
 // #endregion
 
