@@ -7,12 +7,12 @@ import { NIL, STRING_COLLECTION } from "../../type/declarations/literal"
 import Node, { PrintOptions, print, SubTree } from "../../node"
 import { postOrder } from "../../node/traversal"
 
-import { RuleSet, process } from "../../nrs"
+import { RuleSet, NodeReplacementSystem } from "../../nrs"
 
 import type { BaseProcessingOptions } from "../../options"
 import SymbolTable from "../../environment/symbolTable"
 
-export { default as NRS } from "./nrs"
+export { RULESET_SEMANTIC } from "./nrs"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -28,8 +28,9 @@ export default class Semantic {
   private AST: SubTree
   public ST: SubTree
   //
-  private NRS: RuleSet[]
+  private rulesets: RuleSet[]
   //
+  private NRS: NodeReplacementSystem
 
   constructor(grammar: Grammar) {
     this.grammar = grammar
@@ -47,13 +48,13 @@ export default class Semantic {
   }
 
   /** Process tokenized expression into an Abstract Syntax Tree (AST) */
-  process(AST: SubTree, NRS: RuleSet[], options: Partial<SemanticOptions> = {}) {
+  process(AST: SubTree, rulesets: RuleSet[], options: Partial<SemanticOptions> = {}) {
     this._options(options) // default options
 
     this.AST = AST
 
-    this.NRS = [...NRS]
-    for (const ruleset of this.grammar.getRuleSets()) this.NRS.push(ruleset)
+    this.rulesets = [...rulesets]
+    for (const ruleset of this.grammar.getRuleSets()) this.rulesets.push(ruleset)
 
     this._process()
 
@@ -61,10 +62,22 @@ export default class Semantic {
   }
 
   _processAbstractSyntaxTree(AST: SubTree) {
-    const MAX_STACK_OVERFLOW = this.NRS.length * 10 + 100
+    const MAX_STACK_OVERFLOW = this.rulesets.length * 10 + 100
+
+    this.NRS = new NodeReplacementSystem()
+    this.NRS.setRulesets(this.rulesets)
 
     const tree = AST.clone()
-    process(this.NRS, tree.root, { scopeManager: this.options.scope, grammar: this.grammar, mutationTag: `semantic`, run: 1 })
+    this.NRS.process(tree.root, {
+      scope: this.options.scope,
+      grammar: this.grammar,
+      //
+      tag: `semantic`,
+      run: 1,
+    })
+
+    tree.root.refreshIndexing()
+    tree.expression()
 
     return tree
   }
@@ -89,6 +102,8 @@ export default class Semantic {
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
 
     print(this.ST.root, options)
+
+    this.NRS.print(`semantic`)
 
     // 2. Build and print Symbol Table
     const symbolTable = SymbolTable.from(this.ST, this.options.scope)

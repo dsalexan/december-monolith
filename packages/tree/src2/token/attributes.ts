@@ -1,5 +1,7 @@
 // #region Lexical Attributes
 
+import { IUnit } from "@december/utils/unit"
+
 import type Node from "../node"
 
 export interface LexicalAttributes {

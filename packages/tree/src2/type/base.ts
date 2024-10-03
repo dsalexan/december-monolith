@@ -10,12 +10,13 @@ import SyntacticalRule, { defaultSyntacticalRule, SyntacticalRuleAdder, Syntacti
 import SemanticalRule, { SemanticalRuleAdder, SemanticalRuleDeriver } from "./rules/semantical"
 import ReduceRule, { ReduceRuleAdder } from "./rules/reducer"
 import assert from "assert"
+import { MaybeUndefined } from "tsdef"
 
 type Maybe<T> = T | undefined
 
 export type TypeID = `structural` | `literal` | `whitespace` | `separator` | `enclosure` | `operator` | `identifier` | `composite` | `keyword`
 
-export type TypeModule = `default` | `operand` | `logical` | `arithmetic` | `wrapper` | `context:break` | `identifier`
+export type TypeModule = `default` | `operand` | `literal:like` | `logical` | `arithmetic` | `wrapper` | `context:break` | `identifier` | `numeric` | `quantity:numerical-value`
 
 export default class Type {
   public id: TypeID
@@ -60,19 +61,19 @@ export default class Type {
     this.addReduce = ReduceRuleAdder
   }
 
-  get lexical() {
+  get lexical(): MaybeUndefined<LexicalRule> {
     return this._lexical
   }
 
-  get syntactical() {
+  get syntactical(): MaybeUndefined<SyntacticalRule> {
     return this._syntactical ?? defaultSyntacticalRule(this)
   }
 
-  get semantical() {
+  get semantical(): MaybeUndefined<SemanticalRule> {
     return this._semantical
   }
 
-  get reduce() {
+  get reduce(): MaybeUndefined<ReduceRule> {
     return this._reduce
   }
 
@@ -123,6 +124,11 @@ export default class Type {
     }
 
     return sorted
+  }
+
+  // UTILS
+  isLiteralLike() {
+    return this.id === `literal` || this.modules.includes(`literal:like`)
   }
 }
 

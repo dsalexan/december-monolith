@@ -45,3 +45,13 @@ export interface BasePatternOptions {
   negate?: boolean
   caseInsensitive?: boolean
 }
+
+// #region FACTORIES
+
+export function NOT<TPattern extends BasePattern>(pattern: TPattern): TPattern {
+  pattern.negate = !pattern.negate
+
+  return pattern
+}
+
+// #endregion

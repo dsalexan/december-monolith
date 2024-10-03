@@ -9,12 +9,14 @@ import { range } from "lodash"
 
 import logger, { paint } from "./logger"
 
+import { UnitManager, BASE_UNITS, DICE } from "./unit"
+
 import { StringProvider } from "./string"
 import Grammar from "./type/grammar"
 import Lexer from "./phases/lexer"
 import Parser from "./phases/parser"
-import Semantic, { NRS as SemanticNRS } from "./phases/semantic"
-import Simplify, { NRS as SimplifyNRS } from "./phases/simplify"
+import Semantic, { RULESET_SEMANTIC } from "./phases/semantic"
+import Simplify, { RULESETS_SIMPLIFY } from "./phases/simplify"
 import Reducer from "./phases/reducer"
 import Resolver from "./phases/resolver"
 
@@ -123,20 +125,44 @@ expression = `$if("AD:Teeth (Sharp Beak)::level" = 1 THEN "pi+" ELSE $if("AD:Tee
 expression = `$if("AD:Teeth (Sharp Teeth)::level" = 1 THEN "cut" ELSE $if("AD:Teeth (Sharp Beak)::level" = 1 THEN "pi+" ELSE $if("AD:Teeth (Fangs)::level" = 1 THEN "imp" ELSE $if("AD:Vampiric Bite::level" = 1 THEN "cut" ELSE "cr"))))`
 //
 expression = `1 + SK:Teste`
+expression = `10 kg`
+expression = `-10 kg`
+expression = `10kg -10 kg`
+expression = `10kg +15 kg`
+expression = `X + 10kg`
+expression = `5 * 10kg`
+expression = `10kg * 5`
+expression = `10 kg + x`
+expression = `10 kg + x kg`
+expression = `10 kg + 20kg + x kg`
+expression = `10 kg + -30 kg`
+expression = `20+x`
+expression = `10 + (20 + x)`
+expression = `-20 + x + 40`
+expression = `10 + 30 + x + -20`
+expression = `10 kg + 20kg + x kg + -30 kg `
+expression = `10 kg + 20kg + x kg + -30 kg + -40kg + kg`
+//
+expression = `d6 + 1d4`
+expression = `d6 + 10d6`
 
 const options = defaultProcessingOptions({
   // general
   scope: { root: `math` },
   //
+  simplify: {
+    rulesets: RULESETS_SIMPLIFY,
+  },
   reducer: {
     ignoreTypes: [`conditional`],
   },
-  resolver: {
-    SimplifyNRS,
-  },
 })
 
-const grammar = new Grammar()
+const unitManager = new UnitManager()
+unitManager.add(...BASE_UNITS)
+unitManager.add(...DICE)
+
+const grammar = new Grammar(unitManager)
 grammar.add(...WHITESPACES)
 grammar.add(...LITERALS)
 // grammar.add(...SEPARATORS)
@@ -200,17 +226,17 @@ parser.print({
   // name: false,
 })
 
-semantic.process(parser.AST, SemanticNRS, options.semantic)
+semantic.process(parser.AST, [RULESET_SEMANTIC], options.semantic)
 semantic.print({ expression })
 
 // environment.print()
 
-// simplify.process(semantic.ST, environment, SimplifyNRS, options.simplify)
+// simplify.process(semantic.ST, environment, [...RULESETS_SIMPLIFY], options.simplify)
 // simplify.print({ expression: simplify.SST.expression() })
 // console.log(` `)
 
 // reducer.process(simplify.SST, environment, options.reducer)
 // reducer.print({ expression: reducer.RT.expression() })
 
-// resolver.process(semantic.ST, environment, options.resolver)
-// resolver.print({ expression: resolver.result.expression() })
+resolver.process(semantic.ST, environment, options.resolver)
+resolver.print({ expression: resolver.result.expression() })

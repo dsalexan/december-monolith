@@ -58,7 +58,7 @@ import Token from "../../token"
  */
 
 import churchill, { Block, paint, Paint } from "../../logger"
-import Node, { SubTree, PrintOptions, print } from "../../node"
+import Node, { SubTree, PrintOptions, print, NodeFactory } from "../../node"
 import Grammar from "../../type/grammar"
 import assert from "assert"
 
@@ -116,7 +116,7 @@ export default class Parser {
 
   /** Parses the tokenized expression into an abstract tree */
   private _abstractTree() {
-    const root = Node.ROOT(this.totality)
+    const root = NodeFactory.ROOT(this.totality)
 
     // consume tokens until the end of the token list
     let current: Node = root
@@ -124,7 +124,7 @@ export default class Parser {
     let cursor = 0
     while (cursor < this.tokens.length) {
       const token = this.tokens[cursor]
-      const node = new Node(token)
+      const node = NodeFactory.make(token)
 
       // insert node (starting at current's subtree), and update current after
       current = new SubTree(current).insert(node)

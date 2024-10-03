@@ -13,7 +13,7 @@ import { EvaluateFunction } from "../../phases/lexer/evaluation"
 import assert from "assert"
 import Node from "../../node"
 import Environment from "../../environment"
-import { RuleSet } from "../../nrs/rule/rule"
+import { RuleSet } from "../../nrs"
 
 export interface SemanticalTypeHierarchy {}
 

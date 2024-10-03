@@ -65,8 +65,9 @@ export default class SymbolTable {
       const scope = scopeManager.evaluate(node)
       const master = getMasterScope(scope)
 
+      const isNil = node.type.name === `nil`
       const isIdentifier = node.type.id === `identifier`
-      const isNonNumericLiteral = node.type.id === `literal` && ![`number`, `signed_number`].includes(node.type.name)
+      const isNonNumericLiteral = node.type.isLiteralLike() && ![`number`, `sign`].includes(node.type.name) && !isNil
       const isOperand = node.type.modules.includes(`operand`)
 
       let isSymbol = false

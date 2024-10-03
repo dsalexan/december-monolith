@@ -67,6 +67,14 @@ export default class Token<TValue = any> {
     return this._attributes as Attributes<TValue>
   }
 
+  public setAttributes(attributes: Partial<Attributes<TValue>>) {
+    this._attributes = attributes
+  }
+
+  public get isNonEvaluated() {
+    return this._attributes === NON_EVALUATED_LEXICAL_TOKEN
+  }
+
   get provider() {
     return this.string.type === `concrete` ? null : this.string.provider
   }
@@ -89,15 +97,8 @@ export default class Token<TValue = any> {
     if (this.string.type === `provided`) this._interval = Interval.fromLength(this.string.start, this.string.length)
   }
 
-  _evaluateOptions(options: Partial<EvaluatorOptions>) {
-    // TODO: Default options-
-    return options
-  }
-
   /** Evaluates attributes (like value) from lexeme */
-  evaluate(_options: Partial<EvaluatorOptions> = {}) {
-    const options = this._evaluateOptions(_options)
-
+  evaluate(options: EvaluatorOptions) {
     assert(this.type, `Token type not set`)
 
     this._attributes = this.type.lexical!.evaluate(this, options) ?? {}

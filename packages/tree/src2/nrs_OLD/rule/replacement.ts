@@ -69,7 +69,9 @@ export function mutate(originalNode: Node, mutation: NRSMutation, context: Repla
   const { command } = mutation
 
   if (command.type === `KEEP_NODE`) {
-    // do nothing
+    registerMutation(originalNode, mutation, context)
+
+    return originalNode
   } else if (command.type === `REMOVE_NODE`) {
     originalNode.parent!.children.remove(originalNode, operationOptions)
 

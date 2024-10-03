@@ -65,7 +65,7 @@ export const SUBTRACTION = new Type(`operator`, `subtraction`, `-`, [`arithmetic
   .deriveSyntactical(2, { incompleteArity: true })
   .setInOrderBehaviour(arityInOrder)
 
-export const SIGN = new Type(`operator`, `sign`, `g`, [`arithmetic`]) //
+export const SIGN = new Type(`operator`, `sign`, `g`, [`arithmetic`, `numeric`, `quantity:numerical-value`, `literal:like`]) //
   .addSyntactical(OPERATOR_PRIORITY + 19, 1)
   .setInOrderBehaviour(arityInOrder)
 

@@ -10,7 +10,7 @@ export interface GenericNodeInstruction extends BaseNodeInstruction {
 
 export interface GetValueNodeInstruction extends BaseNodeInstruction {
   protocol: `get-value`
-  type: `string` | `number` | `boolean` | `any`
+  type: `string` | `number` | `boolean` | `any` | `quantity`
   asIdentifier?: boolean
 }
 

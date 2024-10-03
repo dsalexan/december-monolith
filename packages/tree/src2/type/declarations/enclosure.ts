@@ -9,17 +9,20 @@ import { AND, OR } from "@december/utils/match/logical"
 // import { CONTAINED_IN, ContainedInSetPattern } from "@december/utils/match/set"
 
 import Type from "../base"
-import Node, { SubTree } from "../../node"
+import Node, { NodeFactory, SubTree } from "../../node"
 import type Token from "../../token"
 import { getType } from "../../type"
 import { EvaluatorOptions } from "../../phases/lexer/evaluation"
 import { interleavedInOrder, wrapperInOrder } from "../../node/traversal"
-import { RuleSet } from "../../nrs"
+
+import { RuleSet, Rule } from "../../nrs"
+import { leftOperand, match, matchInChildren, nextSibling, predicate, filter, firstChild } from "../../nrs/rule/match/functions"
+import { ADD_NODE_AT, COLLAPSE_NODE, REMOVE_NODE, SWAP_NODES_AT } from "../../nrs/rule/mutation/instruction"
 
 import { TYPE, NODE, TREE } from "../../match/pattern"
-import { Rule, leftOperand, match, matchInChildren, nextSibling, predicate, filter, ADD_NODE_AT, firstChild, KEEP_NODE } from "../../nrs/rule"
 import { KEYWORD_GROUP } from "./keyword"
 import { CUSTOM } from "../../phases/reducer/instruction"
+import { NodeTokenizedWord_Node } from "../../node/node/token"
 
 /**
  * Lower Priority means less nodes can be parent of this node
@@ -133,13 +136,13 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
         const end = last(node.children.nodes)!.range.column(`last`)
         const _range = Range.fromInterval(start, end)
 
-        const tokensByChild = node.children.map(child => [child, child.tokenize()] as const)
+        const tokensByChild = node.children.map(child => [child, child.tokenize() as NodeTokenizedWord_Node[]] as const)
         const _tokensByChild = tokensByChild.map(([child, tokens]) => child.name)
 
         node.children.removeAll({ refreshIndexing: false })
 
         // add condition keyword (since first children of a conditional node is a condition group)
-        const condition = node.LIST(Range.fromPoint(openerParenthesis.interval.end + 1))
+        const condition = NodeFactory.LIST(Range.fromPoint(openerParenthesis.interval.end + 1))
         condition.setType(KEYWORD_GROUP)
         condition.setAttributes({ group: `condition` })
 
@@ -160,14 +163,16 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
             if (!token) node = originalNode.clone({ cloneSubTree: true })
             else {
               // re-match token in grammar (since grammar could have new shit)
-              const types = grammar.syntacticalMatch(token.lexeme, current)
-              assert(types.length > 0, `How can it be?`)
+              const matches = grammar.syntacticalMatch(token.lexeme, current)
+              assert(matches.length > 0, `How can it be?`)
+
+              const types = matches.map(({ type }) => type)
 
               // if prioritary type differs, clone token and update type
               const newType = types[0].name !== token.type.name
               const _token = newType ? token.clone().setType(types[0]) : token
 
-              node = new Node(_token)
+              node = NodeFactory.make(_token)
             }
 
             current = new SubTree(current).insert(node, { refreshIndexing: false })
@@ -199,7 +204,7 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
         _condition.children.removeAll()
 
         const type = getType(typing.getType(condition)!)
-        condition = Node.fromToken(condition.toString(), type)
+        condition = NodeFactory.make(condition.toString(), type)
         _condition.syntactical.addNode(condition)
       }
 
@@ -209,7 +214,7 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
           _consequent.children.removeAll()
 
           const type = getType(typing.getType(consequent)!)
-          consequent = Node.fromToken(consequent.toString(), type)
+          consequent = NodeFactory.make(consequent.toString(), type)
           _consequent.syntactical.addNode(consequent)
         }
 
@@ -217,7 +222,7 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
           _alternative.children.removeAll()
 
           const type = getType(typing.getType(alternative)!)
-          alternative = Node.fromToken(alternative.toString(), type)
+          alternative = NodeFactory.make(alternative.toString(), type)
           _alternative.syntactical.addNode(alternative)
         }
 

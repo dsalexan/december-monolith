@@ -1,21 +1,22 @@
 import { APPLY_ARGUMENTS, ELEMENTARY_ALGEBRA, GET_VALUE, NodeInstruction, NORMALIZE, PASS, PROCESS_CHILD } from "./instruction"
 import assert from "assert"
-import { filter, isBoolean, isFunction, isNil, isNumber, isString, range } from "lodash"
+import { filter, isBoolean, isFunction, isNil, isNumber, isString, range, uniq } from "lodash"
 
 import { Interval, Point, Range, typing } from "@december/utils"
+import { IUnit, Quantity } from "@december/utils/unit"
 import { Primitive } from "@december/utils/typing"
 
 import churchill, { Block, paint, Paint } from "../../logger"
 
-import Node, { PrintOptions, print, SubTree } from "../../node"
+import Node, { PrintOptions, print, SubTree, NodeFactory } from "../../node"
 
 import type { BaseProcessingOptions } from "../../options"
 
 import Environment from "../../environment"
 import { postOrder } from "../../node/traversal"
 import { getMasterScope, MasterScope, Scope } from "../../node/scope"
-import { BOOLEAN, NUMBER, STRING } from "../../type/declarations/literal"
-import Token from "../../token"
+import { BOOLEAN, NUMBER, QUANTITY, STRING } from "../../type/declarations/literal"
+import Token, { NON_EVALUATED_LEXICAL_TOKEN } from "../../token"
 import Grammar from "../../type/grammar"
 import SymbolTable from "../../environment/symbolTable"
 import { IDENTIFIER } from "../../type/declarations/identifier"
@@ -23,6 +24,8 @@ import Type from "../../type/base"
 import { getType } from "../../type"
 import { ProcessedNode } from "../../type/rules/reducer"
 import { TypeName } from "../../type/declarations/name"
+import { Arguments } from "tsdef"
+// import { Operation, Operand, doAlgebra, OPERATIONS } from "./algebra"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -132,6 +135,7 @@ export default class Reducer {
       if (master !== `math`) debugger
 
       if (node.type.name === `number`) return GET_VALUE(`number`)
+      else if (node.type.name === `quantity`) return GET_VALUE(`quantity`)
       else if (node.type.name === `string` || node.type.name === `string_collection`) {
         const identifier = node.content!
         const isSymbol = this.symbolTable.has(identifier)
@@ -210,6 +214,17 @@ export default class Reducer {
 
         return numericValue
       } else if (instruction.type === `boolean`) return stringValue.toLowerCase() === `true` || stringValue === `1` ? true : false
+      else if (instruction.type === `quantity`) {
+        const value = this._processNode(node.children.nodes[0])
+
+        if (value instanceof Node) return node
+
+        const unit = node.attributes.unit as IUnit
+
+        assert(isNumber(value), `Only tested for numbers`)
+
+        return unit.toQuantity(value)
+      }
       //
     } else if (instruction.protocol === `elementary-algebra`) {
       if (node.type.name !== `sign`) assert(node.type.syntactical!.arity === 2, `Elementary algebra requires two operands`)
@@ -217,21 +232,34 @@ export default class Reducer {
       const { arity } = node.type.syntactical!
       assert(arity === node.children.length, `Elementary algebra "${node.type.name}" requires ${arity} operands`)
 
+      const __children = node.children.nodes.length
       const _children = node.children.nodes.map(child => this._processNode(child))
 
+      assert(_children.length === __children, `Not all children were processed`)
+
+      const _sameAlgebraicType = _children.map(child => {
+        if (child instanceof Node) return `node`
+        else if (child instanceof Quantity) {
+          const quantity = child as Quantity
+          return `quantity:${quantity.unit.getSymbol()}`
+        } else return typing.guessType(child)
+      })
+      const sameAlgebraicType = uniq(_sameAlgebraicType)
+
+      const differentTypes = sameAlgebraicType.length > 1
+
       // if we could not process all nodes, wrap everything in nodes to return
-      if (_children.some(child => child instanceof Node)) return wrapProcessedChildren(node, _children)
+      if (differentTypes || _children.some(child => child instanceof Node)) return wrapProcessedChildren(node, _children)
 
       let [left, right] = _children as number[]
 
-      // TODO: Probably check if both operands are of the same type???
-
-      // arithmetic operations
       if (node.type.name === `sign`) {
         assert(left, `Sign operation requires one operand`)
         const sign = node.lexeme === `-` ? -1 : 1
-        return left * sign
-      } else if (node.type.name === `addition`) return left + right
+        return sign * left
+      }
+      // arithmetic operations
+      if (node.type.name === `addition`) return left + right
       else if (node.type.name === `subtraction`) return left - right
       else if (node.type.name === `multiplication`) return left * right
       else if (node.type.name === `division`) return left / right
@@ -241,8 +269,6 @@ export default class Reducer {
       else if (node.type.name === `smaller`) return left < right
       else if (node.type.name === `greater_or_equal`) return left >= right
       else if (node.type.name === `smaller_or_equal`) return left <= right
-      //
-      else throw new Error(`Unimplemented elementary algebra operation "${node.type.name}"`)
     } else if (instruction.protocol === `apply-arguments`) {
       const _name = node.children.nodes[0]
       const _arguments = node.children.nodes.slice(1)
@@ -284,19 +310,14 @@ export default class Reducer {
     const result = this._processNode(this.T.root)
 
     // encapsulate processed return into a tree
-    const root = Node.ROOT(Range.fromLength(0, 1))
+    const root = NodeFactory.ROOT(Range.fromLength(0, 1))
     const tree = new SubTree(root)
 
-    if (result instanceof Node) {
-      tree.root.children.add(result)
-    } else if (isString(result) || isNumber(result) || isBoolean(result)) {
-      const type = getType(typing.guessType(result)!)
-      const literal = Node.fromToken(result.toString(), type)
-
-      tree.root.children.add(literal)
-    } else throw new Error(`Unimplemented result treatment`)
+    const node = result instanceof Node ? result : NodeFactory.makeByGuess(result)
+    tree.root.children.add(node)
 
     // verify expression (and recalculate if necessary)
+    tree.root.refreshIndexing()
     tree.expression(true)
 
     this.RT = tree
@@ -317,11 +338,38 @@ export default class Reducer {
 }
 
 function wrapProcessedChildren(parent: Node, children: ProcessedNode[], i0 = 0) {
+  for (const [i, child] of children.entries()) {
+    const node = child instanceof Node ? child : NodeFactory.makeByGuess(child)
+    parent.syntactical.replaceAt(i0 + i, node)
+  }
+
+  return parent
+}
+
+function wrapProcessedChildren_REFACTOR_THIS_SHIT(parent: Node, children: ProcessedNode[], i0 = 0) {
   for (const [i, _child] of children.entries()) {
     if (!(_child instanceof Node)) {
-      const type = getType(typing.getType(_child)!)
-      const child = Node.fromToken(_child.toString(), type)
+      let variableType = typing.getType(_child)! as Arguments<typeof getType>[0]
+      if (_child instanceof Quantity) variableType = `quantity`
+
+      const type = getType(variableType)
+      const child = NodeFactory.make(_child.toString(), type)
       parent.syntactical.replaceAt(i0 + i, child)
+
+      if (type.name === `quantity`) {
+        const unitOfMeasurement: IUnit = _child as any
+
+        child.tokens[0].setAttributes({ traversalIndex: -1, value: unitOfMeasurement })
+        child.setAttributes({ reorganized: true, unit: unitOfMeasurement })
+      }
+
+      for (const token of child.tokens) {
+        assert(!token.isNonEvaluated, `Token must be evaluated`)
+      }
+    } else {
+      // for (const token of _child.tokens) {
+      //   assert(!token.isNonEvaluated, `Token must be evaluated`)
+      // }
     }
   }
 

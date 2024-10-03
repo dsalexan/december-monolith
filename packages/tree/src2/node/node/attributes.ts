@@ -1,18 +1,20 @@
 import { isArray, mergeWith } from "lodash"
 
 import { mergeWithDeep } from "@december/utils"
+import { IUnit, Quantity } from "@december/utils/unit"
 import { isPrimitive } from "@december/utils/typing"
 
 import { Node } from "./base"
-import { NRSMutationMap } from "../../nrs/system"
 
 export interface SemanticalAttributes {
   originalNodes?: Node[]
   tags: string[]
   reorganized?: boolean
   group?: string
-  mutations?: Record<string, NRSMutationMap> // tag -> mutation map per ruleset
   unbalanced?: boolean
+  // QUANTITY
+  unit?: IUnit
+  clarityWrapper?: boolean
 }
 
 export type Attributes = SemanticalAttributes

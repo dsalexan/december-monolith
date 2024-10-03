@@ -33,7 +33,8 @@ export function formatName(level: number, node: Node, token: Token | undefined, 
     repr = ` `
     color = paint.gray
   } else if (node.type.id === `literal` || node.type.name === `identifier`) {
-    if (node.type.name === `number` || node.type.name === `sign` || node.type.name === `string_collection` || node.type.name === `boolean` || node.type.name === `identifier`) repr = `${node.type.prefix}${number}`
+    if (node.type.name === `number` || node.type.name === `unit` || node.type.name === `sign` || node.type.name === `string_collection` || node.type.name === `boolean` || node.type.name === `identifier`)
+      repr = `${node.type.prefix}${number}`
     else if (node.type.name === `string`) repr = `${number}`
     else if (node.type.name === `nil`) repr = `${node.type.prefix}`
   } else if (node.type.name === `list`) {
@@ -67,16 +68,19 @@ export default function name(root: Node, level: number, format: TokenFormatOptio
   return {
     fn: () => {
       // if (global.__DEBUG_LABEL === `"->ρ1.a` && level === 2) debugger
-      const tokens = root.tokenize(level)
+      const tokens = root.tokenize({ level })
 
       const sequences: Grid.Sequence.Sequence[] = []
 
       // format tokenized nodes to text
-      for (const [j, { node, token }] of tokens.entries()) {
+      for (const [j, word] of tokens.entries()) {
         // if (global.__DEBUG_LABEL === `]->L5.b` && j === 5) debugger
+        if (word.type === `node`) {
+          const { node, token } = word
 
-        const _sequences = formatName(level, node, token, { ...format })
-        sequences.push(..._sequences)
+          const _sequences = formatName(level, node, token, { ...format })
+          sequences.push(..._sequences)
+        } else throw new Error(`Unimplemented tokenized word type "${word.type}"`)
       }
 
       return sequences

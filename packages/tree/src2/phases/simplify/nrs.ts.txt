@@ -4,21 +4,152 @@ import { simplify } from "mathjs"
 import { flow } from "fp-ts/lib/function"
 
 import { EQUALS } from "@december/utils/match/element"
-import { AND } from "@december/utils/match/logical"
-import { MULTIPLICATION } from "../../type/declarations/operator"
-import { NUMBER } from "../../type/declarations/literal"
-import { TYPE, NODE } from "../../match/pattern"
+import { AND, OR } from "@december/utils/match/logical"
+import { MULTIPLICATION, SIGN } from "../../type/declarations/operator"
+import { NUMBER, QUANTITY, STRING, UNIT } from "../../type/declarations/literal"
+import { TYPE, NODE, NodePattern } from "../../match/pattern"
 
 import { KEEP_NODE, REMOVE_NODE, REPLACE_NODES_AT } from "../../nrs/system"
-import { Rule, leftOperand, match, matchInChildren, nextSibling, predicate, filter, ADD_NODE_AT, offspringAt, rightOperand } from "../../nrs/rule"
+import { Rule, leftOperand, match, matchInChildren, nextSibling, predicate, filter, ADD_NODE_AT, offspringAt, rightOperand, parent } from "../../nrs/rule"
 
 import { RuleSet } from "../../nrs/rule/rule"
 import assert from "assert"
 import Token from "../../token"
 import Node from "../../node"
+import { CONTAINS } from "../../../../utils/src/match/set"
+import { NOT } from "../../../../utils/src/match/base"
+import { last } from "lodash"
 
 // export const BASE_RULESET: Rule[] = []
 export const RULESET = new RuleSet(`simplify`)
+
+// #region SIMPLIFY QUANTITIES
+
+RULESET.add(
+  `-_1q -> (-_1)q`, //
+  flow(
+    match(TYPE.NAME(EQUALS(`sign`))), // "+" or "-"
+    flow(leftOperand, match(TYPE.NAME(EQUALS(`quantity`)))), // left === quantity
+  ),
+  node => {
+    const signToken = node.tokens[0]
+    const sign = signToken.lexeme === `-` ? -1 : 1
+
+    const quantity = node.children.get(0)
+    const value = quantity.children.get(0)
+
+    quantity.updateFallbackRange(node.range)
+    quantity.children.remove(value.index, { refreshIndexing: false })
+
+    const newSign = Node.fromToken(signToken, SIGN)
+    quantity.children.add(newSign, null, { refreshIndexing: false })
+    newSign.children.add(value, null, { refreshIndexing: true })
+
+    return quantity
+  },
+)
+
+RULESET.add(
+  `_Literal*Quantity -> Quantity*_Literal`, //
+  flow(
+    match(OR<NodePattern>(TYPE.NAME(EQUALS(`addition`)), TYPE.NAME(EQUALS(`multiplication`)))), // "+"" or "*"
+    predicate(node => node.children.length === 2), // two operands
+    flow(leftOperand, match(AND<any>(OR<NodePattern>(TYPE.ID(EQUALS(`literal`)), TYPE.MODULE(CONTAINS(`literal:like`))), TYPE.NAME(NOT(EQUALS(`quantity`))))), parent), // left === literal (non-quantity)
+    flow(rightOperand, match(TYPE.NAME(EQUALS(`quantity`))), parent), // right === quantity
+  ),
+  node => {
+    node.children.nodes[0].swapWith(node.children.nodes[1])
+
+    return KEEP_NODE()
+  },
+)
+
+RULESET.add(
+  `_1q+_2q -> (_1+_2)q || _1q*_2 -> (_1*_2)q`, //
+  flow(
+    match(OR<NodePattern>(TYPE.NAME(EQUALS(`addition`)), TYPE.NAME(EQUALS(`multiplication`)))), // "+"" or "*"
+    flow(leftOperand, match(TYPE.NAME(EQUALS(`quantity`))), parent), // left === quantity
+    predicate(node => {
+      const [left, right] = node.children.nodes
+
+      // _1q+_2q -> (_1+_2)q
+      if (right?.type.name === `quantity`) {
+        return left.attributes.unit!.isEquals(right.attributes.unit!)
+      }
+
+      // _1q*_2 -> (_1*_2)q
+      else if (right?.type.isLiteralLike()) {
+        return true
+      }
+
+      return false
+    }),
+    // flow(rightOperand, match(TYPE.NAME(EQUALS(`quantity`))), parent), // right === quantity
+    // predicate(node => {
+    //   const [left, right] = node.children.nodes
+
+    //   return left.attributes.unit!.isEquals(right.attributes.unit!)
+    // }),
+  ),
+  node => {
+    /**
+     * I)  _1q+_2q -> (_1+_2)q
+     * II) _1q*_2 -> (_1*_2)q
+     */
+    const [A, B] = node.children.nodes
+
+    const isI = B.type.name === `quantity`
+    const isII = B.type.name !== `quantity`
+
+    const index = node.index
+    const parent = node.parent!
+
+    const unit = new Token({ type: `concrete`, value: last(A.tokens)!.lexeme }, STRING)
+    unit.setAttributes({ traversalIndex: -1 })
+
+    const quantity = new Node(unit)
+    quantity.setType(QUANTITY)
+
+    const opener = new Token({ type: `concrete`, value: `(` }, STRING)
+    const closer = new Token({ type: `concrete`, value: `)` }, STRING)
+
+    opener.setAttributes({ traversalIndex: 0 })
+    closer.setAttributes({ traversalIndex: -2 })
+
+    quantity.addToken([opener, closer], 0)
+
+    const unitOfMeasurement = A.attributes.unit!
+    quantity.setAttributes({ unit: unitOfMeasurement })
+
+    // add quantities values to new operator
+    const operator = Node.fromToken(node.tokens[0], node.type)
+    operator.setAttributes({ originalNodes: [node.clone()] })
+
+    operator.children.add(A.children.get(0), null, { refreshIndexing: false })
+    operator.children.add(isI ? B.children.get(0) : B, null, { refreshIndexing: false })
+
+    // add operator do master quantity
+    quantity.children.add(operator, null, { refreshIndexing: false })
+
+    return quantity
+  },
+)
+
+// #endregion
+
+// #region SIMPLIFY ENCLOSURES
+
+RULESET.add(
+  `(Operator) -> Operator`, //
+  flow(
+    match(TYPE.ID(EQUALS(`enclosure`))), //
+    leftOperand,
+    match(TYPE.ID(EQUALS(`operator`))),
+  ),
+  node => node.children.nodes[0],
+)
+
+// #endregion
 
 //             addRule( new TARuleFromString( '0+_1', '_1' ) );
 RULESET.add(
@@ -37,7 +168,7 @@ RULESET.add(
   `_Literal2=0-_1 -> _1=0-_Literal2`, //
   [
     flow(match(TYPE.NAME(EQUALS(`equals`)))), // "="
-    flow(leftOperand, match(TYPE.ID(EQUALS(`literal`)))), // left === _Literal2
+    flow(leftOperand, match(OR<NodePattern>(TYPE.ID(EQUALS(`literal`)), TYPE.MODULE(CONTAINS(`literal:like`))))), // left === _Literal2
     flow(rightOperand, match(TYPE.NAME(EQUALS(`subtraction`)))), // right === "-"
     flow(
       rightOperand, // right >
@@ -140,22 +271,9 @@ RULESET.add(
     predicate(node => node.children.nodes[0].content === node.children.nodes[1].content), // left === right
   ),
   node => {
-    // TODO: Improve this mess (it works thou)
     // TODO: Probably should work on the calculations part (since comparing lexemes is not really what I want for this rule)
 
-    const [left, right] = node.children.nodes
-    const [minus] = node.tokens
-
-    let modifiedExpression = minus.provider!.value
-
-    debugger
-
-    // const zeroToken = new Token(minus.lexer, { start: left.range.column(`first`), length: 1, type: NUMBER })
-    // modifiedExpression = modifiedExpression.substring(0, zeroToken.interval.start) + `0` + modifiedExpression.substring(zeroToken.interval.length)
-    // zeroToken.updateExpression(modifiedExpression)
-    // const zero = new Node(zeroToken)
-
-    return `zero` as any
+    return Node.fromToken(`0`, NUMBER)
   },
 )
 
@@ -224,8 +342,99 @@ RULESET.add(
 
 //             addRule( new TARuleFromString( '_Literal*_NonLiteral', '_NonLiteral*_Literal' ) );
 //             addRule( new TARuleFromString( '_Literal+_NonLiteral', '_NonLiteral+_Literal' ) );
+RULESET.add(
+  `_Literal+_NonLiteral -> _NonLiteral+_Literal`, //
+  flow(
+    match(OR<NodePattern>(TYPE.NAME(EQUALS(`addition`)), TYPE.NAME(EQUALS(`multiplication`)))), // "+"" or "*"
+    predicate(node => node.children.length === 2), // two operands
+    flow(leftOperand, match(OR<NodePattern>(TYPE.ID(EQUALS(`literal`)), TYPE.MODULE(CONTAINS(`literal:like`)))), parent), // left === literal
+    flow(rightOperand, match(AND<NodePattern>(TYPE.ID(NOT(EQUALS(`literal`))), TYPE.MODULE(NOT(CONTAINS(`literal:like`))))), parent), // right === non-literal
+    // predicate(node => {
+    //   const [left, right] = node.children.nodes
+
+    //   return !right.type.isLiteralLike()
+    // }),
+  ),
+  node => {
+    node.children.nodes[0].swapWith(node.children.nodes[1])
+
+    return KEEP_NODE()
+  },
+)
 
 //             addRule( new TARuleFromString( '_Literal1+(_Literal2+_NonLiteral)', '_NonLiteral+(_Literal1+_Literal2)' ) );
+RULESET.add(
+  `_Literal1+(_Literal2+_NonLiteral) || _Literal1+(_NonLiteral+_Literal2) || (_NonLiteral+_Literal1)+_Literal2 -> _NonLiteral+(_Literal1+_Literal2)`, //
+  flow(
+    match(OR<NodePattern>(TYPE.NAME(EQUALS(`addition`)), TYPE.NAME(EQUALS(`multiplication`)))), // "+"" or "*"
+    predicate(node => node.children.length === 2), // two operands
+    predicate(node => {
+      const [left, right] = node.children.nodes
+
+      // I) _Literal1+(_Literal2+_NonLiteral)
+      if (left.type.isLiteralLike() && sameType(right, node) && right.children.length === 2) {
+        const [LB, C] = right.children.nodes
+        if (LB.type.isLiteralLike() && C.type.id !== `literal`) return true
+      }
+
+      // II) (_NonLiteral+_Literal1)+_Literal2
+      if (right.type.isLiteralLike() && sameType(left, node) && left.children.length === 2) {
+        const [A, LB] = left.children.nodes
+        if (LB.type.isLiteralLike() && A.type.id !== `literal`) return true
+      }
+
+      // III) _Literal1+(_NonLiteral+_Literal2)
+      if (left.type.isLiteralLike() && sameType(right, node) && right.children.length === 2) {
+        const [B, LC] = right.children.nodes
+        if (LC.type.isLiteralLike() && B.type.id !== `literal`) return true
+      }
+
+      return false
+    }),
+  ),
+  node => {
+    /**
+     * I)  _Literal1+(_Literal2+_NonLiteral)
+     * II) (_NonLiteral+_Literal1)+_Literal2
+     * III) _Literal1+(_NonLiteral+_Literal2)
+     */
+
+    const [left, right] = node.children.nodes
+
+    const isI = left.type.isLiteralLike() && right.type.isLiteralLike()
+    const isII = left.type.id !== `literal`
+    const isIII = left.type.isLiteralLike() && right.type.id !== `literal`
+
+    if (isI) {
+      const A = left
+      const [B, C] = right.children.nodes
+
+      // LA + (LB + C) -> C + (LA + LB)
+
+      A.swapWith(C) // LA + (LB + C) -> C + (LB + LA)
+      B.swapWith(A) //  C + (LB + LA) -> C + (LA + LB)
+    } else if (isII) {
+      const [A, B] = left.children.nodes
+      const C = right
+
+      // (A + LB) + LC -> A + (LB + LC)
+
+      left.swapWith(C) // (A + LB) + LC -> LC + (A + LB)
+      C.swapWith(A) // LC + (A + LB) -> A + (LC + LB)
+      B.swapWith(C) // A + (LC + LB) -> A + (LB + LC)
+    } else {
+      const A = left
+      const [B, C] = right.children.nodes
+
+      // LA + (B + LC) -> B + (LA + LC)
+
+      A.swapWith(B) // LA + (B + LC) -> B + (LA + LC)
+    }
+
+    return KEEP_NODE()
+  },
+)
+
 //             addRule( new TARuleFromString( '_Literal1+(_Literal2+_1)', '_1+(_Literal1+_Literal2)' ) );
 
 //             addRule( new TARuleFromString( '(_1*_2)+(_3*_2)', '(_1+_3)*_2' ) );
@@ -239,6 +448,31 @@ RULESET.add(
 
 //             addRule( new TARuleFromString( '(_1+_2)+_3', '_1+(_2+_3)' ) );
 //             addRule( new TARuleFromString( '(_1*_2)*_3', '_1*(_2*_3)' ) );
+RULESET.add(
+  `(_1+_2)+_3 -> _1+(_2+_3)`, //
+  flow(
+    // match(AND<NodePattern>(TYPE.ID(EQUALS(`operator`)), TYPE.MODULE(CONTAINS(`arithmetic`)))), // +, -, *, /
+    match(OR<NodePattern>(TYPE.NAME(EQUALS(`addition`)), TYPE.NAME(EQUALS(`multiplication`)))), // "+"" or "*"
+    predicate(node => node.children.length === 2), // two operands
+    predicate(node => {
+      const [left, right] = node.children.nodes
+
+      if (left.type.getFullName() === node.type.getFullName()) return left.children.length === 2
+
+      return false
+    }),
+  ),
+  node => {
+    const [left, C] = node.children.nodes
+    const [A, B] = left.children.nodes
+
+    left.swapWith(C) // (A + B) + C -> C + (A + B)
+    C.swapWith(A) // C + (A + B) -> A + (C + B)
+    C.swapWith(B) // A + (C + B) -> A + (B + C)
+
+    return KEEP_NODE()
+  },
+)
 
 //             addRule( new TARuleFromString( '_1+(_1+_2)', '(2*_1)+_2' ) );
 
@@ -250,3 +484,7 @@ RULESET.add(
 //             addRule( new TARuleFromString( '_literal1 / _NonLiteral = _literal2', '_literal1 * _literal2 = _NonLiteral' ) );
 
 export default [RULESET]
+
+function sameType(node: Node, parent: Node) {
+  return node.type.getFullName() === parent.type.getFullName()
+}

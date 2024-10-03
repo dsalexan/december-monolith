@@ -12,12 +12,12 @@ import Node, { PrintOptions, print, SubTree } from "../../node"
 
 import { inOrder, postOrder } from "../../node/traversal"
 
-import { process, RuleSet } from "../../nrs"
+import { RuleSet, NodeReplacementSystem } from "../../nrs"
 
 import type { BaseProcessingOptions } from "../../options"
 import Environment from "../../environment"
 
-export { default as NRS } from "./nrs"
+export { RULESETS_SIMPLIFY } from "./nrs"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -48,7 +48,9 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
  *
  * */
 
-export interface BaseSimplifyOptions {}
+export interface BaseSimplifyOptions {
+  rulesets?: RuleSet[]
+}
 
 export type SimplifyOptions = BaseSimplifyOptions & BaseProcessingOptions
 
@@ -62,8 +64,9 @@ export default class Simplify {
   private environment: Environment
   public SST: SubTree
   //
-  private NRS: RuleSet[]
+  private rulesets: RuleSet[]
   //
+  private NRS: NodeReplacementSystem
 
   constructor(grammar: Grammar) {
     this.grammar = grammar
@@ -75,19 +78,22 @@ export default class Simplify {
       logger: options.logger ?? _logger,
       debug: options.debug ?? false,
       scope: options.scope!,
+      rulesets: options.rulesets ?? [],
     }
 
     return this.options
   }
 
   /** Process tokenized expression into an Abstract Syntax Tree (AST) */
-  process(ST: SubTree, environment: Environment, NRS: RuleSet[], options: Partial<SimplifyOptions> = {}) {
+  process(ST: SubTree, environment: Environment, rulesets: RuleSet[], options: Partial<SimplifyOptions> = {}) {
     this._options(options) // default options
 
     this.ST = ST
     this.environment = environment
 
-    this.NRS = [...NRS]
+    this.rulesets = [...(this.options.rulesets ?? []), ...rulesets]
+
+    assert(this.rulesets.length > 0, `No rulesets provided for simplification`)
 
     this._process()
 
@@ -98,14 +104,29 @@ export default class Simplify {
   private _simplifySemanticTree(ST: SubTree, environment: Environment) {
     const __DEBUG = true // COMMENT
 
+    this.NRS = new NodeReplacementSystem()
+    this.NRS.setRulesets(this.rulesets)
+
+    // ST.root.debug()
+
     const tree = ST.clone()
-    process(this.NRS, tree.root, { operationOptions: { refreshIndexing: false }, scopeManager: this.options.scope, grammar: this.grammar, mutationTag: `simplify`, run: 1 })
+
+    // tree.root.debug()
+
+    this.NRS.process(tree.root, {
+      operationOptions: { refreshIndexing: false },
+      scope: this.options.scope,
+      grammar: this.grammar,
+      //
+      tag: `simplify`,
+      run: 1,
+    })
 
     tree.root.refreshIndexing()
 
     // tree.root.debug()
 
-    tree.expression()
+    tree.expression(true)
 
     // tree.root.debug()
 
@@ -128,5 +149,7 @@ export default class Simplify {
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
 
     print(this.SST.root, options)
+
+    this.NRS.print(`simplify`)
   }
 }

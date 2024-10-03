@@ -183,5 +183,17 @@
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },
+    
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "v4 (units)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src2\\environment\\unit\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
   ]
 }

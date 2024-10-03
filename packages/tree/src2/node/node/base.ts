@@ -16,10 +16,10 @@ import NodeCollection from "./collection"
 import { ancestor, offspring, sibling } from "./hierarchy"
 import { find, findAncestor, findByTraversal } from "./find"
 import { setType, NodeBalancing, balancing, comparePriority } from "./type"
-import { addToken, clearTokens, tokenize, content, range as __range } from "./token"
+import { addToken, clearTokens, tokenize, content, NodeTokenizeOptions, range as __range } from "./token"
 import { Attributes, createAttributes, setAttributes } from "./attributes"
 import { toString, repr, debug } from "./repr"
-import { clone, createNil, createList, createFromToken } from "./factories"
+import { clone } from "./factories"
 import {
   // MOVE
   swapWith,
@@ -35,14 +35,31 @@ type Nullable<T> = T | null
 export class Node {
   public id: string = uuidv4()
   public scope: Scope[] = []
+  public version: number = 0
 
-  constructor(type: Type, range: Range)
-  constructor(token: Token, range?: Range)
-  constructor(tokenOrType: Token | Type, range?: Range) {
-    this._tokens = tokenOrType instanceof Token ? [tokenOrType] : []
-    this._type = tokenOrType instanceof Type ? tokenOrType : null
+  // constructor(type: Type, range: Range)
+  // constructor(token: Token, range?: Range)
+  // constructor(tokenOrType: Token | Type, range?: Range) {
+  //   this._tokens = tokenOrType instanceof Token ? [tokenOrType] : []
+  //   this._type = tokenOrType instanceof Type ? tokenOrType : null
 
-    if (tokenOrType instanceof Type && range) this._range = range
+  //   if (tokenOrType instanceof Type) {
+  //     assert(range, `Range must be provided for a node without token`)
+  //     this._range = range
+  //   }
+  // }
+  constructor(token: Token) {
+    this._tokens = [token]
+  }
+
+  static tokenless(type: Type, range: Range) {
+    const node = new Node(null as any)
+    node._tokens = []
+
+    node._type = type
+    node._range = range
+
+    return node
   }
 
   // INDEX
@@ -157,9 +174,31 @@ export class Node {
 
   // eslint-disable-next-line prettier/prettier
   public get content(): Nullable<string> { return content.call(this) }
+  public getContent(options?: Partial<NodeTokenizeOptions>): string | null {
+    return content.call(this, options)
+  }
+  public getDebugContent(options?: Partial<NodeTokenizeOptions>): string | null {
+    return content.call(this, {
+      wrapInParenthesis: (node: Node) => [`operator`, `enclosure`].includes(node.type.id),
+      showType: true,
+      ...options,
+    })
+  }
+  public getTreeHash() {
+    return `${this.id}::${this.getDebugContent()}`
+  }
 
   // eslint-disable-next-line prettier/prettier
   public get range(): Range { return __range.call(this) }
+  public tryGetRange(): Nullable<Range> {
+    try {
+      return this.range
+    } catch {
+      //
+    }
+
+    return null
+  }
 
   // ATTRIBUTES
   protected _attributes: Attributes = createAttributes()
@@ -171,12 +210,12 @@ export class Node {
 
   // FACTORIES
   public clone = clone
-  public static ROOT(range: Range) {
-    return new Node(ROOT, range)
-  }
-  public NIL = createNil
-  public LIST = createList
-  public static fromToken = createFromToken
+  // public static ROOT(range: Range) {
+  //   return Node.tokenless(ROOT, range)
+  // }
+  // public NIL = createNil
+  // public LIST = createList
+  // public static fromToken = createFromToken
 
   // REPR
   public toString = toString

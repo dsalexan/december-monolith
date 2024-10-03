@@ -22,6 +22,7 @@ import Grammar from "../../type/grammar"
 import { EvaluatorOptions } from "./evaluation"
 import { TypeName } from "../../type/declarations/name"
 import { ProvidedString, StringProvider } from "../../string"
+import { TrueMatchResult } from "./match"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -51,6 +52,7 @@ export type LexerOptions = ScannerOptions & EvaluatorOptions
 
 interface ProtoToken {
   type: { name: `word` } | Type
+  match: TrueMatchResult
   value: string
 }
 
@@ -111,7 +113,13 @@ export default class Lexer {
       // if lexeme was already determined
       if (word.type.name !== `word`) {
         // build lexeme and add it to list
-        const lexeme: Lexeme = { start: this.cursor, length: word.value.length, type: word.type }
+        const lexeme: Lexeme = {
+          type: word.type,
+          match: word.match,
+          //
+          start: this.cursor,
+          length: word.value.length,
+        }
         lexemes.push(lexeme)
 
         this.cursor += word.value.length // advance cursor
@@ -152,20 +160,20 @@ export default class Lexer {
 
     let buffer: ProtoToken | null = null
     for (let i = 0; i < this.expression.length; i++) {
-      let type: ProtoToken[`type`] = { name: `word` }
+      let match: Omit<ProtoToken, `value`> = { type: { name: `word` }, match: { value: true } }
 
       const character = this.expression[i]
 
       // 1) determine token type for character
-      const characterType = this.grammar.match(character, type => type.id === `whitespace`)
-      if (!characterType.length) type = { name: `word` } // character is a word
-      else type = characterType[0]
+      const grammarMatches = this.grammar.match(character, type => type.id === `whitespace`)
+      // if (!characterType.length) type = { name: `word` } // character is a word
+      if (grammarMatches.length > 0) match = { type: grammarMatches[0].type, match: grammarMatches[0] }
 
       // 2) if token type changed from buffer, start new token
-      if (buffer === null) buffer = { type, value: `` }
-      if (buffer!.type.name !== type.name) {
+      if (buffer === null) buffer = { ...match, value: `` }
+      if (buffer!.type.name !== match.type.name) {
         tokens.push(buffer) // store buffer
-        buffer = { type, value: `` } // reset buffer
+        buffer = { ...match, value: `` } // reset buffer
       }
 
       // 3) append character to buffer
@@ -193,12 +201,17 @@ export default class Lexer {
       sequence = `${sequence}${character}`
 
       // match sequence to token types
-      const types = this.grammar.match(sequence)
-      if (types.length) {
+      const matches = this.grammar.match(sequence)
+      if (matches.length) {
         // store lexemes by priority
-        for (const type of types) {
+        for (const { type, ...match } of matches) {
           // const type = types[0]
-          const lexeme: Lexeme = { start: this.cursor, length: sequence.length, type }
+          const lexeme: Lexeme = {
+            type,
+            match, //
+            start: this.cursor,
+            length: sequence.length,
+          }
           lexemes.push(lexeme)
         }
       }
@@ -221,11 +234,17 @@ export default class Lexer {
         const character = this.expression[j]
 
         // match character to token types
-        const types = this.grammar.match(character)
+        const matches = this.grammar.match(character)
 
         // if character has no recognized type, return it as an unknown lexeme
-        if (types.length === 0) {
-          const lexeme: Lexeme = { start: this.cursor, length: 1, type: UNKNOWN }
+        if (matches.length === 0) {
+          const lexeme: Lexeme = {
+            type: UNKNOWN,
+            match: { value: true },
+            //
+            start: this.cursor,
+            length: 1,
+          }
           lexemes.push(lexeme)
 
           break
@@ -262,7 +281,7 @@ export default class Lexer {
     const token = new Token(string, lexeme.type)
 
     // evaluate lexeme into token
-    token.evaluate(this.options)
+    token.evaluate({ match: lexeme.match })
 
     return token
   }

@@ -4,8 +4,14 @@ import { Point, Range } from "@december/utils"
 
 import Token from "../../token"
 import { Node } from "./base"
-import { inOrder } from "../traversal"
+import { inOrder, InOrderTraversalOptions } from "../traversal"
 import assert from "assert"
+
+export interface NodeTokenizeOptions {
+  level: number
+  wrapInParenthesis: InOrderTraversalOptions[`wrapInParenthesis`]
+  showType: boolean
+}
 
 export function addToken(this: Node, token: Token | Token[], index?: number) {
   const tokens = isArray(token) ? token : [token]
@@ -22,29 +28,31 @@ export function clearTokens() {
   this._tokens.splice(0, this._tokens.length)
 }
 
-export function tokenize(level?: number): { node: Node; token?: Token }[] {
-  const list: { node: Node; token?: Token }[] = []
-
-  inOrder(this, (node, token, ignorable) => !ignorable && list.push({ node, token: token || undefined }), level)
-
-  return list
-}
-
-export function content(this: Node): string | null {
+export function content(this: Node, options: Partial<NodeTokenizeOptions> = {}): string | null {
   if (this._tokens.length === 0 && this.children.length === 0) return null
 
   const strings: string[] = []
 
-  const tokens = this.tokenize()
-  for (const { node, token } of tokens) {
-    if (token) strings.push(token.lexeme)
-    else {
-      // Non-overflowable content
-      // TODO: Implement for tokenless and childless nodes that are not points
-      if (this._tokens.length === 0 && this.children.length === 0 && !this._range.columnIsPoint(`first`)) debugger
+  const tokens = this.tokenize(options)
+  for (const word of tokens) {
+    if (word.type === `node`) {
+      if (word.token) strings.push(word.token.lexeme)
+      else {
+        // // Non-overflowable content
+        // // TODO: Implement for tokenless and childless nodes that are not points
+        // if (this._tokens.length === 0 && this.children.length === 0 && !this._range.columnIsPoint(`first`)) debugger
 
-      if (this._tokens.length) strings.push(this._tokens.map(token => token.lexeme).join(``))
-    }
+        // if (this._tokens.length) strings.push(this._tokens.map(token => token.lexeme).join(``))
+
+        // Non-overflowable content
+        // TODO: Implement for tokenless and childless nodes that are not points
+        if (word.node._tokens.length === 0 && word.node.children.length === 0 && !word.node._range.columnIsPoint(`first`)) debugger
+
+        if (word.node._tokens.length) strings.push(word.node._tokens.map(token => token.lexeme).join(``))
+      }
+    } else if (word.type === `artefact`) strings.push(word.value)
+    // @ts-ignore
+    else throw new Error(`Unimplemented tokenized word type "${word.type}"`)
   }
 
   return strings.join(``)
@@ -76,7 +84,42 @@ export function range(this: Node): Range {
   const range = new Range()
 
   const tokens = this.tokenize()
-  for (const { node, token } of tokens) range.addEntry(...(token ? [token.interval] : node.range.getEntries()))
+  for (const word of tokens) {
+    if (word.type === `node`) range.addEntry(...(word.token ? [word.token.interval] : word.node.range.getEntries()))
+    else throw new Error(`Unimplemented tokenized word type "${word.type}"`)
+  }
 
   return range
 }
+
+export function tokenize(options: Partial<NodeTokenizeOptions> = {}): NodeTokenizedWord[] {
+  const list: NodeTokenizedWord[] = []
+
+  inOrder(
+    this,
+    (node, token, { ignorable, first }) => {
+      if (ignorable) return
+
+      if (token?.type === `word`) list.push({ type: `artefact`, node, value: token.value })
+      else list.push({ type: `node`, node, token: token || undefined })
+    },
+    options.level,
+    { wrapInParenthesis: options.wrapInParenthesis, showType: options.showType },
+  )
+
+  return list
+}
+
+export interface NodeTokenizedWord_Node {
+  type: `node`
+  node: Node
+  token?: Token
+}
+
+export interface NodeTokenizedWord_Artefact {
+  type: `artefact`
+  node: Node
+  value: string
+}
+
+export type NodeTokenizedWord = NodeTokenizedWord_Node | NodeTokenizedWord_Artefact

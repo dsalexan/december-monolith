@@ -71,6 +71,8 @@
  * - AST -> Result
  */
 
+import * as Unit from "./unit"
+
 import * as Type from "./type"
 export * as Token from "./token"
 import * as Parser from "./phases/parser"

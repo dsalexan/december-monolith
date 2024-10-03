@@ -14,13 +14,10 @@ import { postOrder } from "../../node/traversal"
 import { getMasterScope, MasterScope, Scope } from "../../node/scope"
 import Simplify, { SimplifyOptions } from "../simplify"
 import Reducer, { ReducerOptions } from "../reducer"
-import { process, RuleSet } from "../../nrs"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export interface BaseResolverOptions {
-  SimplifyNRS: RuleSet[]
-  //
   simplify?: SimplifyOptions
   reducer?: ReducerOptions
 }
@@ -49,8 +46,6 @@ export default class Resolver {
       logger: options.logger ?? _logger,
       debug: options.debug ?? false,
       scope: options.scope!,
-      //
-      SimplifyNRS: options.SimplifyNRS!,
     }
 
     return this.options
@@ -75,13 +70,15 @@ export default class Resolver {
     this.result = this.tree
 
     // 1. Resolve tree
-    let lastExpression = this.result.expression()
+    this.result.expression()
+    let lastExpression = this.result.root.getContent({ wrapInParenthesis: true })
     while (i < STACK_OVERFLOW_PROTECTION) {
       this.result = this._resolve(this.result, i)
 
       // check if we can stop
-      const newExpression = this.result.expression()
-      if (newExpression === lastExpression) break
+      this.result.expression()
+      const newExpression = this.result.root.getContent({ wrapInParenthesis: true })
+      if (newExpression === lastExpression && i > 0) break
 
       lastExpression = newExpression
       i++
@@ -94,12 +91,23 @@ export default class Resolver {
     // 1. Simplify expression
     global.__DEBUG_LABEL = `[${i}].simplify` // COMMENT
 
-    const beforeSimplify = tree.expression()
+    tree.expression()
+    const beforeSimplify = tree.root.getContent({ wrapInParenthesis: true })
 
-    this.simplify.process(tree, this.environment, this.options.SimplifyNRS, this.options.simplify)
+    this.simplify.process(tree, this.environment, [], this.options.simplify)
+    this.simplify.SST.expression()
+    const afterSimplify = this.simplify.SST.root.getContent({ wrapInParenthesis: true })
 
     // if there were no changes, stop
-    if (beforeSimplify === this.simplify.SST.expression()) return this.simplify.SST
+    if (beforeSimplify === afterSimplify && i > 0) {
+      if (__DEBUG) {
+        console.log(`\n`)
+        _logger.add(paint.grey(global.__DEBUG_LABEL)).info()
+        _logger.add(paint.grey.italic.dim(`  (no changes, stop resolve loop)`)).info()
+      }
+
+      return this.simplify.SST
+    }
 
     if (__DEBUG) {
       console.log(`\n`)

@@ -29,7 +29,8 @@ export function SyntacticalRuleAdder(this: Type, priority: number, arity: number
 export function SyntacticalRuleDeriver(this: Type, arity: number, { priority, incompleteArity, pattern, parent }: Partial<SyntacticalRule> = {}) {
   assert(this.lexical || this.semantical, `deriveSyntactical requires either a LexicalRule or SemanticalRule to derive from`)
 
-  this.addSyntactical(priority ?? this.lexical?.priority ?? this.syntactical?.priority, arity, { incompleteArity, pattern, parent })
+  priority ??= this.lexical?.priority ?? this.syntactical?.priority
+  this.addSyntactical(priority!, arity, { incompleteArity, pattern, parent })
 
   return this
 }

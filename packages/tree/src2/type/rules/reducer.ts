@@ -9,6 +9,7 @@
 import { isArray, isNil } from "lodash"
 
 import { Match } from "@december/utils"
+import { IUnit, Quantity } from "@december/utils/unit"
 import { Primitive } from "@december/utils/typing"
 
 import type Type from "../base"
@@ -16,7 +17,7 @@ import { EvaluateFunction } from "../../phases/lexer/evaluation"
 import assert from "assert"
 import Node from "../../node"
 import Environment from "../../environment"
-import { RuleSet } from "../../nrs/rule/rule"
+
 import { MasterScope, Scope } from "../../node/scope"
 import { NodeInstruction } from "../../phases/reducer/instruction"
 import type Reducer from "../../phases/reducer"
@@ -46,4 +47,4 @@ export default class ReduceRule {
 
 export type IGetNodeInstruction = (this: Reducer, node: Node, scope: { master: MasterScope; all: Scope[] }) => NodeInstruction
 export type IProcessNodeInstruction = (this: Reducer, instruction: NodeInstruction, node: Node, scope: { master: MasterScope; all: Scope[] }) => ProcessedNode
-export type ProcessedNode = Node | NonNullable<Primitive> | Function
+export type ProcessedNode = Node | NonNullable<Primitive> | Function | Quantity

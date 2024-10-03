@@ -1,5 +1,5 @@
 import assert from "assert"
-import { isBoolean, isNumber, isString, last, subtract } from "lodash"
+import { isBoolean, isNumber, isString, last, subtract, uniqBy } from "lodash"
 
 import { Range, Interval, Point, typing } from "@december/utils"
 
@@ -20,6 +20,8 @@ import { ProvidedString, StringProvider } from "../string"
 import { NodeCollectionOperationOptions } from "./node/collection"
 import { KEYWORD_GROUP } from "../type/declarations/keyword"
 import { getType } from "../type"
+import Token from "../token"
+import NodeFactory from "./factory"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -78,7 +80,7 @@ export default class SubTree {
       if (node.type.id !== `keyword`) debugger
 
       // try to find an ancestor matching parent
-      const ancestor = this.root.findAncestor(ancestor => node.type.syntactical.parent!.match(ancestor))
+      const ancestor = this.root.findAncestor(ancestor => node.type.syntactical!.parent!.match(ancestor))
 
       if (ancestor) return new SubTree(ancestor).insert(node, { ...options, ignoreSyntacticalParent: true })
     }
@@ -138,10 +140,15 @@ export default class SubTree {
     // 1. Verify that all tokens have the same provider signature
     const providers: Nullable<StringProvider>[] = []
     preOrder(this.root, node => {
-      for (const token of node.tokens) if (!providers.find(provider => provider && provider.signature === token.provider?.signature)) providers.push(token.provider)
+      for (const token of node.tokens) {
+        const signature = token.provider?.signature
+
+        const provider = providers.find(provider => provider?.signature === signature)
+        if (provider === undefined) providers.push(token.provider)
+      }
     })
 
-    if (!recompileProviders) assert(providers.length === 1, `All tokens must have the same signature (and, thus, only one provider)`)
+    // if (!recompileProviders) assert(providers.length === 1, `All tokens must have the same signature (and, thus, only one provider)`)
 
     // 1. Verify that all tokens have an assigned interval
     let thereAreTokensLackingInterval = false
@@ -152,16 +159,21 @@ export default class SubTree {
 
     assert(!thereAreTokensLackingInterval, `All tokens must have an assigned interval`)
 
-    if (providers.length === 1 && providers[0] !== null && !thereAreTokensLackingInterval) return providers[0].value
+    const isSingleValidProvider = providers.length === 1 && providers[0] !== null
+    const haveMultipleProviders = providers.length > 1
+
+    const shouldRecalculate = !isSingleValidProvider || haveMultipleProviders || thereAreTokensLackingInterval // should recalculate ranges if there are multiple providers or some tokens are lacking interval
+
+    if (!recompileProviders && !shouldRecalculate) return providers[0]!.value
 
     // 2. Recalculate expression (because not all tokens have the same provider OR some tokens are lacking interval)
 
     let expression = ``
     let cursor = 0
-    inOrder(this.root, (node, token, ignorable) => {
+    inOrder(this.root, (node, token, { ignorable }) => {
       if (ignorable) debugger
 
-      if (token) {
+      if (token instanceof Token) {
         // if (token.provider) debugger
 
         const lexeme = token.lexeme
@@ -231,7 +243,7 @@ export default class SubTree {
 
   //   // recalculate ranges and final expression
   //   let cursor = 0
-  //   inOrder(this.root, (node, token, ignorable) => {
+  //   inOrder(this.root, (node, token, {ignorable}) => {
   //     if (ignorable) debugger
 
   //     // if (node._range) debugger
@@ -342,7 +354,7 @@ function insertOperator(subtree: Node, operator: Node, options: Partial<InsertOp
 
       const fallbackRange = Range.fromPoint(Range.point(subtree.range, `internal`, `first`, subtree.type.name === `root`))
       // const fallbackRange = Range.fromPoint(this.point(`internal`, `first`, subtree))
-      const nil = new Node(NIL, fallbackRange)
+      const nil = NodeFactory.NIL(fallbackRange)
       subtree.syntactical.addNode(nil, undefined, options)
     } else {
       //  subtree has children
@@ -403,7 +415,7 @@ function insertOperator(subtree: Node, operator: Node, options: Partial<InsertOp
     }
 
     parent.syntactical.addNode(operator, undefined, options) // add operator as a child of subtree (or last child of subtree in a VERY specific scenario)
-    const nil = operator.NIL()
+    const nil = NodeFactory.NIL(operator)
 
     // TODO: This would probably be different for any arity !== 2
     operator.syntactical.addNode(nil, undefined, options) // add nil as left operand of operator
@@ -506,7 +518,7 @@ function insertSeparator(subtree: Node, separator: Node, options: Partial<Insert
     subtree.syntactical.addNode(separator, 0, { ...options, preserveExistingNode: true, refreshIndexing: false })
 
     // create new list for next tokens
-    const emptyList = separator.LIST(Range.fromPoint(last(separator.tokens)!.interval.end + 1))
+    const emptyList = NodeFactory.LIST(Range.fromPoint(last(separator.tokens)!.interval.end + 1))
     separator.syntactical.addNode(emptyList, undefined, options)
 
     // empty list is new target, future tokens should be inserted in its subtree
@@ -518,7 +530,7 @@ function insertSeparator(subtree: Node, separator: Node, options: Partial<Insert
 
   // make emptyList to act as new target for future tokens (but as a child of master separator)
   const fallbackRange = Range.fromPoint(separator.range.column(`last`) + 1)
-  const emptyList = new Node(LIST, fallbackRange)
+  const emptyList = NodeFactory.LIST(fallbackRange)
   master.syntactical.addNode(emptyList, undefined, options)
 
   // update master tokens
@@ -539,9 +551,9 @@ function insertKeyword(subTree: Node, keyword: Node, options: Partial<InsertOpti
   const parent = subTree
 
   // TODO: Untested
-  if (parent.type.syntactical.arity !== 3) debugger
+  if (parent.type.syntactical!.arity !== 3) debugger
 
-  const { arity } = keyword.type.syntactical
+  const { arity } = keyword.type.syntactical!
 
   // TODO: N-ary keywords should act how? Just aggregating all children? Or are funcionally the same as unary?
 
@@ -590,7 +602,7 @@ function insertKeyword(subTree: Node, keyword: Node, options: Partial<InsertOpti
       keyword.syntactical.addNode(beforeList, undefined, { ...options, refreshIndexing: false })
 
       // create new empty list as second child, and pass it as next target
-      const emptyList = keyword.LIST(Range.fromPoint(last(keyword.tokens)!.interval.end + 1))
+      const emptyList = NodeFactory.LIST(Range.fromPoint(last(keyword.tokens)!.interval.end + 1))
       keyword.syntactical.addNode(emptyList, undefined, options)
 
       return emptyList

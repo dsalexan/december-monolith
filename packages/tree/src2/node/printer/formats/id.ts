@@ -48,16 +48,20 @@ export default function name(root: Node, level: number, format: TokenFormatOptio
   return {
     fn: () => {
       // if (global.__DEBUG_LABEL === `"->ρ1.a` && level === 2) debugger
-      const tokens = root.tokenize(level)
+      const tokens = root.tokenize({ level })
 
       const sequences: Grid.Sequence.Sequence[] = []
 
       // format tokenized nodes to text
-      for (const [j, { node, token }] of tokens.entries()) {
+      for (const [j, word] of tokens.entries()) {
         // if (global.__DEBUG_LABEL === `]->L5.b` && j === 5) debugger
 
-        const _sequences = formatID(level, node, token, { ...format })
-        sequences.push(..._sequences)
+        if (word.type === `node`) {
+          const { node, token } = word
+
+          const _sequences = formatID(level, node, token, { ...format })
+          sequences.push(..._sequences)
+        } else throw new Error(`Unimplemented tokenized word type "${word.type}"`)
       }
 
       return sequences

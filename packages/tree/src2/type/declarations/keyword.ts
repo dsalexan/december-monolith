@@ -13,10 +13,12 @@ import Node, { SubTree } from "../../node"
 import type Token from "../../token"
 import { EvaluatorOptions } from "../../phases/lexer/evaluation"
 import { interleavedInOrder, wrapperInOrder } from "../../node/traversal"
-import { RuleSet } from "../../nrs"
+
+import { RuleSet, Rule } from "../../nrs"
+import { leftOperand, match, matchInChildren, nextSibling, predicate, filter, firstChild } from "../../nrs/rule/match/functions"
+import { ADD_NODE_AT, COLLAPSE_NODE, REMOVE_NODE, SWAP_NODES_AT } from "../../nrs/rule/mutation/instruction"
 
 import { TYPE, NODE } from "../../match/pattern"
-import { Rule, leftOperand, match, matchInChildren, nextSibling, predicate, filter, ADD_NODE_AT, firstChild, KEEP_NODE } from "../../nrs/rule"
 
 /**
  * Lower Priority means less nodes can be parent of this node

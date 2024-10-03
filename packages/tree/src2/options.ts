@@ -15,7 +15,7 @@ export interface PhaseProcessingOptions {
   semantic?: BaseSemanticOptions
   simplify?: BaseSimplifyOptions
   reducer?: BaseReducerOptions
-  resolver: BaseResolverOptions
+  resolver?: BaseResolverOptions
 }
 
 export interface InputProcessingOptions {
@@ -63,11 +63,12 @@ export function defaultProcessingOptions(options: InputProcessingOptions & Phase
     ...(options.reducer ?? {}),
   }
 
+  const _resolver = options.resolver ?? {}
   const resolver = {
     ...base,
-    simplify,
-    reducer,
-    ...(options.resolver ?? {}),
+    ..._resolver,
+    simplify: { ...simplify, ...(_resolver.simplify ?? {}) },
+    reducer: { ...reducer, ...(_resolver.reducer ?? {}) },
   }
 
   return {

@@ -1,0 +1,84 @@
+import { Quantity } from "@december/utils/unit"
+import assert from "assert"
+
+export const ARITHMETIC_OPERATIONS = [`addition`, `subtraction`, `multiplication`, `division`] as const
+export type ArithmeticOperation = (typeof ARITHMETIC_OPERATIONS)[number]
+
+export const RELATIONAL_OPERATIONS = [`equals`, `greater`, `smaller`, `greater_or_equal`, `smaller_or_equal`] as const
+export type RelationalOperation = (typeof RELATIONAL_OPERATIONS)[number]
+
+export const OPERATIONS = [...ARITHMETIC_OPERATIONS, ...RELATIONAL_OPERATIONS] as const
+export type Operation = ArithmeticOperation | RelationalOperation
+
+export type Operand = Quantity | number | string
+export const OPERAND_TYPES = [`quantity`, `number`] as const
+export type OperandType = (typeof OPERAND_TYPES)[number]
+
+export interface AlgebraOptions {
+  inverse?: boolean
+}
+
+export function doAlgebra(operation: Operation, left: Operand, right: Operand, options: AlgebraOptions): Operand {
+  // TODO: Probably check if both operands are of the same type???
+
+  // arithmetic operations
+  if (operation === `addition`) return addition(left, right, options)
+  else if (operation === `subtraction`) return addition(left, right, { ...options, inverse: true })
+  else if (operation === `multiplication`) return multiplication(left, right, options)
+  else if (operation === `division`) return multiplication(left, right, { ...options, inverse: true })
+  // logical operations
+  if (operation === `equals`) return left === right
+  else if (operation === `greater`) return left > right
+  else if (operation === `smaller`) return left < right
+  else if (operation === `greater_or_equal`) return left >= right
+  else if (operation === `smaller_or_equal`) return left <= right
+  //
+  else throw new Error(`Unimplemented algebra operation "${operation}"`)
+}
+
+function addition(left: Operand, right: Operand, options: AlgebraOptions): Operand {
+  const _left = operandType(left)
+  const _right = operandType(right)
+
+  assert(_left === _right, `Can only add operands of the same type: "${_left}" <> "${_right}"`)
+
+  if (_left === `number`) {
+    const numberLeft = left as number
+    const numberRight = right as number
+
+    return numberLeft + (options.inverse ? -numberRight : numberRight)
+  } else if (_left === `quantity`) {
+    const __left = primitiveType(left)
+    const __right = primitiveType(right)
+
+    assert(__left === __right, `Can only add quantities of the same type: "${__left}" <> "${__right}"`)
+
+    return null as any
+  }
+
+  throw new Error(`Unimplemented addition for operands of type "${_left}"`)
+}
+
+function multiplication(left: Operand, right: Operand, options: AlgebraOptions): Operand {}
+
+// #region UTILS
+
+export function operandType(operand: Operand): OperandType {
+  if (operand instanceof Quantity) return `quantity`
+  else if (typeof operand === `number`) return `number`
+  // else if (typeof operand === `string`) return `string`
+
+  // @ts-ignore
+  throw new Error(`Unimplemented operand type for "${operand.toString()}"`)
+}
+
+export function primitiveType(operand: Operand): OperandType {
+  if (typeof operand === `number`) return `number`
+  // else if (typeof operand === `string`) return `string`
+  else if (operand instanceof Quantity) return primitiveType(operand.value)
+
+  // @ts-ignore
+  throw new Error(`Unimplemented primitive type for "${operand.toString()}"`)
+}
+
+// #endregion

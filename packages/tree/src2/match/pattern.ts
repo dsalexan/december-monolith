@@ -1,4 +1,3 @@
-import { offspring } from "./../nrs/rule_old/index"
 import { BasePattern, BasePatternOptions } from "@december/utils/match/base"
 import { ElementPattern } from "@december/utils/match/element"
 import { SetPattern } from "@december/utils/match/set"
@@ -9,6 +8,7 @@ import { TypeName } from "../type/declarations/name"
 
 import assert from "assert"
 import { ancestry, inContext, preOrder } from "../node/traversal"
+import { TypeID, TypeModule } from "../type/base"
 
 // #region Node Patterns
 
@@ -31,6 +31,10 @@ export class BaseNodePattern extends BasePattern {
     super(type, options)
     this.pattern = pattern
     if (options.bypass) this.bypass = options.bypass
+  }
+
+  override match(node: Node): boolean {
+    return super.match(node)
   }
 
   override _match(node: Node): boolean {
@@ -90,6 +94,25 @@ export class NodePrimitivePattern extends BaseNodePattern {
   }
 }
 
+export class NodeCollectionPattern extends BaseNodePattern {
+  declare type: `node:type:module`
+  declare pattern: SetPattern<(string | number | boolean)[]>
+
+  constructor(type: `node:type:module`, pattern: SetPattern<(string | number | boolean)[]>, options: Partial<BaseNodePatternOptions> = {}) {
+    super(type, pattern, options)
+  }
+
+  getValue(node: Node): (string | number | boolean)[] {
+    if (this.type === `node:type:module`) return node.type.modules
+
+    assert(false, `Unimplemented node pattern value evaluation for "${this.type}"`)
+  }
+
+  override _match(node: Node): boolean {
+    return this.pattern.match(this.getValue(node))
+  }
+}
+
 export class NodeScopePattern extends BaseNodePattern {
   declare type: `node:scope`
   declare pattern: SetPattern<string[]>
@@ -103,7 +126,7 @@ export class NodeScopePattern extends BaseNodePattern {
   }
 }
 
-export type NodePattern = NodeTypeNamePattern | NodePrimitivePattern | NodeScopePattern
+export type NodePattern = NodeTypeNamePattern | NodePrimitivePattern | NodeScopePattern | NodeCollectionPattern
 
 // #endregion
 
@@ -178,8 +201,9 @@ export type TreePattern = TraversalTreePattern | TargetTreePattern
 
 export const TYPE = {
   NAME: (pattern: ElementPattern<TypeName>): NodeTypeNamePattern => new NodeTypeNamePattern(pattern),
-  ID: (pattern: ElementPattern<string>): NodePrimitivePattern => new NodePrimitivePattern(`node:type:id`, pattern),
+  ID: (pattern: ElementPattern<TypeID>): NodePrimitivePattern => new NodePrimitivePattern(`node:type:id`, pattern),
   FULL: (pattern: ElementPattern<string>): NodePrimitivePattern => new NodePrimitivePattern(`node:type:full`, pattern),
+  MODULE: (pattern: SetPattern<TypeModule[]>): NodeCollectionPattern => new NodeCollectionPattern(`node:type:module`, pattern),
 }
 
 export const NODE = {

@@ -7,6 +7,7 @@ import { Node } from "../base"
 import { createIndexing, NodeIndexing } from "../indexing"
 import { isArray, range, reverse } from "lodash"
 import { applyOptions, NodeCollectionOperationOptions } from "../collection"
+import NodeFactory from "../../factory"
 
 // ===============================================================================
 //                           GENERIC IMPLEMENTATIONS
@@ -26,6 +27,7 @@ export function swapWith(this: Node, other: Node, options: Partial<NodeCollectio
   assert(other.parent, `Node B has no parent`)
 
   const A = {
+    id: this.id,
     index: this.index,
     level: this.level,
     node: this,
@@ -34,6 +36,7 @@ export function swapWith(this: Node, other: Node, options: Partial<NodeCollectio
   }
 
   const B = {
+    id: other.id,
     index: other.index,
     level: other.level,
     node: other,
@@ -41,8 +44,14 @@ export function swapWith(this: Node, other: Node, options: Partial<NodeCollectio
     root: other.root,
   }
 
-  A.parent.children.remove(A.index, { ...options, refreshIndexing: false })
-  B.parent.children.remove(B.index, { ...options, refreshIndexing: false })
+  A.parent.children.remove(
+    A.parent.children.findIndex(child => child.id === A.id),
+    { ...options, refreshIndexing: false },
+  )
+  B.parent.children.remove(
+    B.parent.children.findIndex(child => child.id === B.id),
+    { ...options, refreshIndexing: false },
+  )
 
   B.parent.children.add(A.node, B.index, { ...options, refreshIndexing: false })
   A.parent.children.add(B.node, A.index, { ...options, refreshIndexing: false })
@@ -69,7 +78,7 @@ export function groupChildren(this: Node, [start, end]: [number, number], list?:
   // create new list if necessary
   if (!list) {
     const fallbackRange = Range.fromPoint(Range.point(children.length > 0 ? children.map(child => child.range) : this.range, `internal`, `first`, children.length === 0 && this.type.name === `root`))
-    list = this.LIST(fallbackRange)
+    list = NodeFactory.LIST(fallbackRange)
   }
 
   this.syntactical.addNode(list, start, options) // add list to parent

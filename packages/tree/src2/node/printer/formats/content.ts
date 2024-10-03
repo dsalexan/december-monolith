@@ -12,6 +12,7 @@ import assert from "assert"
 
 import { Node } from "../../node/base"
 import { NODE_BALANCING } from "../../node/type"
+import { NodeTokenizedWord_Node } from "../../node/token"
 
 export function formatContent(level: number, node: Node, token: Token | undefined, { ...options }: TokenFormatOptions): Grid.Sequence.Sequence[] {
   const sequences: Grid.Sequence.Sequence[] = []
@@ -21,7 +22,7 @@ export function formatContent(level: number, node: Node, token: Token | undefine
   // if (global.__DEBUG_LABEL === `,->root` && node.name === `C1.a`) debugger
   // if (node.name === `s3.b`) debugger
 
-  const tokens = token ? [{ node, token }] : node.tokenize()
+  const tokens = token ? [{ node, token }] : (node.tokenize() as NodeTokenizedWord_Node[])
   const __DEBUG_TOKENS = tokens.map(token => {
     const repr = token.token ? token.token.lexeme : token.node.lexeme
     const range = token.token?.interval?.toRange() ?? token.node.range
@@ -36,13 +37,14 @@ export function formatContent(level: number, node: Node, token: Token | undefine
     if (node.balancing === NODE_BALANCING.UNBALANCED) color = paint.red
 
     if (higherContent) color = paint.grey
-    else if (node.id === leaf.id && node.type.name !== `keyword_group`) color = color.bold
+    else if (node.id === leaf.id && ![`keyword_group`, `quantity`].includes(node.type.name)) color = color.bold
 
     if (node.type.id === `enclosure` && node.type.name !== `list` && !node.type.modules.includes(`wrapper`)) {
       if (node.id !== leaf.id && leaf.type.id !== `keyword`) color = color.dim
       else color = color.bold
-    } else if (node.type.name === `keyword_group`) {
+    } else if ([`keyword_group`, `quantity`].includes(node.type.name)) {
       if (node.id === leaf.id) color = color.dim
+      if (node.type.name === `quantity`) color = color.italic
     } else if (node.type.id === `operator`) {
       if (node.id !== leaf.id) color = color.dim
     } else if (node.type.id === `separator`) {
@@ -68,14 +70,18 @@ export default function content(root: Node, level: number, format: TokenFormatOp
     fn: () => {
       // if (level === 3) debugger
 
-      const tokens = root.tokenize(level)
+      const tokens = root.tokenize({ level })
 
       const sequences: Grid.Sequence.Sequence[] = []
 
       // format tokenized nodes to text
-      for (const [j, { node, token }] of tokens.entries()) {
-        const _sequences = formatContent(level, node, token, { ...format })
-        sequences.push(..._sequences)
+      for (const [j, word] of tokens.entries()) {
+        if (word.type === `node`) {
+          const { node, token } = word
+
+          const _sequences = formatContent(level, node, token, { ...format })
+          sequences.push(..._sequences)
+        } else throw new Error(`Unimplemented tokenized word type "${word.type}"`)
       }
 
       return sequences
