@@ -119,6 +119,10 @@
       "@december/compile/*": ["../../../packages/compile/src/*"],
       "@december/tree": ["../../../packages/tree/src2"],
       "@december/tree/*": ["../../../packages/tree/src2/*"],
+      "@december/system": ["../../../packages/system/src"],
+      "@december/system/*": ["../../../packages/system/src/*"],
+      "@december/gca": ["../../../packages/gca/src"],
+      "@december/gca/*": ["../../../packages/gca/src/*"],
     }
   },
   "include": ["."],

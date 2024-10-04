@@ -1,5 +1,5 @@
-import { d6, DiceRoller } from "./dice"
-import { Environment, print } from "./tree"
+import { d6, DiceRoller } from "@december/system/dice"
+import { Environment, print } from "@december/system/tree"
 
 import logger, { paint } from "./logger"
 

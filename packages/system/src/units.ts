@@ -1,6 +1,7 @@
 import { UnitManager, SimpleUnit, UnitPrefixesCollection, SI_PREFIXES_COLLECTION } from "@december/utils/unit"
 
-export { UnitManager, Quantity, IUnit } from "@december/utils/unit"
+export { UnitManager, Quantity } from "@december/utils/unit"
+export type { IUnit } from "@december/utils/unit"
 
 export const _GRAM = new SimpleUnit(`g`, `gram`, `mass`)
 export const GRAMS = new UnitPrefixesCollection(_GRAM, SI_PREFIXES_COLLECTION)

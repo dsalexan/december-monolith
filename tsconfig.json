@@ -48,6 +48,10 @@
       "@december/tree/*": ["packages/tree/src2/*"],
       "@december/compiler": ["packages/compiler/src"],
       "@december/compiler/*": ["packages/compiler/src/*"],
+      "@december/system": ["./packages/system/src"],
+      "@december/system/*": ["./packages/system/src/*"],
+      "@december/gca": ["./packages/gca/src"],
+      "@december/gca/*": ["./packages/gca/src/*"],
     }
   },
   "exclude": ["node_modules"],

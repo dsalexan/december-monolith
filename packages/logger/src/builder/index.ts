@@ -140,6 +140,10 @@ export default class Builder {
     return this
   }
 
+  untab(size?: number): this {
+    return this.tab(size === undefined ? -1 : -size)
+  }
+
   setTab(size: number): this {
     this.options.tab.size = size
 

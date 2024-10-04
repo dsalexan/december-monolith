@@ -1,8 +1,9 @@
 import { isNil, isNumber, isString, range, sum } from "lodash"
-import { Node, Gardener, NodeFactory, SubTree, Grammar, Environment, ObjectSource, Processor, ProcessedData } from "./tree"
-import { D6, DICE, IUnit, Quantity, UnitManager } from "./units"
 import { Arguments, MaybeUndefined } from "tsdef"
 import assert from "assert"
+
+import { Node, Gardener, NodeFactory, SubTree, Grammar, Environment, ObjectSource, Processor, ProcessedData } from "./tree"
+import { D6, DICE, IUnit, Quantity, UnitManager } from "./units"
 
 export function dice(unit: IUnit, base: number, modifier?: number): SubTree {
   const gardener = Gardener.make()

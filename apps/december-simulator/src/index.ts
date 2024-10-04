@@ -1,17 +1,15 @@
 import path from "path"
 
-import { GURPS } from "./system"
-import GCAImporter from "./system/gurps/importer/GCA"
+import { GCACharacter, GCACharacterImporter } from "@december/gca"
 
 import churchil from "./logger"
 
-const system = new GURPS(churchil)
-const importer = new GCAImporter(churchil)
+const importer = new GCACharacterImporter(churchil)
 
 const GCA5 = `C:\\Users\\dsale\\Documents\\GURPS Character Assistant 5`
 const pathfile = path.join(GCA5, `characters`, `Luke Undell (dsalexan).gca5`)
 
-const test = system.makeCharacter()
-importer.import(pathfile, test).then(() => {
+const character = new GCACharacter()
+importer.import(pathfile, character).then(() => {
   debugger
 })
