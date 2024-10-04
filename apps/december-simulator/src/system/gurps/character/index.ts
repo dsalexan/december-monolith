@@ -1,4 +1,5 @@
 import BaseCharacter from "../../../character"
+import { SubTree } from "../../../tree"
 
 export interface CharacterInformation {
   player: string
@@ -18,7 +19,7 @@ export interface TransformOverview {
   traits: { id: number; name: string }[]
 }
 
-export type DamageTable = Record<number, { thr: number; sw: number }>
+export type DamageTable = Record<number, { thr: SubTree; sw: SubTree }>
 
 export interface CharacterData {
   info: CharacterInformation

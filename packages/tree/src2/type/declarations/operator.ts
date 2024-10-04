@@ -83,6 +83,7 @@ export const ALGEBRAIC_OPERATOR_NAMES = [`multiplication`, `division`, `addition
 export type AlgebraicOperatorTypeName = (typeof ALGEBRAIC_OPERATOR_NAMES)[number]
 
 export const OPERATORS = [...LOGICAL_OPERATORS, ...RELATIONAL_OPERATORS, ...ALGEBRAIC_OPERATORS]
+export type OperatorType = (typeof OPERATORS)[number]
 export const OPERATOR_NAMES = [...LOGICAL_OPERATOR_NAMES, ...RELATIONAL_OPERATOR_NAMES, ...ALGEBRAIC_OPERATOR_NAMES] as const
 export type OperatorTypeName = (typeof OPERATOR_NAMES)[number]
 

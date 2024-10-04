@@ -202,7 +202,7 @@ export default class Reducer {
         const identifier = stringValue
         assert(this.environment.has(identifier), `Identifier "${identifier}" is not defined in Environment`)
 
-        stringValue = this.environment.get(identifier).getValue()
+        stringValue = this.environment.get(identifier).getValue(identifier, node)
       }
 
       if (instruction.type === `any`) return stringValue
@@ -216,14 +216,18 @@ export default class Reducer {
       } else if (instruction.type === `boolean`) return stringValue.toLowerCase() === `true` || stringValue === `1` ? true : false
       else if (instruction.type === `quantity`) {
         const value = this._processNode(node.children.nodes[0])
-
         if (value instanceof Node) return node
 
         const unit = node.attributes.unit as IUnit
-
         assert(isNumber(value), `Only tested for numbers`)
 
-        return unit.toQuantity(value)
+        const quantity = unit.toQuantity(value)
+
+        const symbol = unit.getSymbol()
+        const isIdentified = this.environment.has(symbol)
+        if (isIdentified) return this.environment.get(symbol).getValue(quantity, node) // probably gon be used for unit conversions
+
+        return quantity
       }
       //
     } else if (instruction.protocol === `elementary-algebra`) {

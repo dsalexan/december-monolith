@@ -6,6 +6,7 @@ import { ANY_PROPERTY, PROPERTY, PropertyReference, PropertyReferencePattern, RE
 import { OR } from "@december/utils/match/logical"
 import { ElementPattern, EQUALS, REGEX } from "@december/utils/match/element"
 import { BasePattern } from "@december/utils/match/base"
+import { UnitManager } from "@december/utils/unit"
 
 import ObjectEventEmitter, { ListenerFunction, ListenerFunctionContext } from "./../manager/events/emitter"
 import { SET, OVERRIDE } from "../mutation"
@@ -267,13 +268,13 @@ export class Strategy {
   }
 
   /** Generates a preProcess method wrapped around a tuple (object, eventEmitter) */
-  preProcess(object: MutableObject, eventEmitter: ObjectEventEmitter) {
+  preProcess(object: MutableObject, eventEmitter: ObjectEventEmitter, unitManager: UnitManager) {
     return (data: Event_Listen[`data`] & { path: ProcessingPath }, targetFunction: string | [string, string], options: PreProcessValueOptions): Mutation[] => {
       const path = getProcessingPath(data.path)
 
       // 1. Pre-process data
       const rawValue = get(object.data, path.raw)
-      const preProcessedValue = preProcessValue(rawValue, path.raw, options)
+      const preProcessedValue = preProcessValue(rawValue, path.raw, { ...options, unitManager })
 
       // 2. If value is ready, set it
       if (preProcessedValue.isReady) {

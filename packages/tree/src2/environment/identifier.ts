@@ -1,3 +1,5 @@
+import Node from "../node"
+
 export class BaseIdentifier {
   type: string
 
@@ -19,5 +21,5 @@ export type Identifier = NamedIdentifier
 
 export interface IdentifiedValue<TValue = any> {
   name: string
-  getValue: () => TValue
+  getValue: (data: unknown, node: Node) => TValue
 }

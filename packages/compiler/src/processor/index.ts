@@ -4,6 +4,7 @@ import { Processor, Environment, ProcessedData, Simbol } from "@december/tree"
 export { Processor, Environment } from "@december/tree"
 export type { ProcessedData } from "@december/tree"
 import { PROPERTY, PropertyReferencePattern, REFERENCE } from "@december/utils/access"
+import { UnitManager } from "@december/utils/unit"
 
 import { Signature } from "../manager/events/signature"
 import type MutableObject from "../object"
@@ -13,10 +14,10 @@ import assert from "assert"
 import { ObjectSourceData } from "../../../tree/src2/environment/source/object"
 import { Event_Listen } from "../manager/events"
 
-export function makeProcessor() {
+export function makeProcessor(unitManager: UnitManager): Processor {
   const processor = new Processor()
 
-  const grammar = processor.makeGrammar()
+  const grammar = processor.makeGrammar(unitManager)
 
   processor.initialize(grammar)
 
@@ -25,9 +26,9 @@ export function makeProcessor() {
 
 export type PreProcessValueOptions = Parameters<Processor[`preProcess`]>[2] & Omit<ProcessingOptions, `referenceToSource`>
 
-export function preProcessValue(value: string, path: string, options: Parameters<Processor[`preProcess`]>[2]): ReadyPreProcessedValue | NonReadyPreProcessedValue {
+export function preProcessValue(value: string, path: string, options: Parameters<Processor[`preProcess`]>[2] & { unitManager: UnitManager }): ReadyPreProcessedValue | NonReadyPreProcessedValue {
   // 1. Make processor
-  const processor = makeProcessor()
+  const processor = makeProcessor(options.unitManager)
 
   // 2. Pre-process value (with empty environment)
   const preProcessedValue = processor.preProcess(value, new Environment(), options)

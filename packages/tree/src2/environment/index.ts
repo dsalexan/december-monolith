@@ -5,15 +5,23 @@ import { BaseSource, ObjectSource } from "./source"
 
 import churchill, { Block, paint, Paint } from "../logger"
 import { IdentifiedValue, BaseIdentifier, NamedIdentifier, Identifier } from "./identifier"
-import { ObjectSourceData } from "./source/object"
+import { InputObjectSourceData, isSourcedValue, ObjectSourceData, SourcedValue } from "./source/object"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export { Simbol } from "./symbolTable"
-export { ObjectSourceData } from "./source/object"
+export { ObjectSourceData, default as ObjectSource } from "./source/object"
 
 export default class Environment {
   public sources: Map<string, BaseSource> = new Map()
+
+  clone() {
+    const environment = new Environment()
+
+    for (const source of this.sources.values()) environment.addSource(source)
+
+    return environment
+  }
 
   hasSource(name: string) {
     return this.sources.has(name)
@@ -25,11 +33,15 @@ export default class Environment {
     this.sources.set(source.name, source)
   }
 
-  addObjectSource(name: string, data: ObjectSourceData) {
+  addObjectSource(name: string, data: InputObjectSourceData) {
     const source = new ObjectSource(name)
 
     for (const [key, value] of Object.entries(data)) {
-      source.object[key] = value
+      let sourcedValue = value as SourcedValue
+
+      if (!isSourcedValue(value)) sourcedValue = { type: `simple`, value: value }
+
+      source.object[key] = sourcedValue
     }
 
     this.addSource(source)

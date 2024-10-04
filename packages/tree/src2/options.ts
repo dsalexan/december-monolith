@@ -9,6 +9,7 @@ import { BaseSemanticOptions } from "./phases/semantic"
 import { BaseSimplifyOptions } from "./phases/simplify"
 import { BaseReducerOptions } from "./phases/reducer"
 import { BaseResolverOptions } from "./phases/resolver"
+import { SubTree } from "./node"
 
 export interface PhaseProcessingOptions {
   parser?: BaseParserOptions
@@ -25,6 +26,7 @@ export interface InputProcessingOptions {
     root: MasterScope | MasterScope[]
     evaluators?: ScopeEvaluator[]
   }
+  AST?: SubTree
 }
 
 export interface BaseProcessingOptions {

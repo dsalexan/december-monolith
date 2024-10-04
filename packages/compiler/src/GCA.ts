@@ -17,6 +17,7 @@ import { ProcessingOptionsGenerator, Strategy } from "./strategy"
 import { ReferenceIndexedEvent_Handle } from "./manager/events/events"
 import { SIGNATURE, Signature } from "./manager/events/signature"
 import { preProcessValue, PreProcessValueOptions, ProcessingOptions, processValue } from "./processor"
+import { UNIT_MANAGER } from "./units"
 
 /**
  * WHAT IS A STRATEGY?
@@ -211,7 +212,7 @@ export const DEFAULT_STRATEGY = new Strategy()
 
         if (value) {
           // 1. Pre-process data (saving signatures, missing references AND firing proxy strategies)
-          const preProcess = strategy.preProcess(object, manager.eventEmitter)
+          const preProcess = strategy.preProcess(object, manager.eventEmitter, UNIT_MANAGER)
           const preProcessedInstructions = preProcess(
             { path: [`_.GCA.modes[${index}].value`, `modes[${index}].value`] }, //
             `compute:processing`,

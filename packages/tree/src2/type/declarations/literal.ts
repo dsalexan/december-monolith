@@ -41,5 +41,6 @@ export type LiteralTypeName = (typeof LITERAL_NAMES)[number]
 export const LITERALS_BY_NAME = LITERALS.reduce((acc, recipe) => ({ ...acc, [recipe.name]: recipe }), {})
 
 export const PRIMITIVE_LITERALS = [NUMBER, STRING, BOOLEAN] as const
-export const PRIMITIVE_LITERAL_NAMES = [`number`, `string`, `boolean`] as const
 export type PrimitiveLiteral = (typeof PRIMITIVE_LITERALS)[number]
+export const PRIMITIVE_LITERAL_NAMES = [`number`, `string`, `boolean`] as const
+export type PrimitiveLiteralName = (typeof PRIMITIVE_LITERAL_NAMES)[number]

@@ -1,8 +1,8 @@
 import Grammar from "./type/grammar"
 import Lexer from "./phases/lexer"
 import Parser from "./phases/parser"
-import Semantic, { NRS as SemanticNRS } from "./phases/semantic"
-import Simplify, { NRS as SimplifyNRS } from "./phases/simplify"
+import Semantic, { RULESET_SEMANTIC } from "./phases/semantic"
+import Simplify, { RULESETS_SIMPLIFY } from "./phases/simplify"
 import Reducer from "./phases/reducer"
 import Resolver from "./phases/resolver"
 
@@ -19,6 +19,7 @@ import { range } from "lodash"
 import logger, { paint } from "./logger"
 import { SubTree } from "./node"
 import assert from "assert"
+import { UnitManager } from "./unit"
 
 export interface ProcessedData {
   isReady: boolean
@@ -40,8 +41,8 @@ export default class Processor {
 
   constructor() {}
 
-  makeGrammar() {
-    const grammar = new Grammar()
+  makeGrammar(unitManager: UnitManager) {
+    const grammar = new Grammar(unitManager)
 
     grammar.add(...WHITESPACES)
     grammar.add(...LITERALS)
@@ -68,35 +69,38 @@ export default class Processor {
     this.options = defaultProcessingOptions({
       ..._options,
       //
-      resolver: {
-        ...(_options.resolver ?? {}),
-        SimplifyNRS,
+      simplify: {
+        rulesets: RULESETS_SIMPLIFY,
       },
     })
 
     const DEBUG = this.options.debug // COMMENT
     if (DEBUG) this.printExpression(expression) // COMMENT
 
-    this.lexer.process(expression)
-    if (DEBUG) this.lexer.print() // COMMENT
+    if (!_options.AST) {
+      this.lexer.process(expression)
+      if (DEBUG) this.lexer.print() // COMMENT
 
-    this.parser.process(expression, this.lexer.tokens, this.options.parser)
-    if (DEBUG)
-      this.parser.print({
-        expression,
-        sequence: {
-          // minimumSizeForBracket: 0,
-          // minimumSizeForPipe: 1,
-          // padding: { character: `‾` },
-          // spacing: { character: `.` },
-          // filling: { character: `▮` },
-        },
-        style: {},
-        // headers: false,
-        // name: false,
-      })
+      this.parser.process(expression, this.lexer.tokens, this.options.parser)
+      if (DEBUG)
+        this.parser.print({
+          expression,
+          sequence: {
+            // minimumSizeForBracket: 0,
+            // minimumSizeForPipe: 1,
+            // padding: { character: `‾` },
+            // spacing: { character: `.` },
+            // filling: { character: `▮` },
+          },
+          style: {},
+          // headers: false,
+          // name: false,
+        })
+    }
 
-    this.semantic.process(this.parser.AST, SemanticNRS, this.options.semantic)
+    const AST = _options.AST ?? this.parser.AST
+
+    this.semantic.process(AST, [RULESET_SEMANTIC], this.options.semantic)
     if (DEBUG) this.semantic.print({ expression }) // COMMENT
 
     // try to solve semantic tree
@@ -121,15 +125,15 @@ export default class Processor {
     const DEBUG = this.options.debug // COMMENT
 
     // 1. Solve tree
-    this.simplify.process(tree, environment, SimplifyNRS, this.options.simplify)
-    if (DEBUG) this.simplify.print({ expression: this.simplify.SST.expression() }) // COMMENT
-    if (DEBUG) console.log(` `) // COMMENT
+    // this.simplify.process(tree, environment, RULESETS_SIMPLIFY, this.options.simplify)
+    // if (DEBUG) this.simplify.print({ expression: this.simplify.SST.expression() }) // COMMENT
+    // if (DEBUG) console.log(` `) // COMMENT
 
-    this.reducer.process(this.simplify.SST, environment, this.options.reducer)
-    if (DEBUG) this.reducer.print({ expression: this.reducer.RT.expression() }) // COMMENT
+    // this.reducer.process(this.simplify.SST, environment, this.options.reducer)
+    // if (DEBUG) this.reducer.print({ expression: this.reducer.RT.expression() }) // COMMENT
 
-    // this.resolver.process(tree, environment, this.options.resolver)
-    // if (DEBUG) this.resolver.print({ expression: this.resolver.result.expression() }) // COMMENT
+    this.resolver.process(tree, environment, this.options.resolver)
+    if (DEBUG) this.resolver.print({ expression: this.resolver.result.expression() }) // COMMENT
 
     // processed tree
     const PT = this.reducer.RT

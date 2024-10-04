@@ -132,7 +132,7 @@ RULESET_SEMANTIC.add(
 
       return quantity
 
-      const numericalValue = NodeFactory.PRIMITIVE(1, NUMBER)
+      const numericalValue = NodeFactory.PRIMITIVE(1, `number`)
 
       return MOVE_NODE_TO(quantity, numericalValue, 0, `ignore`)
     }
@@ -165,7 +165,7 @@ RULESET_SEMANTIC.add(
     }),
   ),
   node => {
-    const value = NodeFactory.PRIMITIVE(1, NUMBER)
+    const value = NodeFactory.PRIMITIVE(1, `number`)
 
     return ADD_NODE_AT(value, 0)
   },

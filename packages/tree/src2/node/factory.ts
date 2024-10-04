@@ -10,11 +10,11 @@ import Token from "../token"
 import { ConcreteString, ProvidedString } from "../string"
 
 import Type from "../type/base"
-import { BOOLEAN, NIL, NUMBER, QUANTITY, STRING, UNIT, PRIMITIVE_LITERALS, PrimitiveLiteral, PRIMITIVE_LITERAL_NAMES } from "../type/declarations/literal"
+import { BOOLEAN, NIL, NUMBER, QUANTITY, STRING, UNIT, PRIMITIVE_LITERALS, PrimitiveLiteral, PRIMITIVE_LITERAL_NAMES, PrimitiveLiteralName, LITERALS_BY_NAME } from "../type/declarations/literal"
 import { FUNCTION, LIST } from "../type/declarations/enclosure"
 import { ROOT } from "../type/declarations/structural"
 import { STRING_COLLECTION } from "./../type/declarations/literal"
-import { SIGN } from "../type/declarations/operator"
+import { OPERATORS_BY_NAME, OperatorType, OperatorTypeName, SIGN } from "../type/declarations/operator"
 
 type StringObject = ProvidedString | ConcreteString | string
 type GuessableVariableType = typing.VariableType | `quantity`
@@ -25,11 +25,16 @@ export interface NodeFactoryOptions {
 }
 
 export default class NodeFactory {
-  private static fromString(value: StringObject, type: Type): Node {
+  public static makeToken(value: StringObject, type: Type): Token {
     const string: ProvidedString | ConcreteString = isString(value) ? { type: `concrete`, value } : value
 
     const token = new Token(string, type)
 
+    return token
+  }
+
+  private static fromString(value: StringObject, type: Type): Node {
+    const token = NodeFactory.makeToken(value, type)
     return this.fromToken(token)
   }
 
@@ -89,7 +94,7 @@ export default class NodeFactory {
     // 2. Create node
     const type = getNodeType(variableType)
     if (PRIMITIVE_LITERAL_NAMES.includes(type.name as any)) {
-      node = NodeFactory.PRIMITIVE(value, type as PrimitiveLiteral)
+      node = NodeFactory.PRIMITIVE(value, type.name as PrimitiveLiteralName)
     } else if (type.name === `quantity`) {
       const quantity = value as Quantity
 
@@ -124,15 +129,28 @@ export default class NodeFactory {
     return NodeFactory.make(NIL, range)
   }
 
-  static PRIMITIVE(value: unknown, type?: PrimitiveLiteral): Node {
+  static PRIMITIVE(value: unknown, type?: PrimitiveLiteralName): Node {
     if (type === undefined) {
       const variableType = guessVariableType(value)
-      type = getNodeType(variableType)
+      type = getNodeType(variableType).name as PrimitiveLiteralName
 
-      assert(PRIMITIVE_LITERAL_NAMES.includes(type.name as any), `Type "${type}" is not a primitive literal`)
+      assert(PRIMITIVE_LITERAL_NAMES.includes(type as any), `Type "${type}" is not a primitive literal`)
     }
 
-    const node = NodeFactory.make(String(value), type!)
+    const _type = LITERALS_BY_NAME[type]
+    const node = NodeFactory.make(String(value), _type)
+
+    return node
+  }
+
+  static OPERATOR(type: OperatorTypeName): Node {
+    let string: string = `?`
+    if (type === `addition`) string = `+`
+    else if (type === `subtraction`) string = `-`
+    else throw new Error(`Operator type "${type}" not implemented`)
+
+    const _type = OPERATORS_BY_NAME[type]
+    const node = NodeFactory.make(string, _type)
 
     return node
   }

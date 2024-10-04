@@ -73,15 +73,20 @@
 
 import * as Unit from "./unit"
 
+export { default as Node, NodeFactory, SubTree, print } from "./node"
+
 import * as Type from "./type"
 export * as Token from "./token"
+export { Gardener } from "./gardener"
+export { default as Grammar } from "./type/grammar"
+
 import * as Parser from "./phases/parser"
 import * as Semantic from "./phases/semantic"
 import * as Simplifier from "./phases/simplify"
 import * as Reducer from "./phases/reducer"
 import * as Resolver from "./phases/resolver"
 
-export { default as Environment, Simbol, ObjectSourceData } from "./environment"
+export { default as Environment, Simbol, ObjectSourceData, ObjectSource } from "./environment"
 export { default as Processor, ProcessedData } from "./processor"
 
 export { ProcessingOptions, defaultProcessingOptions } from "./options"

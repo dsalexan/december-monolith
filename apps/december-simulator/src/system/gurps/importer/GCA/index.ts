@@ -8,6 +8,10 @@ import logger, { Builder, paint } from "../../../../logger"
 import { AnyObject } from "tsdef"
 import GURPSCharacter, { CharacterData, DamageTable } from "../../character"
 import { range } from "lodash"
+import { D6 } from "../../../../units"
+import { Gardener, NodeFactory } from "../../../../tree"
+
+import * as Dice from "../../../../dice"
 
 export default class GCAImporter extends GenericImporter {
   character: GURPSCharacter
@@ -43,7 +47,6 @@ export default class GCAImporter extends GenericImporter {
     const { name, player, bodytype, vitals, currenttransform } = character[0]
     const { traits: _traits, transforms, basicdamages } = character[0]
 
-    debugger
     // 1. Build Damage Table
     const damageTable: DamageTable = {}
 

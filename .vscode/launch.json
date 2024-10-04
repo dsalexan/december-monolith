@@ -151,11 +151,23 @@
     {
       "type": "node-terminal",
       "request": "launch",
-      "name": "v4 (Lexer)",
+      "name": "v4 (Tree)",
       "skipFiles": [
         "<node_internals>/**"
       ],
       "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src2\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "v4 (Tree/Wrapper)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src2\\testWrapper.ts",
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },
@@ -180,6 +192,18 @@
         "<node_internals>/**"
       ],
       "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\apps\\december-simulator\\src\\index.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "v4 (simulator/dice)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\apps\\december-simulator\\src\\testDice.ts",
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },
