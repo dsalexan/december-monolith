@@ -22,6 +22,7 @@ import { KEYWORD_GROUP } from "../type/declarations/keyword"
 import { getType } from "../type"
 import Token from "../token"
 import NodeFactory from "./factory"
+import { evaluateTreeScope } from "./scope"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 

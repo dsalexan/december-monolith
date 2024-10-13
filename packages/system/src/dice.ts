@@ -72,6 +72,17 @@ export class DiceRoller {
     }
   }
 
+  public static getEnvironment(options: DiceRollOptions = {}) {
+    return this.getInstance().getEnvironment(options)
+  }
+
+  public getEnvironment(options: DiceRollOptions = {}) {
+    const environment = options.environment ? options.environment.clone() : new Environment()
+    if (!options.dontRoll) environment.addSource(this.rollingDice)
+
+    return environment
+  }
+
   public static roll(expression: string, options: DiceRollOptions): ProcessedData
   public static roll(tree: SubTree, options: DiceRollOptions): ProcessedData
   public static roll(expressionOrTree: string | SubTree, options: DiceRollOptions): ProcessedData {
@@ -91,10 +102,8 @@ export class DiceRoller {
       expression = AST.expression()
     }
 
-    // 2. Clone environment
-    const environment = options.environment ? options.environment.clone() : new Environment()
-    if (!options.dontRoll) environment.addSource(this.rollingDice)
-
+    // 2. Process expresion
+    const environment = this.getEnvironment(options)
     const data = this.processor.preProcess(expression, environment, {
       scope: {
         root: `math`,

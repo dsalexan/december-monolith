@@ -2,7 +2,7 @@ import churchill, { Block, paint, Paint } from "./logger"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-import { MasterScope, ScopeEvaluator, ScopeManager, GenericScope } from "./node/scope"
+import { MasterScope } from "./node/scope"
 
 import { BaseParserOptions } from "./phases/parser"
 import { BaseSemanticOptions } from "./phases/semantic"
@@ -22,30 +22,23 @@ export interface PhaseProcessingOptions {
 export interface InputProcessingOptions {
   logger?: typeof _logger
   debug?: boolean
-  scope: {
-    root: MasterScope | MasterScope[]
-    evaluators?: ScopeEvaluator[]
-  }
+  scope: MasterScope
   AST?: SubTree
 }
 
 export interface BaseProcessingOptions {
   logger?: typeof _logger
   debug: boolean
-  scope: ScopeManager
+  scope: MasterScope
 }
 
 export type ProcessingOptions = BaseProcessingOptions & PhaseProcessingOptions
 
 export function defaultProcessingOptions(options: InputProcessingOptions & PhaseProcessingOptions): ProcessingOptions {
-  const rootScope = Array.isArray(options.scope.root) ? options.scope.root : [options.scope.root]
-  const scopeManager = new ScopeManager(...rootScope)
-  scopeManager.addEvaluator(...(options.scope.evaluators ?? []))
-
   const base: BaseProcessingOptions = {
     logger: options.logger ?? _logger,
     debug: options.debug ?? false,
-    scope: scopeManager,
+    scope: options.scope,
   }
 
   const parser = {

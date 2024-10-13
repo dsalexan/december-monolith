@@ -38,9 +38,9 @@ function isAnAlias(value: string) {
 }
 
 const GCABaseProcessingOptions: Omit<ProcessingOptions, `referenceToSource`> = {
-  isProxiableIdentifier: ({ content }) => isAnAlias(content),
+  isProxiableIdentifier: ({ content, value }) => isAnAlias(value),
   // TODO: It is not always going to be "level"
-  identifierSymbolToPropertyPattern: ({ content }) => PROPERTY(REFERENCE(`alias`, content), `level`),
+  identifierSymbolToPropertyPattern: ({ content, value }) => PROPERTY(REFERENCE(`alias`, value), `level`),
 }
 
 const GCAProcessingOptionsGenerator: ProcessingOptionsGenerator =
@@ -109,11 +109,11 @@ export const DEFAULT_STRATEGY = new Strategy()
 
   //               // 3. If value is not ready, listen for those references at MANAGER LEVEL
   //               instructions.push(...preProcessedValue.doSignature(object))
-  //               const missingReferenceIdentifiers = preProcessedValue.doMissingIdentifiers(object, ({ content }) => isAnAlias(content))
+  //               const missingReferenceIdentifiers = preProcessedValue.doMissingIdentifiers(object, ({ content, value }) => isAnAlias(value))
 
   //               // 3.1 Proxy update:property to missing references into compute:modes
   //               if (missingReferenceIdentifiers.length > 0) {
-  //                 const propertyPatterns = missingReferenceIdentifiers.map(({ content }) => PROPERTY(REFERENCE(`alias`, content), `level`))
+  //                 const propertyPatterns = missingReferenceIdentifiers.map(({ content, value }) => PROPERTY(REFERENCE(`alias`, value), `level`))
 
   //                 const proxy = strategy.proxy(object, manager.eventEmitter)
   //                 proxy({ type: `update:property`, properties: propertyPatterns, data: { path } }, `compute:modes:process`).bindSignature(preProcessedValue.getSignature())
@@ -323,9 +323,9 @@ export const DEFAULT_STRATEGY = new Strategy()
   //         const proxy = strategy.proxy(object, manager.eventEmitter)
 
   //         // 3. Proxy update:property to missing references into compute:modes (only for new/unknown missing references — i.e. those that were not known before)
-  //         processedValue.doMissingIdentifiers(content => isAnAlias(content))
+  //         processedValue.doMissingIdentifiers(({content, value}) => isAnAlias(value))
 
-  //         processedValue.doProxy(proxy, ({ content }) => PROPERTY(REFERENCE(`alias`, content), `level`), { index })
+  //         processedValue.doProxy(proxy, ({ content, value }) => PROPERTY(REFERENCE(`alias`, value), `level`), { index })
 
   //         // 4. Remove current computed value
   //         return [DELETE(computedPath)]
@@ -367,9 +367,9 @@ export const DEFAULT_STRATEGY = new Strategy()
   //       const proxy = strategy.proxy(object, manager.eventEmitter)
 
   //       // 3. Proxy update:property to missing references into compute:modes (only for new/unknown missing references — i.e. those that were not known before)
-  //       processedValue.doMissingIdentifiers(({ content }) => isAnAlias(content))
+  //       processedValue.doMissingIdentifiers(({ content, value }) => isAnAlias(value))
 
-  //       processedValue.doProxy(proxy, ({ content }) => PROPERTY(REFERENCE(`alias`, content), `level`), data)
+  //       processedValue.doProxy(proxy, ({ content, value }) => PROPERTY(REFERENCE(`alias`, value), `level`), data)
 
   //       // 4. Remove current computed value
   //       return [DELETE(path.computed)]

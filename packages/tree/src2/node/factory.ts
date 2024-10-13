@@ -15,6 +15,8 @@ import { FUNCTION, LIST } from "../type/declarations/enclosure"
 import { ROOT } from "../type/declarations/structural"
 import { STRING_COLLECTION } from "./../type/declarations/literal"
 import { OPERATORS_BY_NAME, OperatorType, OperatorTypeName, SIGN } from "../type/declarations/operator"
+import { IDENTIFIER } from "../type/declarations/identifier"
+import { evaluateNodeScope, MasterScope } from "./scope"
 
 type StringObject = ProvidedString | ConcreteString | string
 type GuessableVariableType = typing.VariableType | `quantity`
@@ -24,7 +26,23 @@ export interface NodeFactoryOptions {
   type: Type
 }
 
+export interface NodeFactoryGlobalSettings {
+  masterScope: MasterScope
+}
+
 export default class NodeFactory {
+  private static _instance: NodeFactory
+  settings: NodeFactoryGlobalSettings
+
+  public static get instance() {
+    if (!this._instance) this._instance = new NodeFactory()
+    return this._instance
+  }
+
+  public static setGlobalSettings(settings: NodeFactoryGlobalSettings) {
+    this.instance.settings = { ...this.instance.settings, ...settings }
+  }
+
   public static makeToken(value: StringObject, type: Type): Token {
     const string: ProvidedString | ConcreteString = isString(value) ? { type: `concrete`, value } : value
 
@@ -81,6 +99,9 @@ export default class NodeFactory {
     // for (const token of node.tokens) {
     //   if (token.isNonEvaluated) token.evaluate({})
     // }
+
+    evaluateNodeScope(node, { master: this.instance.settings.masterScope })
+    node.getScope()
 
     return node
   }
@@ -167,8 +188,75 @@ export default class NodeFactory {
     return NodeFactory.make(sign, { type: SIGN })
   }
 
-  static FUNCTION(range: Range): Node {
-    const fn = NodeFactory.make(FUNCTION, range)
+  static FUNCTION(name: Node, args: Node, options: Partial<{ range: Range }> = {}): Node {
+    // 1. Calculate fallback range
+    const fallbackRangeFromNodes = Range.fromOffsetPoints([name.range.column(`first`), args.range.column(`last`)], 0.5)
+    const fallbackRange = options.range ?? fallbackRangeFromNodes
+
+    // 2. Create master function node
+    const fn = NodeFactory.make(FUNCTION, fallbackRange)
+    fn.setAttributes({ originalNodes: [name.clone(), args.clone()], reorganized: true })
+
+    // 3. Add name node
+    name.setAttributes({ tags: [`name`] }).setType(IDENTIFIER)
+    fn.children.add(name, null, { refreshIndexing: false })
+
+    // all arguments of a function are its [1, N] children (there is no seed for a parenthesis)
+    assert(args.tokens.length === 2, `Unimplemented for enclosure with anything but 2 tokens`) // cause parenthesis has 2 tokens
+    assert(args.type.name === `parenthesis`, `Unimplemented for non-parenthesis enclosure`)
+
+    // 4. Properly format () tokens for traversal
+    //      #0 is function name
+    const [opener, closer] = args.tokens
+    opener.attributes.traversalIndex = 1
+    closer.attributes.traversalIndex = -1
+
+    fn.addToken([opener, closer])
+
+    // 4. Add argument nodes
+    const childIsNotASeparator = args.children.nodes[0].type.id !== `separator`
+    const haveMultipleChildrenWithoutWhitespaces = args.children.length > 1 && args.children.nodes.find(node => node.type.name === `whitespace`) === undefined
+
+    const childrenAreArguments = childIsNotASeparator && (haveMultipleChildrenWithoutWhitespaces || args.children.length === 1)
+
+    if (childrenAreArguments)
+      while (args.children.length) {
+        const child = args.children.nodes[0].setAttributes({ tags: [`argument`] })
+        fn.children.add(child, null, { refreshIndexing: false })
+      }
+    else if (args.children.length > 1) {
+      // multiple children, but single argument
+      //    make a list
+      const argument = NodeFactory.LIST(Range.fromPoint(args.children.nodes[0].range.column(`first`)))
+      argument.setAttributes({ tags: [`argument`] })
+      fn.children.add(argument, null, { refreshIndexing: false })
+
+      const grandchildren = [...args.children.nodes]
+      for (const grandchild of grandchildren) {
+        argument.children.add(grandchild, null, { refreshIndexing: false })
+      }
+    } else {
+      // (parenthesis > child)
+      //    child is a separator, ergo its children should be the arguments
+
+      const child = args.children.nodes[0]
+
+      if (child.type.name === `comma`) {
+        // inject comma tokens into function node (for printing purposes)
+        //    #0  is function name
+        //    #1  is (
+        //    #-1 is )
+        const commas = child.tokens
+        for (const [i, comma] of commas.entries()) comma.attributes.traversalIndex = i + 2
+        fn.addToken(commas)
+
+        const grandchildren = [...child.children.nodes]
+        for (const grandchild of grandchildren) {
+          grandchild.setAttributes({ tags: [`argument`] })
+          fn.children.add(grandchild, null, { refreshIndexing: false })
+        }
+      } else throw new Error(`Unsure how to handle a parenthesis with single child "${child.type.getFullName()}"`)
+    }
 
     return fn
   }

@@ -75,6 +75,8 @@ import * as Unit from "./unit"
 
 export { default as Node, NodeFactory, SubTree, print } from "./node"
 
+export { MasterScope } from "./node/scope"
+
 import * as Type from "./type"
 export * as Token from "./token"
 export { Gardener } from "./gardener"

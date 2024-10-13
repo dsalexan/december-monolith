@@ -17,7 +17,7 @@ export function repr(this: Node) {
   return string
 }
 
-export function debug(this: Node) {
+export function debug(this: Node, { scope }: Partial<{ scope: boolean }> = {}) {
   console.log(`======================================`)
   console.log(`                DEBUG `)
   console.log(` ${this.name} `)
@@ -28,20 +28,32 @@ export function debug(this: Node) {
   preOrder(this, node => {
     const lexeme = node.getDebugContent()
 
-    let interval = `<interval>`
-    try {
-      interval = node.tokens.length > 0 ? node.tokens.map(token => token.interval.toString()).join(`; `) : `—`
-    } catch {
-      //
-    }
+    if (scope) {
+      let scope = `???`
+      try {
+        // @ts-ignore
+        scope = node.scope.isolation
+      } catch {
+        //
+      }
 
-    let range = `<range>`
-    try {
-      range = node.range.toString()
-    } catch {
-      //
-    }
+      console.log(`${` `.repeat(node.level * 2)}${node.name} ${scope}`)
+    } else {
+      let interval = `<interval>`
+      try {
+        interval = node.tokens.length > 0 ? node.tokens.map(token => token.interval.toString()).join(`; `) : `—`
+      } catch {
+        //
+      }
 
-    console.log(`${` `.repeat(node.level * 2)}${node.name} ${!isNil(lexeme) && !isEmpty(lexeme) ? `<${lexeme}>` : ``}  ${interval}  =>  ${range}`)
+      let range = `<range>`
+      try {
+        range = node.range.toString()
+      } catch {
+        //
+      }
+
+      console.log(`${` `.repeat(node.level * 2)}${node.name} ${!isNil(lexeme) && !isEmpty(lexeme) ? `<${lexeme}>` : ``}  ${interval}  =>  ${range}`)
+    }
   })
 }

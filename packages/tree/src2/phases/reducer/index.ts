@@ -14,7 +14,7 @@ import type { BaseProcessingOptions } from "../../options"
 
 import Environment from "../../environment"
 import { postOrder } from "../../node/traversal"
-import { getMasterScope, MasterScope, Scope } from "../../node/scope"
+import { evaluateTreeScope, MasterScope, Scope } from "../../node/scope"
 import { BOOLEAN, NUMBER, QUANTITY, STRING } from "../../type/declarations/literal"
 import Token, { NON_EVALUATED_LEXICAL_TOKEN } from "../../token"
 import Grammar from "../../type/grammar"
@@ -104,14 +104,13 @@ export default class Reducer {
   _processNode(node: Node): ProcessedNode {
     assert(node, `Node must be defined`)
 
-    const scope = this.options.scope.evaluate(node)
-    const master = getMasterScope(scope)
+    const scope = node.getScope()
 
-    const instruction = this._getNodeInstruction(node, { master, all: scope })
+    const instruction = this._getNodeInstruction(node, { master: this.options.scope, all: scope })
 
     // if (node.content === `X`) debugger
 
-    return this._processNodeInstruction(instruction, node, { master, all: scope })
+    return this._processNodeInstruction(instruction, node, { master: this.options.scope, all: scope })
   }
 
   /** Get instruction for node processing based on scope */
@@ -132,7 +131,7 @@ export default class Reducer {
     } else if (node.type.id === `literal`) {
       // TODO: Implement literality function in Environment
 
-      if (master !== `math`) debugger
+      if (master !== `math-enabled`) debugger
 
       if (node.type.name === `number`) return GET_VALUE(`number`)
       else if (node.type.name === `quantity`) return GET_VALUE(`quantity`)
@@ -152,13 +151,13 @@ export default class Reducer {
       } else throw new Error(`Unimplemented literal type "${node.type.name}"`)
       //
     } else if (node.type.id === `operator`) {
-      if (master !== `math`) throw new Error(`Unimplemented NON-MATH operator type "${node.type.name}"`)
+      if (master !== `math-enabled`) throw new Error(`Unimplemented NON-MATH operator type "${node.type.name}"`)
 
       if (node.type.modules.includes(`arithmetic`)) return ELEMENTARY_ALGEBRA()
       else if (node.type.modules.includes(`logical`)) return ELEMENTARY_ALGEBRA()
     } else if (node.type.name === `function`) return APPLY_ARGUMENTS(1)
     else if (node.type.id === `enclosure`) {
-      if (master !== `math`) throw new Error(`Unimplemented NON-MATH enclosure type "${node.type.name}"`)
+      if (master !== `math-enabled`) throw new Error(`Unimplemented NON-MATH enclosure type "${node.type.name}"`)
 
       if (node.type.modules.includes(`wrapper`)) {
         if (node.children.length === 1) return PROCESS_CHILD()
@@ -268,7 +267,10 @@ export default class Reducer {
       else if (node.type.name === `multiplication`) return left * right
       else if (node.type.name === `division`) return left / right
       // logical operations
-      if (node.type.name === `equals`) return left === right
+      else if (node.type.name === `and`) return left && right
+      else if (node.type.name === `or`) return left || right
+      //    inequality
+      else if (node.type.name === `equals`) return left === right
       else if (node.type.name === `greater`) return left > right
       else if (node.type.name === `smaller`) return left < right
       else if (node.type.name === `greater_or_equal`) return left >= right
@@ -323,6 +325,7 @@ export default class Reducer {
     // verify expression (and recalculate if necessary)
     tree.root.refreshIndexing()
     tree.expression(true)
+    evaluateTreeScope(tree, { master: this.options.scope })
 
     this.RT = tree
   }

@@ -128,6 +128,8 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
 
         assert(ifNode.tokens.length === 1, `Conditional "IF" should be a single token`)
 
+        node.tokens[0].attributes.traversalIndex = 0
+
         const _if = ifNode.tokens[0]
         _if.attributes.traversalIndex = 0
         node.addToken(_if, 0)

@@ -7,6 +7,7 @@ import { conditionalSet } from "@december/utils"
 import churchill, { Builder, paint } from "../../logger"
 
 import { GCATrait } from "../../trait"
+import { TRAIT_SECTIONS, TraitSection } from "../../trait/section"
 import importGCATraitModifier from "./modifier"
 import importGCATraitMode from "./mode"
 
@@ -27,11 +28,14 @@ export default function importGCATrait(superType: `trait` | `attribute`, raw: An
   const _extendedTags = raw.extended?.[0]?.extendedtag ?? []
   const extendedTags = Object.fromEntries(_extendedTags.map((tag: any) => [tag.tagname, tag.tagvalue])) as Record<string, string[]>
 
+  const section: TraitSection = raw.$.type.toLowerCase() as TraitSection
+  assert(TRAIT_SECTIONS.includes(section), `Trait section "${section}" is not valid`)
+
   // 2. Build trait
   const trait: GCATrait = {
     id,
     name,
-    type: raw.$.type,
+    section,
     active: has(extendedTags, `inactive`) ? extendedTags[`inactive`][0] !== `yes` : true,
     attribute: superType === `attribute`,
     //

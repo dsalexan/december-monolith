@@ -22,13 +22,18 @@ import { filter, leftOperand, match, matchInChildren, nextSibling, predicate, pr
 import { ADD_NODE_AT, COLLAPSE_NODE, COMPLEX_MUTATION, MOVE_NODE_TO, REMOVE_NODE } from "../../nrs/rule/mutation/instruction"
 import { NodeTokenizedWord_Node } from "../../node/node/token"
 import { RuleMatch } from "../../nrs/rule/match"
+import { uniq } from "lodash"
+import { debugScopeTree } from "../../node/scope"
 
 export const RULESET_SEMANTIC = new RuleSet(`semantic`)
 
 // Ignore whitespaces in any non-string context
 RULESET_SEMANTIC.add(
   `ignore-whitespace`,
-  match(AND<NodePattern>(TYPE.NAME(EQUALS(`whitespace`)), NODE.SCOPE(NOT_CONTAINS(`string`)))), //
+  flow(
+    type(`name`, `whitespace`), //
+    match(NODE.SCOPE(NOT_CONTAINS(`textual`))),
+  ),
   node => REMOVE_NODE(),
 )
 
@@ -56,9 +61,9 @@ RULESET_SEMANTIC.add(
   node => {
     if (global.__DEBUG_LABEL === `L1.a`) debugger // COMMENT
 
-    assert(node.children.length === 0, `How to collapse empty strings?`)
+    assert(node.children.length !== 0, `How to collapse empty strings?`)
 
-    const WITH_QUOTES = false
+    const WITH_QUOTES = true
 
     // TODO: Use collapse centralized function
     const tokenized = node.tokenize() as NodeTokenizedWord_Node[]
@@ -66,6 +71,72 @@ RULESET_SEMANTIC.add(
 
     const allTokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
     const tokens = WITH_QUOTES ? allTokens : allTokens.slice(1, -1)
+
+    const string = NodeFactory.STRING_COLLECTION(tokens)
+    string.setAttributes({ tags: [`from-quotes`] })
+
+    return string
+  },
+)
+
+// Collapse LIST into a string collection
+RULESET_SEMANTIC.add(
+  `collapse-lists-into-string`, //
+  flow(
+    type(`name`, `list`),
+    predicate(node => node.children.length > 1),
+    predicate(node => {
+      // 1. textual scope
+      if (node.getScope().includes(`textual`)) return true
+
+      // 2. Argument of a function
+      if (node.parent?.type.name === `function`) {
+        const _childrenScopes = node.children.map(child => child.getScope())
+        const childrenScopes = uniq(_childrenScopes.flat())
+
+        return childrenScopes.length === 1 && childrenScopes[0] === `textual`
+      }
+
+      return false
+    }),
+    predicate(node => {
+      // 1. check if all children are literals
+      const childrenTypes = node.children.map(child => child.type)
+
+      const areAllChildrenLiterals = childrenTypes.every(type => type.isLiteralLike() || type.id === `whitespace`)
+      if (!areAllChildrenLiterals) return false
+
+      // 2. check if all children are of textual scopes
+      const _childrenScopes = node.children.map(child => child.getScope())
+      const childrenScopes = uniq(_childrenScopes.flat())
+
+      if (childrenScopes.length !== 1) return false
+      // assert(childrenScopes.length === 1, `All children should be of the same scope`)
+      assert(!childrenScopes.includes(`derived`), `Children should NOT be of derived scope`)
+
+      const isNonDerivedChildrenScopesTextural = childrenScopes[0] === `textual`
+      if (!isNonDerivedChildrenScopesTextural) return false
+
+      // 3. Check if parent scope is non-derived
+      const _parentScope = node.parent?.getScope() ?? []
+      const parentScope = _parentScope.filter(scope => scope !== `derived`)
+
+      // debugScopeTree(node.root, `contextualized`, true)
+
+      return parentScope.length >= 1
+    }),
+  ),
+  node => {
+    if (global.__DEBUG_LABEL === `L1.a`) debugger // COMMENT
+
+    assert(node.children.length !== 0, `How to collapse empty strings?`)
+
+    // TODO: Use collapse centralized function
+    const tokenized = node.tokenize() as NodeTokenizedWord_Node[]
+    const _tokenized = tokenized.map(({ node, token }) => (token ? token.lexeme : node.lexeme))
+
+    const allTokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
+    const tokens = allTokens
 
     const string = NodeFactory.STRING_COLLECTION(tokens)
 
@@ -254,60 +325,57 @@ RULESET_SEMANTIC.add(
     const string = result
     const parenthesis = nextSibling(result)!
 
-    // 1. Create Function node
-    const fallbackRange = Range.fromOffsetPoints([string.range.column(`first`), parenthesis.range.column(`last`)], 0.5)
-    const fn: Node = NodeFactory.FUNCTION(fallbackRange)
+    // 1. Create Function node from string and parenthesis
+    const fn: Node = NodeFactory.FUNCTION(string, parenthesis)
 
-    fn.setAttributes({ originalNodes: [string.clone(), parenthesis.clone()], reorganized: true })
-
-    // 2. Add name node
-    string.setAttributes({ tags: [`name`] }).setType(IDENTIFIER)
-    fn.children.add(string, null, { refreshIndexing: false })
-
-    // all arguments of a function are its [1, N] children (there is no seed for a parenthesis)
-    // parenthesis._addToParent(fn, null, true).setAttributes({ tags: [`arguments`] })
-    assert(parenthesis.tokens.length === 2, `Unimplemented for enclosure with anything but 2 tokens`)
-
-    // 3. Properly format () tokens for traversal
-    const [opener, closer] = parenthesis.tokens
-    opener.attributes.traversalIndex = 1
-    closer.attributes.traversalIndex = -1
-
-    fn.addToken([opener, closer])
-
-    // 3. Add argument nodes
-    const child = parenthesis.children.nodes[0]
-
-    const childrenAreArguments = parenthesis.children.length > 1 || child.type.id !== `separator`
-
-    if (childrenAreArguments)
-      while (parenthesis.children.length) {
-        const child = parenthesis.children.nodes[0]
-
-        child.setAttributes({ tags: [`argument`] })
-        fn.children.add(child, null, { refreshIndexing: false })
-      }
-    else {
-      // (parenthesis > child)
-      // child is a separator, ergo its children should be the arguments
-
-      if (child.type.name === `comma`) {
-        // inject comma tokens into function node (for printing purposes)
-        const commas = child.tokens
-        for (const [i, comma] of commas.entries()) comma.attributes.traversalIndex = i + 1
-        fn.addToken(commas)
-
-        const grandchildren = [...child.children.nodes]
-        for (const grandchild of grandchildren) {
-          grandchild.setAttributes({ tags: [`argument`] })
-          fn.children.add(grandchild, null, { refreshIndexing: false })
-        }
-      } else throw new Error(`Unsure how to handle a parenthesis with single child "${child.type.getFullName()}"`)
-    }
-
+    // 2. Remove parenthesis from tree
     // TODO: Think a better way to handle this. This kills the immutability of the Semantic NRS
     node.children.remove(parenthesis.index, { refreshIndexing: false })
 
     return ADD_NODE_AT(fn, index, `ignore`)
+  },
+)
+
+// Collapse parenthesis into a string collection
+RULESET_SEMANTIC.add(
+  `collapse-parenthesis-into-string`, //
+  flow(
+    type(`name`, `parenthesis`),
+    predicate(node => node.children.length >= 1),
+    match(NODE.SCOPE(CONTAINS(`textual`))),
+    predicate(node => {
+      // 1. check if all children are literals OR an aggregator
+      const childrenTypes = node.children.map(child => child.type)
+
+      const areAllChildrenLiterals = childrenTypes.every(type => type.isLiteralLike() || type.id === `whitespace`)
+      const isChildIrrelevant = node.children.length === 1 && node.children.nodes[0].getScope(`isolation`)[0] === `irrelevant`
+
+      if (!areAllChildrenLiterals && !isChildIrrelevant) return false
+
+      // 2. check if some child is of textual scopes
+      const _childrenScopes = node.children.map(child => child.getScope())
+      const childrenScopes = uniq(_childrenScopes.flat())
+
+      assert(childrenScopes.length === 1, `All children should be of the same scope`)
+      assert(!childrenScopes.includes(`derived`), `Children should NOT be of derived scope`)
+
+      return childrenScopes.includes(`textual`)
+    }),
+  ),
+  node => {
+    if (global.__DEBUG_LABEL === `L1.a`) debugger // COMMENT
+
+    assert(node.children.length !== 0, `How to collapse empty strings?`)
+
+    // TODO: Use collapse centralized function
+    const tokenized = node.tokenize() as NodeTokenizedWord_Node[]
+    const _tokenized = tokenized.map(({ node, token }) => (token ? token.lexeme : node.lexeme))
+
+    const allTokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
+    const tokens = allTokens
+
+    const string = NodeFactory.STRING_COLLECTION(tokens)
+
+    return string
   },
 )

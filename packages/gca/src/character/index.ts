@@ -10,21 +10,37 @@ export default class GCACharacter implements ICharacter {
   //
   name: string
   //
-  data: CharacterData
+  general: CharacterGeneralData
   traits: Record<string, GCATrait>
   stats: Record<string, GCATrait>
 
   constructor(id?: string) {
     this.id = id ?? uuidv4()
   }
+
+  get allTraits() {
+    const o = Object.values(this.traits)
+      .map(trait => ({
+        type: `trait`,
+        trait,
+      }))
+      .concat(
+        Object.values(this.stats).map(trait => ({
+          type: `stat`,
+          trait,
+        })),
+      )
+
+    return o as {
+      type: `trait` | `stat`
+      trait: GCATrait
+    }[]
+  }
 }
 
-export interface CharacterData {
+export interface CharacterGeneralData {
   info: CharacterInformation
-  transforms: {
-    current: string
-    list: Record<TransformOverview[`name`], TransformOverview>
-  }
+  transforms: CharacterTransforms
   damageTable: DamageTable
 }
 
@@ -46,4 +62,9 @@ export interface TransformOverview {
   traits: { id: number; name: string }[]
 }
 
-export type DamageTable = Record<number, { thr: SubTree; sw: SubTree }>
+export interface CharacterTransforms {
+  current: string
+  list: Record<TransformOverview[`name`], TransformOverview>
+}
+
+export type DamageTable = Record<number, { thr: { base: number; modifier: number }; sw: { base: number; modifier: number } }>

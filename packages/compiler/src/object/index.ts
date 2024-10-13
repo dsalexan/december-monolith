@@ -1,7 +1,7 @@
 // import { MutationInstruction } from "./../mutation/instruction"
 import { v4 as uuidv4 } from "uuid"
 import { EventEmitter } from "@billjs/event-emitter"
-import { cloneDeep, get, isEqual, set } from "lodash"
+import { cloneDeep, get, isArray, isEqual, set } from "lodash"
 
 import { Reference } from "@december/utils/access"
 import { getDeepProperties, isPrimitive } from "@december/utils/typing"
@@ -31,6 +31,23 @@ export interface ObjectUpdateEventData {
   mutations: Mutation[]
 }
 
+function getData(value: any, path: string = ``) {
+  if (value instanceof Reference) {
+    debugger
+  }
+
+  if (value === undefined) return undefined
+  if (value === null) return null
+  if (isPrimitive(value)) return value
+
+  if (isArray(value)) return [...value].map((item, index) => getData(item, `${path}.[${index}]`))
+
+  let other: AnyObject = {}
+  for (const [key, local] of Object.entries(value)) other[key] = getData(local, `${path}.${key}`)
+
+  return other
+}
+
 export default class MutableObject<TData extends AnyObject = any> extends EventEmitter {
   public manager: ObjectManager
   public id: ObjectID
@@ -42,6 +59,34 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
   }
 
   public metadata: Record<string, any> = {}
+
+  public getData(): TData {
+    return this._getData(this.data, ``) as TData
+  }
+
+  protected _getData(value: any, path: string = ``) {
+    // REFERENCE
+    if (value instanceof Reference) {
+      const reference = value as Reference
+      if (reference.type === `metadata`) return this.metadata[reference.value]
+
+      throw new Error(`Reference "${reference.type}" not implemented`)
+    }
+
+    // PRIMITIVES
+    if (value === undefined) return undefined
+    if (value === null) return null
+    if (isPrimitive(value)) return value
+
+    // ARRAY
+    if (isArray(value)) return [...value].map((item, index) => this._getData(item, `${path}.[${index}]`))
+
+    // OBJECT
+    let other: AnyObject = {}
+    for (const [key, local] of Object.entries(value)) other[key] = this._getData(local, `${path}.${key}`)
+
+    return other
+  }
 
   constructor(manager: ObjectManager, id: ObjectID | typeof MUTABLE_OBJECT_RANDOM_ID = MUTABLE_OBJECT_RANDOM_ID) {
     super()

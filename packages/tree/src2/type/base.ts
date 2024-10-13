@@ -16,7 +16,7 @@ type Maybe<T> = T | undefined
 
 export type TypeID = `structural` | `literal` | `whitespace` | `separator` | `enclosure` | `operator` | `identifier` | `composite` | `keyword`
 
-export type TypeModule = `default` | `operand` | `literal:like` | `logical` | `arithmetic` | `wrapper` | `context:break` | `identifier` | `numeric` | `quantity:numerical-value`
+export type TypeModule = `default` | `operand` | `literal:like` | `logical` | `arithmetic` | `inequality` | `wrapper` | `context:break` | `identifier` | `numeric` | `quantity:numerical-value`
 
 export default class Type {
   public id: TypeID

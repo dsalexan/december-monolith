@@ -9,6 +9,7 @@ import { TypeName } from "../type/declarations/name"
 import assert from "assert"
 import { ancestry, inContext, preOrder } from "../node/traversal"
 import { TypeID, TypeModule } from "../type/base"
+import { Scope } from "../node/scope/types"
 
 // #region Node Patterns
 
@@ -115,14 +116,14 @@ export class NodeCollectionPattern extends BaseNodePattern {
 
 export class NodeScopePattern extends BaseNodePattern {
   declare type: `node:scope`
-  declare pattern: SetPattern<string[]>
+  declare pattern: SetPattern<Scope[]>
 
-  constructor(pattern: SetPattern<string[]>, options: Partial<BaseNodePatternOptions> = {}) {
+  constructor(pattern: SetPattern<Scope[]>, options: Partial<BaseNodePatternOptions> = {}) {
     super(`node:scope`, pattern, options)
   }
 
   override _match(node: Node): boolean {
-    return this.pattern.match(node.scope)
+    return this.pattern.match(node.getScope())
   }
 }
 
@@ -208,7 +209,7 @@ export const TYPE = {
 
 export const NODE = {
   CONTENT: (pattern: ElementPattern<string | number | boolean>): NodePrimitivePattern => new NodePrimitivePattern(`node:content`, pattern),
-  SCOPE: (pattern: SetPattern<string[]>): NodeScopePattern => new NodeScopePattern(pattern),
+  SCOPE: (pattern: SetPattern<Scope[]>): NodeScopePattern => new NodeScopePattern(pattern),
 }
 
 export const TREE = {

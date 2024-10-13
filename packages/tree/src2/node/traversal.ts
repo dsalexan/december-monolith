@@ -193,6 +193,9 @@ export function wrapperInOrder(node: Node, iteratee: TraversalIteratee, maxDepth
 export function interleavedInOrder(node: Node, iteratee: TraversalIteratee, maxDepth = Infinity, options: Partial<InOrderTraversalOptions> = {}) {
   const children = node.getChildren(maxDepth)
 
+  // if (global.__DEBUG_TREE_PHASE === `simplify`) debugger // COMMENT
+  // if (global.__DEBUG_TREE_PHASE === `simplify` && node.name === `if1.a`) debugger // COMMENT
+
   const targets: (Node | Token)[] = [...children]
   const inPlaceTokens = node.tokens.filter(token => token.attributes.traversalIndex === undefined)
   const lockedTokens = node.tokens.filter(token => token.attributes.traversalIndex !== undefined)
@@ -201,16 +204,21 @@ export function interleavedInOrder(node: Node, iteratee: TraversalIteratee, maxD
   for (const [i, token] of reverse([...inPlaceTokens.entries()])) targets.splice(i + 1, 0, token)
 
   // 2. Add tokens in their locked index to buffer
-  const fromStart: (Token | undefined)[] = []
-  const fromEnd: (Token | undefined)[] = []
+  const fromStart: (Token[] | undefined)[] = []
+  const fromEnd: (Token[] | undefined)[] = []
   for (const token of lockedTokens) {
-    if (token.attributes.traversalIndex! >= 0) fromStart[token.attributes.traversalIndex!] = token
-    else fromEnd[-token.attributes.traversalIndex!] = token
+    if (token.attributes.traversalIndex! >= 0) {
+      fromStart[token.attributes.traversalIndex!] ??= []
+      fromStart[token.attributes.traversalIndex!]?.push(token)
+    } else {
+      fromEnd[-token.attributes.traversalIndex!] ??= []
+      fromEnd[-token.attributes.traversalIndex!]?.push(token)
+    }
   }
 
   // 3. Add from buffer to targets
-  for (const [i, token] of [...fromStart.entries()]) if (token) targets.splice(i, 0, token)
-  for (const [i, token] of [...fromEnd.entries()]) if (token) targets.splice(targets.length - i + 1, 0, token)
+  for (const [i, tokens] of reverse([...fromStart.entries()])) if (tokens) targets.splice(i, 0, ...tokens)
+  for (const [i, tokens] of [...fromEnd.entries()]) if (tokens) targets.splice(targets.length - i + 1, 0, ...tokens)
 
   // 4. Traverse targets
   let cursor = 0
@@ -224,8 +232,9 @@ export function tokenCollectionInOrder(node: Node, iteratee: TraversalIteratee, 
   assert(node.children.length === 0, `Token Collection nodes should't have children`)
   assert(node.tokens.length > 0, `Token Collection nodes SHOULD have tokens`)
 
-  // for (const token of node.tokens) iteratee(node, token)
-  iteratee(node, null, { first: true })
+  // for (const token of node.tokens) iteratee(node, token, { first: false })
+  for (const [i, token] of node.tokens.entries()) iteratee(node, token, { first: i === 0 })
+  // iteratee(node, null, { first: true })
 }
 
 // #endregion
@@ -233,7 +242,7 @@ export function tokenCollectionInOrder(node: Node, iteratee: TraversalIteratee, 
 // #endregion
 
 /** Traverse upwards the tree, minDepth is 0 (root) by default */
-export function inContext(node: Node, iteratee: TraversalIteratee, minDepth = -Infinity) {
+export function inContext(node: Node, iteratee: TraversalIteratee, minDepth = -Infinity, ignoreSelfContext = false) {
   // const children = node.getChildren(maxDepth)
   // for (const child of children) postOrder(child, iteratee, maxDepth)
   // iteratee(node, null)
@@ -247,11 +256,13 @@ export function inContext(node: Node, iteratee: TraversalIteratee, minDepth = -I
   // //    only consider nodes in POSITIVE balancing (for now just N/A or BALANCED) for context breaking
   // if (node.type.modules.includes(`context:break`) && node.balancing < NODE_BALANCING.NON_APPLICABLE) debugger
 
-  // check context break
-  if (node.type.modules.includes(`context:break`)) return
+  if (!ignoreSelfContext) {
+    // check context break
+    if (node.type.modules.includes(`context:break`)) return
+  }
 
   // call for parent
-  if (node.parent!) inContext(node.parent!, iteratee, minDepth)
+  if (node.parent!) inContext(node.parent!, iteratee, minDepth, false)
 }
 
 /** Traverse all nodes in tree by level */

@@ -1,8 +1,10 @@
+import { TraitSection } from "./section"
+
 export interface GCATrait {
   id: number
   name: string
   nameext?: string
-  type: string
+  section: TraitSection
   attribute: boolean
   active: boolean
   //

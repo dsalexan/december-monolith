@@ -29,6 +29,7 @@ import { KEYWORDS } from "./type/declarations/keyword"
 
 import { defaultProcessingOptions } from "./options"
 import Environment from "./environment"
+import { NodeFactory } from "./node"
 
 let expression = `1 + 2`
 expression = `1 a`
@@ -145,10 +146,24 @@ expression = `10 kg + 20kg + x kg + -30 kg + -40kg + kg`
 //
 expression = `d6 + 1d4`
 expression = `d6 + 10d6`
+//
+expression = `@fn(1, 2, 3)`
+expression = `"10 + 1"`
+expression = `10 + 1`
+expression = `"A A" = 1`
+expression = `if("A A" = 1 & @fn(B, C) = 0 THEN "D" ELSE "E")`
+expression = `Claws (Long Talon)`
+expression = `Claws (Long @modgets(Talon, Clw))`
+expression = `Claws (Long (Talon, Clw))`
+expression = `@fn(A B)`
+expression = `@itemhasmod(AD:Claws (Long Talons), Feet Only) = 0`
+expression = `$if("AD:Claws (Long Talons)::level" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN "cut/imp" ELSE "cr")`
+// expression = `$if("AD:Claws (Sharp Claws)::level" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN "cut" ELSE $if("AD:Claws (Talons)::level" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN "cut/imp" ELSE $if("AD:Claws (Long Talons)::level" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN "cut/imp" ELSE "cr")))`
 
 const options = defaultProcessingOptions({
   // general
-  scope: { root: `math` },
+  scope: `math-enabled`,
+  debug: true,
   //
   simplify: {
     rulesets: RULESETS_SIMPLIFY,
@@ -157,6 +172,7 @@ const options = defaultProcessingOptions({
     ignoreTypes: [`conditional`],
   },
 })
+NodeFactory.setGlobalSettings({ masterScope: options.scope })
 
 const unitManager = new UnitManager()
 unitManager.add(...BASE_UNITS)

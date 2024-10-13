@@ -6,7 +6,7 @@ import type Node from "../../node"
 import type { SubTree } from "../../node"
 import { BY_TYPE } from "../../type/styles"
 import { groupBy, isString, max, orderBy, sum } from "lodash"
-import { getMasterScope, ScopeManager } from "../../node/scope"
+import { MasterScope } from "../../node/scope"
 import { byLevel } from "../../node/traversal"
 import Type from "../../type/base"
 
@@ -15,6 +15,7 @@ export const _logger = churchill.child(`tree`, undefined, { separator: `` })
 export interface Simbol {
   node: Node
   content: string // node content for symbol
+  value: string // node value for symbol, usually a cleaner version of content
 }
 
 export default class SymbolTable {
@@ -24,9 +25,9 @@ export default class SymbolTable {
 
   constructor() {}
 
-  static from(tree: SubTree, scopeManager: ScopeManager) {
+  static from(tree: SubTree, masterScope: MasterScope) {
     const table = new SymbolTable()
-    table.from(tree, scopeManager)
+    table.from(tree, masterScope)
 
     return table
   }
@@ -56,34 +57,35 @@ export default class SymbolTable {
     throw new Error(`Type ${type} not implemented for searching symbol table`)
   }
 
-  from(tree: SubTree, scopeManager: ScopeManager) {
+  from(tree: SubTree, masterScope: MasterScope) {
     this.reset()
 
     this.tree = tree
 
     byLevel(tree.root, node => {
-      const scope = scopeManager.evaluate(node)
-      const master = getMasterScope(scope)
-
       const isNil = node.type.name === `nil`
       const isIdentifier = node.type.id === `identifier`
       const isNonNumericLiteral = node.type.isLiteralLike() && ![`number`, `sign`].includes(node.type.name) && !isNil
       const isOperand = node.type.modules.includes(`operand`)
 
       let isSymbol = false
-      if (master === `math`) {
+      if (masterScope === `math-enabled`) {
         isSymbol = isIdentifier || isNonNumericLiteral
-      } else throw new Error(`Unimplemented master scope "${master}"`)
+      } else throw new Error(`Unimplemented master scope "${masterScope}"`)
 
       if (!isSymbol) return
 
-      const content: string = node.content as string
+      const content = node.content as string
+
+      let value: string = node.content as string
+      if (node.attributes.tags.includes(`from-quotes`)) value = content.slice(1, -1)
 
       assert(isString(content), `Non-string content`)
 
       const symbol: Simbol = {
         node,
         content,
+        value,
       }
 
       this.set(symbol)

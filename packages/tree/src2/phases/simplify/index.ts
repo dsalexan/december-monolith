@@ -16,6 +16,7 @@ import { RuleSet, NodeReplacementSystem } from "../../nrs"
 
 import type { BaseProcessingOptions } from "../../options"
 import Environment from "../../environment"
+import { evaluateTreeScope } from "../../node/scope"
 
 export { RULESETS_SIMPLIFY } from "./nrs"
 
@@ -103,6 +104,7 @@ export default class Simplify {
   /** Simplify Semantic Tree based on environment */
   private _simplifySemanticTree(ST: SubTree, environment: Environment) {
     const __DEBUG = true // COMMENT
+    global.__DEBUG_TREE_PHASE = `simplify` // COMMENT
 
     this.NRS = new NodeReplacementSystem()
     this.NRS.setRulesets(this.rulesets)
@@ -110,6 +112,7 @@ export default class Simplify {
     // ST.root.debug()
 
     const tree = ST.clone()
+    evaluateTreeScope(tree, { master: this.options.scope })
 
     // tree.root.debug()
 
@@ -127,6 +130,7 @@ export default class Simplify {
     // tree.root.debug()
 
     tree.expression(true)
+    evaluateTreeScope(tree, { master: this.options.scope })
 
     // tree.root.debug()
 

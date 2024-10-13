@@ -3,7 +3,7 @@ import { cloneDeep, mergeWith, reverse } from "lodash"
 import churchill, { Block, paint, Paint } from "../logger"
 
 import Node, { print, SubTree } from "../node"
-import { ScopeManager } from "./../node/scope"
+import { evaluateTreeScope, MasterScope } from "./../node/scope"
 import { BY_TYPE } from "../type/styles"
 import Grammar from "../type/grammar"
 import { RuleSet, RuleSetExecutionContext, RuleSetMutationDescription } from "./ruleset"
@@ -18,7 +18,7 @@ export const _logger = churchill.child(`nrs`, undefined, { separator: `` })
 export interface NodeReplacementSystemContext extends RuleSetExecutionContext {
   tag: string
   run: number
-  scope: ScopeManager
+  scope: MasterScope
   grammar: Grammar
 }
 
@@ -48,24 +48,32 @@ export class NodeReplacementSystem {
 
   /** Recursively process subtree */
   public process(node: Node, context: Omit<NodeReplacementSystemContext, `hash` | `wasRuleExecuted`>) {
-    // 1. Process node (as many times as needed for ALL applicable rules to be applied)
+    // Process node (as many times as needed for ALL applicable rules to be applied)
     const mutatedNode = this.processNode(node, context)
 
     const nodeWasChanged = mutatedNode !== false
-    const processedNode = mutatedNode instanceof Node ? mutatedNode : node
-
-    // 2. Process post-processed node's children (since they are the new state of the tree)
     let offspringWasChanged = false
-    for (const child of processedNode.children.nodes) {
-      const wasProcessed = this.process(child, context)
 
-      if (wasProcessed !== false) offspringWasChanged = true
+    const targetNode = mutatedNode === false ? node : mutatedNode
+
+    // if (nodeWasChanged) debugger // COMMENT
+
+    if (targetNode instanceof Node) {
+      // 1. Re-evaluate tree scope if node was changed
+      evaluateTreeScope(new SubTree(targetNode.root), { master: context.scope })
+
+      // 2. Process post-processed node's children (since they are the new state of the tree)
+      for (const child of targetNode.children.nodes) {
+        const wasProcessed = this.process(child, context)
+
+        if (wasProcessed !== false) offspringWasChanged = true
+      }
+
+      if (nodeWasChanged || offspringWasChanged) targetNode.version++
+
+      // 3. If any changes were made to node's offspring, re-process everything
+      if (offspringWasChanged) this.process(targetNode, { ...context, run: context.run + 1 })
     }
-
-    if (nodeWasChanged || offspringWasChanged) processedNode.version++
-
-    // 3. If any changes were made to node's offspring, re-process everything
-    if (offspringWasChanged) this.process(processedNode, { ...context, run: context.run + 1 })
 
     return nodeWasChanged || offspringWasChanged
   }
@@ -78,6 +86,7 @@ export class NodeReplacementSystem {
     global.__DEBUG_LABEL_NRS = `${context.tag}[${context.run}]:${node.name}` // COMMENT
 
     // if (global.__DEBUG_LABEL_NRS === `simplify[2]:+1.a`) debugger // COMMENT
+    // if (node.name === `f1.a`) debugger
 
     const trace: RuleSetMutationTrace = {
       previousNodeState: {
@@ -98,8 +107,6 @@ export class NodeReplacementSystem {
       parent: node.parent,
       index: node.index,
     }
-
-    node.scope = context.scope.evaluate(node)
 
     if (__DEBUG) DEBUG_1(node, context) // COMMENT
 

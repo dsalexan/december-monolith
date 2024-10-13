@@ -30,7 +30,7 @@ export function formatName(level: number, node: Node, token: Token | undefined, 
   const number = node.indexing.level === -1 ? `${node.index === -1 ? `` : node.index}*` : numberToLetters(node.indexing.level)
 
   if (node.type.name === `whitespace`) {
-    repr = ` `
+    repr = `▯`
     color = paint.gray
   } else if (node.type.id === `literal` || node.type.name === `identifier`) {
     if (node.type.name === `number` || node.type.name === `unit` || node.type.name === `sign` || node.type.name === `string_collection` || node.type.name === `boolean` || node.type.name === `identifier`)

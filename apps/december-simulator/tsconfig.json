@@ -122,6 +122,8 @@
       "@december/system/*": ["../../../packages/system/src/*"],
       "@december/gca": ["../../../packages/gca/src"],
       "@december/gca/*": ["../../../packages/gca/src/*"],
+      "@december/gurps": ["../../../packages/gurps/src"],
+      "@december/gurps/*": ["../../../packages/gurps/src/*"],
     }
   },
   "include": ["."],

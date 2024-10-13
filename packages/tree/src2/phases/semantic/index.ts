@@ -11,6 +11,7 @@ import { RuleSet, NodeReplacementSystem } from "../../nrs"
 
 import type { BaseProcessingOptions } from "../../options"
 import SymbolTable from "../../environment/symbolTable"
+import { evaluateTreeScope } from "../../node/scope"
 
 export { RULESET_SEMANTIC } from "./nrs"
 
@@ -68,6 +69,8 @@ export default class Semantic {
     this.NRS.setRulesets(this.rulesets)
 
     const tree = AST.clone()
+    evaluateTreeScope(tree, { master: this.options.scope })
+
     this.NRS.process(tree.root, {
       scope: this.options.scope,
       grammar: this.grammar,
@@ -78,6 +81,7 @@ export default class Semantic {
 
     tree.root.refreshIndexing()
     tree.expression()
+    evaluateTreeScope(tree, { master: this.options.scope })
 
     return tree
   }

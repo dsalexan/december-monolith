@@ -8,7 +8,7 @@ import { Node } from "./node/base"
 export const MASTER_SCOPES = [`math`, `text-processing`] as const
 
 export type MasterScope = (typeof MASTER_SCOPES)[number]
-export type GenericScope = `string`
+export type GenericScope = `string` | `possible-string`
 export type Scope = MasterScope | GenericScope
 
 export interface ScopeInstruction {
@@ -18,9 +18,9 @@ export interface ScopeInstruction {
 
 export type ScopeEvaluation = Scope | ScopeInstruction
 
-export type ScopeEvaluator = (node: Node) => ScopeEvaluation[]
+export type ScopeEvaluator = (node: Node, source: Node, ancestors: Node[]) => ScopeEvaluation[]
 
-export class ScopeManager {
+export class ScopeManager1 {
   public scopes: {
     master: MasterScope[]
     local: Scope[]
@@ -51,10 +51,13 @@ export class ScopeManager {
     // artifically add root node if necessary
     if (!nodes.find(node => node.type.name === `root`)) nodes.push(node.root)
 
+    // if (node.type.name === `whitespace`) debugger
+
     for (const ancestor of nodes) {
       // for eache evaluator in manager
       for (const evaluator of this.evaluators) {
-        const evaluations = evaluator(ancestor)
+        const evaluations = evaluator(ancestor, node, nodes)
+
         // for each scope OR instruction in evaluation
         for (const _evaluation of evaluations) {
           const instruction: ScopeInstruction = isString(_evaluation) ? { type: `add`, values: [_evaluation] } : _evaluation
@@ -78,9 +81,33 @@ const masterScopeEvaluator: TMasterScopeEvaluator =
   node =>
     node.type.name === `root` ? [...masterScopes] : []
 
-const defaultScopeEvaluator: ScopeEvaluator = node => {
+const defaultScopeEvaluator: ScopeEvaluator = (node, source, ancestors) => {
   if (node.type.name === `quotes`) return [`string`]
   if (node.type.name === `string`) return [`string`]
+  if (node.type.name === `list`) {
+    const children = node.children
+    const types = children.map(child => child.type)
+
+    const certainlyWhitespaceContext = types.every(type => type.name === `whitespace`)
+    const certainlyStringContext = !certainlyWhitespaceContext && types.every(type => type.name === `string` || type.name === `quotes` || type.name === `whitespace`)
+    const possiblyStringContext =
+      !certainlyWhitespaceContext &&
+      types.every(
+        type =>
+          // CERTAINLY STRING
+          type.name === `string` ||
+          type.name === `quotes` ||
+          type.name === `whitespace` ||
+          // POSSIBLY STRING
+          type.id === `enclosure` ||
+          type.id === `literal`,
+      )
+
+    if (source.type.name === `whitespace`) debugger
+
+    if (certainlyStringContext) return [`string`]
+    else if (possiblyStringContext) return [`possible-string`]
+  }
 
   return []
 }

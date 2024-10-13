@@ -11,9 +11,9 @@ import type { BaseProcessingOptions } from "../../options"
 
 import Environment from "../../environment"
 import { postOrder } from "../../node/traversal"
-import { getMasterScope, MasterScope, Scope } from "../../node/scope"
 import Simplify, { SimplifyOptions } from "../simplify"
 import Reducer, { ReducerOptions } from "../reducer"
+import { evaluateTreeScope } from "../../node/scope"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 

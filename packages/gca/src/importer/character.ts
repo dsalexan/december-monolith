@@ -7,7 +7,7 @@ import { ICharacterImporter, Dice } from "@december/system"
 
 import churchill, { Builder, paint } from "../logger"
 
-import GCACharacter, { DamageTable, CharacterData } from "../character"
+import GCACharacter, { DamageTable, CharacterGeneralData } from "../character"
 import { importGCATrait } from "./trait"
 import { GCATrait } from "../trait"
 
@@ -30,7 +30,7 @@ export default class GCACharacterImporter implements ICharacterImporter {
     fs.writeFileSync(`./test.json`, JSON.stringify(content, null, 2), `utf-8`) // COMMENT
 
     // 2. Import stuff
-    character.data = this.characterData(content)
+    character.general = this.characterGeneralData(content)
 
     this.logger.tab() // COMMENT
     const { traits, stats } = this.traitsAndStats(content)
@@ -38,11 +38,9 @@ export default class GCACharacterImporter implements ICharacterImporter {
 
     character.traits = traits
     character.stats = stats
-
-    debugger
   }
 
-  protected characterData(raw: AnyObject): CharacterData {
+  protected characterGeneralData(raw: AnyObject): CharacterGeneralData {
     const { gca5 } = raw
     const { character } = gca5
 
@@ -56,8 +54,8 @@ export default class GCACharacterImporter implements ICharacterImporter {
       const st = parseInt(row.st[0])
       if (st === 0) continue // TODO: Implement calculable damage ST
 
-      const thr = Dice.d6(parseInt(row.thbase[0]), parseInt(row.thadd[0]))
-      const sw = Dice.d6(parseInt(row.swbase[0]), parseInt(row.swadd[0]))
+      const thr = { base: parseInt(row.thbase[0]), modifier: parseInt(row.thadd[0]) }
+      const sw = { base: parseInt(row.swbase[0]), modifier: parseInt(row.swadd[0]) }
 
       damageTable[st] = { thr, sw }
     }

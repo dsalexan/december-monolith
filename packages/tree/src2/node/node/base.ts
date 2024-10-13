@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid"
 import assert from "assert"
 import { add, cloneDeep, isEmpty, isNil, isString, uniqBy } from "lodash"
+import { Nullable } from "tsdef"
 
 import { Range } from "@december/utils"
 
@@ -29,12 +30,17 @@ import {
 } from "./operations"
 
 import { ROOT } from "../../type/declarations/structural"
+import { IsolationScope } from "../scope/types"
 
-type Nullable<T> = T | null
+export const NON_EVALUATED_SCOPE = Symbol.for(`NODE:NON_EVALUATED_SCOPE`)
+
+export interface NodeScope {
+  isolation: IsolationScope[]
+  contextualized: Scope[]
+}
 
 export class Node {
   public id: string = uuidv4()
-  public scope: Scope[] = []
   public version: number = 0
 
   // constructor(type: Type, range: Range)
@@ -60,6 +66,33 @@ export class Node {
     node._range = range
 
     return node
+  }
+
+  // SCOPE
+  protected scope: typeof NON_EVALUATED_SCOPE | NodeScope = NON_EVALUATED_SCOPE
+
+  public getScope(): Scope[]
+  public getScope(type: `isolation`): IsolationScope[]
+  public getScope(type: `contextualized`): Scope[]
+  public getScope(type: `isolation`, strict: false): Nullable<IsolationScope[]>
+  public getScope(type: `contextualized`, strict: false): Nullable<Scope[]>
+  public getScope(type: `isolation` | `contextualized` = `contextualized`, strict = true): Nullable<IsolationScope[] | Scope[]> {
+    assert(this.scope !== NON_EVALUATED_SCOPE, `Scope not evaluated yet`)
+
+    if (strict) {
+      assert(this.scope.contextualized !== undefined, `Scope not evaluated yet`)
+      assert(this.scope.isolation !== undefined, `Scope not evaluated yet`)
+    }
+
+    return this.scope[type] ?? null
+  }
+
+  public setScope(type: `isolation`, scope: IsolationScope[]): void
+  public setScope(type: `contextualized`, scope: Scope[]): void
+  public setScope(type: `isolation` | `contextualized`, scope: (Scope | IsolationScope)[]): void {
+    if (this.scope === NON_EVALUATED_SCOPE) this.scope = { isolation: undefined, contextualized: undefined } as any
+
+    this.scope[type] = scope
   }
 
   // INDEX
