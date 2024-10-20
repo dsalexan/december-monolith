@@ -47,7 +47,7 @@ RULESET_SEMANTIC.add(
   node => {
     assert(node.tokens.length === 0, `List should not have tokens`)
 
-    const child = node.children.length > 0 ? node.children.remove(0) : NodeFactory.NIL(node)
+    const child = node.children.length > 0 ? node.children.remove(0) : NodeFactory.abstract.NIL(node)
     child.attributes.originalNodes = [...(node.attributes.originalNodes ?? [])]
 
     return child
@@ -72,7 +72,7 @@ RULESET_SEMANTIC.add(
     const allTokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
     const tokens = WITH_QUOTES ? allTokens : allTokens.slice(1, -1)
 
-    const string = NodeFactory.STRING_COLLECTION(tokens)
+    const string = NodeFactory.abstract.STRING_COLLECTION(tokens)
     string.setAttributes({ tags: [`from-quotes`] })
 
     return string
@@ -138,7 +138,7 @@ RULESET_SEMANTIC.add(
     const allTokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
     const tokens = allTokens
 
-    const string = NodeFactory.STRING_COLLECTION(tokens)
+    const string = NodeFactory.abstract.STRING_COLLECTION(tokens)
 
     return string
   },
@@ -191,19 +191,19 @@ RULESET_SEMANTIC.add(
       const unit = result
       const numericalValue = previousSibling(result)!
 
-      const quantity = NodeFactory.QUANTITY(unit)
+      const quantity = NodeFactory.abstract.QUANTITY(unit)
       quantity.setAttributes({ originalNodes: [numericalValue.clone(), unit.clone()], reorganized: true })
 
       return MOVE_NODE_TO(quantity, numericalValue, 0, `ignore`)
     } else {
       const unit = result
 
-      const quantity = NodeFactory.QUANTITY(unit)
+      const quantity = NodeFactory.abstract.QUANTITY(unit)
       quantity.setAttributes({ originalNodes: [unit.clone()], reorganized: true })
 
       return quantity
 
-      const numericalValue = NodeFactory.PRIMITIVE(1, `number`)
+      const numericalValue = NodeFactory.abstract.PRIMITIVE(1, `number`)
 
       return MOVE_NODE_TO(quantity, numericalValue, 0, `ignore`)
     }
@@ -236,7 +236,7 @@ RULESET_SEMANTIC.add(
     }),
   ),
   node => {
-    const value = NodeFactory.PRIMITIVE(1, `number`)
+    const value = NodeFactory.abstract.PRIMITIVE(1, `number`)
 
     return ADD_NODE_AT(value, 0)
   },
@@ -262,7 +262,7 @@ RULESET_SEMANTIC.add(
     quantity.children.remove(value.index, { refreshIndexing: false })
 
     // 2. Create new sign node and add value (previously removed) here
-    const newSign = NodeFactory.SIGN(signToken)
+    const newSign = NodeFactory.abstract.SIGN(signToken)
     newSign.children.add(value, null, { refreshIndexing: false })
 
     // 3. Add new sign as quantity's value
@@ -278,7 +278,19 @@ RULESET_SEMANTIC.add(
   flow(
     match(OR(TYPE.NAME(EQUALS(`addition`)), TYPE.NAME(EQUALS(`subtraction`)))), // "+" or "-"
     leftOperand,
-    type(`name`, `nil`), // nil(left-operand)
+    predicate(node => {
+      // 1. nil
+      if (node.type.name === `nil`) return true
+
+      // 2. List os whitespaces / whitespace
+      if (node.type.name === `whitespace`) return true
+      if (node.type.name === `list`) {
+        const allWhitespaces = node.children.every(child => child.type.name === `whitespace`)
+        if (allWhitespaces) return true
+      }
+
+      return false
+    }),
   ),
   node => {
     if (global.__DEBUG_LABEL === `L1.a`) debugger // COMMENT
@@ -326,7 +338,7 @@ RULESET_SEMANTIC.add(
     const parenthesis = nextSibling(result)!
 
     // 1. Create Function node from string and parenthesis
-    const fn: Node = NodeFactory.FUNCTION(string, parenthesis)
+    const fn: Node = NodeFactory.abstract.FUNCTION(string, parenthesis)
 
     // 2. Remove parenthesis from tree
     // TODO: Think a better way to handle this. This kills the immutability of the Semantic NRS
@@ -374,7 +386,7 @@ RULESET_SEMANTIC.add(
     const allTokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
     const tokens = allTokens
 
-    const string = NodeFactory.STRING_COLLECTION(tokens)
+    const string = NodeFactory.abstract.STRING_COLLECTION(tokens)
 
     return string
   },

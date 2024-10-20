@@ -40,7 +40,7 @@ type TMatch_InChildren = (pattern: NodePattern) => (node: Nullable<Node>) => Nod
 type TType = <TBy extends By = By>(by: TBy, value: TypeBy[TBy]) => (node: Nullable<Node>) => Nullable<Node>
 type TIsLiteralLike = (node: Nullable<Node>) => Nullable<Node>
 
-export const match: TMatch_Node = pattern => node => (node && pattern.match(node) ? node : null)
+export const match: TMatch_Node = pattern => node => (node && pattern.match(node).isMatch ? node : null)
 export const matchInChildren: TMatch_InChildren = pattern => node => node?.children.filter(match(pattern)) ?? []
 
 export const type: TType = (by, value) => node => {

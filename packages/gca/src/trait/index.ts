@@ -1,5 +1,8 @@
 import { TraitSection } from "./section"
 
+export { TRAIT_SECTIONS } from "./section"
+export type { TraitSection } from "./section"
+
 export interface GCATrait {
   id: number
   name: string

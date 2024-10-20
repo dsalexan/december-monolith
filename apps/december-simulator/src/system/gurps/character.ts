@@ -3,13 +3,13 @@ import { MaybeNull } from "tsdef"
 import { isString } from "lodash"
 
 import { Reference } from "@december/utils/access"
-import { MutableObject, ObjectManager } from "@december/compiler"
+import { MutableObject, ObjectController } from "@december/compiler"
 import { ObjectID, MUTABLE_OBJECT_RANDOM_ID } from "@december/compiler/object"
 import { IGURPSCharacter, IGURPSTrait } from "@december/gurps"
 
 export type GURPSCharacterTag = keyof GURPSCharacter[`tags`]
 
-export default class GURPSCharacter extends ObjectManager implements IGURPSCharacter {
+export default class GURPSCharacter extends ObjectController implements IGURPSCharacter {
   system: `GURPS` = `GURPS`
   //
   id: string
@@ -20,15 +20,15 @@ export default class GURPSCharacter extends ObjectManager implements IGURPSChara
   // #region Objects
 
   // eslint-disable-next-line prettier/prettier
-  get traits() { return this.tags.traits.map(id => this.objects.get(id) as MutableObject<IGURPSTrait>) }
+  get traits() { return this.tags.traits.map(id => this.store.getByID(id) as MutableObject<IGURPSTrait>) }
   // eslint-disable-next-line prettier/prettier
-  get stats() { return this.tags.stats.map(id => this.objects.get(id) as MutableObject<IGURPSTrait>) }
+  get stats() { return this.tags.stats.map(id => this.store.getByID(id) as MutableObject<IGURPSTrait>) }
   // eslint-disable-next-line prettier/prettier
-  get general(): IGURPSCharacter[`general`] { return (this.objects.get(this.tags.general)! as MutableObject<IGURPSCharacter[`general`]>).getData() }
+  get general(): IGURPSCharacter[`general`] { return (this.store.getByID(this.tags.general)! as MutableObject<IGURPSCharacter[`general`]>).getData() }
 
   protected getTrait(idOrReference: string | Reference<`alias` | `id`>): MaybeNull<IGURPSTrait> {
     const reference = isString(idOrReference) ? new Reference(`id`, idOrReference) : idOrReference
-    const objects = this.objects.getByReference(reference) as MutableObject<IGURPSTrait>[]
+    const objects = this.store.getByReference(reference, false) as MutableObject<IGURPSTrait>[]
 
     assert(objects.length <= 1, `Multiple objects found for reference`)
 
@@ -50,7 +50,7 @@ export default class GURPSCharacter extends ObjectManager implements IGURPSChara
     this.tags = { traits: [], stats: [] } as any
   }
 
-  indexObject(object: MutableObject, tag: GURPSCharacterTag) {
+  tagObject(object: MutableObject, tag: GURPSCharacterTag) {
     if (tag === `general`) {
       assert(this.tags.general === undefined, `general already tagged`)
       this.tags.general = object.id

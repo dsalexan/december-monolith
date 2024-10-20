@@ -35,6 +35,8 @@ export default class Processor {
   public simplify: Simplify
   public reducer: Reducer
   public resolver: Resolver
+  //
+  public preProcessedExpression: string
   // RESULT
   public preProcessed: ProcessedData
   public processed: ProcessedData
@@ -76,6 +78,8 @@ export default class Processor {
 
     const DEBUG = this.options.debug // COMMENT
     if (DEBUG) this.printExpression(expression) // COMMENT
+
+    this.preProcessedExpression = expression
 
     if (!_options.AST) {
       this.lexer.process(expression)

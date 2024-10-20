@@ -142,7 +142,7 @@ export function setup(root: Node, options: PrintOptions): PrintSetup {
       height: root.height,
     },
     rows,
-    maxWidth: 310, // 230
+    maxWidth: options?.maxWidth ?? 280, // 230
     //
     padding: {
       prefix: 2,

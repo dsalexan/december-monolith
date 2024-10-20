@@ -17,7 +17,7 @@ import NodeCollection from "./collection"
 import { ancestor, offspring, sibling } from "./hierarchy"
 import { find, findAncestor, findByTraversal } from "./find"
 import { setType, NodeBalancing, balancing, comparePriority } from "./type"
-import { addToken, clearTokens, tokenize, content, NodeTokenizeOptions, range as __range } from "./token"
+import { addToken, clearTokens, tokenize, content, NodeTokenizeOptions, range as __range, blocks } from "./token"
 import { Attributes, createAttributes, setAttributes } from "./attributes"
 import { toString, repr, debug } from "./repr"
 import { clone } from "./factories"
@@ -31,6 +31,7 @@ import {
 
 import { ROOT } from "../../type/declarations/structural"
 import { IsolationScope } from "../scope/types"
+import logger, { Block, paint } from "../../logger"
 
 export const NON_EVALUATED_SCOPE = Symbol.for(`NODE:NON_EVALUATED_SCOPE`)
 
@@ -206,6 +207,8 @@ export class Node {
   public get balancing(): NodeBalancing { return balancing.call(this) }
 
   // eslint-disable-next-line prettier/prettier
+  public get blocks(): Nullable<Block[]> { return blocks.call(this) }
+  // eslint-disable-next-line prettier/prettier
   public get content(): Nullable<string> { return content.call(this) }
   public getContent(options?: Partial<NodeTokenizeOptions>): string | null {
     return content.call(this, options)
@@ -215,6 +218,22 @@ export class Node {
       wrapInParenthesis: (node: Node) => [`operator`, `enclosure`].includes(node.type.id),
       showType: true,
       ...options,
+    })
+  }
+  public getTreeContent(options: Partial<{ maxLevel: number }> = {}) {
+    const maxLevel = options.maxLevel === undefined ? Infinity : options.maxLevel + this.level
+
+    console.log(` `)
+    preOrder(this, node => {
+      if (node.level > maxLevel) return
+
+      logger.add(` `.repeat(node.level * 2))
+      logger.add(...paint.grey(paint.dim(`[`), node.name, paint.dim(`]`))).add(`  `)
+
+      const content = node.blocks
+      assert(content !== null, `Huh?`)
+      logger.add(...paint.white(content))
+      logger.debug()
     })
   }
   public getTreeHash() {

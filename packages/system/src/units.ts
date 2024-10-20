@@ -13,5 +13,11 @@ export const D4 = new SimpleUnit(`d4`, `four-sided die`, `dimensionless`, { acce
 
 export const DICE = [D6, D4]
 
-export const UNIT_MANAGER = new UnitManager()
-UNIT_MANAGER.add(...BASE_UNITS, ...DICE)
+export function defaultUnitManager() {
+  const UNIT_MANAGER = new UnitManager()
+  UNIT_MANAGER.add(...BASE_UNITS, ...DICE)
+
+  return UNIT_MANAGER
+}
+
+export const UNIT_MANAGER = defaultUnitManager()

@@ -12,6 +12,7 @@ import { RuleSet, NodeReplacementSystem } from "../../nrs"
 import type { BaseProcessingOptions } from "../../options"
 import SymbolTable from "../../environment/symbolTable"
 import { evaluateTreeScope } from "../../node/scope"
+import { NODE_BALANCING } from "../../node/node/type"
 
 export { RULESET_SEMANTIC } from "./nrs"
 
@@ -57,6 +58,12 @@ export default class Semantic {
     this.rulesets = [...rulesets]
     for (const ruleset of this.grammar.getRuleSets()) this.rulesets.push(ruleset)
 
+    // check AST for any unbalanced shit
+    postOrder(this.AST.root, node => {
+      const balancing = node.balancing
+      assert(balancing >= NODE_BALANCING.NON_APPLICABLE, `Cant handle`)
+    })
+
     this._process()
 
     return this.ST
@@ -69,7 +76,13 @@ export default class Semantic {
     this.NRS.setRulesets(this.rulesets)
 
     const tree = AST.clone()
-    evaluateTreeScope(tree, { master: this.options.scope })
+    evaluateTreeScope(tree, { master: this.options.scope, phase: `semantic` })
+
+    // check AST for any unbalanced shit
+    postOrder(this.AST.root, node => {
+      const balancing = node.balancing
+      assert(balancing >= NODE_BALANCING.NON_APPLICABLE, `Cant handle`)
+    })
 
     this.NRS.process(tree.root, {
       scope: this.options.scope,

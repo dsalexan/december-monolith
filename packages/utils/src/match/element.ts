@@ -1,5 +1,7 @@
 import assert from "assert"
-import { BasePattern, BasePatternOptions } from "./base"
+import { BasePattern, BasePatternOptions, PatternMatchInfo } from "./base"
+import { isEqual } from "lodash"
+import { Nullable } from "tsdef"
 
 /**
  * https://en.wikipedia.org/wiki/Element_(mathematics)
@@ -17,9 +19,8 @@ export class EqualsElementPattern<TElement = any> extends BasePattern {
     this.element = element
   }
 
-  override _match<TTestElement = TElement>(value: TTestElement): boolean {
-    // @ts-ignore
-    return this.element === value
+  override _match<TTestElement = TElement>(value: TTestElement): PatternMatchInfo {
+    return { isMatch: isEqual(this.element, value) }
   }
 
   override _toString() {
@@ -27,7 +28,11 @@ export class EqualsElementPattern<TElement = any> extends BasePattern {
   }
 }
 
-export class RegexElementPattern extends BasePattern {
+export interface RegexPatternMatchInfo extends PatternMatchInfo {
+  regexResult: Nullable<RegExpExecArray>
+}
+
+export class RegexElementPattern extends BasePattern<RegexPatternMatchInfo> {
   declare type: `regex`
   public regex: RegExp
 
@@ -36,8 +41,12 @@ export class RegexElementPattern extends BasePattern {
     this.regex = regex
   }
 
-  override _match<TValue = any>(value: TValue): boolean {
-    return this.regex.test(String(value))
+  override _match<TValue = any>(value: TValue): RegexPatternMatchInfo {
+    const regexMatch = this.regex.exec(String(value))
+    return {
+      isMatch: regexMatch !== null,
+      regexResult: regexMatch,
+    }
   }
 
   override _toString() {
@@ -45,7 +54,11 @@ export class RegexElementPattern extends BasePattern {
   }
 }
 
-export class IsElementOfSetPattern<TElementValue = unknown> extends BasePattern {
+export interface IsElementOfSetPatternMatchInfo extends PatternMatchInfo {
+  index: number
+}
+
+export class IsElementOfSetPattern<TElementValue = unknown> extends BasePattern<IsElementOfSetPatternMatchInfo> {
   declare type: `is_element_of`
   public superset: TElementValue[]
 
@@ -54,8 +67,9 @@ export class IsElementOfSetPattern<TElementValue = unknown> extends BasePattern 
     this.superset = [...superset]
   }
 
-  override _match<TTestElementValue = TElementValue>(value: TTestElementValue): boolean {
-    return this.superset.includes(value as any)
+  override _match<TTestElementValue = TElementValue>(value: TTestElementValue): IsElementOfSetPatternMatchInfo {
+    const index = this.superset.findIndex(element => isEqual(element, value))
+    return { isMatch: index > -1, index }
   }
 
   override _toString() {

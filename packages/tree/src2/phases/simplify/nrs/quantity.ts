@@ -127,10 +127,10 @@ RULESET_SIMPLIFY_QUANTITY.add(
 
     // 1. Create quantity node
     const unitOfMeasurement = A.attributes.unit!
-    const quantity = NodeFactory.QUANTITY(unitOfMeasurement, { unitString: last(A.tokens)!.lexeme, wrap: true })
+    const quantity = NodeFactory.abstract.QUANTITY(unitOfMeasurement, { unitString: last(A.tokens)!.lexeme, wrap: true })
 
     // 2. Create new operator node
-    const operator = NodeFactory.make(node.tokens[0], { type: node.type })
+    const operator = NodeFactory.abstract.make(node.tokens[0], { type: node.type })
     operator.setAttributes({ originalNodes: [node.clone()] })
 
     // 3. Add operands to new operator node

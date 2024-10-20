@@ -4,6 +4,8 @@ import { ElementPattern, ElementPatternTypes } from "./element"
 import { LogicalPattern, LogicalPatternTypes } from "./logical"
 import { SetPattern, SetPatternTypes } from "./set"
 
+export type { BasePatternMatch, PatternMatchInfo } from "./base"
+
 export * as Base from "./base"
 export * as Logical from "./logical"
 export * as Element from "./element"

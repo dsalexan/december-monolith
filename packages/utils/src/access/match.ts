@@ -1,14 +1,19 @@
-import { BasePattern, BasePatternOptions } from "@december/utils/match/base"
-import { ElementPattern, EQUALS } from "@december/utils/match/element"
+import { BasePattern, BasePatternMatch, BasePatternOptions, makeGenericBasePatternMatch, PatternMatchInfo } from "@december/utils/match/base"
+import { ElementPattern, EQUALS, REGEX } from "@december/utils/match/element"
 import { SetPattern } from "@december/utils/match/set"
 
 import { ANY_PROPERTY, Property, PropertyReference, Reference, SymbolProperty } from "."
-import { isString, property } from "lodash"
+import { isRegExp, isString, property } from "lodash"
 import assert from "assert"
 
 export interface ReferencePatternOptions extends BasePatternOptions {}
 
-export class ReferencePattern<TReference extends Reference = Reference> extends BasePattern {
+export interface ReferencePatternMatchInfo extends PatternMatchInfo {
+  typeMatch: BasePatternMatch
+  valueMatch: BasePatternMatch
+}
+
+export class ReferencePattern<TReference extends Reference = Reference> extends BasePattern<ReferencePatternMatchInfo> {
   declare type: `reference`
 
   typePattern: BasePattern
@@ -21,11 +26,15 @@ export class ReferencePattern<TReference extends Reference = Reference> extends 
     this.valuePattern = isString(valuePattern) ? EQUALS(valuePattern) : valuePattern
   }
 
-  override _match(reference: Reference): boolean {
+  override _match(reference: Reference): ReferencePatternMatchInfo {
     const typeMatch = this.typePattern.match(reference.type)
     const valueMatch = this.valuePattern.match(reference.value)
 
-    return typeMatch && valueMatch
+    return {
+      isMatch: typeMatch.isMatch && valueMatch.isMatch,
+      typeMatch,
+      valueMatch,
+    }
   }
 
   override _toString() {
@@ -37,7 +46,12 @@ export interface PropertyReferencePatternOptions extends BasePatternOptions {}
 
 export const PLACEHOLDER_SELF_REFERENCE = Symbol.for(`PLACEHOLDER_SELF_REFERENCE`)
 
-export class PropertyReferencePattern<TReference extends Reference = Reference> extends BasePattern {
+export interface PropertyReferencePatternMatchInfo extends PatternMatchInfo {
+  referenceMatch: BasePatternMatch
+  propertyMatch: BasePatternMatch
+}
+
+export class PropertyReferencePattern<TReference extends Reference = Reference> extends BasePattern<PropertyReferencePatternMatchInfo> {
   declare type: `property`
 
   referencePattern: ReferencePattern<TReference> | typeof PLACEHOLDER_SELF_REFERENCE
@@ -50,22 +64,29 @@ export class PropertyReferencePattern<TReference extends Reference = Reference> 
 
     if (propertyPattern instanceof BasePattern) this.propertyPattern = propertyPattern
     else if (isString(propertyPattern)) this.propertyPattern = EQUALS(propertyPattern)
+    else if (isRegExp(propertyPattern)) this.propertyPattern = REGEX(propertyPattern)
     else this.propertyPattern = propertyPattern
   }
 
-  override _match(propertyReference: PropertyReference): boolean {
+  override _match(propertyReference: PropertyReference): PropertyReferencePatternMatchInfo {
     assert(this.referencePattern !== PLACEHOLDER_SELF_REFERENCE, `PropertyReferencePattern cannot have a self reference as a reference pattern`)
 
     const referenceMatch = this.referencePattern.match(propertyReference.object)
 
-    let propertyMatch = false
+    let propertyMatch: BasePatternMatch = null as any
     if (this.propertyPattern instanceof BasePattern) propertyMatch = this.propertyPattern.match(propertyReference.property)
-    else if (this.propertyPattern === ANY_PROPERTY) propertyMatch = true
+    else if (this.propertyPattern === ANY_PROPERTY) propertyMatch = makeGenericBasePatternMatch({ isMatch: true }, propertyReference.property)
 
-    return referenceMatch && propertyMatch
+    assert(propertyMatch !== null, `Property match must be defined`)
+
+    return {
+      isMatch: referenceMatch.isMatch && propertyMatch.isMatch,
+      referenceMatch,
+      propertyMatch,
+    }
   }
 
-  override match(reference: PropertyReference): boolean {
+  override match(reference: PropertyReference): BasePatternMatch {
     return super.match(reference)
   }
 

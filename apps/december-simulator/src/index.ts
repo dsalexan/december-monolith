@@ -1,12 +1,13 @@
 import path from "path"
 
 import { GCACharacter, GCACharacterImporter } from "@december/gca"
-import { SET } from "@december/compiler"
+import { makeArtificialEventTrace, SET } from "@december/compiler"
 
-import churchil from "./logger"
+import churchil, { paint } from "./logger"
 import { GURPSCharacter } from "./system/gurps"
 import { IMPORT_CHARACTER_FROM_GCA_STRATEGY } from "./system/gurps/strategies/GCA/character"
 import { IMPORT_TRAIT_FROM_GCA_STRATEGY } from "./system/gurps/strategies/GCA/trait"
+import { makeArtificilEventDispatcher } from "../../../packages/compiler/src/controller/eventEmitter/event"
 
 const importer = new GCACharacterImporter(churchil)
 
@@ -15,16 +16,23 @@ const pathfile = path.join(GCA5, `characters`, `Luke Undell (dsalexan).gca5`)
 
 async function run() {
   // 1. Import character from GCA5 file
+  const ImportEvent = makeArtificilEventDispatcher({ type: `import`, origin: { file: pathfile, type: `gca` } })
+  // const ImportEvent = makeArtificialEventTrace({ type: `import`, origin: { file: pathfile, type: `gca` } })
+
   const GCA = new GCACharacter()
   await importer.import(pathfile, GCA)
 
   // 2. Setup character mutable object compilation
+  churchil.add(paint.grey(`[setup] general + ${GCA.allTraits.length} traits`)).info()
+
   const character = new GURPSCharacter(GCA.id, GCA.name)
 
   const general = character.makeObject(`general`)
-  character.indexObject(general, `general`)
-  character.applyStrategy(general.reference(`id`), IMPORT_CHARACTER_FROM_GCA_STRATEGY)
-  general.update([SET(`_.GCA`, GCA.general)])
+  character.tagObject(general, `general`)
+  character.applyStrategy(general, IMPORT_CHARACTER_FROM_GCA_STRATEGY)
+  character.frameRegistry.register(general.id, { name: `GCA:import`, fn: () => [SET(`_.GCA`, GCA.general)] })
+  character.callQueue.enqueue(general.reference(), { eventDispatcher: ImportEvent, name: `GCA:import` })
+  // general.update([SET(`_.GCA`, GCA.general)], [], ImportEvent)
 
   for (const { type, trait } of GCA.allTraits) {
     if (
@@ -36,13 +44,15 @@ async function run() {
       continue
 
     const object = character.makeObject(trait.id.toString())
-    character.indexObject(object, `${type}s`)
-    character.applyStrategy(object.reference(`id`), IMPORT_TRAIT_FROM_GCA_STRATEGY)
-    object.update([SET(`_.GCA`, trait)])
+    character.tagObject(object, `${type}s`)
+    character.applyStrategy(object, IMPORT_TRAIT_FROM_GCA_STRATEGY)
+    character.frameRegistry.register(object.id, { name: `GCA:import`, fn: () => [SET(`_.GCA`, trait)] })
+    character.callQueue.enqueue(object.reference(), { eventDispatcher: ImportEvent, name: `GCA:import` })
+    // object.update([SET(`_.GCA`, trait)], [], ImportEvent)
   }
 
   // 3. Compile character
-  character.mutator.run()
+  character.callQueue.execute()
 
   const _general = character.general
   debugger

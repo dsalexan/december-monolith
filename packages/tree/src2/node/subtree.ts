@@ -1,5 +1,5 @@
 import assert from "assert"
-import { isBoolean, isNumber, isString, last, subtract, uniqBy } from "lodash"
+import { isBoolean, isNil, isNumber, isString, last, subtract, uniqBy } from "lodash"
 
 import { Range, Interval, Point, typing } from "@december/utils"
 
@@ -47,7 +47,7 @@ export default class SubTree {
 
   /** Inserts a node in subtree */
   insert(node: Node, options: Partial<InsertOptions> = {}) {
-    // global.__DEBUG = true // COMMENT
+    global.__DEBUG = false // COMMENT
     global.__DEBUG_LABEL = `${node.lexeme}->${this.root.name}` // COMMENT
 
     if (global.__DEBUG) {
@@ -80,10 +80,25 @@ export default class SubTree {
       // ERROR: Untested
       if (node.type.id !== `keyword`) debugger
 
-      // try to find an ancestor matching parent
-      const ancestor = this.root.findAncestor(ancestor => node.type.syntactical!.parent!.match(ancestor))
+      // 1. Only proceed if target parent is found in ancestry (AND in context)
+      const ancestor = this.root.findByTraversal(inContext, ancestor => node.type.syntactical!.parent!.match(ancestor).isMatch)
 
-      if (ancestor) return new SubTree(ancestor).insert(node, { ...options, ignoreSyntacticalParent: true })
+      if (ancestor) {
+        // A. IF (conditional), check if master conditional doesn't already have a similar keyword
+        if (node.type.name.startsWith(`conditional:`)) {
+          const currentlyInMaster = ancestor?.children.map(child => child.attributes.group)
+          const group = node.type.name.split(`:`)[1]
+          assert(!isNil(group), `Keyword NEEDS a group`)
+
+          const isNewKeyword = !currentlyInMaster?.includes(group)
+          if (isNewKeyword) return new SubTree(ancestor!).insert(node, { ...options, ignoreSyntacticalParent: true })
+        }
+        //
+        else throw new Error(`Unimplemented keyword handling`)
+      }
+
+      // reset node type to STRING, something went wrong with its target parent
+      node.setType(STRING)
     }
 
     // TODO: Implement this
@@ -355,7 +370,7 @@ function insertOperator(subtree: Node, operator: Node, options: Partial<InsertOp
 
       const fallbackRange = Range.fromPoint(Range.point(subtree.range, `internal`, `first`, subtree.type.name === `root`))
       // const fallbackRange = Range.fromPoint(this.point(`internal`, `first`, subtree))
-      const nil = NodeFactory.NIL(fallbackRange)
+      const nil = NodeFactory.abstract.NIL(fallbackRange)
       subtree.syntactical.addNode(nil, undefined, options)
     } else {
       //  subtree has children
@@ -416,7 +431,7 @@ function insertOperator(subtree: Node, operator: Node, options: Partial<InsertOp
     }
 
     parent.syntactical.addNode(operator, undefined, options) // add operator as a child of subtree (or last child of subtree in a VERY specific scenario)
-    const nil = NodeFactory.NIL(operator)
+    const nil = NodeFactory.abstract.NIL(operator)
 
     // TODO: This would probably be different for any arity !== 2
     operator.syntactical.addNode(nil, undefined, options) // add nil as left operand of operator
@@ -519,7 +534,7 @@ function insertSeparator(subtree: Node, separator: Node, options: Partial<Insert
     subtree.syntactical.addNode(separator, 0, { ...options, preserveExistingNode: true, refreshIndexing: false })
 
     // create new list for next tokens
-    const emptyList = NodeFactory.LIST(Range.fromPoint(last(separator.tokens)!.interval.end + 1))
+    const emptyList = NodeFactory.abstract.LIST(Range.fromPoint(last(separator.tokens)!.interval.end + 1))
     separator.syntactical.addNode(emptyList, undefined, options)
 
     // empty list is new target, future tokens should be inserted in its subtree
@@ -531,7 +546,7 @@ function insertSeparator(subtree: Node, separator: Node, options: Partial<Insert
 
   // make emptyList to act as new target for future tokens (but as a child of master separator)
   const fallbackRange = Range.fromPoint(separator.range.column(`last`) + 1)
-  const emptyList = NodeFactory.LIST(fallbackRange)
+  const emptyList = NodeFactory.abstract.LIST(fallbackRange)
   master.syntactical.addNode(emptyList, undefined, options)
 
   // update master tokens
@@ -580,12 +595,15 @@ function insertKeyword(subTree: Node, keyword: Node, options: Partial<InsertOpti
     }
 
     // add keyword to parent (as a keyword group)
-    const name = keyword.content
-
-    assert(name, `Keyword must have content to name a group`)
+    const group = keyword.type.name.split(`:`)[1]
+    assert(group, `Keyword must have content to name a group`)
 
     keyword.setType(KEYWORD_GROUP)
-    keyword.setAttributes({ group: name! })
+    keyword.setAttributes({ group })
+
+    assert(arity === 1, `Untested traversal index = 0 for binary shit`)
+    assert(keyword.tokens.length === 1, `Untested traversal index = 0 for anything BUT one token`)
+    keyword.tokens[0].attributes.traversalIndex = 0
 
     const _options = arity === 1 ? options : { ...options, refreshIndexing: false }
     parent.syntactical.addNode(keyword, undefined, _options)
@@ -603,7 +621,7 @@ function insertKeyword(subTree: Node, keyword: Node, options: Partial<InsertOpti
       keyword.syntactical.addNode(beforeList, undefined, { ...options, refreshIndexing: false })
 
       // create new empty list as second child, and pass it as next target
-      const emptyList = NodeFactory.LIST(Range.fromPoint(last(keyword.tokens)!.interval.end + 1))
+      const emptyList = NodeFactory.abstract.LIST(Range.fromPoint(last(keyword.tokens)!.interval.end + 1))
       keyword.syntactical.addNode(emptyList, undefined, options)
 
       return emptyList

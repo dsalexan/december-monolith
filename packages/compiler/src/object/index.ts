@@ -2,16 +2,20 @@
 import { v4 as uuidv4 } from "uuid"
 import { EventEmitter } from "@billjs/event-emitter"
 import { cloneDeep, get, isArray, isEqual, set } from "lodash"
+import assert from "assert"
+import { AnyObject } from "tsdef"
 
-import { Reference } from "@december/utils/access"
+import { PropertyReference, Reference, METADATA_PROPERTY } from "@december/utils/access"
 import { getDeepProperties, isPrimitive } from "@december/utils/typing"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
-import { DeleteMutation, doesMutationHaveValue, Mutation, OverrideMutation, SetMutation } from "../mutation/mutation"
-import type ObjectManager from "../manager"
-import assert from "assert"
-import { AnyObject } from "tsdef"
+import { DeleteMutation, doesMutationHaveValue, Mutation, OverrideMutation, SET, SetMutation } from "../mutation/mutation"
+
+import type ObjectController from "../controller"
+import { IntegrityEntry } from "../controller/integrityRegistry"
+import { ObjectPropertyReference } from "./property"
+import { EventTrace } from "../controller/eventEmitter/event"
 
 export const MUTABLE_OBJECT_RANDOM_ID = Symbol.for(`MUTABLE_OBJECT_RANDOM_ID`)
 
@@ -49,7 +53,7 @@ function getData(value: any, path: string = ``) {
 }
 
 export default class MutableObject<TData extends AnyObject = any> extends EventEmitter {
-  public manager: ObjectManager
+  public controller: ObjectController
   public id: ObjectID
   //
   public readonly data: TData = {} as any
@@ -65,6 +69,7 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
   }
 
   protected _getData(value: any, path: string = ``) {
+    debugger
     // REFERENCE
     if (value instanceof Reference) {
       const reference = value as Reference
@@ -88,11 +93,26 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     return other
   }
 
-  constructor(manager: ObjectManager, id: ObjectID | typeof MUTABLE_OBJECT_RANDOM_ID = MUTABLE_OBJECT_RANDOM_ID) {
+  /** Store metadata in object (and also reference in "regular" data) */
+  public storeMetadata(value: unknown, targetPath: string, integrityEntries: IntegrityEntry[] = []): Mutation[] {
+    assert(integrityEntries.length > 0, `Integrity entries must be provided when storing metadata`)
+
+    // 1. Set in metadata
+    set(this.metadata, targetPath, value)
+
+    // 2. Return mutation instructions (since we should still register in "regular" data the reference to metadata)
+    return [SET(targetPath, new PropertyReference(this.reference(), `metadata.${targetPath}`))]
+  }
+
+  constructor(controller: ObjectController, id: ObjectID | typeof MUTABLE_OBJECT_RANDOM_ID = MUTABLE_OBJECT_RANDOM_ID) {
     super()
 
-    this.manager = manager
+    this.controller = controller
     this.id = id === MUTABLE_OBJECT_RANDOM_ID ? uuidv4() : id
+  }
+
+  public makeIntegrityEntry(key: string, value: string): IntegrityEntry {
+    return { key: `${this.id}::${key}`, value }
   }
 
   public getAliases(): ObjectAlias[] {
@@ -116,7 +136,7 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     throw new Error(`Invalid reference type "${type}"`)
   }
 
-  public update(mutations: Mutation[]) {
+  public update(mutations: Mutation[], integrityEntries: IntegrityEntry[], trace: EventTrace) {
     const changedProperties: string[] = []
 
     // 1. Mutate object as per instruction
@@ -151,19 +171,41 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
       else throw new Error(`Invalid mutation instruction type "${instruction.type}"`)
     }
 
+    // 2. Register integrity entries
+    for (const entry of integrityEntries) this.controller.integrityRegistry.add(entry, trace)
+
     // if nothing was changed, bail out
     if (changedProperties.length === 0) return false
 
-    // 2. Save new data
+    // 3. Save new data
     this.setData(newData)
 
-    const reference = this.reference(`id`) as StrictObjectReference
+    // 4. Warn manager to re-check references (mostly aliases for now)
+    this.controller.store.update(this)
 
-    // 3. Warn manager to re-check references (mostly aliases for now)
-    this.manager.verifyReferences(reference)
+    // 5. Cascade update to controller
+    const aliases = this.getAliases()
 
-    // 4. Cascade update to manager
-    this.manager.cascadeUpdate(reference, changedProperties)
+    // 5.A. Build a list of referenced properties with all aliases
+    const referencedProperties: ObjectPropertyReference[] = []
+    for (const property of changedProperties) {
+      // OBJECT ID x PROPERTY
+      referencedProperties.push(new PropertyReference(`id`, this.id, property))
+
+      // OBJECT ALIAS x PROPERTY
+      for (const alias of aliases) referencedProperties.push(new PropertyReference(`alias`, alias, property))
+    }
+
+    // 5.B. Emit this shitton of events
+    //      A object could be listening for changes in itself (OBJECT LEVEL)
+    //      A object A could be listening for changes in object B (CONTROLLER LEVEL)
+    for (const propertyReference of referencedProperties) {
+      this.controller.eventEmitter.emit({
+        type: `property:updated`,
+        property: propertyReference,
+        trace,
+      })
+    }
 
     return true
   }

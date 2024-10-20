@@ -31,19 +31,15 @@ export interface NodeFactoryGlobalSettings {
 }
 
 export default class NodeFactory {
-  private static _instance: NodeFactory
+  public static abstract = new NodeFactory({ masterScope: null as any })
+  //
   settings: NodeFactoryGlobalSettings
 
-  public static get instance() {
-    if (!this._instance) this._instance = new NodeFactory()
-    return this._instance
+  public constructor(settings: NodeFactoryGlobalSettings) {
+    this.settings = settings
   }
 
-  public static setGlobalSettings(settings: NodeFactoryGlobalSettings) {
-    this.instance.settings = { ...this.instance.settings, ...settings }
-  }
-
-  public static makeToken(value: StringObject, type: Type): Token {
+  public makeToken(value: StringObject, type: Type): Token {
     const string: ProvidedString | ConcreteString = isString(value) ? { type: `concrete`, value } : value
 
     const token = new Token(string, type)
@@ -51,23 +47,23 @@ export default class NodeFactory {
     return token
   }
 
-  private static fromString(value: StringObject, type: Type): Node {
-    const token = NodeFactory.makeToken(value, type)
+  private fromString(value: StringObject, type: Type): Node {
+    const token = this.makeToken(value, type)
     return this.fromToken(token)
   }
 
-  private static fromToken(token: Token): Node {
+  private fromToken(token: Token): Node {
     return new Node(token)
   }
 
-  private static fromType(type: Type, range: Range): Node {
+  private fromType(type: Type, range: Range): Node {
     return Node.tokenless(type, range)
   }
 
-  public static make(value: StringObject, type: Type, options?: Partial<NodeFactoryOptions>): Node
-  public static make(tokens: MaybeArray<Token>, options?: Partial<NodeFactoryOptions>): Node
-  public static make(type: Type, range: Range, options?: Partial<NodeFactoryOptions>): Node
-  public static make(valueOrTokensOrType: StringObject | MaybeArray<Token> | Type, typeOrRangeOrOptions?: Type | Partial<NodeFactoryOptions> | Range, _options?: Partial<NodeFactoryOptions>): Node {
+  public make(value: StringObject, type: Type, options?: Partial<NodeFactoryOptions>): Node
+  public make(tokens: MaybeArray<Token>, options?: Partial<NodeFactoryOptions>): Node
+  public make(type: Type, range: Range, options?: Partial<NodeFactoryOptions>): Node
+  public make(valueOrTokensOrType: StringObject | MaybeArray<Token> | Type, typeOrRangeOrOptions?: Type | Partial<NodeFactoryOptions> | Range, _options?: Partial<NodeFactoryOptions>): Node {
     let node: Node = null as any
     let options: Partial<NodeFactoryOptions> = {}
 
@@ -100,13 +96,13 @@ export default class NodeFactory {
     //   if (token.isNonEvaluated) token.evaluate({})
     // }
 
-    evaluateNodeScope(node, { master: this.instance.settings.masterScope })
+    evaluateNodeScope(node, { master: this.settings.masterScope })
     node.getScope()
 
     return node
   }
 
-  public static makeByGuess(value: unknown) {
+  public makeByGuess(value: unknown) {
     let node: Node
 
     // 1. Guess value variable type
@@ -115,15 +111,15 @@ export default class NodeFactory {
     // 2. Create node
     const type = getNodeType(variableType)
     if (PRIMITIVE_LITERAL_NAMES.includes(type.name as any)) {
-      node = NodeFactory.PRIMITIVE(value, type.name as PrimitiveLiteralName)
+      node = this.PRIMITIVE(value, type.name as PrimitiveLiteralName)
     } else if (type.name === `quantity`) {
       const quantity = value as Quantity
 
       // 1. Create quantity master node
-      node = NodeFactory.QUANTITY(quantity.unit)
+      node = this.QUANTITY(quantity.unit)
 
       // 2. Add value to quantity
-      const quantityValue = NodeFactory.PRIMITIVE(quantity.value)
+      const quantityValue = this.PRIMITIVE(quantity.value)
       node.children.add(quantityValue, null, { refreshIndexing: false })
     }
     //
@@ -137,20 +133,20 @@ export default class NodeFactory {
     return node
   }
 
-  public static ROOT(range: Range): Node {
-    return NodeFactory.make(ROOT, range)
+  public ROOT(range: Range): Node {
+    return this.make(ROOT, range)
   }
 
-  static NIL(range: Range): Node
-  static NIL(node: Node): Node
-  static NIL(rangeOrNode: Range | Node): Node {
+  public NIL(range: Range): Node
+  public NIL(node: Node): Node
+  public NIL(rangeOrNode: Range | Node): Node {
     let range = rangeOrNode as Range
     if (rangeOrNode instanceof Node) range = Range.fromPoint(rangeOrNode.range.column(`first`))
 
-    return NodeFactory.make(NIL, range)
+    return this.make(NIL, range)
   }
 
-  static PRIMITIVE(value: unknown, type?: PrimitiveLiteralName): Node {
+  public PRIMITIVE(value: unknown, type?: PrimitiveLiteralName): Node {
     if (type === undefined) {
       const variableType = guessVariableType(value)
       type = getNodeType(variableType).name as PrimitiveLiteralName
@@ -159,42 +155,42 @@ export default class NodeFactory {
     }
 
     const _type = LITERALS_BY_NAME[type]
-    const node = NodeFactory.make(String(value), _type)
+    const node = this.make(String(value), _type)
 
     return node
   }
 
-  static OPERATOR(type: OperatorTypeName): Node {
+  public OPERATOR(type: OperatorTypeName): Node {
     let string: string = `?`
     if (type === `addition`) string = `+`
     else if (type === `subtraction`) string = `-`
     else throw new Error(`Operator type "${type}" not implemented`)
 
     const _type = OPERATORS_BY_NAME[type]
-    const node = NodeFactory.make(string, _type)
+    const node = this.make(string, _type)
 
     return node
   }
 
-  static LIST(range: Range): Node {
-    return NodeFactory.make(LIST, range)
+  public LIST(range: Range): Node {
+    return this.make(LIST, range)
   }
 
-  static STRING_COLLECTION(tokens: Token[]): Node {
-    return NodeFactory.make(tokens, { type: STRING_COLLECTION })
+  public STRING_COLLECTION(tokens: Token[]): Node {
+    return this.make(tokens, { type: STRING_COLLECTION })
   }
 
-  static SIGN(sign: Token): Node {
-    return NodeFactory.make(sign, { type: SIGN })
+  public SIGN(sign: Token): Node {
+    return this.make(sign, { type: SIGN })
   }
 
-  static FUNCTION(name: Node, args: Node, options: Partial<{ range: Range }> = {}): Node {
+  public FUNCTION(name: Node, args: Node, options: Partial<{ range: Range }> = {}): Node {
     // 1. Calculate fallback range
     const fallbackRangeFromNodes = Range.fromOffsetPoints([name.range.column(`first`), args.range.column(`last`)], 0.5)
     const fallbackRange = options.range ?? fallbackRangeFromNodes
 
     // 2. Create master function node
-    const fn = NodeFactory.make(FUNCTION, fallbackRange)
+    const fn = this.make(FUNCTION, fallbackRange)
     fn.setAttributes({ originalNodes: [name.clone(), args.clone()], reorganized: true })
 
     // 3. Add name node
@@ -227,7 +223,7 @@ export default class NodeFactory {
     else if (args.children.length > 1) {
       // multiple children, but single argument
       //    make a list
-      const argument = NodeFactory.LIST(Range.fromPoint(args.children.nodes[0].range.column(`first`)))
+      const argument = this.LIST(Range.fromPoint(args.children.nodes[0].range.column(`first`)))
       argument.setAttributes({ tags: [`argument`] })
       fn.children.add(argument, null, { refreshIndexing: false })
 
@@ -261,9 +257,9 @@ export default class NodeFactory {
     return fn
   }
 
-  static QUANTITY(unitOfMeasurement: IUnit, options?: Partial<{ unitString: string; wrap: boolean }>): Node
-  static QUANTITY(unit: Node, options?: Partial<{ unitString: string; wrap: boolean }>): Node
-  static QUANTITY(unitOfMeasurementORUnit: IUnit | Node, options: Partial<{ unitString: string; wrap: boolean }> = {}): Node {
+  public QUANTITY(unitOfMeasurement: IUnit, options?: Partial<{ unitString: string; wrap: boolean }>): Node
+  public QUANTITY(unit: Node, options?: Partial<{ unitString: string; wrap: boolean }>): Node
+  public QUANTITY(unitOfMeasurementORUnit: IUnit | Node, options: Partial<{ unitString: string; wrap: boolean }> = {}): Node {
     let unit: Node, unitToken: Token, unitOfMeasurement: IUnit, quantity: Node
 
     if (isUnit(unitOfMeasurementORUnit)) {
@@ -274,7 +270,7 @@ export default class NodeFactory {
       unitToken = new Token({ type: `concrete`, value: _unit }, UNIT)
 
       // 2. Create master quantity node
-      quantity = NodeFactory.make(unitToken, { type: QUANTITY })
+      quantity = this.make(unitToken, { type: QUANTITY })
     } else {
       unit = unitOfMeasurementORUnit
 

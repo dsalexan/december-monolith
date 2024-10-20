@@ -113,7 +113,7 @@ RULESET_SIMPLIFY_STACK_OVERFLOW.add(
     predicate(node => node.children.length === 2), // two operands
     predicate(node => node.children.nodes[0].content === node.children.nodes[1].content), // left === right
   ),
-  node => NodeFactory.make(`0`, NUMBER),
+  (node, state) => NodeFactory.abstract.make(`0`, NUMBER),
 )
 
 // #endregion

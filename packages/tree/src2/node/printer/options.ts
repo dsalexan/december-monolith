@@ -28,6 +28,7 @@ export interface PartialPrintOptions {
   name: boolean
   id: boolean
   content: boolean
+  maxWidth: number
 }
 
 export type PrintOptions = RequiredPrintOptions & PartialDeep<PartialPrintOptions>

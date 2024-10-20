@@ -109,12 +109,12 @@ RULESET_SIMPLIFY_MATH.add(
       // (A + LB) - LC -> (A + LB) + LC
       node.setType(ADDITION)
       node.clearTokens()
-      node.addToken(NodeFactory.makeToken(`+`, ADDITION))
+      node.addToken(NodeFactory.abstract.makeToken(`+`, ADDITION))
 
       // (A + LB) + LC -> (A - LB) + LC
       left.setType(SUBTRACTION)
       left.clearTokens()
-      left.addToken(NodeFactory.makeToken(`-`, SUBTRACTION))
+      left.addToken(NodeFactory.abstract.makeToken(`-`, SUBTRACTION))
 
       left.swapWith(C) // (A - LB) + LC -> LC + (A - LB)
       C.swapWith(A) // LC + (A - LB) -> A + (LC - LB)
@@ -123,12 +123,12 @@ RULESET_SIMPLIFY_MATH.add(
       // (LA + B) - LC -> (LA + B) + LC
       node.setType(ADDITION)
       node.clearTokens()
-      node.addToken(NodeFactory.makeToken(`+`, ADDITION))
+      node.addToken(NodeFactory.abstract.makeToken(`+`, ADDITION))
 
       // (LA + B) + LC -> (LA - B) + LC
       left.setType(SUBTRACTION)
       left.clearTokens()
-      left.addToken(NodeFactory.makeToken(`-`, SUBTRACTION))
+      left.addToken(NodeFactory.abstract.makeToken(`-`, SUBTRACTION))
 
       left.swapWith(C) // (LA - B) + LC -> LC + (LA - B)
       C.swapWith(B) // LC + (LA - B) -> B + (LC - LA)

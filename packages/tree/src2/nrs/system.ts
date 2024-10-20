@@ -60,7 +60,7 @@ export class NodeReplacementSystem {
 
     if (targetNode instanceof Node) {
       // 1. Re-evaluate tree scope if node was changed
-      evaluateTreeScope(new SubTree(targetNode.root), { master: context.scope })
+      evaluateTreeScope(new SubTree(targetNode.root), { master: context.scope, phase: context.tag })
 
       // 2. Process post-processed node's children (since they are the new state of the tree)
       for (const child of targetNode.children.nodes) {

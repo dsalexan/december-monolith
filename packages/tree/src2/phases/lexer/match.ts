@@ -28,7 +28,9 @@ export const PatternMatchFunction: MatchFunction = (type: Type, sequence: string
   assert(lexical.patterns.length === 1, `Unimplemented multiple patterns`)
   assert(pattern, `No pattern found for type "${type.name}"`)
 
-  return { value: pattern.match(sequence) }
+  const match = pattern.match(sequence)
+  return { value: match.isMatch, data: match }
+  // return { value: pattern.match(sequence) }
 }
 
 export const UnitMatchFunction: MatchFunction = (type: Type, sequence: string, options: MatchOptions) => {

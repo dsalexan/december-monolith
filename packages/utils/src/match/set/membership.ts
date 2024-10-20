@@ -1,6 +1,7 @@
 import assert from "assert"
 
-import { BasePattern, BasePatternOptions } from "../base"
+import { BasePattern, BasePatternOptions, PatternMatchInfo } from "../base"
+import { isEqual } from "lodash"
 
 type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends readonly (infer ElementType)[] ? ElementType : never
 
@@ -19,6 +20,10 @@ type ArrayElement<ArrayType extends readonly unknown[]> = ArrayType extends read
  * and "includes" for the subset relation only.[3]
  */
 
+export interface ContainsElementPatternMatchInfo extends PatternMatchInfo {
+  index: number
+}
+
 export class ContainsElementPattern<TSetValue extends readonly unknown[] = unknown[]> extends BasePattern {
   declare type: `set_contains`
   public element: ArrayElement<TSetValue>
@@ -28,8 +33,10 @@ export class ContainsElementPattern<TSetValue extends readonly unknown[] = unkno
     this.element = element
   }
 
-  override _match<TTestSetValue extends readonly unknown[] = TSetValue>(superset: TTestSetValue): boolean {
-    return superset.includes(this.element as any)
+  override _match<TTestSetValue extends readonly unknown[] = TSetValue>(superset: TTestSetValue): ContainsElementPatternMatchInfo {
+    // return superset.includes(this.element as any)
+    const index = superset.findIndex(element => isEqual(element, this.element))
+    return { isMatch: index > -1, index }
   }
 }
 

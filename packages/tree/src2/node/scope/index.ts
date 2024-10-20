@@ -15,10 +15,12 @@ export { MasterScope, Scope } from "./types"
 export interface ScopeEvaluationOptions {
   master: MasterScope
   useTreeContext?: boolean
+  phase?: string
 }
 
-export function evaluateTreeScope(tree: SubTree, { master }: ScopeEvaluationOptions) {
+export function evaluateTreeScope(tree: SubTree, options: ScopeEvaluationOptions) {
   let __DEBUG = false // COMMENT
+  // __DEBUG = options.phase === `semantic` // COMMENT
 
   const root: Node = tree.root
 
@@ -31,7 +33,7 @@ export function evaluateTreeScope(tree: SubTree, { master }: ScopeEvaluationOpti
 
   // 1. Evaluate scopes in isolation (bottom -> up)
   postOrder(root, node => {
-    const scope = evaluateNodeScopeInIsolation(node, { master })
+    const scope = evaluateNodeScopeInIsolation(node, options)
     node.setScope(`isolation`, scope)
     node.setScope(`contextualized`, undefined as any)
   })
@@ -40,7 +42,7 @@ export function evaluateTreeScope(tree: SubTree, { master }: ScopeEvaluationOpti
 
   // 2. Contextualize scope base on isolation scope
   postOrder(root, node => {
-    const scope = contextualizedScopeInIsolation(node, { master })
+    const scope = contextualizedScopeInIsolation(node, options)
     node.setScope(`contextualized`, scope)
   })
 
@@ -48,7 +50,7 @@ export function evaluateTreeScope(tree: SubTree, { master }: ScopeEvaluationOpti
   // if (global.__DEBUG_LABEL_NRS === `semantic[3]:S2.a`) debugger
 
   // 3. Resolve derivations and Spread down scope where necessary
-  postOrder(root, node => evaluateSubTreeScopeInDerivation(node, { master }))
+  postOrder(root, node => evaluateSubTreeScopeInDerivation(node, options))
 
   if (__DEBUG) debugScopeTree(root, `contextualized`)
 
@@ -59,17 +61,17 @@ export function evaluateTreeScope(tree: SubTree, { master }: ScopeEvaluationOpti
   })
 }
 
-export function evaluateNodeScope(node: Node, { master }: ScopeEvaluationOptions) {
+export function evaluateNodeScope(node: Node, options: ScopeEvaluationOptions) {
   // 1. Evaluate scopes in isolation (bottom -> up)
-  const isolationScope = evaluateNodeScopeInIsolation(node, { master })
+  const isolationScope = evaluateNodeScopeInIsolation(node, options)
   node.setScope(`isolation`, isolationScope)
 
   // 2. Contextualize scope base on isolation scope
-  const contextualizedScope = contextualizedScopeInIsolation(node, { master })
+  const contextualizedScope = contextualizedScopeInIsolation(node, options)
   node.setScope(`contextualized`, contextualizedScope)
 
   // // 3. Resolve derivations through children
-  // if (node.children.length > 0) resolveDerivedScope(node, { master })
+  // if (node.children.length > 0) resolveDerivedScope(node, options)
 
   // // 4. Check if all derived scopes were resolved
   // const scope = node.getScope()
@@ -77,24 +79,24 @@ export function evaluateNodeScope(node: Node, { master }: ScopeEvaluationOptions
 }
 
 // Evaluates isolation scope for a node (i.e. just the node, ignoring its position on the tree)
-function evaluateNodeScopeInIsolation(node: Node, { master }: ScopeEvaluationOptions): IsolationScope[] {
+function evaluateNodeScopeInIsolation(node: Node, options: ScopeEvaluationOptions): IsolationScope[] {
   const scopes: IsolationScope[] = []
 
   // 1. Evaluted based on type
 
   // ====================================   CONFIRMED  ==============================================
+  // C. Node is an operator, so it really depends on the context
+  if (node.type.id === `operator`) scopes.push(`possible-operator`)
   // A. Scope comes literally from literal type if everything else fails
-  if ([`string`, `string_collection`].includes(node.type.name) || node.type.modules.includes(`numeric`)) scopes.push(`literal`)
+  else if ([`string`, `string_collection`].includes(node.type.name) || node.type.modules.includes(`numeric`) || node.type.name === `boolean`) scopes.push(`literal`)
   // B. Node is enclosed by quotes
   else if (node.type.name === `quotes` || node.type.name === `identifier`) scopes.push(`confirmed-string`)
-  // C. Node is an operator, so it really depends on the context
-  else if (node.type.id === `operator`) scopes.push(`possible-operator`)
   // D. Lists derive scope from chidren (since they act like a aggregator of shit)
   else if (node.type.name === `list` || node.type.name === `parenthesis`) scopes.push(`aggregator`)
   // E. IF's keywords (and other structural logical things) are logical
   else if (node.type.id === `keyword` || node.type.name === `function`) scopes.push(`logical-expression`)
   // ?. Generics
-  else if ([`enclosure`, `separator`].includes(node.type.id)) scopes.push(`irrelevant`)
+  else if ([`enclosure`, `separator`].includes(node.type.id) || node.type.name === `nil`) scopes.push(`irrelevant`)
   else if (node.type.name === `root`) scopes.push(`n/a`)
   // ================================================================================================
 
@@ -127,13 +129,14 @@ function contextualizedScopeInIsolation(node: Node, { master, useTreeContext }: 
   else if (scope === `logical-expression`) scopes.push(`logical`)
   else if (scope === `literal`) {
     if ([`string`, `string_collection`].includes(node.type.name)) scopes.push(`textual`)
-    else if (node.type.modules.includes(`numeric`)) scopes.push(`logical`)
+    else if (node.type.modules.includes(`numeric`) || node.type.name === `boolean`) scopes.push(`logical`)
     //
     else throw new Error(`Unimplemented type "${node.type.getFullName()}" for literal isolated scope`)
   } else if (scope === `n/a`) {
     if (master === `math-enabled`) scopes.push(`logical`)
     else if (master === `text-processing`) scopes.push(`textual`)
-    else throw new Error(`Unimplemented master scope "${master}"`)
+    else scopes.push(`derived`)
+    //throw new Error(`Unimplemented master scope "${master}"`)
   }
   // ================================================================================================
 
@@ -148,7 +151,7 @@ function contextualizedScopeInIsolation(node: Node, { master, useTreeContext }: 
       const parentThenChildren = treeContext.ancestors.parentScope || treeContext.children.scope
       const childrenThenParent = treeContext.children.scope || treeContext.ancestors.parentScope
 
-      if (scope === `possible-string`) {
+      if (scope === `possible-string` || (scope === `irrelevant` && node.type.name === `nil`)) {
         // A. Whitespace inside an argument list of a function surrounded by anything (i.e. not the first or last of list)
         if (node.type.name === `whitespace` && node.parent?.type.name === `list`) {
           const isFirstOrLast = node.index === 0 || node.index === node.parent.children.length - 1
@@ -178,7 +181,7 @@ function contextualizedScopeInIsolation(node: Node, { master, useTreeContext }: 
 }
 
 // Resolves derived contextualized scope into a "real" scope
-function resolveDerivedScope(node: Node, { master }: ScopeEvaluationOptions): NodeScope {
+function resolveDerivedScope(node: Node, options: ScopeEvaluationOptions): NodeScope {
   const contextualizedScope = node.getScope()
   if (contextualizedScope.includes(`derived`)) {
     let derivedScope: Nullable<Scope> = null
@@ -231,15 +234,15 @@ function resolveDerivedScope(node: Node, { master }: ScopeEvaluationOptions): No
 }
 
 // Evaluates scope for entire subtree (with node as root), resolving any derivations on root AND spreading down its scope
-function evaluateSubTreeScopeInDerivation(node: Node, { master }: ScopeEvaluationOptions) {
+function evaluateSubTreeScopeInDerivation(node: Node, options: ScopeEvaluationOptions) {
   // 1. Leaf nodes dont count
   if (node.children.length === 0) return
 
   // if (node.getScope(`isolation`).includes(`possible-operator`)) debugger
-  // if (node.name === `L2.a`) debugger
+  // if (node.name === `g1.a`) debugger
 
   // 2. Try to resolve self scope (derived -> something other)
-  const nodeScope = resolveDerivedScope(node, { master })
+  const nodeScope = resolveDerivedScope(node, options)
 
   if (!nodeScope.contextualized.includes(`derived`)) {
     // 3. Decide directive for spread down
@@ -251,12 +254,12 @@ function evaluateSubTreeScopeInDerivation(node: Node, { master }: ScopeEvaluatio
     else throw new Error(`Unimplemented isolation scope "${nodeScope.isolation.join(`, `)}" for ${node.name} in directive decision`)
 
     // 4. Spread down scope (deciding if it is necessary based on isolation data)
-    spreadDownScope(node, directive, { master })
+    spreadDownScope(node, directive, options)
   }
 }
 
 // Spreads down node scope based on a directive (basically resolving/enforcing scope for its offspring)
-function spreadDownScope(node: Node, directive: `resolve-derived` | `enforce-scope`, { master }: ScopeEvaluationOptions) {
+function spreadDownScope(node: Node, directive: `resolve-derived` | `enforce-scope`, options: ScopeEvaluationOptions) {
   const contextualizedScope = node.getScope()
 
   preOrder(node, child => {
@@ -269,7 +272,7 @@ function spreadDownScope(node: Node, directive: `resolve-derived` | `enforce-sco
     if (directive === `resolve-derived`) {
       if (!childScope.includes(`derived`)) return
 
-      const newChildScope = contextualizedScopeInIsolation(child, { master, useTreeContext: true })
+      const newChildScope = contextualizedScopeInIsolation(child, { ...options, useTreeContext: true })
       child.setScope(`contextualized`, childScope.map(scope => (scope === `derived` ? newChildScope : scope)).flat())
     } else if (directive === `enforce-scope`) child.setScope(`contextualized`, [...contextualizedScope])
     //
@@ -347,7 +350,7 @@ export function debugScopeTree(root: Node, type: `isolation` | `contextualized`,
 
       if (type === `contextualized`) color = color.grey.dim.italic
 
-      logger.add(color(scope))
+      logger.add(color(scope)).add(` `)
     }
 
     if (type === `contextualized`) {
@@ -358,7 +361,7 @@ export function debugScopeTree(root: Node, type: `isolation` | `contextualized`,
         if (scope === `textual`) color = paint.green
         if (scope === `derived`) color = paint.grey
 
-        logger.add(color(scope))
+        logger.add(color(scope)).add(` `)
       }
     }
 

@@ -316,10 +316,10 @@ export default class Reducer {
     const result = this._processNode(this.T.root)
 
     // encapsulate processed return into a tree
-    const root = NodeFactory.ROOT(Range.fromLength(0, 1))
+    const root = NodeFactory.abstract.ROOT(Range.fromLength(0, 1))
     const tree = new SubTree(root)
 
-    const node = result instanceof Node ? result : NodeFactory.makeByGuess(result)
+    const node = result instanceof Node ? result : NodeFactory.abstract.makeByGuess(result)
     tree.root.children.add(node)
 
     // verify expression (and recalculate if necessary)
@@ -346,7 +346,7 @@ export default class Reducer {
 
 function wrapProcessedChildren(parent: Node, children: ProcessedNode[], i0 = 0) {
   for (const [i, child] of children.entries()) {
-    const node = child instanceof Node ? child : NodeFactory.makeByGuess(child)
+    const node = child instanceof Node ? child : NodeFactory.abstract.makeByGuess(child)
     parent.syntactical.replaceAt(i0 + i, node)
   }
 
@@ -360,7 +360,7 @@ function wrapProcessedChildren_REFACTOR_THIS_SHIT(parent: Node, children: Proces
       if (_child instanceof Quantity) variableType = `quantity`
 
       const type = getType(variableType)
-      const child = NodeFactory.make(_child.toString(), type)
+      const child = NodeFactory.abstract.make(_child.toString(), type)
       parent.syntactical.replaceAt(i0 + i, child)
 
       if (type.name === `quantity`) {

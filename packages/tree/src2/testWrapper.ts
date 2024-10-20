@@ -35,17 +35,19 @@ import { Gardener } from "./gardener"
 
 // =======================================================
 
-const gardener = Gardener.make()
-const plus = gardener.add(NodeFactory.OPERATOR(`addition`))
-plus.insert(NodeFactory.PRIMITIVE(1))
+const nodeFactory = new NodeFactory({ masterScope: `math-enabled` })
 
-const plus2 = plus.add(NodeFactory.OPERATOR(`addition`))
-plus2.insert(NodeFactory.PRIMITIVE(2))
+const gardener = Gardener.make(nodeFactory)
+const plus = gardener.add(nodeFactory.OPERATOR(`addition`))
+plus.insert(nodeFactory.PRIMITIVE(1))
+
+const plus2 = plus.add(nodeFactory.OPERATOR(`addition`))
+plus2.insert(nodeFactory.PRIMITIVE(2))
 
 // 2. Secondary tree
-const minus = Gardener.add(NodeFactory.OPERATOR(`subtraction`))
-minus.add(NodeFactory.PRIMITIVE(`x`))
-minus.add(NodeFactory.PRIMITIVE(3))
+const minus = Gardener.add(nodeFactory.OPERATOR(`subtraction`))
+minus.add(nodeFactory.PRIMITIVE(`x`))
+minus.add(nodeFactory.PRIMITIVE(3))
 
 plus2.add(minus.node)
 
@@ -84,13 +86,13 @@ const data = processor.preProcess(expression, environment, {
   AST: MT,
   debug: true,
   // general
-  scope: { root: `math` },
+  scope: `math-enabled`,
   //
   simplify: {
     rulesets: RULESETS_SIMPLIFY,
   },
   reducer: {
-    ignoreTypes: [`conditional`],
+    ignoreTypes: [], //[`conditional`],
   },
 })
 

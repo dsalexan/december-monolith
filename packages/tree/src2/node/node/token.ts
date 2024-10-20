@@ -6,6 +6,8 @@ import Token from "../../token"
 import { Node } from "./base"
 import { inOrder, InOrderTraversalOptions } from "../traversal"
 import assert from "assert"
+import { Block, paint } from "../../logger"
+import { Nullable } from "tsdef"
 
 export interface NodeTokenizeOptions {
   level: number
@@ -56,6 +58,41 @@ export function content(this: Node, options: Partial<NodeTokenizeOptions> = {}):
   }
 
   return strings.join(``)
+}
+
+export function blocks(this: Node, options: Partial<NodeTokenizeOptions> = {}): Nullable<Block[]> {
+  if (this._tokens.length === 0 && this.children.length === 0) return null
+
+  const blocks: Block[] = []
+
+  const tokens = this.tokenize(options)
+  for (const word of tokens) {
+    if (word.type === `node`) {
+      if (word.token) {
+        let color = paint.dim
+        if (word.node.id === this.id) color = paint.identity
+
+        blocks.push(color(word.token.lexeme))
+      } else {
+        // // Non-overflowable content
+        // // TODO: Implement for tokenless and childless nodes that are not points
+        // if (this._tokens.length === 0 && this.children.length === 0 && !this._range.columnIsPoint(`first`)) debugger
+
+        // if (this._tokens.length) strings.push(this._tokens.map(token => token.lexeme).join(``))
+
+        debugger
+        // Non-overflowable content
+        // TODO: Implement for tokenless and childless nodes that are not points
+        if (word.node._tokens.length === 0 && word.node.children.length === 0 && !word.node._range.columnIsPoint(`first`)) debugger
+
+        for (const token of word.node._tokens) blocks.push(paint.identity(token.lexeme))
+      }
+    } else if (word.type === `artefact`) blocks.push(paint.grey.dim(word.value))
+    // @ts-ignore
+    else throw new Error(`Unimplemented tokenized word type "${word.type}"`)
+  }
+
+  return blocks
 }
 
 export function range(this: Node): Range {

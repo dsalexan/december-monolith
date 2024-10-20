@@ -1,8 +1,12 @@
 import assert from "assert"
 
-import { BasePattern, BasePatternOptions } from "./base"
+import { BasePattern, BasePatternMatch, BasePatternOptions, PatternMatchInfo } from "./base"
 
-export class ConnectiveLogicalPattern<TPattern extends BasePattern = any> extends BasePattern {
+export interface ConnectiveLogicalPatternMatchInfo extends PatternMatchInfo {
+  individualMatches: BasePatternMatch[]
+}
+
+export class ConnectiveLogicalPattern<TPattern extends BasePattern = any> extends BasePattern<ConnectiveLogicalPatternMatchInfo> {
   declare type: `and` | `or`
   public patterns: TPattern[]
 
@@ -11,10 +15,13 @@ export class ConnectiveLogicalPattern<TPattern extends BasePattern = any> extend
     this.patterns = [...patterns]
   }
 
-  override _match<TValue = any>(value: TValue): boolean {
+  override _match<TValue = any>(value: TValue): ConnectiveLogicalPatternMatchInfo {
     const matches = this.patterns.map(pattern => pattern.match(value))
 
-    return this.type === `and` ? matches.every(Boolean) : matches.some(Boolean)
+    return {
+      isMatch: this.type === `and` ? matches.every(match => match.isMatch) : matches.some(match => match.isMatch),
+      individualMatches: matches,
+    }
   }
 }
 

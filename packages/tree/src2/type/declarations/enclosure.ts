@@ -23,6 +23,7 @@ import { TYPE, NODE, TREE } from "../../match/pattern"
 import { KEYWORD_GROUP } from "./keyword"
 import { CUSTOM } from "../../phases/reducer/instruction"
 import { NodeTokenizedWord_Node } from "../../node/node/token"
+import Parser from "../../phases/parser"
 
 /**
  * Lower Priority means less nodes can be parent of this node
@@ -120,66 +121,34 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
         match(NODE.CONTENT(IS_ELEMENT_OF([`if`, `@if`, `$if`]))), // firstChild === "if"
       ),
       (node, state, { grammar }) => {
+        // 1. An IF initially would be considered a function make it its own type
         node.setType(CONDITIONAL)
 
-        // pass "if" as a token, not as name (if don't have first child as name)
+        // 2. Incorporate if as a token (currently it is the node "name" for function)
         const ifNode = node.children.remove(0, { refreshIndexing: false })
-        const openerParenthesis = node.tokens[0]
-
-        assert(ifNode.tokens.length === 1, `Conditional "IF" should be a single token`)
-
-        node.tokens[0].attributes.traversalIndex = 0
+        assert(ifNode.tokens.length === 1, `Conditional "IF" should be a single token`) // cant handle
 
         const _if = ifNode.tokens[0]
         _if.attributes.traversalIndex = 0
         node.addToken(_if, 0)
 
-        const start = node.children.nodes[0].range.column(`first`)
-        const end = last(node.children.nodes)!.range.column(`last`)
-        const _range = Range.fromInterval(start, end)
+        // 2.A. Update "(" traversal index to follow IF
+        node.tokens[1].attributes.traversalIndex = 0
 
+        // 3. Remove all children from node (IF), but keep tokens for re-parsing
         const tokensByChild = node.children.map(child => [child, child.tokenize() as NodeTokenizedWord_Node[]] as const)
-        const _tokensByChild = tokensByChild.map(([child, tokens]) => child.name)
-
+        const tokens = tokensByChild.map(([, tokens]) => tokens).flat()
         node.children.removeAll({ refreshIndexing: false })
 
-        // add condition keyword (since first children of a conditional node is a condition group)
-        const condition = NodeFactory.LIST(Range.fromPoint(openerParenthesis.interval.end + 1))
+        // 4. Append empty CONDITIONAL keyword group (since they can't be parsed automatically)
+        const condition = NodeFactory.abstract.LIST(Range.fromPoint(node.tokens[1].interval.end + 1)) // start AFTER opener parenthesis
         condition.setType(KEYWORD_GROUP)
         condition.setAttributes({ group: `condition` })
 
         node.children.add(condition, undefined, { refreshIndexing: false })
 
-        let current = condition
-
-        // global.__DEBUG = true // COMMENT
-
-        // basically re-parse tokens
-        for (const [child, tokens] of tokensByChild) {
-          if (child.type.name === `string_collection`) debugger
-          if (child.type.name === `sign`) debugger
-
-          for (const { node: originalNode, token } of tokens) {
-            let node: Node
-
-            if (!token) node = originalNode.clone({ cloneSubTree: true })
-            else {
-              // re-match token in grammar (since grammar could have new shit)
-              const matches = grammar.syntacticalMatch(token.lexeme, current)
-              assert(matches.length > 0, `How can it be?`)
-
-              const types = matches.map(({ type }) => type)
-
-              // if prioritary type differs, clone token and update type
-              const newType = types[0].name !== token.type.name
-              const _token = newType ? token.clone().setType(types[0]) : token
-
-              node = NodeFactory.make(_token)
-            }
-
-            current = new SubTree(current).insert(node, { refreshIndexing: false })
-          }
-        }
+        // 5. Re-parse offpsing tokens from IF node (previously inside functions arguments)
+        Parser.processTokenizedWords(tokens, { grammar, initialSubTreeRoot: condition, debug: false })
 
         return node
       },
@@ -188,7 +157,7 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
   .addReduce(
     (node, { master }) => CUSTOM(),
     function (instruction, node, { master }) {
-      const dontReduce = this.options.ignoreTypes?.includes(node.type.name) // TODO: Implement this
+      const dontReduce = this.options.ignoreTypes?.includes(node.type.name)
 
       assert(node.type.syntactical!.arity === 3, `Conditional requires three operands`)
 
@@ -206,7 +175,7 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
         _condition.children.removeAll()
 
         const type = getType(typing.getType(condition)!)
-        condition = NodeFactory.make(condition.toString(), type)
+        condition = NodeFactory.abstract.make(condition.toString(), type)
         _condition.syntactical.addNode(condition)
       }
 
@@ -216,7 +185,7 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
           _consequent.children.removeAll()
 
           const type = getType(typing.getType(consequent)!)
-          consequent = NodeFactory.make(consequent.toString(), type)
+          consequent = NodeFactory.abstract.make(consequent.toString(), type)
           _consequent.syntactical.addNode(consequent)
         }
 
@@ -224,7 +193,7 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
           _alternative.children.removeAll()
 
           const type = getType(typing.getType(alternative)!)
-          alternative = NodeFactory.make(alternative.toString(), type)
+          alternative = NodeFactory.abstract.make(alternative.toString(), type)
           _alternative.syntactical.addNode(alternative)
         }
 

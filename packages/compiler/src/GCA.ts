@@ -16,7 +16,7 @@ import { Event_Listen } from "./manager/events"
 import { ProcessingOptionsGenerator, Strategy } from "./strategy"
 import { ReferenceIndexedEvent_Handle } from "./manager/events/events"
 import { SIGNATURE, Signature } from "./manager/events/signature"
-import { preProcessValue, PreProcessValueOptions, ProcessingOptions, processValue } from "./processor"
+import { preProcessValue, PreProcessValueOptions, ProcessingOptions, processValue } from "./processor/index.ts"
 import { UNIT_MANAGER } from "./units"
 
 /**

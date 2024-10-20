@@ -1,6 +1,6 @@
+import assert from "assert"
 import { isNil, isNumber, isString, range, sum } from "lodash"
 import { Arguments, MaybeUndefined } from "tsdef"
-import assert from "assert"
 
 import { Node, Gardener, NodeFactory, SubTree, Grammar, Environment, ObjectSource, Processor, ProcessedData } from "./tree"
 import { D6, DICE, IUnit, Quantity, UnitManager } from "./units"
@@ -10,11 +10,11 @@ export function dice(unit: IUnit, base: number, modifier?: number): SubTree {
 
   const hasModifier = !isNil(modifier)
 
-  const node = hasModifier ? gardener.add(NodeFactory.OPERATOR(`addition`)) : gardener.root
+  const node = hasModifier ? gardener.add(NodeFactory.abstract.OPERATOR(`addition`)) : gardener.root
 
-  node.add(NodeFactory.QUANTITY(unit)).insert(NodeFactory.PRIMITIVE(base))
+  node.add(NodeFactory.abstract.QUANTITY(unit)).insert(NodeFactory.abstract.PRIMITIVE(base))
 
-  if (hasModifier) node.insert(NodeFactory.PRIMITIVE(modifier))
+  if (hasModifier) node.insert(NodeFactory.abstract.PRIMITIVE(modifier))
 
   return gardener.get()
 }
@@ -105,9 +105,7 @@ export class DiceRoller {
     // 2. Process expresion
     const environment = this.getEnvironment(options)
     const data = this.processor.preProcess(expression, environment, {
-      scope: {
-        root: `math`,
-      },
+      scope: `math-enabled`,
       ...options.processing,
       AST,
     })

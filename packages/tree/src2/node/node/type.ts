@@ -6,6 +6,7 @@ export const NODE_BALANCING = {
   UNBALANCED: -1,
   NON_APPLICABLE: 0,
   BALANCED: 1,
+  EXACTLY_BALANCED: 2,
 } as const
 
 export type NodeBalancing = (typeof NODE_BALANCING)[keyof typeof NODE_BALANCING]

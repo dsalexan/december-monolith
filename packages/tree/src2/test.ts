@@ -159,7 +159,69 @@ expression = `@fn(A B)`
 expression = `@itemhasmod(AD:Claws (Long Talons), Feet Only) = 0`
 expression = `$if("AD:Claws (Long Talons)::level" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN "cut/imp" ELSE "cr")`
 // expression = `$if("AD:Claws (Sharp Claws)::level" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN "cut" ELSE $if("AD:Claws (Talons)::level" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN "cut/imp" ELSE $if("AD:Claws (Long Talons)::level" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN "cut/imp" ELSE "cr")))`
+expression = `$if(1 = 1 & 2 = 0 THEN "cut" ELSE "cr")`
+expression = `$if(B = 1 & @itemhasmod(B, Feet) = 0 THEN "cut/imp" ELSE "cr")`
+expression = `$if(A = 1 THEN "cut" ELSE $if(B = 1 THEN "imp" ELSE "cr"))`
+expression = `$if(A = 1 & 2 = 0 THEN "cut" ELSE $if(B = 1 & 3 = 0 THEN "cut/imp" ELSE "cr"))`
+expression = `$if(A = 1 & @itemhasmod(A, Feet) = 0 THEN "cut" ELSE $if(B = 1 & @itemhasmod(B, Feet) = 0 THEN "cut/imp" ELSE "cr"))`
+expression = `$if("A::level" = 1 & @itemhasmod(A, Feet) = 0 THEN "cut" ELSE $if("B::level" = 1 & @itemhasmod(B, Feet) = 0 THEN "cut/imp" ELSE "cr"))`
+expression = `$if("A::level" = 1 & @itemhasmod(A, Feet Only) = 0 THEN "cut" ELSE $if("B::level" = 1 & @itemhasmod(B, Feet Only) = 0 THEN "cut/imp" ELSE "cr"))`
+expression = `$if("AD:Claws (Sharp Claws)::level" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN "cut" ELSE $if("AD:Claws (Talons)::level" = 1 & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN "cut/imp" ELSE "cr"))`
+expression = `$if("AD:Claws (Sharp Claws)::level" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN "cut" ELSE $if("AD:Claws (Talons)::level" = 1 & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN "cut/imp" ELSE $if("AD:Claws (Long Talons)::level" = 1 & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN "cut/imp" ELSE "cr")))`
+//
+expression = `-@basethdice(ST:Kick)`
+expression = `@if(A = 1 then -@basethdice(ST:Kick) else 0)`
+expression = `@if(1 = 1 
+  then @if(2 = 1 
+    then 0 
+    else 1
+  ) 
+  else 0
+)`
+expression = `thr+ 
+@if(me::level = ST:DX 
+  then @basethdice(ST:Kick) 
+  else @if(me::level > ST:DX 
+    then 2 * @basethdice(ST:Kick) 
+    else 0
+  )
+)`
+expression = `thr+ 
+@if(me::level = ST:DX 
+  then @basethdice(ST:Kick) 
+  else @if(me::level > ST:DX 
+    then 2 * @basethdice(ST:Kick) 
+    else 0
+  )
+) + 
+@if("DI:Horizontal::level" = 1 
+  then @if("AD:Claws (Blunt Claws)::level" = 1 
+    then 0 
+    else @if("AD:Claws (Sharp Claws)::level" = 1 
+      then 0 
+      else @if("AD:Claws (Talons)::level" = 1 
+        then 0 
+        else @if("AD:Claws (Long Talons)::level" = 1 
+          then 0 
+          else @basethdice(ST:Kick)
+        )
+      )
+    )
+  ) 
+  else 0
+) + 
+@if("AD:Claws (Blunt Claws)::level" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Hands Only) = 0 
+  then @basethdice(ST:Kick) 
+  else @if("AD:Claws (Long Talons)::level" = 1 & @itemhasmod(AD:Claws (Long Talons), Hands Only) = 0 
+    then @basethdice(ST:Kick) 
+    else @if("AD:Claws (Hooves)::level" = 1 
+      then @basethdice(ST:Kick) 
+      else 0
+    )
+  )
+)`
 
+expression = expression.replaceAll(/(\r\n|\n|\r) */gm, ``)
 const options = defaultProcessingOptions({
   // general
   scope: `math-enabled`,
@@ -169,10 +231,11 @@ const options = defaultProcessingOptions({
     rulesets: RULESETS_SIMPLIFY,
   },
   reducer: {
-    ignoreTypes: [`conditional`],
+    ignoreTypes: [],
   },
 })
-NodeFactory.setGlobalSettings({ masterScope: options.scope })
+
+const nodeFactory = new NodeFactory({ masterScope: options.scope })
 
 const unitManager = new UnitManager()
 unitManager.add(...BASE_UNITS)
@@ -247,12 +310,12 @@ semantic.print({ expression })
 
 // environment.print()
 
-// simplify.process(semantic.ST, environment, [...RULESETS_SIMPLIFY], options.simplify)
-// simplify.print({ expression: simplify.SST.expression() })
-// console.log(` `)
+simplify.process(semantic.ST, environment, [...RULESETS_SIMPLIFY], options.simplify)
+simplify.print({ expression: simplify.SST.expression() })
+console.log(` `)
 
 // reducer.process(simplify.SST, environment, options.reducer)
 // reducer.print({ expression: reducer.RT.expression() })
 
-resolver.process(semantic.ST, environment, options.resolver)
-resolver.print({ expression: resolver.result.expression() })
+// resolver.process(semantic.ST, envirSonment, options.resolver)
+// resolver.print({ expression: resolver.result.expression() })

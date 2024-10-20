@@ -63,7 +63,7 @@ export const RULESET_SIMPLIFY_TEXT = new RuleSet(`simplify/text`)
 //     const allTokens = tokenized.flatMap(({ node, token }) => (token ? [token] : node.tokens))
 //     const tokens = allTokens
 
-//     const string = NodeFactory.STRING_COLLECTION(tokens)
+//     const string = NodeFactory.abstract.STRING_COLLECTION(tokens)
 
 //     return string
 //   },

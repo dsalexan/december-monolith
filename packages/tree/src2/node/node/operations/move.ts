@@ -78,7 +78,7 @@ export function groupChildren(this: Node, [start, end]: [number, number], list?:
   // create new list if necessary
   if (!list) {
     const fallbackRange = Range.fromPoint(Range.point(children.length > 0 ? children.map(child => child.range) : this.range, `internal`, `first`, children.length === 0 && this.type.name === `root`))
-    list = NodeFactory.LIST(fallbackRange)
+    list = NodeFactory.abstract.LIST(fallbackRange)
   }
 
   this.syntactical.addNode(list, start, options) // add list to parent

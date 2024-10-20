@@ -1,4 +1,36 @@
-export class BasePattern {
+export interface PatternMatchInfo {
+  isMatch: boolean
+}
+
+export interface SubPatternPatternMatchInfo extends PatternMatchInfo {
+  patternMatch: BasePatternMatch
+}
+
+export interface BasePatternMatch extends PatternMatchInfo {
+  isNegated: boolean
+  isCaseInsensitive: boolean
+  //
+  value: unknown
+  preparedValue: unknown
+}
+
+export function makeGenericBasePatternMatch<TMatchInfo extends PatternMatchInfo = PatternMatchInfo>(
+  matchInfo: TMatchInfo,
+  value: unknown,
+  { isNegated, isCaseInsensitive, preparedValue }: Partial<Pick<BasePatternMatch, `isNegated` | `isCaseInsensitive` | `preparedValue`>> = {},
+): BasePatternMatch {
+  return {
+    ...matchInfo,
+    //
+    isNegated: isNegated ?? false,
+    isCaseInsensitive: isCaseInsensitive ?? false,
+    //
+    value,
+    preparedValue: preparedValue ?? value,
+  }
+}
+
+export class BasePattern<TMatchInfo extends PatternMatchInfo = PatternMatchInfo> {
   type: string
   //
   negate?: boolean
@@ -17,16 +49,23 @@ export class BasePattern {
     return value
   }
 
-  _match(value: unknown): boolean {
+  _match(value: unknown): TMatchInfo {
     throw new Error(`Unimplemented _match`)
   }
 
-  match(value: unknown): boolean {
+  match(value: unknown): BasePatternMatch {
     const preparedValue = this._prepare(value)
 
-    const result = this._match(preparedValue)
+    const matchInfo = this._match(preparedValue)
 
-    return this.negate ? !result : result
+    return {
+      ...matchInfo,
+      isMatch: this.negate ? !matchInfo.isMatch : matchInfo.isMatch,
+      isNegated: this.negate ?? false,
+      isCaseInsensitive: this.caseInsensitive ?? false,
+      value,
+      preparedValue,
+    }
   }
 
   toString() {

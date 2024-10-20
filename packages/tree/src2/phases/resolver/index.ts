@@ -86,7 +86,7 @@ export default class Resolver {
   }
 
   private _resolve(tree: SubTree, i: number) {
-    const __DEBUG = true // COMMENT
+    const __DEBUG = false // COMMENT
 
     // 1. Simplify expression
     global.__DEBUG_LABEL = `[${i}].simplify` // COMMENT

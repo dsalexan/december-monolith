@@ -7,14 +7,16 @@ export class Gardener {
   root: NodeWrapper
   //
   private unstable = true
+  private nodeFactory: NodeFactory
 
-  constructor() {
-    this._root = NodeFactory.ROOT(Range.fromInterval(0, 1))
+  constructor(nodeFactory: NodeFactory) {
+    this.nodeFactory = nodeFactory
+    this._root = this.nodeFactory.ROOT(Range.fromInterval(0, 1))
     this.root = this.wrap(this._root)
   }
 
-  public static make() {
-    const gardener = new Gardener()
+  public static make(nodeFactory?: NodeFactory) {
+    const gardener = new Gardener(nodeFactory || NodeFactory.abstract)
 
     return gardener
   }

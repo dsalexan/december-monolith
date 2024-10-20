@@ -68,6 +68,7 @@ import { Grid } from "@december/logger"
 import { Range } from "@december/utils"
 import { STRING, STRING_COLLECTION } from "../../type/declarations/literal"
 import type { BaseProcessingOptions } from "../../options"
+import { NodeTokenizedWord_Node } from "../../node/node/token"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -116,7 +117,7 @@ export default class Parser {
 
   /** Parses the tokenized expression into an abstract tree */
   private _abstractTree() {
-    const root = NodeFactory.ROOT(this.totality)
+    const root = NodeFactory.abstract.ROOT(this.totality)
 
     // consume tokens until the end of the token list
     let current: Node = root
@@ -124,7 +125,7 @@ export default class Parser {
     let cursor = 0
     while (cursor < this.tokens.length) {
       const token = this.tokens[cursor]
-      const node = NodeFactory.make(token)
+      const node = NodeFactory.abstract.make(token)
 
       // insert node (starting at current's subtree), and update current after
       current = new SubTree(current).insert(node)
@@ -134,6 +135,53 @@ export default class Parser {
     }
 
     return new SubTree(root)
+  }
+
+  /** Re-parse a list of tokenized words (usually acquired from already parsed nodes) */
+  public static processTokenizedWords(tokenizedWords: NodeTokenizedWord_Node[], { grammar, initialSubTreeRoot, debug }: ProcessTokenizedWordsOptions): Node {
+    let cursor = initialSubTreeRoot
+
+    for (const { node: originalNode, token } of tokenizedWords) {
+      let node: Node
+      let newNodeSpecs = false
+
+      if (debug) console.log(`\n"${token?.lexeme ?? `<null>`}" @`, cursor.name) // COMMENT
+
+      // 1. If word lacks token, it is simply a node, just clone it
+      if (!token) node = originalNode.clone({ cloneSubTree: true })
+      else {
+        // 2. Re-match token in grammar (since grammar could have new stuff derived from special types, such as conditional)
+        const matches = grammar.syntacticalMatch(token.lexeme, cursor)
+        assert(matches.length > 0, `How can it be?`)
+
+        const types = matches.map(({ type }) => type)
+
+        // 3. If prioritary type is the same, just make node based on token
+        newNodeSpecs = types[0].name !== token.type.name
+        if (!newNodeSpecs) node = NodeFactory.abstract.make(token)
+        else {
+          // 4. New different prioritary token, assign new TYPE to token and make node
+          const typedToken = token.clone().setType(types[0])
+          node = NodeFactory.abstract.make(typedToken)
+        }
+      }
+
+      const subTree = new SubTree(cursor)
+
+      // 4. Insert newly parsed node in subtree
+      // if (node.lexeme === `-`) debugger
+      cursor = subTree.insert(node, { refreshIndexing: false })
+
+      if (debug) {
+        console.log(`"${node.content}"`)
+        console.log(originalNode.type.toString(), `->`, node.type.toString())
+        initialSubTreeRoot.parent!.getTreeContent()
+
+        // if (newNodeSpecs) debugger
+      }
+    }
+
+    return cursor
   }
 
   // #region DEBUG
@@ -154,4 +202,10 @@ export default class Parser {
   }
 
   // #endregion
+}
+
+export interface ProcessTokenizedWordsOptions {
+  grammar: Grammar
+  initialSubTreeRoot: Node
+  debug?: boolean
 }

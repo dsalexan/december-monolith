@@ -30,7 +30,7 @@ import { TYPE, NODE } from "../../match/pattern"
 const KEYWORD_PRIORITY = 10 ** 20
 const ENCLOSURE_PRIORITY = 10 ** 1
 
-export const KEYWORD_GROUP = new Type(`keyword`, `keyword_group`, `K`).addSyntactical(ENCLOSURE_PRIORITY + 60, Infinity) // list of "nodes" exclusevely attached to a KEYWORD, has no lexical equivalent
+export const KEYWORD_GROUP = new Type(`keyword`, `keyword_group`, `K`).addSyntactical(ENCLOSURE_PRIORITY + 60, Infinity).setInOrderBehaviour(interleavedInOrder) // list of "nodes" exclusevely attached to a KEYWORD, has no lexical equivalent
 
 // WARN: Always update this list when adding a new recipe
 export const KEYWORDS = [KEYWORD_GROUP]

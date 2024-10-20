@@ -5,6 +5,8 @@ import { TraitType, toTag } from "./type"
 export * as Mode from "./mode"
 export * as Type from "./type"
 
+export type { default as IGURPSTraitMode } from "./mode"
+
 export default interface IGURPSTrait {
   name: string
   nameExtension?: string

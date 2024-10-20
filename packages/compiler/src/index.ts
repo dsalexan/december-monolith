@@ -5,42 +5,26 @@ import { Reference } from "@december/utils/access"
 
 import churchill, { Block, paint, Paint } from "./logger"
 
-export { default as ObjectManager } from "./manager"
+// export { default as ObjectManager } from "./manager"
+export { default as ObjectController } from "./controller"
+export { default as ObjectStore } from "./controller/store"
+export { default as ObjectIntegrityRegistry } from "./controller/integrityRegistry"
+export { default as ObjectEventEmitter, makeArtificialEventTrace } from "./controller/eventEmitter"
+export { default as ObjectFrameRegistry } from "./controller/frameRegistry"
+export { default as ObjectCallQueue } from "./controller/callQueue"
+export { Strategy } from "./controller/strategy"
+
 export { default as MutableObject } from "./object"
-export { Strategy } from "./strategy"
 
 export { SET, OVERRIDE } from "./mutation"
 export type { Mutation } from "./mutation/mutation"
-export { DYNAMIC_MUTATION_HASH } from "./manager/mutator"
+// export { DYNAMIC_MUTATION_HASH } from "./manager/mutator"
 
-export { Signature } from "./manager/events/signature"
+// export { Signature } from "./manager/events/signature"
 
-export type { ListenerFunctionContext } from "./manager/events/emitter"
-export type { ReferenceIndexedEvent_Handle } from "./manager/events/events"
+// export type { ListenerFunctionContext } from "./manager/events/emitter"
+// export type { ReferenceIndexedEvent_Handle } from "./manager/events/events"
 
 import MutableObject from "./object"
 import { Mutation, SET } from "./mutation/mutation"
-import { Signature } from "./manager/events/signature"
-
-export function setupMetadata(object: MutableObject, pathOrSignature: string | Signature, value: unknown, hash?: string): Mutation[] {
-  const instructions: Mutation[] = []
-  let path: string, signature: Signature
-
-  // 1. Parse arguments
-  if (isString(pathOrSignature)) {
-    path = pathOrSignature
-    signature = new Signature(object.id, path, hash ?? uuidv4())
-  } else {
-    path = pathOrSignature.path
-    signature = hash !== undefined ? new Signature(object.id, path, hash) : pathOrSignature
-  }
-
-  // 2. Push signature instruction
-  instructions.push(signature.instruction())
-
-  // 3. Set metadata
-  set(object.metadata, path, value)
-  instructions.push(SET(path, new Reference(`metadata`, path)))
-
-  return instructions
-}
+// import { Signature } from "./manager/events/signature"

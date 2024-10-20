@@ -1,6 +1,6 @@
 import Grammar from "../../../type/grammar"
 
-import Node from "../../../node"
+import Node, { NodeFactory } from "../../../node"
 import { NodeTreeOperationOptions } from "../../../node/node/operations/syntactical"
 
 import { RuleMatchState } from "../rule"

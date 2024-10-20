@@ -18,7 +18,7 @@ import makeProcessor, { Environment, ProcessedData, Processor } from "../tree"
 import { Event_Listen } from "../manager/events"
 import { SIGNATURE, Signature, SignaturePattern } from "../manager/events/signature"
 import { EventDispatched, ReferenceEventTrace, SignatureChangedEventTrace, SignatureUpdatedEvent_Handle } from "../manager/events/events"
-import { IdentifierSymbolToPropertyPattern, IsProxiableIdentifier, preProcessValue, PreProcessValueOptions, ProcessingOptions, processValue, ReferenceToSource } from "../processor"
+import { IdentifierSymbolToPropertyPattern, IsProxiableIdentifier, preProcessValue, PreProcessValueOptions, ProcessingOptions, processValue, ReferenceToSource } from "../processor/index.ts"
 import { MaybeNil, MaybeUndefined } from "tsdef"
 
 /**
@@ -218,7 +218,7 @@ export class Strategy {
 
       const fnGenerator = this.generators.get(functionName)
 
-      assert(fnGenerator, `Function "${name}" not found`)
+      assert(fnGenerator, `Function "${functionName}" not found`)
 
       const fn = fnGenerator(object, this, functionHash)
 
@@ -232,7 +232,7 @@ export class Strategy {
           eventEmitter.on(
             { type: `signature:updated`, signatures: patterns },
             {
-              id: `${object.id}::(signature):${name}`,
+              id: `${object.id}::(signature):${functionName}${_hash}`,
               fn: context => {
                 const signatureEvent = context.event as EventDispatched<SignatureUpdatedEvent_Handle>
 

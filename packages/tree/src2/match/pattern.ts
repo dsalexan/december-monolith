@@ -1,4 +1,4 @@
-import { BasePattern, BasePatternOptions } from "@december/utils/match/base"
+import { BasePattern, BasePatternMatch, BasePatternOptions, PatternMatchInfo, SubPatternPatternMatchInfo } from "@december/utils/match/base"
 import { ElementPattern } from "@december/utils/match/element"
 import { SetPattern } from "@december/utils/match/set"
 
@@ -10,11 +10,16 @@ import assert from "assert"
 import { ancestry, inContext, preOrder } from "../node/traversal"
 import { TypeID, TypeModule } from "../type/base"
 import { Scope } from "../node/scope/types"
+import { MaybeUndefined, Nullable } from "tsdef"
 
 // #region Node Patterns
 
 export interface BaseNodePatternOptions extends BasePatternOptions {
   bypass?: BaseNodePattern
+}
+
+export interface BaseNodePatternMatch extends BasePatternMatch {
+  isBypass: boolean
 }
 
 export class BaseNodePattern extends BasePattern {
@@ -34,11 +39,15 @@ export class BaseNodePattern extends BasePattern {
     if (options.bypass) this.bypass = options.bypass
   }
 
-  override match(node: Node): boolean {
-    return super.match(node)
+  override match(node: Node): BaseNodePatternMatch {
+    const superMatch = super.match(node)
+    return {
+      ...superMatch,
+      isBypass: !!this.bypass,
+    }
   }
 
-  override _match(node: Node): boolean {
+  override _match(node: Node): PatternMatchInfo {
     throw new Error(`Unimplemented _match for node pattern`)
   }
 
@@ -69,8 +78,9 @@ export class NodeTypeNamePattern extends BaseNodePattern {
     super(`type:name`, pattern, options)
   }
 
-  override _match(node: Node): boolean {
-    return this.pattern.match(node.type.name)
+  override _match(node: Node): SubPatternPatternMatchInfo {
+    const patternMatch = this.pattern.match(node.type.name)
+    return { isMatch: patternMatch.isMatch, patternMatch }
   }
 }
 
@@ -90,8 +100,9 @@ export class NodePrimitivePattern extends BaseNodePattern {
     assert(false, `Unimplemented node pattern value evaluation for "${this.type}"`)
   }
 
-  override _match(node: Node): boolean {
-    return this.pattern.match(this.getValue(node))
+  override _match(node: Node): SubPatternPatternMatchInfo {
+    const patternMatch = this.pattern.match(this.getValue(node))
+    return { isMatch: patternMatch.isMatch, patternMatch }
   }
 }
 
@@ -109,8 +120,9 @@ export class NodeCollectionPattern extends BaseNodePattern {
     assert(false, `Unimplemented node pattern value evaluation for "${this.type}"`)
   }
 
-  override _match(node: Node): boolean {
-    return this.pattern.match(this.getValue(node))
+  override _match(node: Node): SubPatternPatternMatchInfo {
+    const patternMatch = this.pattern.match(this.getValue(node))
+    return { isMatch: patternMatch.isMatch, patternMatch }
   }
 }
 
@@ -122,8 +134,9 @@ export class NodeScopePattern extends BaseNodePattern {
     super(`node:scope`, pattern, options)
   }
 
-  override _match(node: Node): boolean {
-    return this.pattern.match(node.getScope())
+  override _match(node: Node): SubPatternPatternMatchInfo {
+    const patternMatch = this.pattern.match(node.getScope())
+    return { isMatch: patternMatch.isMatch, patternMatch }
   }
 }
 
@@ -144,6 +157,11 @@ export class BaseTreePattern extends BasePattern {
   }
 }
 
+export interface TargetTreePatternMatchInfo extends PatternMatchInfo {
+  target: Nullable<Node>
+  patternMatch: MaybeUndefined<BasePatternMatch>
+}
+
 export class TargetTreePattern extends BaseTreePattern {
   _target: `parent`
 
@@ -158,11 +176,21 @@ export class TargetTreePattern extends BaseTreePattern {
     throw new Error(`Unimplemented tree pattern target "${this._target}"`)
   }
 
-  override _match(node: Node): boolean {
+  override _match(node: Node): TargetTreePatternMatchInfo {
     const target = this.target(node)
+    const patternMatch = target ? this.pattern.match(target) : undefined
 
-    return !!target && this.pattern.match(target)
+    return {
+      isMatch: !!target && !!patternMatch?.isMatch,
+      target,
+      patternMatch,
+    }
   }
+}
+
+export interface TraversalTreePatternMatchInfo extends PatternMatchInfo {
+  target: MaybeUndefined<Node>
+  patternMatch: MaybeUndefined<BasePatternMatch>
 }
 
 export class TraversalTreePattern extends BaseTreePattern {
@@ -173,16 +201,24 @@ export class TraversalTreePattern extends BaseTreePattern {
     this.direction = direction
   }
 
-  override _match(node: Node): boolean {
-    let result = false
+  override _match(node: Node): TraversalTreePatternMatchInfo {
+    let result: Nullable<{
+      node: Node
+      match: BaseNodePatternMatch
+    }> = null
 
-    const traversal = this.traversal
-
-    traversal(node, node => {
-      if (this.pattern.match(node)) result = true
+    this.traversal(node, node => {
+      const match = this.pattern.match(node)
+      if (match.isMatch) result = { node, match }
     })
 
-    return result
+    if (result !== null) assert((result as any).match.isMatch, `How the fuc`)
+
+    return {
+      isMatch: result !== null,
+      target: (result as any)?.node,
+      patternMatch: (result as any)?.match,
+    }
   }
 
   public get traversal() {
