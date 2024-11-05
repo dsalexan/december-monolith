@@ -1,7 +1,7 @@
 import assert from "assert"
 import { AnyObject, MaybeUndefined, Nullable } from "tsdef"
 import { EventEmitter } from "@billjs/event-emitter"
-import { identity, isArray, isEqual, last, sortBy, uniq } from "lodash"
+import { flow, identity, isArray, isEqual, last, sortBy, uniq } from "lodash"
 
 import { Reference } from "@december/utils/access"
 
@@ -178,9 +178,19 @@ export default class ObjectCallQueue extends ObjectManager {
     const queue = this.getNextQueue()
     const object: StrictObjectReference = this.controller.store.strictifyReference(_object)
 
+    // 0. Mount arguments
+    let args: AnyObject = {}
+    if (bareExecutionContext.argumentProvider) {
+      const providers = isArray(bareExecutionContext.argumentProvider) ? bareExecutionContext.argumentProvider : [bareExecutionContext.argumentProvider]
+      for (const provider of providers) args = { ...args, ...provider(bareExecutionContext) }
+    }
+    if (bareExecutionContext.arguments) args = { ...args, ...bareExecutionContext.arguments }
+
     // 1. Build full Execution Context
     const executionContext: ExecutionContext = {
       ...bareExecutionContext,
+      arguments: args,
+      //
       id: getExecutionContextID(object, bareExecutionContext),
       index: queue.queue.size,
       //
@@ -194,8 +204,8 @@ export default class ObjectCallQueue extends ObjectManager {
     const doSkip = this.shouldSkip(executionContext)
     if (doSkip) {
       if (this.__DEBUG) {
-        logger.add(...paint.grey(`[`, paint.red.dim(`enqueue/`), paint.red.dim.bold(`skip`), `]`)).add(` `)
-        logger.add(...explainExecutionContext(executionContext, { object: _object, queue }))
+        logger.add(...paint.grey(`[`, paint.grey.dim(`enqueue/`), paint.red.dim(`skip`), `]`)).add(` `)
+        logger.add(...paint.grey(...explainExecutionContext(executionContext, { object: _object, queue })))
         logger.info()
       }
 

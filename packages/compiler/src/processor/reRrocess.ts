@@ -14,6 +14,7 @@ import {
   listenForMissingIdentifiersGenerator,
   makeProcessor,
   NonReadyBaseProcessedReturn,
+  ProcessingPackage,
   ProcessingState,
   ProcessingSymbolsOptions,
   ProcessorOptions,
@@ -44,17 +45,20 @@ export interface NonReadyReProcessedReturn extends NonReadyBaseProcessedReturn {
 export type ReProcessedReturn = ReadyReProcessedReturn | NonReadyReProcessedReturn
 
 /** Re-process state (usually called when some reference is resolved) */
-export function reProcess(object: MutableObject, path: string, options: ReProcessOptions): ReProcessedReturn {
+export function reProcess(processingPackage: ProcessingPackage, options: ReProcessOptions): ReProcessedReturn {
+  const { object, path, environment } = processingPackage
+
   // 1. Get processor from state
-  const state: ProcessingState = get(object.metadata, path)
-  assert(state, `We need processing state here`)
+  const state: ProcessingState = get(object.metadata, path.target)
+  assert(state, `Processing state should be stored in object metadata for re-processing`)
 
   // 2. Build environment and finish processing
-  const environment = buildEnvironment(state, options)
   const processedData = state.processor.process(environment)
 
   // 3. If value is ready, return
   if (processedData.isReady) {
+    state.isReady = true
+
     return {
       isReady: true,
       data: processedData,
@@ -62,6 +66,8 @@ export function reProcess(object: MutableObject, path: string, options: ReProces
       environment,
     }
   }
+
+  state.isReady = false
 
   // 4. Store missing references keeping completion from happening
   const saveMissingIdentifiers: NonReadyReProcessedReturn[`saveMissingIdentifiers`] = saveMissingIdentifiersGenerator(state, options.isProxiableIdentifier)
@@ -78,21 +84,4 @@ export function reProcess(object: MutableObject, path: string, options: ReProces
     saveMissingIdentifiers,
     listenForMissingIdentifiers,
   }
-}
-
-/** Build environment (sometimes from an already existing one) for re-processing */
-export function buildEnvironment(state: ProcessingState, options: ProcessorOptions & ProcessingEnvironmentOptions) {
-  // 1. Get symbols from state
-  const missingIdentifiers = state.missingIdentifiers
-
-  const environment: Environment = options.environment?.clone() ?? new Environment()
-  for (const symbol of missingIdentifiers) {
-    const reference = symbol.value
-    const sourceData = options.referenceToSource(reference)
-
-    // if reference is found
-    if (sourceData) environment.addObjectSource(reference, sourceData)
-  }
-
-  return environment
 }

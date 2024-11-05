@@ -76,11 +76,12 @@ export class DiceRoller {
     return this.getInstance().getEnvironment(options)
   }
 
-  public getEnvironment(options: DiceRollOptions = {}) {
-    const environment = options.environment ? options.environment.clone() : new Environment()
-    if (!options.dontRoll) environment.addSource(this.rollingDice)
+  public getEnvironment(options: DiceRollOptions = {}): Environment {
+    let contextualizedEnvironment = options.environment ? options.environment.clone() : new Environment()
 
-    return environment
+    if (!options.dontRoll) contextualizedEnvironment.addSource(this.rollingDice)
+
+    return contextualizedEnvironment
   }
 
   public static roll(expression: string, options: DiceRollOptions): ProcessedData

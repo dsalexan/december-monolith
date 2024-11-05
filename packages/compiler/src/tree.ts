@@ -6,7 +6,8 @@ export type { ProcessedData } from "@december/tree"
 export default function makeProcessor() {
   const processor = new Processor()
 
-  const grammar = processor.makeGrammar()
+  debugger
+  const grammar = processor.makeGrammar(null as any)
 
   processor.initialize(grammar)
 

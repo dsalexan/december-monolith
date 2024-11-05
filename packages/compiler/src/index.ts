@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid"
 import { isString, set } from "lodash"
 
 import { Reference } from "@december/utils/access"

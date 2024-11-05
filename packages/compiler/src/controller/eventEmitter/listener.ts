@@ -1,5 +1,7 @@
-import { v4 as uuidv4 } from "uuid"
 import { AnyObject } from "tsdef"
+
+import uuid from "@december/utils/uuid"
+
 import { Event, EventDispatcher, TargetableObject, TargetEvent } from "./event"
 
 import type ObjectEventEmitter from "./index"
@@ -33,6 +35,6 @@ export interface Listener extends GenericListener {
 }
 
 export function getListenerID(objectID: ObjectID, { targetEvent }: GenericListener): string {
-  const hash = uuidv4().substring(0, 8)
+  const hash = uuid().substring(0, 8)
   return `${objectID}::${targetEvent.type}::${hash}`
 }

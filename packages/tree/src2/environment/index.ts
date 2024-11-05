@@ -4,8 +4,9 @@ import SymbolTable from "./symbolTable"
 import { BaseSource, ObjectSource } from "./source"
 
 import churchill, { Block, paint, Paint } from "../logger"
-import { IdentifiedValue, BaseIdentifier, NamedIdentifier, Identifier } from "./identifier"
+import { IdentifiedValue, BaseIdentifier, NamedIdentifier, Identifier, IdentifiedValueReturn, StrictIdentifiedValueReturn, isResolved, MISSING_VALUE } from "./identifier"
 import { InputObjectSourceData, isSourcedValue, ObjectSourceData, SourcedValue } from "./source/object"
+import { AnyObject } from "tsdef"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -31,6 +32,8 @@ export default class Environment {
     assert(!this.hasSource(source.name), `Source "${source.name}" already exists`)
 
     this.sources.set(source.name, source)
+
+    return source
   }
 
   addObjectSource(name: string, data: InputObjectSourceData) {
@@ -45,6 +48,8 @@ export default class Environment {
     }
 
     this.addSource(source)
+
+    return source
   }
 
   _has(_identifier: Identifier | string) {
@@ -76,14 +81,30 @@ export default class Environment {
     for (const name of sources) {
       const source = this.sources.get(name)!
 
-      const value = source.get(identifier)
-      matches.push({ source: name, value: value })
+      if (source.has(identifier)) {
+        const value = source.get(identifier)
+        matches.push({ source: name, value: value })
+      }
     }
 
     assert(matches.length > 0, `We should ALWAYS first check if the identifier exists before getting it`)
     assert(matches.length === 1, `Implement handling with multiple matches`)
 
     return matches[0].value
+  }
+
+  get _() {
+    return {
+      get: (_identifier: Identifier | string, confirmedSources: string[] | null = null) => {
+        if (!this.has(_identifier)) return undefined
+
+        const sourceValue = this.get(_identifier, confirmedSources)
+        const value = sourceValue.getValue.call(this, null as any, null as any)
+        if (!Environment.isResolved(value)) return undefined
+
+        return value
+      },
+    }
   }
 
   print() {
@@ -98,5 +119,9 @@ export default class Environment {
     logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
 
     console.log(this)
+  }
+
+  public static isResolved<TValue = any>(value: IdentifiedValueReturn<TValue>): value is StrictIdentifiedValueReturn<TValue> {
+    return isResolved<TValue>(value)
   }
 }

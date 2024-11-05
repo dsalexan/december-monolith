@@ -6,6 +6,7 @@ export * as Mode from "./mode"
 export * as Type from "./type"
 
 export type { default as IGURPSTraitMode } from "./mode"
+export { makeGURPSTraitEnvironment } from "./environment"
 
 export default interface IGURPSTrait {
   name: string

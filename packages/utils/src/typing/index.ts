@@ -78,8 +78,10 @@ export function isPrimitive(value: unknown): value is string | number | boolean 
   return isString(value) || isNumber(value) || isBoolean(value) || isSymbol(value) || isNil(value)
 }
 
-export function getDeepProperties(object: AnyObject, path = ``): string[] {
-  const entries = Object.entries(object)
+export function getDeepProperties(object: AnyObject, path = ``, skipDeep: (path: string, value: unknown) => boolean): string[] {
+  if (skipDeep(path, object)) return []
+
+  let entries = Object.entries(object)
 
   const paths: string[] = []
   for (const [key, value] of entries) {
@@ -87,7 +89,7 @@ export function getDeepProperties(object: AnyObject, path = ``): string[] {
 
     paths.push(localPath)
 
-    if (!isPrimitive(value)) paths.push(...getDeepProperties(value, localPath))
+    if (!isPrimitive(value)) paths.push(...getDeepProperties(value, localPath, skipDeep))
   }
 
   return paths

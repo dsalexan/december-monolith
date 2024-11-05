@@ -1,10 +1,9 @@
-import { v4 as uuidv4 } from "uuid"
-
 import { set } from "lodash"
 import { Strategy, Mutation, SET, OVERRIDE } from "@december/compiler"
 import { IntegrityEntry } from "@december/compiler/controller/integrityRegistry"
 import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, Reference } from "@december/utils/access"
 
+import uuid from "@december/utils/uuid"
 import { Dice } from "@december/system"
 import { IGURPSCharacter } from "@december/gurps"
 import { DamageTable } from "@december/gurps/character"
@@ -36,7 +35,7 @@ export const IMPORT_CHARACTER_FROM_GCA_STRATEGY = new Strategy() //
       }
 
       // Trees should NEVER be saved within mutable context (we should generate an integrity entry for the tree, and save it as metadata)
-      const entry = object.makeIntegrityEntry(`damageTable`, uuidv4())
+      const entry = object.makeIntegrityEntry(`damageTable`, uuid())
       mutations.push(...object.storeMetadata(damageTable, `damageTable`, [entry]))
       integrityEntries.push(entry)
 

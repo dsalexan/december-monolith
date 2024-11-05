@@ -22,7 +22,7 @@ export function isSourcedValue(value: unknown): value is SourcedValue {
   return typeof value === `object` && value !== null && `type` in value && (`value` in value || `getValue` in value)
 }
 
-export type InputObjectSourceData = Record<string, Primitive | SourcedValue>
+export type InputObjectSourceData = Record<string, null | Primitive | SourcedValue>
 export type ObjectSourceData = Record<string, SourcedValue>
 
 export default class ObjectSource extends BaseSource {

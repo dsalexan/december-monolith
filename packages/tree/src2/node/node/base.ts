@@ -1,9 +1,9 @@
-import { v4 as uuidv4 } from "uuid"
 import assert from "assert"
 import { add, cloneDeep, isEmpty, isNil, isString, uniqBy } from "lodash"
 import { Nullable } from "tsdef"
 
 import { Range } from "@december/utils"
+import uuid from "@december/utils/uuid"
 
 import Type from "../../type/base"
 import Token from "../../token"
@@ -41,7 +41,7 @@ export interface NodeScope {
 }
 
 export class Node {
-  public id: string = uuidv4()
+  public id: string = uuid()
   public version: number = 0
 
   // constructor(type: Type, range: Range)

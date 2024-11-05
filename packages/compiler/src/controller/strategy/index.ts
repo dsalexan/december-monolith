@@ -1,41 +1,55 @@
 import assert from "assert"
-import { get, isNil, isString, property, set } from "lodash"
+import { AnyObject, MaybeArray, MaybeUndefined, Nilable, Nullable } from "tsdef"
+import { get, isNil, isString, property, set, uniq } from "lodash"
 
-import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, REFERENCE } from "@december/utils/access"
+import { Simbol } from "@december/tree"
+import generateUUID from "@december/utils/uuid"
+import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, Reference, REFERENCE } from "@december/utils/access"
+import { PropertyReferencePatternMatchInfo } from "@december/utils/access/match"
+import { BasePattern, PatternMatchInfo } from "@december/utils/match/base"
+import { RegexPatternMatchInfo } from "@december/utils/match/element"
 
 import MutableObject from "../../object"
 
 import ObjectIntegrityRegistry, { IntegrityEntry } from "../integrityRegistry"
 import { GenericMutationFrame } from "../frameRegistry"
-import { PROPERTY_UPDATED, TargetEvent, TargetPropertyUpdatedEvent } from "../eventEmitter/event"
+import { EventDispatcher, PROPERTY_UPDATED, PropertyUpdatedEvent, TargetEvent, TargetPropertyUpdatedEvent } from "../eventEmitter/event"
 import { GenericListener, getListenerID, Listener } from "../eventEmitter/listener"
 import { BareExecutionContext } from "../callQueue"
 
-import { preProcess, reProcess, PreProcessOptions as _PreProcessOptions, ReProcessOptions as _ReProcessOptions } from "../../processor"
+import { preProcess, reProcess, PreProcessOptions, ReProcessOptions } from "../../processor"
 import { DELETE, Mutation, OVERRIDE, SET } from "../../mutation/mutation"
 
 import type ObjectController from ".."
-import { BasePattern } from "../../../../utils/src/match/base"
+import { ArgumentProvider } from "../callQueue/executionContext"
+import { ProcessingPackage, ProcessingPath, ProcessingState, ProcessingSymbolTranslationTable } from "../../processor/base"
+import { Environment } from "../../tree"
+import { process, StrategyPreProcessOptions, StrategyReProcessOptions } from "./processing"
+import { MutationFunctionMetadata, MutationFunctionOutput } from "../frameRegistry/mutationFrame"
+import logger, { paint } from "../../logger"
+import { PreProcessedReturn } from "../../processor/preProcess"
+import { ReProcessedReturn } from "../../processor/reRrocess"
+
+export type { StrategyPreProcessOptions, StrategyReProcessOptions } from "./processing"
 
 export type Generator<TReturn> = (object: MutableObject) => TReturn
-
-export interface ProcessingPath {
-  original: string
-  target: string
-}
 
 export interface ProxyListenerOptions {
   arguments?: BareExecutionContext[`arguments`]
   integrityEntries?: IntegrityEntry[]
 }
 
-export type PreProcessOptions = _PreProcessOptions & {
-  name?: string
-  executionContext: BareExecutionContext
-} & ProxyListenerOptions
+// export type PreProcessOptions = _PreProcessOptions & {
+//   name?: string
+//   environmentGenerator?: EnvironmentGenerator
+//   executionContext: BareExecutionContext
+// } & ProxyListenerOptions
 
-export type ReProcessOptions = _ReProcessOptions
-export type ReProcessOptionsGenerator = (controller: ObjectController) => ReProcessOptions
+// export type ReProcessOptions = _ReProcessOptions & {
+//   name?: string
+//   environmentGenerator?: EnvironmentGenerator
+// } & ProxyListenerOptions
+// export type ReProcessOptionsGenerator = (controller: ObjectController) => ReProcessOptions
 
 export class Strategy {
   frameRegistry: Map<GenericMutationFrame[`name`], GenericMutationFrame>
@@ -96,6 +110,7 @@ export class Strategy {
       return (event, metadata) => {
         const bareExecutionContext: BareExecutionContext = { eventDispatcher: event, name }
         if (options.arguments) bareExecutionContext.arguments = options.arguments
+        if (options.argumentProvider) bareExecutionContext.argumentProvider = options.argumentProvider
 
         metadata.eventEmitter.controller.callQueue.enqueue(object.reference(), bareExecutionContext)
       }
@@ -147,66 +162,144 @@ export class Strategy {
 
   // #region PROCESSING/COMPILLING
 
-  public static preProcess(origin: MutableObject, path: ProcessingPath, options: PreProcessOptions): { mutations: Mutation[]; integrityEntries: IntegrityEntry[] } {
-    // 1. Pre-process expression
-    const expression = get(origin.data, path.original)
-    assert(isString(expression), `Expression is not a string to be pre-processed`)
-    const preProcessedValue = preProcess(expression, { ...options })
-
-    // 2. If value is ready, set it
-    if (preProcessedValue.isReady) {
-      const computedValue = preProcessedValue.data.tree.value()
-      return { mutations: [OVERRIDE(path.target, computedValue)], integrityEntries: [] }
-    }
-
-    const mutations: Mutation[] = []
-
-    // 3. If value is not ready, store current processing data AND listen for those missing references at CONTROLLER LEVEL
-    const state = preProcessedValue.saveState(origin, path.target)
-    preProcessedValue.saveMissingIdentifiers(origin)
-    preProcessedValue.listenForMissingIdentifiers(Strategy.addProxyListener, origin, options.name ?? `compute:processing`, { ...options.arguments, path })
-
-    return { mutations: [...mutations, ...state.mutations], integrityEntries: state.integrityEntries }
+  public static preProcess(processingPackage: ProcessingPackage, options: StrategyPreProcessOptions) {
+    return process(`pre-process`, Strategy.addProxyListener, processingPackage, options)
   }
 
-  public registerProcessingFunction(name: GenericMutationFrame[`name`], optionsGenerator: ReProcessOptionsGenerator): this {
-    this.registerMutationFunction(name, (object: MutableObject, { arguments: args }) => {
-      // arguments: AnyObject
-      // executionContext: ExecutionContext<TEvent>
-      // callQueue: ObjectCallQueue
-      // frameRegistry: ObjectFrameRegistry
+  public static reProcess(processingPackage: ProcessingPackage, options: StrategyReProcessOptions) {
+    return process(`re-process`, Strategy.addProxyListener, processingPackage, options)
+  }
 
-      const { path } = args as { path: { original: string; target: string } }
-      assert(!isNil(path), `Path for processing (raw and computed) was not specified`)
+  public static process(pkg: ProcessingPackage, options: StrategyReProcessOptions & StrategyPreProcessOptions) {
+    const { object, path } = pkg
 
-      const options = optionsGenerator(object.controller)
+    const state: ProcessingState = get(object.metadata, path.target)
 
-      // 1. Finish processing value (now with access to a built environment)
-      const processedValue = reProcess(object, path.target, options)
+    let output: MutationFunctionOutput & { processedValue: PreProcessedReturn | ReProcessedReturn } = null as any
 
-      // 2. Value is ready, pass instruction
-      if (processedValue.isReady) {
-        const computedValue = processedValue.data.tree.value()
+    const doPreProcess = !!state
+    let doReProcess = true
 
-        debugger
-        // // DEBUG: This is just to simulate a "signature change"
-        // // ====================================================
-        // processedValue.signature.value = `aaaaa`
-        // return [OVERRIDE(path.computed, computedValue), processedValue.signature.instruction()]
-        // // ====================================================
+    // 1. if state doesn't exist, pre-process
+    if (doPreProcess) {
+      const { mutations, integrityEntries, processedValue } = Strategy.preProcess(pkg, options)
 
-        return [OVERRIDE(path.target, computedValue)]
+      output = { mutations: [...mutations], integrityEntries: [...integrityEntries], processedValue }
+      if (processedValue.isReady) doReProcess = false
+    }
+
+    // 2. if processing is NOT ready following pre-processing (OR if state already exists), re-process
+    if (doReProcess) {
+      const { mutations, integrityEntries, processedValue } = Strategy.reProcess(pkg, options)
+
+      output = { mutations: [...(output?.mutations ?? []), ...mutations], integrityEntries: [...(output?.integrityEntries ?? []), ...integrityEntries], processedValue }
+    }
+
+    assert(output !== null, `Output must be defined`)
+    return output
+  }
+
+  // Inject specific missing references in base environment
+  public static injectMissingReferences(
+    object: MutableObject,
+    missingIdentifiers: Simbol[],
+    translationTable: ProcessingSymbolTranslationTable,
+    baseEnvironment: Environment,
+    fetchReference: (identifier: string, key: string) => Nilable<AnyObject>,
+  ): Environment | false {
+    const localSource: AnyObject = {}
+
+    // 1. For each missing identifier, try to fetch value into local source
+    for (const missingIdentifier of missingIdentifiers) {
+      const identifier = missingIdentifier.content
+      const proxiedKey = translationTable.get(missingIdentifier) ?? missingIdentifier.value
+
+      /**
+       * fetchReference -> returns value for reference
+       *    null -> reference not found
+       *    undefined -> fetch scenario not implemented
+       *    value -> reference found
+       */
+      const referencedValue = fetchReference(identifier, proxiedKey)
+      assert(referencedValue !== undefined, `Fetch for reference "${identifier}/${proxiedKey}" not implemented`)
+
+      if (referencedValue === null) {
+        logger.add(` `.repeat(10))
+        logger
+          .add(paint.grey.dim(`[${object.id}/`), paint.grey(object.data.name), paint.grey.dim(`]`))
+          .add(` `, paint.white(identifier))
+          .add(paint.grey.dim(` -> `), paint.grey.dim.bold(proxiedKey))
+        logger.debug()
       }
 
-      // 3. Value is not ready, proxy PropertyUpdate to missing references (only for new/unknown missing references — i.e. those that were not known before)
-      processedValue.saveMissingIdentifiers(object)
-      processedValue.listenForMissingIdentifiers(Strategy.addProxyListener, object, name, { ...args, path })
+      localSource[identifier] = referencedValue
+    }
 
-      // 4. Remove current computed value
-      return [DELETE(path.target)]
+    // 2. If any new value was fetched, inject into local source
+    if (Object.entries(localSource).length > 0) {
+      const environment = baseEnvironment.clone()
+      environment.addObjectSource(`local_${generateUUID().substring(0, 8)}`, localSource)
+
+      return environment
+    }
+
+    // 3. If nothing new was fetched, return false
+    return false
+  }
+
+  public registerReProcessingFunction(name: GenericMutationFrame[`name`], optionsGenerator: Generator<StrategyReProcessOptions>): this {
+    this.registerMutationFunction(name, (object: MutableObject, mutationOptions: MutationFunctionMetadata) => {
+      const { path } = mutationOptions.arguments as { path: ProcessingPath }
+      assert(!isNil(path), `Path for processing (raw and computed) was not specified`)
+
+      // 1. Generate options with contextualized object
+      const options: StrategyReProcessOptions = optionsGenerator(object)
+
+      // 2. Assemble package from context
+      const translationTable: ProcessingSymbolTranslationTable = new ProcessingSymbolTranslationTable({})
+      const processingPackage = new ProcessingPackage(object, path.expression, path.target, { name, arguments: { ...mutationOptions.arguments } }, null as any, null as any)
+
+      // 3. Pre-process expression from path (or re-process state from path)
+      return Strategy.reProcess(processingPackage, options)
     })
 
     return this
+  }
+
+  // #endregion
+
+  // #region EVENT -> ARGUMENTS PARSING
+
+  /** PropertyUpdated regex index to arguments */
+  public static argumentProvider_PropertyUpdatedRegexIndexes(key: string = `index`): ArgumentProvider {
+    return ({ eventDispatcher: event }: BareExecutionContext<PropertyUpdatedEvent>) => {
+      assert(event.type === `property:updated`, `Event must be of type "property:updated"`)
+
+      let args: AnyObject = {}
+
+      let possibleIndexes: MaybeUndefined<number>[] = []
+
+      const matches: PropertyReferencePatternMatchInfo[] = (event.matches ?? []) as PatternMatchInfo[] as PropertyReferencePatternMatchInfo[]
+      for (const [matchIndex, match] of matches.entries()) {
+        if (match.propertyMatch.type === `regex`) {
+          const regexMatch = match.propertyMatch as PatternMatchInfo as RegexPatternMatchInfo
+          if (regexMatch.regexResult) {
+            const index = parseInt(regexMatch.regexResult[1])
+            assert(!isNil(index) && !isNaN(index), `Index must be a number`)
+
+            possibleIndexes[matchIndex] = index
+          }
+          //
+        } else throw new Error(`Unimplemented for match of pattern "${match.propertyMatch.type}"`)
+      }
+
+      const validIndexes: number[] = uniq(possibleIndexes.filter(index => !isNil(index)) as number[])
+      assert(validIndexes.length === 1, `Only one valid index must be found`)
+
+      args[key] = validIndexes[0]
+
+      return args
+    }
   }
 
   // #endregion
@@ -215,6 +308,7 @@ export class Strategy {
 export interface CommonOptions {
   integrityEntries?: GenericListener[`integrityEntries`]
   arguments?: BareExecutionContext[`arguments`]
+  argumentProvider?: MaybeArray<ArgumentProvider>
 }
 
 export function resolveTargetEvent(object: MutableObject, targetEvent: TargetEvent): TargetEvent {

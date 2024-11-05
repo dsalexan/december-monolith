@@ -15,7 +15,8 @@ export interface MutationFunctionMetadata<TEvent extends Event = Event> {
   frameRegistry: ObjectFrameRegistry
 }
 
-export type MutationFunctionReturn = MaybeArray<Mutation> | { mutations: MaybeArray<Mutation>; integrityEntries: IntegrityEntry[] }
+export type MutationFunctionOutput = { mutations: Mutation[]; integrityEntries: IntegrityEntry[] }
+export type MutationFunctionReturn = MaybeArray<Mutation> | { mutations: MaybeArray<Mutation>; integrityEntries: IntegrityEntry[] } | MutationFunctionOutput
 export type MutationFunction = (object: MutableObject, metadata: MutationFunctionMetadata) => MutationFunctionReturn
 
 export interface GenericMutationFrame {

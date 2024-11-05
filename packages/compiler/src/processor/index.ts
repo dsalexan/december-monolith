@@ -1,5 +1,5 @@
-export type { ProcessorOptions, ProcessingSymbolsOptions } from "./base"
-export { makeProcessor } from "./base"
+export type { ProcessorOptions, ProcessingSymbolsOptions, ProcessingState } from "./base"
+export { makeProcessor, ProcessingPackage } from "./base"
 
 export { preProcess } from "./preProcess"
 export type { PreProcessOptions } from "./preProcess"

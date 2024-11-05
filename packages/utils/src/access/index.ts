@@ -18,6 +18,10 @@ export class Reference<TType extends string = string, TValue = string> {
   isEqual(other: Reference) {
     return this.toString() === other.toString()
   }
+
+  static isReference(value: any): value is Reference {
+    return value instanceof Reference
+  }
 }
 
 export type StringProperty = string
@@ -67,5 +71,9 @@ export class PropertyReference<TReference extends Reference = Reference, TProper
     if (other.property === METADATA_PROPERTY || this.property === METADATA_PROPERTY) debugger
 
     return this.toString() === other.toString()
+  }
+
+  static isPropertyReference(value: any): value is PropertyReference {
+    return value instanceof PropertyReference
   }
 }

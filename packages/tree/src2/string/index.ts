@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid"
+import uuid from "@december/utils/uuid"
 
 export class StringProvider {
   public value: string
@@ -10,7 +10,7 @@ export class StringProvider {
 
   update(value: string) {
     this.value = value
-    this.signature = uuidv4()
+    this.signature = uuid()
   }
 }
 

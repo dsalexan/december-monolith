@@ -12,7 +12,6 @@ import Node, { PrintOptions, print, SubTree, NodeFactory } from "../../node"
 
 import type { BaseProcessingOptions } from "../../options"
 
-import Environment from "../../environment"
 import { postOrder } from "../../node/traversal"
 import { evaluateTreeScope, MasterScope, Scope } from "../../node/scope"
 import { BOOLEAN, NUMBER, QUANTITY, STRING } from "../../type/declarations/literal"
@@ -25,6 +24,7 @@ import { getType } from "../../type"
 import { ProcessedNode } from "../../type/rules/reducer"
 import { TypeName } from "../../type/declarations/name"
 import { Arguments } from "tsdef"
+import Environment from "../../environment"
 // import { Operation, Operand, doAlgebra, OPERATIONS } from "./algebra"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
@@ -201,7 +201,8 @@ export default class Reducer {
         const identifier = stringValue
         assert(this.environment.has(identifier), `Identifier "${identifier}" is not defined in Environment`)
 
-        stringValue = this.environment.get(identifier).getValue(identifier, node)
+        const _value = this.environment.get(identifier).getValue.call(this.environment, identifier, node)
+        if (Environment.isResolved(_value)) stringValue = _value
       }
 
       if (instruction.type === `any`) return stringValue
@@ -224,7 +225,10 @@ export default class Reducer {
 
         const symbol = unit.getSymbol()
         const isIdentified = this.environment.has(symbol)
-        if (isIdentified) return this.environment.get(symbol).getValue(quantity, node) // probably gon be used for unit conversions
+        if (isIdentified) {
+          const value = this.environment.get(symbol).getValue.call(this.environment, quantity, node)
+          if (!Environment.isResolved(value)) return value // probably gon be used for unit conversions
+        }
 
         return quantity
       }

@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid"
+import uuid from "@december/utils/uuid"
 
 import { ICharacter } from "@december/system"
 import { SubTree } from "@december/tree"
@@ -15,7 +15,7 @@ export default class GCACharacter implements ICharacter {
   stats: Record<string, GCATrait>
 
   constructor(id?: string) {
-    this.id = id ?? uuidv4()
+    this.id = id ?? uuid()
   }
 
   get allTraits() {

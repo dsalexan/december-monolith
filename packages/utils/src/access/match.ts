@@ -75,7 +75,7 @@ export class PropertyReferencePattern<TReference extends Reference = Reference> 
 
     let propertyMatch: BasePatternMatch = null as any
     if (this.propertyPattern instanceof BasePattern) propertyMatch = this.propertyPattern.match(propertyReference.property)
-    else if (this.propertyPattern === ANY_PROPERTY) propertyMatch = makeGenericBasePatternMatch({ isMatch: true }, propertyReference.property)
+    else if (this.propertyPattern === ANY_PROPERTY) propertyMatch = makeGenericBasePatternMatch(`any`, { isMatch: true }, propertyReference.property)
 
     assert(propertyMatch !== null, `Property match must be defined`)
 

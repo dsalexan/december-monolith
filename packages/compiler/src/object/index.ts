@@ -1,10 +1,11 @@
 // import { MutationInstruction } from "./../mutation/instruction"
-import { v4 as uuidv4 } from "uuid"
+
 import { EventEmitter } from "@billjs/event-emitter"
-import { cloneDeep, get, isArray, isEqual, set } from "lodash"
+import { cloneDeep, get, isArray, isEqual, isString, set } from "lodash"
 import assert from "assert"
 import { AnyObject } from "tsdef"
 
+import uuid from "@december/utils/uuid"
 import { PropertyReference, Reference, METADATA_PROPERTY } from "@december/utils/access"
 import { getDeepProperties, isPrimitive } from "@december/utils/typing"
 
@@ -64,33 +65,33 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
 
   public metadata: Record<string, any> = {}
 
-  public getData(): TData {
+  public getData(path: string = ``): TData {
     return this._getData(this.data, ``) as TData
   }
 
-  protected _getData(value: any, path: string = ``) {
-    debugger
-    // REFERENCE
-    if (value instanceof Reference) {
-      const reference = value as Reference
-      if (reference.type === `metadata`) return this.metadata[reference.value]
+  public _getData<TData>(value: any, path: string = ``): TData {
+    // if (path === `modes.[0].form`) debugger
 
-      throw new Error(`Reference "${reference.type}" not implemented`)
+    // REFERENCE
+    if (Reference.isReference(value)) return value as any
+    if (PropertyReference.isPropertyReference(value)) {
+      if (isString(value.property) && value.property.startsWith(`metadata.`)) return get(this, value.property)
+      else return value as any
     }
 
     // PRIMITIVES
-    if (value === undefined) return undefined
-    if (value === null) return null
-    if (isPrimitive(value)) return value
+    if (value === undefined) return undefined as any
+    if (value === null) return null as any
+    if (isPrimitive(value)) return value as any
 
     // ARRAY
-    if (isArray(value)) return [...value].map((item, index) => this._getData(item, `${path}.[${index}]`))
+    if (isArray(value)) return [...value].map((item, index) => this._getData(item, `${path}.[${index}]`)) as any
 
     // OBJECT
     let other: AnyObject = {}
     for (const [key, local] of Object.entries(value)) other[key] = this._getData(local, `${path}.${key}`)
 
-    return other
+    return other as any
   }
 
   /** Store metadata in object (and also reference in "regular" data) */
@@ -108,7 +109,7 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     super()
 
     this.controller = controller
-    this.id = id === MUTABLE_OBJECT_RANDOM_ID ? uuidv4() : id
+    this.id = id === MUTABLE_OBJECT_RANDOM_ID ? uuid() : id
   }
 
   public makeIntegrityEntry(key: string, value: string): IntegrityEntry {
@@ -150,7 +151,8 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
 
         // get deep properties of old value
         if (!isPrimitive(instruction.oldValue)) {
-          const deepProperties = getDeepProperties(instruction.oldValue as AnyObject)
+          // EXCEPTION: ignore deep properties for METADATA REFERENCE
+          const deepProperties = getDeepProperties(instruction.oldValue as AnyObject, ``, (path, value) => isMetadataReference(value))
           for (const property of deepProperties) {
             const fullProperty = `${mutation.property}.${property}`
             if (!changedProperties.includes(fullProperty)) changedProperties.push(fullProperty)
@@ -159,7 +161,8 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
 
         // get deep properties of new value
         if (doesMutationHaveValue(mutation) && !isPrimitive(mutation.value)) {
-          const deepProperties = getDeepProperties(mutation.value as AnyObject)
+          // EXCEPTION: ignore deep properties for METADATA REFERENCE
+          const deepProperties = getDeepProperties(mutation.value as AnyObject, ``, (path, value) => isMetadataReference(value))
           for (const property of deepProperties) {
             const fullProperty = `${mutation.property}.${property}`
             if (!changedProperties.includes(fullProperty)) changedProperties.push(fullProperty)
@@ -252,3 +255,11 @@ export interface MutateMutationInstruction extends BaseMutationInstruction {
 }
 
 export type MutationInstruction = SkipMutationInstruction | MutateMutationInstruction
+
+function isMetadataReference(value: unknown): value is PropertyReference {
+  if (!PropertyReference.isPropertyReference(value)) return false
+  if (isString(value.property)) return value.property.startsWith(`metadata.`)
+
+  debugger
+  return false
+}

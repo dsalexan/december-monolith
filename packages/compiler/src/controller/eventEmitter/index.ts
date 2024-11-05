@@ -197,6 +197,8 @@ export default class ObjectEventEmitter extends ObjectManager {
         logger.info()
       }
 
+      if (listener.id === `11178::property:updated::7594cfc8`) debugger
+
       callback(eventDispatcher, callbackMetadata)
     }
   }

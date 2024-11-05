@@ -1,9 +1,13 @@
 import assert from "assert"
-import { identity } from "lodash"
-import { AnyObject } from "tsdef"
+import { cloneDeep, has, identity, isNil, omit } from "lodash"
+import { AnyObject, MaybeArray } from "tsdef"
 
 import { arrayJoin } from "@december/utils"
+import { PatternMatchInfo } from "@december/utils/match"
+import { RegexPatternMatchInfo } from "@december/utils/match/element"
+import { PropertyReferencePatternMatchInfo } from "@december/utils/access/match"
 import { isPrimitive } from "@december/utils/typing"
+import { Reference, PropertyReference } from "@december/utils/access"
 
 import { Block, paint } from "../../logger"
 
@@ -12,10 +16,13 @@ import { GenericMutationFrame } from "../frameRegistry"
 import { ObjectReference, StrictObjectReference } from "../../object"
 import { CallQueue } from "./queue"
 
+export type ArgumentProvider = (bareExecutionContext: BareExecutionContext) => AnyObject
+
 export interface BareExecutionContext<TEvent extends Event = Event> {
   name: GenericMutationFrame[`name`] // name of the mutation function to run
   arguments?: AnyObject
   eventDispatcher: EventDispatcher<TEvent>
+  argumentProvider?: MaybeArray<ArgumentProvider>
 }
 
 export interface ExecutionContext<TEvent extends Event = Event> extends BareExecutionContext<TEvent> {
@@ -36,9 +43,15 @@ export interface ExplainExecutionContextOptions {
 export function hashExecutionContextArguments(bareExecutionContext: BareExecutionContext): string[] {
   const _arguments: string[] = []
   for (const [key, value] of Object.entries(bareExecutionContext.arguments ?? {})) {
-    assert(isPrimitive(value), `Implement hashing for this`)
+    let hash: string
 
-    _arguments.push(`${key}:${String(value)}`)
+    if (isPrimitive(value)) hash = String(value)
+    else if (Reference.isReference(value) || PropertyReference.isPropertyReference(value)) hash = value.toString()
+    else if (has(value, `expression`) && has(value, `target`)) hash = `${value.expression}|${value.target}` // ProcessingPath
+    else if (has(value, `id`)) hash = value.id // Generic (anything with an id)
+    else throw new Error(`Implement hashing for this`)
+
+    _arguments.push(`${key}:${hash}`)
   }
 
   return _arguments
@@ -57,29 +70,33 @@ export function explainExecutionContext(executionContext: ExecutionContext, { ob
   // 1. Push basics
   blocks.push(
     //
-    paint.white.bold((object ?? executionContext.object).toString()),
+    paint.identity.bold((object ?? executionContext.object).toString()),
     paint.identity(` `),
-    paint.white(executionContext.name),
+    paint.identity(executionContext.name),
     paint.identity(` `),
   )
 
   // 2. Unshift queue stuff
-  if (queue) blocks.unshift(...paint.grey(queue.toString(), `, `, paint.white(executionContext.index), `/${queue.queue.size}`, ` `))
+  if (queue) blocks.unshift(...paint.dim(queue.toString(), `, `), paint.identity(executionContext.index), ...paint.dim(`/${queue.queue.size}`, ` `))
 
   // 3. Push arguments
-  const _arguments: Block[] = []
-  for (const [key, value] of Object.entries(executionContext.arguments ?? {})) {
-    _arguments.push(
-      //
-      paint.bold(key),
+  const _arguments: Block[][] = []
+  const keys = Object.keys(executionContext.arguments ?? {})
+  const values = hashExecutionContextArguments(executionContext)
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i]
+    const value = values[i]
+
+    _arguments.push([
+      paint.identity(key), //
       paint.dim.grey(`:`),
-      paint.identity(value.toString()) as any,
-    )
+      paint.dim(value.toString()) as any,
+    ])
   }
 
   if (_arguments.length > 0) {
     blocks.push(paint.dim.grey(`{`))
-    blocks.push(...arrayJoin(_arguments, paint.dim.grey(`, `)))
+    blocks.push(...arrayJoin(_arguments, paint.dim.grey(`, `)).flat())
     blocks.push(paint.dim.grey(`}`))
   }
 

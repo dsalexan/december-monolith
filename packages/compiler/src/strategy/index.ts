@@ -1,7 +1,7 @@
 import { EventEmitter } from "@billjs/event-emitter"
 import { get, isArray, isNil, isString, set } from "lodash"
-import { v4 as uuidv4 } from "uuid"
 
+import uuid from "@december/utils/uuid"
 import { ANY_PROPERTY, PROPERTY, PropertyReference, PropertyReferencePattern, REFERENCE, PLACEHOLDER_SELF_REFERENCE, Reference } from "@december/utils/access"
 import { OR } from "@december/utils/match/logical"
 import { ElementPattern, EQUALS, REGEX } from "@december/utils/match/element"
@@ -325,17 +325,17 @@ function fillEvent(event: Event_Listen, object: MutableObject): Event_Listen {
   throw new Error(`Unimplemented event type "${event.type}"`)
 }
 
-export interface ProcessingPath_Object {
-  raw: string
-  computed: string
-}
+// export interface ProcessingPath_Object {
+//   raw: string
+//   computed: string
+// }
 
-export type ProcessingPath_Tuple = [string, string]
+// export type ProcessingPath_Tuple = [string, string]
 
-export type ProcessingPath = ProcessingPath_Object | ProcessingPath_Tuple
+// export type ProcessingPath = ProcessingPath_Object | ProcessingPath_Tuple
 
-export function getProcessingPath(path: ProcessingPath): ProcessingPath_Object {
-  if (isArray(path)) return { raw: path[0], computed: path[1] }
+// export function getProcessingPath(path: ProcessingPath): ProcessingPath_Object {
+//   if (isArray(path)) return { raw: path[0], computed: path[1] }
 
-  return path
-}
+//   return path
+// }

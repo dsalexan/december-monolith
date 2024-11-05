@@ -7,6 +7,7 @@ export interface SubPatternPatternMatchInfo extends PatternMatchInfo {
 }
 
 export interface BasePatternMatch extends PatternMatchInfo {
+  type: string
   isNegated: boolean
   isCaseInsensitive: boolean
   //
@@ -15,6 +16,7 @@ export interface BasePatternMatch extends PatternMatchInfo {
 }
 
 export function makeGenericBasePatternMatch<TMatchInfo extends PatternMatchInfo = PatternMatchInfo>(
+  type: string,
   matchInfo: TMatchInfo,
   value: unknown,
   { isNegated, isCaseInsensitive, preparedValue }: Partial<Pick<BasePatternMatch, `isNegated` | `isCaseInsensitive` | `preparedValue`>> = {},
@@ -22,6 +24,7 @@ export function makeGenericBasePatternMatch<TMatchInfo extends PatternMatchInfo 
   return {
     ...matchInfo,
     //
+    type,
     isNegated: isNegated ?? false,
     isCaseInsensitive: isCaseInsensitive ?? false,
     //
@@ -60,6 +63,7 @@ export class BasePattern<TMatchInfo extends PatternMatchInfo = PatternMatchInfo>
 
     return {
       ...matchInfo,
+      type: this.type,
       isMatch: this.negate ? !matchInfo.isMatch : matchInfo.isMatch,
       isNegated: this.negate ?? false,
       isCaseInsensitive: this.caseInsensitive ?? false,

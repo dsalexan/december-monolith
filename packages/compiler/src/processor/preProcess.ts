@@ -1,6 +1,7 @@
-import { set, get, isNil } from "lodash"
+import { set, get, isNil, isString } from "lodash"
 import assert from "assert"
 
+import uuid from "@december/utils/uuid"
 import { Processor, Environment, ProcessedData, Simbol, ObjectSourceData } from "@december/tree"
 import { UnitManager } from "@december/utils/unit"
 import { PropertyReferencePattern } from "@december/utils/access"
@@ -14,6 +15,8 @@ import {
   listenForMissingIdentifiersGenerator,
   makeProcessor,
   NonReadyBaseProcessedReturn,
+  ProcessingPackage,
+  ProcessingPath,
   ProcessingState,
   ProcessingSymbolsOptions,
   ProcessorOptions,
@@ -38,13 +41,16 @@ export interface NonReadyPreProcessedReturn extends NonReadyBaseProcessedReturn 
 export type PreProcessedReturn = ReadyPreProcessedReturn | NonReadyPreProcessedReturn
 
 /** Do pre-processing steps to resolve an expression */
-export function preProcess(expression: string, options: PreProcessOptions): PreProcessedReturn {
-  // 1. Pre-process value (with empty environment)
-  const processor = makeProcessor(options)
-  const environment: Environment = options.environment?.clone() ?? new Environment()
-  const preProcessed = processor.preProcess(expression, environment, options)
+export function preProcess(processingPackage: ProcessingPackage, options: PreProcessOptions): PreProcessedReturn {
+  // 1. Extract expression from path
+  const expression = get(processingPackage.object.data, processingPackage.path.expression)
+  assert(isString(expression), `Expression is not a string`)
 
-  // 2. If value is ready, return
+  // 2. Pre-process value (with empty environment)
+  const processor = makeProcessor(options)
+  const preProcessed = processor.preProcess(expression, processingPackage.environment, options)
+
+  // 3. If value is ready, return
   if (preProcessed.isReady) {
     return {
       isReady: true,
@@ -54,29 +60,31 @@ export function preProcess(expression: string, options: PreProcessOptions): PreP
   }
 
   const state: ProcessingState = {
+    id: `processing-state::${uuid().substring(0, 8)}`,
+    package: processingPackage,
     processor,
-    environment,
     integrityEntries: [],
     //
+    isReady: false,
     missingIdentifiers: [],
     listenedMissingIdentifiers: [],
   }
 
-  // 3. Store processor state in metadata (and make integrity entry)
+  // 4. Store processor state in metadata (and make integrity entry)
   const saveState: NonReadyPreProcessedReturn[`saveState`] = (object: MutableObject, targetPath: string) => {
-    // 3.1. Make integrity entry (it is registered when shipping mutations)
+    // 4.1. Make integrity entry (it is registered when shipping mutations)
     const integrityEntries = [object.makeIntegrityEntry(targetPath, expression)]
 
-    // 3.2. Store state in metadata
+    // 4.2. Store state in metadata
     const mutations: Mutation[] = object.storeMetadata(state, targetPath, integrityEntries)
 
     return { state, mutations, integrityEntries }
   }
 
-  // 4. Store missing references keeping completion from happening
+  // 5. Store missing references keeping completion from happening
   const saveMissingIdentifiers: NonReadyPreProcessedReturn[`saveMissingIdentifiers`] = saveMissingIdentifiersGenerator(state, options.isProxiableIdentifier)
 
-  // 5. Proxy missing references events to final processing step
+  // 6. Proxy missing references events to final processing step
   const listenForMissingIdentifiers: NonReadyPreProcessedReturn[`listenForMissingIdentifiers`] = listenForMissingIdentifiersGenerator(state, options.identifierSymbolToPropertyPattern)
 
   return {

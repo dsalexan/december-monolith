@@ -1,3 +1,6 @@
+import seedrandom from "seedrandom"
+seedrandom(`hello.`, { global: true })
+
 import path from "path"
 
 import { GCACharacter, GCACharacterImporter } from "@december/gca"
