@@ -14,6 +14,7 @@ import { postOrder } from "../../node/traversal"
 import Simplify, { SimplifyOptions } from "../simplify"
 import Reducer, { ReducerOptions } from "../reducer"
 import { evaluateTreeScope } from "../../node/scope"
+import SymbolTable from "../../environment/symbolTable"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -52,18 +53,18 @@ export default class Resolver {
   }
 
   /** Start Resolution Loop with tree + environment */
-  process(tree: SubTree, environment: Environment, options: Partial<ResolverOptions> = {}) {
+  process(tree: SubTree, symbolTable: SymbolTable, environment: Environment, options: Partial<ResolverOptions> = {}) {
     this._options(options) // default options
 
     this.tree = tree
     this.environment = environment
 
-    this._process()
+    this._process(symbolTable)
 
     return this.tree
   }
 
-  private _process() {
+  private _process(symbolTable: SymbolTable) {
     let i = 0
     const STACK_OVERFLOW_PROTECTION = 100
 
@@ -73,7 +74,7 @@ export default class Resolver {
     this.result.expression()
     let lastExpression = this.result.root.getContent({ wrapInParenthesis: true })
     while (i < STACK_OVERFLOW_PROTECTION) {
-      this.result = this._resolve(this.result, i)
+      this.result = this._resolve(this.result, symbolTable, i)
 
       // check if we can stop
       this.result.expression()
@@ -85,7 +86,7 @@ export default class Resolver {
     }
   }
 
-  private _resolve(tree: SubTree, i: number) {
+  private _resolve(tree: SubTree, symbolTable: SymbolTable, i: number) {
     const __DEBUG = false // COMMENT
 
     // 1. Simplify expression
@@ -128,6 +129,9 @@ export default class Resolver {
       const expression = this.reducer.RT.expression()
       this.reducer.print({ expression })
     }
+
+    // 3. Index symbols in centralized table
+    symbolTable.from(this.reducer.RT, this.options.scope, false)
 
     return this.reducer.RT
   }

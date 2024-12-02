@@ -3,6 +3,7 @@ import assert from "assert"
 import { has, isNumber } from "lodash"
 
 import { conditionalSet } from "@december/utils"
+import { getAliases, isNameExtensionValid, Type } from "@december/gurps/trait"
 
 import churchill, { Builder, paint } from "../../logger"
 
@@ -21,20 +22,30 @@ export default function importGCATrait(superType: `trait` | `attribute`, raw: An
   const id = parseInt(raw.$.idkey)
   assert(isNumber(id), `Trait ID is not a number`)
 
+  const section: TraitSection = raw.$.type.toLowerCase() as TraitSection
+  assert(TRAIT_SECTIONS.includes(section), `Trait section "${section}" is not valid`)
+
   const name = raw.name[0].trim() as string
 
-  logger.add(...paint.grey(paint.dim(`[${superType}s/`), id, paint.dim(`] `)), paint.white(name)).debug() // COMMENT
+  const _nameext: MaybeUndefined<string> = raw.nameext?.[0]
+  const nameext = isNameExtensionValid(_nameext) ? _nameext : undefined
+
+  logger.add(...paint.grey(paint.dim(`[${superType}s/`), id, paint.dim(`] `)), paint.white(name)) // COMMENT
+  if (nameext) logger.add(paint.dim(` (${nameext})`)) // COMMENT
+
+  const _aliases = getAliases(Type.fromGCASection(section), name, nameext) // COMMENT
+  if (_aliases.length > 0) logger.add(paint.gray.dim(` [${_aliases.join(`, `)}]`)) // COMMENT
+
+  logger.debug() // COMMENT
 
   const _extendedTags = raw.extended?.[0]?.extendedtag ?? []
   const extendedTags = Object.fromEntries(_extendedTags.map((tag: any) => [tag.tagname, tag.tagvalue])) as Record<string, string[]>
-
-  const section: TraitSection = raw.$.type.toLowerCase() as TraitSection
-  assert(TRAIT_SECTIONS.includes(section), `Trait section "${section}" is not valid`)
 
   // 2. Build trait
   const trait: GCATrait = {
     id,
     name,
+    nameext,
     section,
     active: has(extendedTags, `inactive`) ? extendedTags[`inactive`][0] !== `yes` : true,
     attribute: superType === `attribute`,

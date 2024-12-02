@@ -2,7 +2,8 @@ import assert from "assert"
 import { AnyObject, MaybeArray, MaybeUndefined, Nilable, Nullable } from "tsdef"
 import { get, isNil, isString, property, set, uniq } from "lodash"
 
-import { Simbol } from "@december/tree"
+import { Processor, Simbol } from "@december/tree"
+import { ProcessorBuildOptions } from "@december/tree/processor"
 import generateUUID from "@december/utils/uuid"
 import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, Reference, REFERENCE } from "@december/utils/access"
 import { PropertyReferencePatternMatchInfo } from "@december/utils/access/match"
@@ -22,15 +23,16 @@ import { DELETE, Mutation, OVERRIDE, SET } from "../../mutation/mutation"
 
 import type ObjectController from ".."
 import { ArgumentProvider } from "../callQueue/executionContext"
-import { ProcessingPackage, ProcessingPath, ProcessingState, ProcessingSymbolTranslationTable } from "../../processor/base"
+// import { ProcessingPackage, ProcessingPath, ProcessingState, ProcessingSymbolTranslationTable } from "../../processor/base"
 import { Environment } from "../../tree"
-import { process, StrategyPreProcessOptions, StrategyReProcessOptions } from "./processing"
+import { StrategyProcessingState, StrategyProcessListenOptions, StrategyProcessSymbolOptions } from "./processing"
 import { MutationFunctionMetadata, MutationFunctionOutput } from "../frameRegistry/mutationFrame"
 import logger, { paint } from "../../logger"
-import { PreProcessedReturn } from "../../processor/preProcess"
-import { ReProcessedReturn } from "../../processor/reRrocess"
+import SymbolTable, { SymbolValueInvoker } from "@december/tree/environment/symbolTable"
+import { StrategyProcessingPackage, StrategyProcessBuildOptions, StrategyProcessor } from "./processing"
 
-export type { StrategyPreProcessOptions, StrategyReProcessOptions } from "./processing"
+export { ProcessingSymbolTranslationTable } from "./translationTable"
+export type { StrategyProcessingPackage, StrategyProcessListenOptions, StrategyProcessSymbolOptions, StrategyProcessBuildOptions } from "./processing"
 
 export type Generator<TReturn> = (object: MutableObject) => TReturn
 
@@ -162,105 +164,112 @@ export class Strategy {
 
   // #region PROCESSING/COMPILLING
 
-  public static preProcess(processingPackage: ProcessingPackage, options: StrategyPreProcessOptions) {
-    return process(`pre-process`, Strategy.addProxyListener, processingPackage, options)
-  }
-
-  public static reProcess(processingPackage: ProcessingPackage, options: StrategyReProcessOptions) {
-    return process(`re-process`, Strategy.addProxyListener, processingPackage, options)
-  }
-
-  public static process(pkg: ProcessingPackage, options: StrategyReProcessOptions & StrategyPreProcessOptions) {
-    const { object, path } = pkg
-
-    const state: ProcessingState = get(object.metadata, path.target)
-
-    let output: MutationFunctionOutput & { processedValue: PreProcessedReturn | ReProcessedReturn } = null as any
-
-    const doPreProcess = !!state
-    let doReProcess = true
-
-    // 1. if state doesn't exist, pre-process
-    if (doPreProcess) {
-      const { mutations, integrityEntries, processedValue } = Strategy.preProcess(pkg, options)
-
-      output = { mutations: [...mutations], integrityEntries: [...integrityEntries], processedValue }
-      if (processedValue.isReady) doReProcess = false
-    }
-
-    // 2. if processing is NOT ready following pre-processing (OR if state already exists), re-process
-    if (doReProcess) {
-      const { mutations, integrityEntries, processedValue } = Strategy.reProcess(pkg, options)
-
-      output = { mutations: [...(output?.mutations ?? []), ...mutations], integrityEntries: [...(output?.integrityEntries ?? []), ...integrityEntries], processedValue }
-    }
-
-    assert(output !== null, `Output must be defined`)
-    return output
-  }
-
-  // Inject specific missing references in base environment
-  public static injectMissingReferences(
+  /** Generic processing for any expression */
+  public static process(
+    processingPackage: Nullable<StrategyProcessingPackage>,
     object: MutableObject,
-    missingIdentifiers: Simbol[],
-    translationTable: ProcessingSymbolTranslationTable,
-    baseEnvironment: Environment,
-    fetchReference: (identifier: string, key: string) => Nilable<AnyObject>,
-  ): Environment | false {
-    const localSource: AnyObject = {}
+    path: string,
+    options: StrategyProcessSymbolOptions & StrategyProcessListenOptions & StrategyProcessBuildOptions & { ignorePackageUpdate?: boolean },
+  ): { state: StrategyProcessingState; mutations: Mutation[]; integrityEntries: IntegrityEntry[] } {
+    const listeners: Listener[] = []
+    const mutations: Mutation[] = []
+    const integrityEntries: IntegrityEntry[] = []
 
-    // 1. For each missing identifier, try to fetch value into local source
-    for (const missingIdentifier of missingIdentifiers) {
-      const identifier = missingIdentifier.content
-      const proxiedKey = translationTable.get(missingIdentifier) ?? missingIdentifier.value
+    // 1. Check if expression was processed previously
+    let state: StrategyProcessingState = get(object.metadata, path)
 
-      /**
-       * fetchReference -> returns value for reference
-       *    null -> reference not found
-       *    undefined -> fetch scenario not implemented
-       *    value -> reference found
-       */
-      const referencedValue = fetchReference(identifier, proxiedKey)
-      assert(referencedValue !== undefined, `Fetch for reference "${identifier}/${proxiedKey}" not implemented`)
+    // 2. Process expression
+    if (!state) {
+      // EXPRESSION WAS NOT PROCESSED YET
+      assert(processingPackage, `Processing package must be provided for new expressions`)
 
-      if (referencedValue === null) {
-        logger.add(` `.repeat(10))
-        logger
-          .add(paint.grey.dim(`[${object.id}/`), paint.grey(object.data.name), paint.grey.dim(`]`))
-          .add(` `, paint.white(identifier))
-          .add(paint.grey.dim(` -> `), paint.grey.dim.bold(proxiedKey))
-        logger.debug()
+      // 2.1. Process (build + solve) expression
+      state = StrategyProcessor.process(processingPackage, options)
+
+      // 2.2. Store processing state in metadata
+      const output = StrategyProcessor.cacheProcessingState(state, object, path)
+      mutations.push(...output.mutations)
+      integrityEntries.push(...output.integrityEntries)
+    } else {
+      // EXPRESSION WAS PROCESSED PREVIOUSLY
+
+      // 2.3. Update package information in state
+      if (processingPackage && !options.ignorePackageUpdate) {
+        assert(state.package.expression === processingPackage.expression, `Expression in processing state must be the same as the one in processing package`)
+        state.package.environment = processingPackage.environment
+        state.package.translationTable = processingPackage.translationTable
+        if (state.package.fallbackEnvironment || processingPackage.fallbackEnvironment) {
+          state.package.fallbackEnvironment = processingPackage.fallbackEnvironment
+        }
       }
 
-      localSource[identifier] = referencedValue
+      // 2.4. Process (solve) expression
+      StrategyProcessor.solve(state, options)
     }
 
-    // 2. If any new value was fetched, inject into local source
-    if (Object.entries(localSource).length > 0) {
-      const environment = baseEnvironment.clone()
-      environment.addObjectSource(`local_${generateUUID().substring(0, 8)}`, localSource)
+    // 3. Listen for missing symbols
+    listeners.push(...StrategyProcessor.listenForMissingSymbols(state, object, path, options))
 
-      return environment
+    // 4. Register event listeners (for symbol updates)
+    for (const listener of listeners) object.controller.eventEmitter.addListener(listener)
+
+    // 5. No new mutations are generated in re-processing UNLESS the state is ready
+    if (state.isReady) {
+      const processedValue = state.resolved.tree.value()
+
+      mutations.push(OVERRIDE(path, processedValue))
+    }
+    // 6. If there is a fallback ready, assign its value to the target path
+    else if (state.fallback && state.processor.isReady(state.fallback)) {
+      const processedValue = state.fallback.tree.value()
+
+      mutations.push(OVERRIDE(path, processedValue))
     }
 
-    // 3. If nothing new was fetched, return false
-    return false
+    return { state, mutations, integrityEntries }
   }
 
-  public registerReProcessingFunction(name: GenericMutationFrame[`name`], optionsGenerator: Generator<StrategyReProcessOptions>): this {
+  /** Generator for a generic re-processing (aka only solves already processed expressions) function */
+  public registerReProcessingFunction(name: GenericMutationFrame[`name`], reProcessingOptionsGenerator: Generator<StrategyProcessSymbolOptions & Omit<StrategyProcessListenOptions, `reProcessingFunction`>>): this {
+    // 0. Create and register a standard mutation function
     this.registerMutationFunction(name, (object: MutableObject, mutationOptions: MutationFunctionMetadata) => {
-      const { path } = mutationOptions.arguments as { path: ProcessingPath }
-      assert(!isNil(path), `Path for processing (raw and computed) was not specified`)
+      // 1. Target path in object's metadata (where processing state is stored) ALWAYS comes as an argument
+      //      (check compiler/controller/processing :: listenForMissingSymbols for more)
+      const path = mutationOptions.arguments.processingStatePath as string
+      const state: StrategyProcessingState = get(object.metadata, path)
 
-      // 1. Generate options with contextualized object
-      const options: StrategyReProcessOptions = optionsGenerator(object)
+      // 2. Re-solve processing state (basically reuses the original build tree in solve loop)
+      const options = reProcessingOptionsGenerator(object)
+      StrategyProcessor.solve(state, options)
 
-      // 2. Assemble package from context
-      const translationTable: ProcessingSymbolTranslationTable = new ProcessingSymbolTranslationTable({})
-      const processingPackage = new ProcessingPackage(object, path.expression, path.target, { name, arguments: { ...mutationOptions.arguments } }, null as any, null as any)
+      // 3. Listen for missing symbols
+      const listeners = StrategyProcessor.listenForMissingSymbols(state, object, path, { ...options, reProcessingFunction: { name, arguments: { ...mutationOptions.arguments, genericReProcessing: true } } })
 
-      // 3. Pre-process expression from path (or re-process state from path)
-      return Strategy.reProcess(processingPackage, options)
+      // 4. Register event listeners (for symbol updates)
+      if (listeners.length > 0) debugger
+      for (const listener of listeners) object.controller.eventEmitter.addListener(listener)
+
+      // // DEBUG: This is just to simulate a "signature change" in re-process
+      // // ====================================================
+      // return [OVERRIDE(path.computed, `aaaaa`), processedValue.signature.instruction()]
+      // // ====================================================
+
+      // [PATH] It is the same as processing state path inside metadata, but inside "data"
+
+      // 5. No new mutations are generated in re-processing UNLESS the state is ready
+      if (state.isReady) {
+        const processedValue = state.resolved.tree.value()
+
+        return [OVERRIDE(path, processedValue)]
+      }
+      // 6. If there is a fallback ready, assign its value to the target path
+      else if (state.fallback && state.processor.isReady(state.fallback)) {
+        const processedValue = state.fallback.tree.value()
+
+        return [OVERRIDE(path, processedValue)]
+      }
+
+      return []
     })
 
     return this

@@ -14,36 +14,65 @@ import { WHITESPACES } from "./type/declarations/whitespace"
 import { KEYWORDS } from "./type/declarations/keyword"
 import { defaultProcessingOptions, InputProcessingOptions, PhaseProcessingOptions, ProcessingOptions } from "./options"
 import Environment from "./environment"
-import SymbolTable from "./environment/symbolTable"
+import SymbolTable, { SymbolValueInvoker } from "./environment/symbolTable"
 import { range } from "lodash"
 import logger, { paint } from "./logger"
 import { SubTree } from "./node"
 import assert from "assert"
 import { UnitManager } from "./unit"
+import { Stage } from "./stage"
 
-export interface ProcessedData {
-  isReady: boolean
+/**
+ * Processor is a centralized packaging class with all phases required for a complete
+ * processing of an expression
+ */
+
+/**
+ * PROCESSING EXPRESSIONS INSIDE A MUTABLE ECOSYSTEM
+ *
+ * - Expressions should be handled inside mutation functions
+ * - Once a processing resolves ready, it should update a FIXED PATH inside the mutable object
+ * - Sometimes a expression can depend on external values to resolve fully.
+ * - Sometimes the expression will use "default" values for missing identifiers JUST TO resolve the processing, this should
+ *      not "permanently" change the expression resulting tree in cache
+ *
+ * PRE-PROCESS
+ * - Parses EXPRESSION into a SEMANTIC TREE (actually expression -> lexer -> parser, AST -> semantic, ST)
+ * - A semantic tree is the "base hierarchy" of the expression as a tree.
+ * - After processing once we don't need to do it again (since the semantic tree will never change while the expression remains the same)
+ * - Maybe "pre-processing" sounds a bit confusing.
+ * - Essentially "BUILD TREE"
+ *
+ * PROCESS
+ * - Gets SEMANTIC TREE and simplify/reduces it ("resolves" it).
+ * - Simplifying applies some rules to the tree structure, changing it in some ways. This can remove missing symbols.
+ * - Reducing changes some identifiers by a specific value indicated in the Environment supplied on call. This can introduce new missing symbols.
+ * - This essentially is a tree resolver, so... "SOLVE TREE".
+ *
+ *
+ */
+
+export type ProcessorBuildOptions = InputProcessingOptions & Partial<PhaseProcessingOptions>
+
+export interface ProcessingOutput {
+  expression: string
+  stage: Stage
   tree: SubTree
-  symbolTable: SymbolTable
 }
 
 export default class Processor {
-  protected options: ProcessingOptions
+  public options: ProcessingOptions
+  //
   public lexer: Lexer
   public parser: Parser
   public semantic: Semantic
   public simplify: Simplify
   public reducer: Reducer
   public resolver: Resolver
-  //
-  public preProcessedExpression: string
-  // RESULT
-  public preProcessed: ProcessedData
-  public processed: ProcessedData
 
   constructor() {}
 
-  makeGrammar(unitManager: UnitManager) {
+  public makeGrammar(unitManager: UnitManager) {
     const grammar = new Grammar(unitManager)
 
     grammar.add(...WHITESPACES)
@@ -57,19 +86,24 @@ export default class Processor {
     return grammar
   }
 
-  initialize(grammar: Grammar) {
+  public initialize(grammar: Grammar) {
     this.lexer = new Lexer(grammar)
     this.parser = new Parser(grammar)
     this.semantic = new Semantic(grammar)
+    //
     this.simplify = new Simplify(grammar)
     this.reducer = new Reducer(grammar)
     this.resolver = new Resolver(this.simplify, this.reducer)
   }
 
-  /** Pre-Process expression into a Tree */
-  preProcess(expression: string, environment: Environment, _options: InputProcessingOptions & Partial<PhaseProcessingOptions>) {
+  /**
+   * Parses an expression into a Semantic Tree.
+   * That resulting tree is immutable for the original expression, there is no need to re-parse it later.
+   * It also is not dependent in environment or unresolved identifiers.
+   */
+  public build(expression: string, options: ProcessorBuildOptions): ProcessingOutput & { symbolTable: SymbolTable } {
     this.options = defaultProcessingOptions({
-      ..._options,
+      ...options,
       //
       simplify: {
         rulesets: RULESETS_SIMPLIFY,
@@ -77,11 +111,9 @@ export default class Processor {
     })
 
     const DEBUG = this.options.debug // COMMENT
-    if (DEBUG) this.printExpression(expression) // COMMENT
+    if (DEBUG) printExpression(expression) // COMMENT
 
-    this.preProcessedExpression = expression
-
-    if (!_options.AST) {
+    if (!options.AST) {
       this.lexer.process(expression)
       if (DEBUG) this.lexer.print() // COMMENT
 
@@ -102,71 +134,99 @@ export default class Processor {
         })
     }
 
-    const AST = _options.AST ?? this.parser.AST
-
-    this.semantic.process(AST, [RULESET_SEMANTIC], this.options.semantic)
+    const AST = options.AST ?? this.parser.AST
+    const semanticTree = this.semantic.process(AST, [RULESET_SEMANTIC], this.options.semantic)
     if (DEBUG) this.semantic.print({ expression }) // COMMENT
 
-    // try to solve semantic tree
-    this.preProcessed = this._solveTree(this.semantic.ST, environment)
-
-    return this.preProcessed
-  }
-
-  /** Finish processing pre-processed Tree */
-  process(environment: Environment) {
-    assert(this.preProcessed, `Pre-processed data is not available`)
-
-    const { tree } = this.preProcessed
-
-    this.processed = this._solveTree(tree, environment)
-
-    return this.processed
-  }
-
-  /** Solve a tree (simplify+reduce OR resolve) */
-  _solveTree(tree: SubTree, environment: Environment): ProcessedData {
-    const DEBUG = this.options.debug // COMMENT
-
-    // 1. Solve tree
-    // this.simplify.process(tree, environment, RULESETS_SIMPLIFY, this.options.simplify)
-    // if (DEBUG) this.simplify.print({ expression: this.simplify.SST.expression() }) // COMMENT
-    // if (DEBUG) console.log(` `) // COMMENT
-
-    // this.reducer.process(this.simplify.SST, environment, this.options.reducer)
-    // if (DEBUG) this.reducer.print({ expression: this.reducer.RT.expression() }) // COMMENT
-
-    this.resolver.process(tree, environment, this.options.resolver)
-    if (DEBUG) this.resolver.print({ expression: this.resolver.result.expression() }) // COMMENT
-
-    // processed tree
-    const PT = this.reducer.RT
-    const symbolTable = SymbolTable.from(PT, this.options.scope)
-    const nonNumericIdentifiers = symbolTable.filter(({ node }) => node.type.name !== `number`)
-
-    const isReady = PT.height <= 2 && nonNumericIdentifiers.length === 0
+    // 2. Build symbol table to track ALL symbols related to expression
+    const symbolTable = SymbolTable.from(semanticTree, this.options.scope)
 
     return {
-      isReady,
-      tree: PT,
+      expression,
+      tree: semanticTree,
+      stage: `semantic_analysis`,
+      //
       symbolTable,
     }
   }
 
-  printExpression(expression: string) {
-    console.log(` `)
-    const N = expression.length
-    const M = Math.ceil(Math.log10(N))
-    logger
-      .add(
-        paint.gray(
-          range(0, N)
-            .map(i => String(i).padStart(M))
-            .join(` `),
-        ),
-      )
-      .info()
-    logger.add(paint.gray([...expression].map(c => c.padStart(M)).join(` `))).info()
-    console.log(` `)
+  /**
+   * Tries to resolve a tree based on an environment.
+   *
+   * Can be any tree, initially would be a semantic post-building
+   */
+  public resolve(processingOutput: ProcessingOutput, symbolTable: SymbolTable, environment: Environment): ProcessingOutput {
+    const DEBUG = this.options.debug // COMMENT
+    const { tree } = processingOutput
+
+    // Resolve (simplify + reduce) semantic tree
+    const resolvedTree = this.resolver.process(tree, symbolTable, environment, this.options.resolver)
+    if (DEBUG) this.resolver.print({ expression: this.resolver.result.expression() }) // COMMENT
+
+    return {
+      expression: processingOutput.expression,
+      tree: resolvedTree,
+      stage: `reduction`,
+    }
   }
+
+  /**
+   * Checks if a tree "is ready" (i.e. if it is, essentially, a proper unique value and not a tree)
+   */
+  public isReady(tree: SubTree, symbolTable?: SymbolTable): boolean
+  public isReady(output: ProcessingOutput, symbolTable?: SymbolTable): boolean
+  public isReady(treeOrOutput: SubTree | ProcessingOutput, symbolTable?: SymbolTable): boolean {
+    const tree: SubTree = treeOrOutput instanceof SubTree ? treeOrOutput : treeOrOutput.tree
+    symbolTable ??= SymbolTable.from(tree, this.options.scope)
+
+    // 2. Check if tree is ready
+    const nonNumericIdentifiers = symbolTable.filter(simbol => simbol.getNode().type.name !== `number`)
+    const isReady = tree.height <= 2 && nonNumericIdentifiers.length === 0
+
+    return isReady
+  }
+
+  /** Tries to resolve tree multiple times (until no new symbols can be resolved into the environment) */
+  public solveLoop(input: ProcessingOutput, symbolTable: SymbolTable, environment: Environment, getSymbolValue: SymbolValueInvoker): ProcessingOutput {
+    let output: ProcessingOutput = input
+
+    const STACK_OVERFLOW_PROTECTION = 10
+
+    let runs = 1
+    let newSymbolsWereAddedToEnvironment = false
+    do {
+      newSymbolsWereAddedToEnvironment = false
+
+      // 1. resolve with current environment
+      output = this.resolve(output, symbolTable, environment)
+      if (this.isReady(output)) break // stop loop if output is ready
+
+      // 2. get and inject resolved symbols into environment
+      newSymbolsWereAddedToEnvironment = symbolTable.injectMissingSymbolsIntoEnvironment(environment, (key, symbols) => getSymbolValue(key, symbols))
+
+      // only loop again if new symbols were added to environment
+      runs++
+
+      assert(runs <= STACK_OVERFLOW_PROTECTION, `Stack overflow protection triggered`)
+    } while (newSymbolsWereAddedToEnvironment)
+
+    return output
+  }
+}
+
+function printExpression(expression: string) {
+  console.log(` `)
+  const N = expression.length
+  const M = Math.ceil(Math.log10(N))
+  logger
+    .add(
+      paint.gray(
+        range(0, N)
+          .map(i => String(i).padStart(M))
+          .join(` `),
+      ),
+    )
+    .info()
+  logger.add(paint.gray([...expression].map(c => c.padStart(M)).join(` `))).info()
+  console.log(` `)
 }

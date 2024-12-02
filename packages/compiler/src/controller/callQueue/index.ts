@@ -150,7 +150,7 @@ export default class ObjectCallQueue extends ObjectManager {
       if (this.current && executionContext.index < this.current.executionContext) {
         if (this.__DEBUG) {
           logger.add(...paint.grey(`[`, paint.red.dim(`dequeue/`), paint.red.dim.bold(`skip`), `]`)).add(` `)
-          logger.add(...explainExecutionContext(executionContext, { queue }))
+          logger.add(...explainExecutionContext(executionContext, { queue, controller: this.controller }))
           logger.add(paint.italic.grey(` (context was already executed)`))
           logger.info()
         }
@@ -162,7 +162,7 @@ export default class ObjectCallQueue extends ObjectManager {
       if (this.__DEBUG) {
         logger.add(...paint.grey(`[`, paint.yellow.dim(`dequeue`), `]`)).add(` `)
         logger.add(...paint.grey(queue.toString(), paint.white(executionContext.index), `/${queue.queue.size}`)).add(` `)
-        logger.add(...explainExecutionContext(executionContext))
+        logger.add(...explainExecutionContext(executionContext, { controller: this.controller }))
         logger.info()
       }
 
@@ -205,7 +205,7 @@ export default class ObjectCallQueue extends ObjectManager {
     if (doSkip) {
       if (this.__DEBUG) {
         logger.add(...paint.grey(`[`, paint.grey.dim(`enqueue/`), paint.red.dim(`skip`), `]`)).add(` `)
-        logger.add(...paint.grey(...explainExecutionContext(executionContext, { object: _object, queue })))
+        logger.add(...paint.grey(...explainExecutionContext(executionContext, { object: _object, queue, controller: this.controller })))
         logger.info()
       }
 
@@ -215,7 +215,7 @@ export default class ObjectCallQueue extends ObjectManager {
     // 3. Enqueue execution context
     if (this.__DEBUG) {
       logger.add(...paint.grey(`[`, paint.yellow.dim(`enqueue`), `]`)).add(` `)
-      logger.add(...explainExecutionContext(executionContext, { object: _object, queue }))
+      logger.add(...explainExecutionContext(executionContext, { object: _object, queue, controller: this.controller }))
       logger.info()
     }
 
@@ -238,7 +238,7 @@ export default class ObjectCallQueue extends ObjectManager {
 
         if (this.__DEBUG) {
           logger.add(...paint.grey(`[`, paint.magenta.dim(`execute`), `]`)).add(` `)
-          logger.add(...explainExecutionContext(executionContext, { queue }))
+          logger.add(...explainExecutionContext(executionContext, { queue, controller: this.controller }))
           logger.info()
         }
 

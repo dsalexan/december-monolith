@@ -363,7 +363,7 @@ function insertOperator(subtree: Node, operator: Node, options: Partial<InsertOp
     if (arity !== 2) debugger
 
     // handle subtree children
-    if (subtree.type.modules.includes(`arithmetic`)) debugger
+    // if (subtree.type.modules.includes(`arithmetic`)) debugger
     if (subTreeRelevantChildren.length === 0) {
       //  subtree are no children to enlist
       //    create and add a nil token as last (and, well, only) child

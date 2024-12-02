@@ -48,5 +48,5 @@ export function getAliases(type: TraitType, name: string, nameExtension?: string
 }
 
 export function isAlias(value: string) {
-  return /^\w{2}\:[\w"\s]+$/.test(value)
+  return /^\w{2}\:[\w" \(\)\,\;\s]+$/.test(value)
 }

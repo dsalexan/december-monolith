@@ -6,20 +6,33 @@ import { BaseSource, ObjectSource } from "./source"
 import churchill, { Block, paint, Paint } from "../logger"
 import { IdentifiedValue, BaseIdentifier, NamedIdentifier, Identifier, IdentifiedValueReturn, StrictIdentifiedValueReturn, isResolved, MISSING_VALUE } from "./identifier"
 import { InputObjectSourceData, isSourcedValue, ObjectSourceData, SourcedValue } from "./source/object"
-import { AnyObject } from "tsdef"
+import { AnyObject, Nilable } from "tsdef"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-export { Simbol } from "./symbolTable"
+export { Simbol, default as SymbolTable } from "./symbolTable"
 export { ObjectSourceData, default as ObjectSource } from "./source/object"
 
+export interface IndexedSource<TSource extends BaseSource = BaseSource> {
+  source: TSource
+  index: number
+}
+
 export default class Environment {
-  public sources: Map<string, BaseSource> = new Map()
+  public sources: Map<string, IndexedSource> = new Map()
 
   clone() {
     const environment = new Environment()
 
-    for (const source of this.sources.values()) environment.addSource(source)
+    for (const { source, index } of this.sources.values()) environment.addSource(source)
+
+    return environment
+  }
+
+  merge(other: Environment) {
+    const environment = this.clone()
+
+    for (const { source, index } of other.sources.values()) environment.addSource(source)
 
     return environment
   }
@@ -31,7 +44,8 @@ export default class Environment {
   addSource(source: BaseSource) {
     assert(!this.hasSource(source.name), `Source "${source.name}" already exists`)
 
-    this.sources.set(source.name, source)
+    const index = this.sources.size
+    this.sources.set(source.name, { source, index })
 
     return source
   }
@@ -58,7 +72,7 @@ export default class Environment {
     type EnvironmentMatch = { source: string }
     const matches: EnvironmentMatch[] = []
 
-    for (const source of this.sources.values()) {
+    for (const { source } of this.sources.values()) {
       if (source.has(identifier)) matches.push({ source: source.name })
     }
 
@@ -75,11 +89,11 @@ export default class Environment {
     type EnvironmentMatch = { source: string; value: IdentifiedValue }
     const matches: EnvironmentMatch[] = []
 
-    const _sources = [...this.sources.values()].map(source => source.name)
+    const _sources = [...this.sources.values()].map(({ source }) => source.name)
     const sources = confirmedSources ? _sources.filter(name => confirmedSources.includes(name)) : _sources
 
     for (const name of sources) {
-      const source = this.sources.get(name)!
+      const { source } = this.sources.get(name)!
 
       if (source.has(identifier)) {
         const value = source.get(identifier)
@@ -125,3 +139,5 @@ export default class Environment {
     return isResolved<TValue>(value)
   }
 }
+
+export type BaseValueInvoker = (...args: any[]) => Nilable<AnyObject>

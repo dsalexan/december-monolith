@@ -220,6 +220,42 @@ expression = `thr+
     )
   )
 )`
+expression = `B + 1 * 2`
+expression = `@if(A = B+1 
+  THEN @fn(P) 
+  ELSE @if(A > B+1 
+    THEN 2 * @fn(P) 
+    ELSE 0
+  )
+)`
+expression = `thr-1 + 
+@if("AD:Claws (Blunt Claws)::level" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Feet Only) = 0 
+  then @basethdice(ST:Punch) 
+  else @if("AD:Claws (Long Talons)::level" = 1 & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 
+    then @basethdice(ST:Punch) 
+    else 0
+  )
+) + 
+@max(
+  @if("SK:Brawling::level" > ST:DX+1 
+    then @basethdice(ST:Punch) 
+    ELSE 0
+  ),
+  @if("SK:Boxing::level" = ST:DX+1 
+    then @basethdice(ST:Punch) 
+    ELSE @if("SK:Boxing::level" > ST:DX+1 
+      then 2 * @basethdice(ST:Punch) 
+      ELSE 0
+    )
+  ),
+  @if("SK:Karate::level" = ST:DX 
+    then @basethdice(ST:Punch) 
+    ELSE @if("SK:Karate::level" > ST:DX 
+      then 2 * @basethdice(ST:Punch) 
+      ELSE 0
+    )
+  )
+)`
 
 expression = expression.replaceAll(/(\r\n|\n|\r) */gm, ``)
 const options = defaultProcessingOptions({
@@ -310,12 +346,12 @@ semantic.print({ expression })
 
 // environment.print()
 
-simplify.process(semantic.ST, environment, [...RULESETS_SIMPLIFY], options.simplify)
-simplify.print({ expression: simplify.SST.expression() })
-console.log(` `)
+// simplify.process(semantic.ST, environment, [...RULESETS_SIMPLIFY], options.simplify)
+// simplify.print({ expression: simplify.SST.expression() })
+// console.log(` `)
 
 // reducer.process(simplify.SST, environment, options.reducer)
 // reducer.print({ expression: reducer.RT.expression() })
 
-// resolver.process(semantic.ST, envirSonment, options.resolver)
-// resolver.print({ expression: resolver.result.expression() })
+resolver.process(semantic.ST, environment, options.resolver)
+resolver.print({ expression: resolver.result.expression() })

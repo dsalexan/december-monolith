@@ -38,3 +38,10 @@ export function getListenerID(objectID: ObjectID, { targetEvent }: GenericListen
   const hash = uuid().substring(0, 8)
   return `${objectID}::${targetEvent.type}::${hash}`
 }
+
+export function createListener(objectID: ObjectID, listener: GenericListener): Listener {
+  return {
+    id: getListenerID(objectID, listener),
+    ...listener,
+  }
+}

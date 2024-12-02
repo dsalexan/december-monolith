@@ -32,5 +32,5 @@ export type TargetReferenceEvents = TargetReferenceAddedEvent | TargetReferenceR
 
 export type ReferenceEventTypes = ReferenceEvents[`type`]
 
-export const REFERNECE_ADDED = (...references: ReferencePattern<ObjectReference>[]): TargetReferenceAddedEvent => ({ type: `reference:added`, references })
-export const REFERNECE_REMOVED = (...references: ReferencePattern<ObjectReference>[]): TargetReferenceRemovedEvent => ({ type: `reference:removed`, references })
+export const REFERENCE_ADDED = (...references: ReferencePattern<ObjectReference>[]): TargetReferenceAddedEvent => ({ type: `reference:added`, references })
+export const REFERENCE_REMOVED = (...references: ReferencePattern<ObjectReference>[]): TargetReferenceRemovedEvent => ({ type: `reference:removed`, references })

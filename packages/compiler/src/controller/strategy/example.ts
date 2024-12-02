@@ -21,26 +21,33 @@
  */
 
 import assert from "assert"
-import { get, isNil } from "lodash"
+import { AnyObject } from "tsdef"
+import { get, isNil, isNumber, set } from "lodash"
 
-import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, Reference, REFERENCE, SELF_PROPERTY } from "@december/utils/access"
-import { isAlias } from "@december/gurps/trait"
+import { Environment, SymbolTable } from "@december/tree"
+import { Strategy, Mutation, SET, MutableObject, OVERRIDE } from "@december/compiler"
 
-import MutableObject from "../../object"
-import { Mutation, OVERRIDE, SET, MERGE } from "../../mutation/mutation"
+import { Generator, ProcessingSymbolTranslationTable } from "@december/compiler/controller/strategy"
+import type { StrategyProcessingPackage, StrategyProcessListenOptions, StrategyProcessBuildOptions, StrategyProcessSymbolOptions } from "@december/compiler/controller/strategy"
+import { IntegrityEntry } from "@december/compiler/controller/integrityRegistry"
+import { REFERENCE_ADDED, ReferenceAddedEvent } from "@december/compiler/controller/eventEmitter/event"
 
-import { Strategy } from "./index"
-import { ReferenceAddedEvent, REFERNECE_ADDED } from "../eventEmitter/event"
-import { CallQueue } from "../callQueue/queue"
-import { GenericListener, Listener } from "../eventEmitter/listener"
-import { BareExecutionContext } from "../callQueue"
+import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, REFERENCE, Reference, SELF_PROPERTY } from "@december/utils/access"
+
+import { IGURPSCharacter, IGURPSTrait, Trait } from "@december/gurps"
+import { isNameExtensionValid, Type, IGURPSTraitMode, isAlias, getAliases } from "@december/gurps/trait"
+import { DamageTable } from "@december/gurps/character"
+
+import { GCACharacter, GCATrait } from "@december/gca"
 import { MutationFunctionMetadata } from "../frameRegistry/mutationFrame"
-import { ProcessingSymbolsOptions, ProcessorOptions } from "../../processor"
-import { IntegrityEntry } from "../integrityRegistry"
+import { GCAProcessingBuildOptions, GCAProcessingSymbolOptionsGenerator } from "./options"
+
+//
+//
 
 export const EXAMPLE_STRATEGY = new Strategy()
 
-// A.1. BASIC
+// A.1. BASIC (event callback to enqueue a previously registered mutation function)
 EXAMPLE_STRATEGY.registerMutationFunction(
   `GCA:alias`, //
   (object: MutableObject) => [SET(`__.aliases`, [`TR:${object.id === `1` ? `Uno` : `Dos`}`])],
@@ -56,7 +63,7 @@ EXAMPLE_STRATEGY.registerMutationFunction(
     },
 )
 
-// A.2. COMMON PROPERTY UPDATED
+// A.2. COMMON PROPERTY UPDATED (like basic but targeting a specific property)
 EXAMPLE_STRATEGY.registerMutationFunction(`compute:level`, (object: MutableObject) => {
   const { level } = object.data._.GCA
   if (isNil(level)) return []
@@ -72,14 +79,14 @@ EXAMPLE_STRATEGY.registerMutationFunction(`compute:level`, (object: MutableObjec
       eventEmitter.controller.callQueue.enqueue(object.reference(), { eventDispatcher: event, name: `GCA:level` }),
 )
 
-// A.3. COMMON MINIMAL FOOTPRINT
+// A.3. COMMON MINIMAL FOOTPRINT (already defines a generic callback for event enqueueing the mutation function)
 EXAMPLE_STRATEGY.onPropertyUpdatedEnqueue(
   [SELF_PROPERTY(`_.GCA.name`), SELF_PROPERTY(`_.INPUT.name`)], //
   `compute:name`,
   object => OVERRIDE(`name`, get(object.data, `_.INPUT.name`, object.data._.GCA.name)),
 )
 
-// B.1. Calling other mutations functions on proxy
+// B.1. Calling other mutations functions on proxy (adding a proxy listener to another object, thru its alias, once an event is triggered)
 EXAMPLE_STRATEGY.registerMutationFunction(`compute:bonus`, (target, { arguments: args, callQueue, executionContext: { eventDispatcher: event } }: MutationFunctionMetadata<ReferenceAddedEvent>) => {
   // object: origin of bonus
   // target: destination of bonus
@@ -101,9 +108,7 @@ EXAMPLE_STRATEGY.registerMutationFunction(`compute:bonus`, (target, { arguments:
   assert(!isNaN(level), `Level "${level}" is not a number`)
 
   return [OVERRIDE(`level`, level + bonus)]
-})
-
-EXAMPLE_STRATEGY.onPropertyUpdatedEnqueue(
+}).onPropertyUpdatedEnqueue(
   [SELF_PROPERTY(`_.GCA`)], //
   `GCA:bonus`,
   (object, { callQueue }) => {
@@ -117,7 +122,7 @@ EXAMPLE_STRATEGY.onPropertyUpdatedEnqueue(
       if (bonus) {
         const target = bonus[0].target
 
-        Strategy.addProxyListener(REFERNECE_ADDED(REFERENCE(`alias`, target)), `compute:bonus`, { arguments: { modeIndex: index, bonusIndex: 0 } })(object)
+        Strategy.addProxyListener(REFERENCE_ADDED(REFERENCE(`alias`, target)), `compute:bonus`, { arguments: { modeIndex: index, bonusIndex: 0 } })(object)
       }
     }
 
@@ -126,32 +131,7 @@ EXAMPLE_STRATEGY.onPropertyUpdatedEnqueue(
 )
 
 // C.1. Processing functions
-
-// 1. We first stablish general processing options for GCA
-const GCAProcessingSymbolsOptions: ProcessingSymbolsOptions = {
-  isProxiableIdentifier: ({ content, value }) => isAlias(value),
-  // TODO: It is not always going to be "level"
-  identifierSymbolToPropertyPattern: ({ content, value }) => PROPERTY(REFERENCE(`alias`, value), `level`),
-}
-
-const GCAProcessingOptions: ProcessorOptions & ProcessingSymbolsOptions = {
-  ...GCAProcessingSymbolsOptions,
-  unitManager: null as any,
-}
-
-// 2. We then add compute:processing, since most processings can be finished using generic algorithms
-EXAMPLE_STRATEGY.registerProcessingFunction(`compute:processing`, controller => ({
-  ...GCAProcessingOptions,
-  referenceToSource: referenceKey => {
-    const [object] = controller.store.getByReference(new Reference(`alias`, referenceKey), false)
-
-    // if reference is found
-    // TODO: It is not always going to be "level"
-    if (object && !isNil(object.data.level)) return { [referenceKey]: object.data.level }
-
-    return null
-  },
-}))
+EXAMPLE_STRATEGY.registerReProcessingFunction(`compute:re-processing`, GCAProcessingSymbolOptionsGenerator)
 
 // 3. The mutation function then calls Strategy.preProcess pointing to some specific mutation function as reaction (by default, compute:processing)
 EXAMPLE_STRATEGY.onPropertyUpdatedEnqueue(
@@ -161,16 +141,23 @@ EXAMPLE_STRATEGY.onPropertyUpdatedEnqueue(
     const { modes: _modes } = object.data._.GCA
     if (!_modes) return []
 
+    const options = { ...GCAProcessingBuildOptions, ...GCAProcessingSymbolOptionsGenerator(object) }
+
     const mutations: Mutation[] = []
     const integrityEntries: IntegrityEntry[] = []
 
     for (const [index, { id, name, value, bonus }] of _modes.entries()) {
       if (value) {
-        const path = { original: `_.GCA.modes[${index}].value`, target: `modes[${index}].value` }
-        const preProcessing = Strategy.preProcess(object, path, { scope: `math-enabled`, executionContext, ...GCAProcessingOptions })
+        // const path = { original: `_.GCA.modes[${index}].value`, target: `modes[${index}].value` }
+        // const procesing = Strategy.preProcess(object, path, { ...options, scope: `math-enabled` })
 
-        mutations.push(...preProcessing.mutations)
-        integrityEntries.push(...preProcessing.integrityEntries)
+        const expression = get(object.data, `_.GCA.modes[${index}].value`)
+        const processingPackage: StrategyProcessingPackage = { expression, environment: new Environment(), translationTable: new ProcessingSymbolTranslationTable() }
+
+        const processing = Strategy.process(processingPackage, object, `modes[${index}].value`, { ...options, scope: `math-enabled`, reProcessingFunction: `compute:re-processing`, ignorePackageUpdate: true })
+
+        mutations.push(...processing.mutations)
+        integrityEntries.push(...processing.integrityEntries)
       }
     }
 

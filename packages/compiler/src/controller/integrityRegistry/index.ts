@@ -88,7 +88,7 @@ export default class ObjectIntegrityRegistry extends ObjectManagerEmitter {
     if (this.__DEBUG) {
       logger.add(...paint.grey(`[`, paint.blue.dim(`integrity/`), paint.blue(`add`), `]`)).add(` `)
       logger.add(paint.white.dim(entry.key), paint.grey.dim(`: `), paint.white(entry.value)).add(` `)
-      logger.add(...explainEventTrace(trace))
+      logger.add(...explainEventTrace(trace, { eventEmitter: this.controller.eventEmitter }))
       logger.info()
     }
 
@@ -138,7 +138,7 @@ export default class ObjectIntegrityRegistry extends ObjectManagerEmitter {
     if (this.__DEBUG) {
       logger.add(...paint.grey(`[`, paint.blue.dim(`integrity/`), paint.blue(`update`), `]`)).add(` `)
       logger.add(paint.white.dim(entry.key), paint.grey.dim(`: `), paint.white(previousValue), paint.grey.dim(` -> `), paint.white.bold(entry.value)).add(` `)
-      logger.add(...explainEventTrace(trace))
+      logger.add(...explainEventTrace(trace, { eventEmitter: this.controller.eventEmitter }))
       logger.info()
     }
 
@@ -190,7 +190,7 @@ export default class ObjectIntegrityRegistry extends ObjectManagerEmitter {
     if (this.__DEBUG) {
       logger.add(...paint.grey(`[`, paint.blue.dim(`integrity/`), paint.blue(`remove`), `]`)).add(` `)
       logger.add(paint.white.dim(entry.key), paint.grey.dim(`: `), paint.white(entry.value)).add(` `)
-      logger.add(...explainEventTrace(trace))
+      logger.add(...explainEventTrace(trace, { eventEmitter: this.controller.eventEmitter }))
       logger.info()
     }
 

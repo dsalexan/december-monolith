@@ -1,16 +1,20 @@
-import { set, get, isNil, isString, cloneDeep } from "lodash"
 import assert from "assert"
+import { MaybeUndefined, NonNil } from "tsdef"
+import { set, get, isNil, isString, cloneDeep } from "lodash"
 
+import SymbolTable from "@december/tree/environment/symbolTable"
 import { Processor, Environment, ProcessedData, Simbol, ObjectSourceData } from "@december/tree"
 import { UnitManager } from "@december/utils/unit"
 import { PropertyReferencePattern } from "@december/utils/access"
+
 import MutableObject from "../object"
-import type { ProxyListenerOptions, Strategy } from "../controller/strategy"
+
+import { resolveTargetEvent, type ProxyListenerOptions, type Strategy } from "../controller/strategy"
 import { GenericMutationFrame } from "../controller/frameRegistry"
 import { IntegrityEntry } from "../controller/integrityRegistry"
 import { PROPERTY_UPDATED } from "../controller/eventEmitter/event"
 import { BareExecutionContext } from "../controller/callQueue"
-import { MaybeUndefined, NonNil } from "tsdef"
+import { createListener, GenericListener, getListenerID, Listener } from "../controller/eventEmitter/listener"
 
 export interface ProcessorOptions {
   unitManager: UnitManager
@@ -28,19 +32,23 @@ export function makeProcessor(options: ProcessorOptions): Processor {
 }
 
 // PROCESSING THINGS
-export type IsProxiableIdentifier = (symbol: Simbol) => boolean
-export type IdentifierSymbolToPropertyPattern = (symbol: Simbol, translationTable: ProcessingSymbolTranslationTable) => PropertyReferencePattern
+// export type IsProxiableIdentifier = (symbol: Simbol) => boolean
+// export type IdentifierSymbolToPropertyPattern = (symbol: Simbol, translationTable: ProcessingSymbolTranslationTable) => PropertyReferencePattern
+export type SymbolListenableChecker = (symbol: Simbol) => boolean
+export type PropertyPatternsFromSymbolGetter = (symbol: Simbol, translationTable: ProcessingSymbolTranslationTable) => PropertyReferencePattern[]
 
 export interface ProcessingSymbolsOptions {
-  isProxiableIdentifier: IsProxiableIdentifier
-  identifierSymbolToPropertyPattern: IdentifierSymbolToPropertyPattern
+  // isProxiableIdentifier: IsProxiableIdentifier
+  // identifierSymbolToPropertyPattern: IdentifierSymbolToPropertyPattern
+  canListenToSymbol: SymbolListenableChecker
+  getPropertyPatternsFromSymbol: PropertyPatternsFromSymbolGetter
 }
 
 // Basically converts a symbol to something proxiable
 export type SymbolTranslationValue = string
 
 export class ProcessingSymbolTranslationTable {
-  table: Record<string, SymbolTranslationValue>
+  table: Record<Simbol[`value`], SymbolTranslationValue> // value -> translation
   fns: ((symbol: Simbol) => SymbolTranslationValue)[] = []
 
   constructor(table: Record<string, SymbolTranslationValue> = {}) {
@@ -63,13 +71,13 @@ export class ProcessingSymbolTranslationTable {
   }
 
   public has(symbol: Simbol): boolean {
-    return !isNil(this.table[symbol.content]) || this.fns.some(fn => !isNil(fn(symbol)))
+    return !isNil(this.table[symbol.value]) || this.fns.some(fn => !isNil(fn(symbol)))
   }
 
   public get(symbol: Simbol): MaybeUndefined<SymbolTranslationValue> {
     const values: SymbolTranslationValue[] = []
 
-    const fromTable = this.table[symbol.content]
+    const fromTable = this.table[symbol.value]
     if (!isNil(fromTable)) values.push(fromTable)
 
     for (const fn of this.fns) {
@@ -77,9 +85,26 @@ export class ProcessingSymbolTranslationTable {
       if (!isNil(fromFunction)) values.push(fromFunction)
     }
 
-    assert(values.length <= 1, `Symbol ${symbol.content} has more than one translation`)
+    assert(values.length <= 1, `Symbol "${symbol.value}" has more than one translation`)
 
     return values[0]
+  }
+
+  /** Returns a collection of symbols with the same value */
+  public getSymbolCollection(): Simbol[][] {
+    const collection: Simbol[][] = []
+
+    for (const key of Object.keys(this.table)) {
+      const fakeSymbol: Simbol = {
+        node: null as any,
+        content: null as any,
+        value: key,
+      }
+
+      collection.push([fakeSymbol])
+    }
+
+    return collection
   }
 }
 
@@ -147,8 +172,7 @@ export interface NonReadyBaseProcessedReturn {
   processor: Processor
   data: ProcessedData
   //
-  saveMissingIdentifiers: (object: MutableObject) => void
-  listenForMissingIdentifiers: (addProxyListener: typeof Strategy.addProxyListener, origin: MutableObject, reProcessingFunction?: ReProcessingFunction) => void
+  listenForSymbols: (symbolTable: SymbolTable, reProcessingFunction?: ReProcessingFunction | string) => Listener[]
 }
 
 // STATE
@@ -164,65 +188,57 @@ export interface ProcessingState {
   integrityEntries: IntegrityEntry[]
   //
   isReady: boolean
-  missingIdentifiers: Simbol[]
-  listenedMissingIdentifiers: string[]
+  symbols: Record<Simbol[`content`], { symbols: Simbol[]; listened: boolean }>
 }
 
-/** Function to save missing identifiers in processing state (i.e. store missing references keeping completion from happening) */
-export const saveMissingIdentifiersGenerator: (state: ProcessingState, isProxiableIdentifier: IsProxiableIdentifier) => NonReadyBaseProcessedReturn[`saveMissingIdentifiers`] =
-  (
-    state: ProcessingState,
-    isProxiableIdentifier: IsProxiableIdentifier, //
-  ) =>
-  (object: MutableObject) => {
-    const processor = state.processor
+/** Function to listen for symbols from symbol table */
+export function listenForSymbolsGenerator(state: ProcessingState, options: ProcessingSymbolsOptions) {
+  return (symbolTable: SymbolTable, reProcessingFunction: ReProcessingFunction | string = `compute:re-processing`) => {
+    // 1. Get all symbols that can be listened to
+    const tableSymbols = symbolTable.filter(symbol => {
+      return state.package.translationTable.has(symbol) || options.canListenToSymbol(symbol)
+    })
 
-    // 1. get all identifiers that are proxiable (i.e. can be listened to by the object controller)
-    const allMissingIdentifiers = processor.preProcessed.symbolTable.filter(symbol => state.package.translationTable.has(symbol) || isProxiableIdentifier(symbol))
+    // 2. Store and listen to new symbols
+    for (const simbol of tableSymbols) {
+      const key = simbol.value
 
-    const missingIdentifiers: Simbol[] = []
-    // 2. Filter only symbols not tracked already
-    for (const symbol of allMissingIdentifiers) {
-      // TODO: Create some sort of ID for symbols
-      // NOTE: What to do when a symbol is being listened to, but stops existing? Well, this only gonna happen when the original expression changes. And that triggers an integrity entry change, which would kill the whole processing state
+      // 3. Store symbol
+      if (!state.symbols[key]) state.symbols[key] = { symbols: [simbol], listened: false }
+      else if (!state.symbols[key].symbols.find(symbol => symbol.node.id !== simbol.node.id)) state.symbols[key].symbols.push(simbol)
 
-      const byContent = state.missingIdentifiers.filter(s => s.content === symbol.content)
-      const byNode = byContent.filter(s => s.node.id === symbol.node.id)
+      if (!state.symbols[key].listened) {
+        // 4. Parse re-processing function name and arguments
+        const name = isString(reProcessingFunction) ? reProcessingFunction : reProcessingFunction.name
+        const args = isString(reProcessingFunction) ? {} : reProcessingFunction.arguments
 
-      if (byNode.length === 0) missingIdentifiers.push(symbol)
+        // 5. Update state
+        state.symbols[key].listened = true
+
+        // 6. Create listeners for symbol
+        const object = state.package.object
+        const propertyPatterns = options.getPropertyPatternsFromSymbol(simbol, state.package.translationTable)
+
+        const genericListener: GenericListener = {
+          // handle self properties (should be any here, thou)
+          targetEvent: resolveTargetEvent(object, PROPERTY_UPDATED(...propertyPatterns)),
+          // enqueue re-processing function on event (i.e. when any of the properties tied to symbol is updated)
+          callback: (event, { eventEmitter }) => {
+            eventEmitter.controller.callQueue.enqueue(object.reference(), {
+              eventDispatcher: event,
+              name,
+              arguments: { ...args, state },
+            })
+          },
+          // if any integrity entry changes, kill this listener
+          integrityEntries: state.integrityEntries,
+        }
+
+        // 7. Return full listener
+        return [createListener(object.id, genericListener)]
+      }
     }
 
-    state.missingIdentifiers.push(...missingIdentifiers)
+    return []
   }
-
-/** Function to Proxy missing references events to final processing step */
-export const listenForMissingIdentifiersGenerator: (state: ProcessingState, identifierSymbolToPropertyPattern: IdentifierSymbolToPropertyPattern) => NonReadyBaseProcessedReturn[`listenForMissingIdentifiers`] =
-  (
-    state: ProcessingState,
-    identifierSymbolToPropertyPattern: IdentifierSymbolToPropertyPattern, //
-  ) =>
-  (addProxyListener: typeof Strategy.addProxyListener, origin: MutableObject, reProcessingFunction: ReProcessingFunction | string = `compute:re-processing`) => {
-    // 1. Get symbols from state
-    const allMissingIdentifiers = state.missingIdentifiers
-    if (allMissingIdentifiers.length === 0) return
-
-    // 2. Filter only symbols WITHOUT a listener already
-    const missingIdentifiers: Simbol[] = allMissingIdentifiers.filter(symbol => !state.listenedMissingIdentifiers.includes(symbol.content))
-    const propertyPatterns = missingIdentifiers.map(simbol => identifierSymbolToPropertyPattern(simbol, state.package.translationTable))
-
-    // 3. Create proxy listener
-    const name = isString(reProcessingFunction) ? reProcessingFunction : reProcessingFunction.name
-    const args = isString(reProcessingFunction) ? {} : reProcessingFunction.arguments
-
-    addProxyListener(
-      PROPERTY_UPDATED(...propertyPatterns), //
-      name ?? `compute:processing`,
-      {
-        arguments: { ...args, state },
-        integrityEntries: state.integrityEntries,
-      },
-    )(origin)
-
-    // 4. Update state
-    state.listenedMissingIdentifiers.push(...missingIdentifiers.map(symbol => symbol.content))
-  }
+}

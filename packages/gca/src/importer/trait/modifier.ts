@@ -16,7 +16,9 @@ export default function importGCATraitModifier(index: number, raw: AnyObject, lo
   const name = raw.name?.[0] as string
   const nameext = raw.nameext?.[0] as string
 
-  logger.add(...paint.grey(paint.dim(`[modifiers/`), index, paint.dim(`/`), id, paint.dim(`] `)), paint.blue(`${name} (${nameext})`)).debug() // COMMENT
+  logger.add(...paint.grey(paint.dim(`[modifiers/`), index, paint.dim(`/`), id, paint.dim(`] `)), paint.blue(`${name}`)) // COMMENT
+  if (nameext) logger.add(paint.blue.dim(` (${nameext})`)) // COMMENT
+  logger.debug() // COMMENT
 
   // 2. Build object
   const modifier: GCATraitModifier = {

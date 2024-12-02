@@ -121,13 +121,14 @@ export default class Reducer {
 
       return PROCESS_CHILD()
     } else if (node.type.id === `identifier`) {
-      const identifier = node.content!
+      // A. Get symbol for content
+      const content = node.content!
+      const [symbol] = this.symbolTable.get(content, `content`).flat()
+      assert(symbol, `Identifier "${node.content}" is not defined in Symbol Table`)
 
-      const isSymbol = this.symbolTable.has(identifier)
-
-      assert(isSymbol, `Identifier "${node.content}" is not defined in Symbol Table`)
-
-      return this.environment.has(identifier) ? GET_VALUE(`any`) : PASS()
+      // B. Check environment by symbol's values (a "cleaner" version of content, following some pre-defined rules)
+      const key = symbol.key
+      return this.environment.has(key) ? GET_VALUE(`any`) : PASS()
     } else if (node.type.id === `literal`) {
       // TODO: Implement literality function in Environment
 
@@ -136,15 +137,19 @@ export default class Reducer {
       if (node.type.name === `number`) return GET_VALUE(`number`)
       else if (node.type.name === `quantity`) return GET_VALUE(`quantity`)
       else if (node.type.name === `string` || node.type.name === `string_collection`) {
-        const identifier = node.content!
-        const isSymbol = this.symbolTable.has(identifier)
+        // A. Get symbol for content
+        const content = node.content!
+        const [symbol] = this.symbolTable.get(content, `content`).flat()
 
         // if node is a symbol
-        if (isSymbol) {
+        if (symbol) {
+          // B. Check environment by symbol's values (a "cleaner" version of content, following some pre-defined rules)
+
           // first try to get value from Environment
           //    if it is not in Environment, transform it into a identifier
 
-          return this.environment.has(identifier) ? GET_VALUE(`any`, true) : NORMALIZE(IDENTIFIER)
+          const key = symbol.key
+          return this.environment.has(key) ? GET_VALUE(`any`, true) : NORMALIZE(IDENTIFIER)
         }
 
         debugger

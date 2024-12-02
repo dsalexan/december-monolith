@@ -506,6 +506,7 @@ export default class Builder {
     const tab = this.options.tab.size === 0 ? `` : this.options.tab.character.repeat(this.options.tab.size)
 
     const [objects, styles] = this.build(this.options.isBrowser ? `browser` : `terminal`)
+    if (objects.length === 0) debugger
 
     objects.splice(0, 0, tab)
     styles.splice(0, 0, [])

@@ -1,5 +1,5 @@
 import assert from "assert"
-import { cloneDeep, has, identity, isNil, omit } from "lodash"
+import { cloneDeep, has, identity, isNil, omit, get } from "lodash"
 import { AnyObject, MaybeArray } from "tsdef"
 
 import { arrayJoin } from "@december/utils"
@@ -15,6 +15,7 @@ import type { Event, EventDispatcher } from "../eventEmitter/event"
 import { GenericMutationFrame } from "../frameRegistry"
 import { ObjectReference, StrictObjectReference } from "../../object"
 import { CallQueue } from "./queue"
+import type ObjectController from ".."
 
 export type ArgumentProvider = (bareExecutionContext: BareExecutionContext) => AnyObject
 
@@ -37,6 +38,7 @@ export interface ExecutionContext<TEvent extends Event = Event> extends BareExec
 export interface ExplainExecutionContextOptions {
   object: ObjectReference
   queue: CallQueue
+  controller: ObjectController
 }
 
 /** Convert all arguments in an execution context to a hash */
@@ -64,15 +66,25 @@ export function getExecutionContextID(strictObject: StrictObjectReference, bareE
   return `${strictObject.toString()}::${bareExecutionContext.name}${_arguments === `` ? `` : `:${_arguments}`}`
 }
 
-export function explainExecutionContext(executionContext: ExecutionContext, { object, queue }: Partial<ExplainExecutionContextOptions> = {}): Block[] {
+export function explainExecutionContext(executionContext: ExecutionContext, { object, queue, controller }: Partial<ExplainExecutionContextOptions> = {}): Block[] {
   const blocks: Block[] = []
 
   // 1. Push basics
+  blocks.push(paint.identity.bold((object ?? executionContext.object).toString()))
+
+  const [_object] = controller?.store.getByReference(object ?? executionContext.object, false) ?? []
+  if (_object) {
+    const name: string = get(_object, `data.name`) ?? get(_object, `data._.GCA.name`)
+    if (name && name !== ``) blocks.push(paint.identity(` `), paint.grey(name))
+
+    const aliases: string[] = get(_object, `data.__.aliases`)
+    if (aliases && aliases.length > 0) blocks.push(paint.dim.grey(` (${aliases.join(`, `)})`))
+  }
+
   blocks.push(
     //
-    paint.identity.bold((object ?? executionContext.object).toString()),
     paint.identity(` `),
-    paint.identity(executionContext.name),
+    paint.magenta.dim.italic(executionContext.name),
     paint.identity(` `),
   )
 
@@ -95,9 +107,9 @@ export function explainExecutionContext(executionContext: ExecutionContext, { ob
   }
 
   if (_arguments.length > 0) {
-    blocks.push(paint.dim.grey(`{`))
+    blocks.push(paint.dim.grey(`{ `))
     blocks.push(...arrayJoin(_arguments, paint.dim.grey(`, `)).flat())
-    blocks.push(paint.dim.grey(`}`))
+    blocks.push(paint.dim.grey(` }`))
   }
 
   return blocks

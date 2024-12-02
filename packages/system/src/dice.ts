@@ -2,8 +2,9 @@ import assert from "assert"
 import { isNil, isNumber, isString, range, sum } from "lodash"
 import { Arguments, MaybeUndefined } from "tsdef"
 
-import { Node, Gardener, NodeFactory, SubTree, Grammar, Environment, ObjectSource, Processor, ProcessedData } from "./tree"
+import { Node, Gardener, NodeFactory, SubTree, Grammar, Environment, ObjectSource, Processor, ProcessingOutput } from "./tree"
 import { D6, DICE, IUnit, Quantity, UnitManager } from "./units"
+import { SymbolTable } from "../../tree/src2"
 
 export function dice(unit: IUnit, base: number, modifier?: number): SubTree {
   const gardener = Gardener.make()
@@ -25,7 +26,7 @@ export function d6(base: number, modifier?: number): SubTree {
 
 export interface DiceRollOptions {
   environment?: Environment
-  processing?: Arguments<Processor[`preProcess`]>[2]
+  processing?: ProcessingOutput
   dontRoll?: boolean
 }
 
@@ -84,15 +85,15 @@ export class DiceRoller {
     return contextualizedEnvironment
   }
 
-  public static roll(expression: string, options: DiceRollOptions): ProcessedData
-  public static roll(tree: SubTree, options: DiceRollOptions): ProcessedData
-  public static roll(expressionOrTree: string | SubTree, options: DiceRollOptions): ProcessedData {
+  public static roll(expression: string, options: DiceRollOptions): ProcessingOutput
+  public static roll(tree: SubTree, options: DiceRollOptions): ProcessingOutput
+  public static roll(expressionOrTree: string | SubTree, options: DiceRollOptions): ProcessingOutput {
     return this.getInstance().roll(expressionOrTree as any, options)
   }
 
-  public roll(expression: string, options: DiceRollOptions): ProcessedData
-  public roll(tree: SubTree, options: DiceRollOptions): ProcessedData
-  public roll(expressionOrTree: string | SubTree, options: DiceRollOptions = {}): ProcessedData {
+  public roll(expression: string, options: DiceRollOptions): ProcessingOutput
+  public roll(tree: SubTree, options: DiceRollOptions): ProcessingOutput
+  public roll(expressionOrTree: string | SubTree, options: DiceRollOptions = {}): ProcessingOutput {
     let expression: string,
       AST: MaybeUndefined<SubTree> = undefined
 
@@ -104,13 +105,16 @@ export class DiceRoller {
     }
 
     // 2. Process expresion
+    const symbolTable = new SymbolTable()
     const environment = this.getEnvironment(options)
-    const data = this.processor.preProcess(expression, environment, {
+
+    const buildOutput = this.processor.build(expression, {
       scope: `math-enabled`,
       ...options.processing,
       AST,
     })
+    const output = this.processor.resolve(buildOutput, symbolTable, environment)
 
-    return data
+    return output
   }
 }

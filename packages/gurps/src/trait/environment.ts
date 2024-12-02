@@ -38,7 +38,7 @@ export const BaseGURPSTraitEnvironment: Environment = global.gurps_BaseGURPSTrai
 export function makeGURPSTraitEnvironment(character: unknown, self: unknown) {
   const environment = BaseGURPSTraitEnvironment.clone()
 
-  environment.addObjectSource(`global`, {
+  environment.addObjectSource(`global:gurps`, {
     character: { type: `simple`, value: character },
     self: { type: `simple`, value: self },
   })

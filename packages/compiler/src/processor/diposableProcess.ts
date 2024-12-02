@@ -8,19 +8,7 @@ import { PropertyReferencePattern } from "@december/utils/access"
 import MutableObject from "../object"
 import { IntegrityEntry } from "../controller/integrityRegistry"
 
-import {
-  IdentifierSymbolToPropertyPattern,
-  IsProxiableIdentifier,
-  listenForMissingIdentifiersGenerator,
-  makeProcessor,
-  NonReadyBaseProcessedReturn,
-  ProcessingPackage,
-  ProcessingState,
-  ProcessingSymbolsOptions,
-  ProcessorOptions,
-  ReadyBaseProcessedReturn,
-  saveMissingIdentifiersGenerator,
-} from "./base"
+import { listenForSymbolsGenerator, makeProcessor, NonReadyBaseProcessedReturn, ProcessingPackage, ProcessingState, ProcessingSymbolsOptions, ProcessorOptions, ReadyBaseProcessedReturn } from "./base"
 import { GenericListener } from "../controller/eventEmitter/listener"
 import { PROPERTY_UPDATED } from "../controller/eventEmitter/event"
 import { ProxyListenerOptions, Strategy } from "../controller/strategy"
@@ -29,23 +17,23 @@ import type ObjectController from "../controller"
 
 export type ReferenceToSource = (referenceKey: string) => ObjectSourceData | null
 export interface ProcessingEnvironmentOptions {
-  referenceToSource: ReferenceToSource
+  // referenceToSource: ReferenceToSource
 }
 
-export type ReProcessOptions = ProcessorOptions & ProcessingSymbolsOptions & ProcessingEnvironmentOptions
+export type DisposableProcessOptions = ProcessorOptions & ProcessingSymbolsOptions & ProcessingEnvironmentOptions
 
 // RETURN
-export interface ReadyReProcessedReturn extends ReadyBaseProcessedReturn {
+export interface ReadyDisposableProcessedReturn extends ReadyBaseProcessedReturn {
   environment: Environment
 }
-export interface NonReadyReProcessedReturn extends NonReadyBaseProcessedReturn {
+export interface NonReadyDisposableProcessedReturn extends NonReadyBaseProcessedReturn {
   environment: Environment
 }
 
-export type ReProcessedReturn = ReadyReProcessedReturn | NonReadyReProcessedReturn
+export type DisposableProcessedReturn = ReadyDisposableProcessedReturn | NonReadyDisposableProcessedReturn
 
-/** Re-process state (usually called when some reference is resolved) */
-export function reProcess(processingPackage: ProcessingPackage, options: ReProcessOptions): ReProcessedReturn {
+/** TODO: wtf is this? */
+export function reProcess(processingPackage: ProcessingPackage, options: DisposableProcessOptions): DisposableProcessedReturn {
   const { object, path, environment } = processingPackage
 
   // 1. Get processor from state
@@ -69,11 +57,8 @@ export function reProcess(processingPackage: ProcessingPackage, options: ReProce
 
   state.isReady = false
 
-  // 4. Store missing references keeping completion from happening
-  const saveMissingIdentifiers: NonReadyReProcessedReturn[`saveMissingIdentifiers`] = saveMissingIdentifiersGenerator(state, options.isProxiableIdentifier)
-
-  // 5. Proxy missing references events to final processing step
-  const listenForMissingIdentifiers: NonReadyReProcessedReturn[`listenForMissingIdentifiers`] = listenForMissingIdentifiersGenerator(state, options.identifierSymbolToPropertyPattern)
+  // 5. Store symbols relevant to processing
+  const listenForSymbols = listenForSymbolsGenerator(state, options)
 
   return {
     isReady: false,
@@ -81,7 +66,6 @@ export function reProcess(processingPackage: ProcessingPackage, options: ReProce
     processor: state.processor,
     environment,
     //
-    saveMissingIdentifiers,
-    listenForMissingIdentifiers,
+    listenForSymbols,
   }
 }

@@ -40,7 +40,8 @@ async function run() {
   for (const { type, trait } of GCA.allTraits) {
     if (
       ![
-        11178, // ST:Bite
+        11290, // ST:Punch
+        // 11178, // ST:Bite
         12899, // SK:Karate
       ].includes(trait.id)
     )
@@ -58,6 +59,10 @@ async function run() {
   character.callQueue.execute()
 
   const _general = character.general
+
+  const punch = character.store.getByID(`11290`) // ST:Punch
+  const bite = character.store.getByID(`11178`) // ST:Bite
+  const karate = character.store.getByID(`12899`) // SK:Karate
   debugger
 }
 

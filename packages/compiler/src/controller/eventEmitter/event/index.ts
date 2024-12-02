@@ -12,9 +12,10 @@ import type { BaseEventTrace } from "./base"
 import { Nullable, WithOptionalKeys } from "tsdef"
 import { omit } from "lodash"
 import assert from "assert"
+import type ObjectEventEmitter from ".."
 
 export { INTEGRITY_ENTRY_ADDED, INTEGRITY_ENTRY_UPDATED } from "./events/integrityEntry"
-export { REFERNECE_ADDED } from "./events/reference"
+export { REFERENCE_ADDED } from "./events/reference"
 export { PROPERTY_UPDATED } from "./events/property"
 
 export type { IntegrityEntryAddedEvent, TargetIntegrityEntryAddedEvent, IntegrityEntryEventTypes, IntegrityEntryEvents, TargetIntegrityEntryEvents } from "./events/integrityEntry"
@@ -99,11 +100,25 @@ export function matchEventToTargets<TTargetableObject extends TargetableObject =
   return matchedTargetEvents.map(([targetable, matchInfo]) => ({ targetable, matches: matchInfo }))
 }
 
-export function explainEvent(event: Event): Block[] {
+export interface ExplainEventOptions {
+  eventEmitter: ObjectEventEmitter
+}
+
+export function explainEvent(event: Event, { eventEmitter }: ExplainEventOptions): Block[] {
   const blocks: Block[] = []
 
-  if (event.type === `property:updated`) blocks.push(paint.white(event.property.toString()))
-  else if (event.type === `reference:added`) blocks.push(paint.white(event.reference.toString()))
+  if (event.type === `property:updated`) {
+    blocks.push(paint.white(event.property.toString()))
+
+    const [object] = eventEmitter.controller.store.getByReference(event.property.object, false)
+    if (object) {
+      const aliases = object.getAliases()
+      if (aliases.length > 0) {
+        const [alias] = aliases
+        blocks.push(paint.dim.grey(` ${alias}:${event.property.property.toString()}`))
+      }
+    }
+  } else if (event.type === `reference:added`) blocks.push(paint.white(event.reference.toString()))
   else if (event.type === `integrity_entry:added`) blocks.push(...paint.grey.dim(`(`, paint.white(event.entry.key), `) "`, paint.grey(`${event.entry.value}`), `"`))
   else if (event.type === `integrity_entry:updated`)
     blocks.push(
@@ -152,14 +167,14 @@ export function explainTargetEvent(targetEvent: TargetEvent): Block[] {
   throw new Error(`Unimplemented event type "${targetEvent.type}"`)
 }
 
-export function explainEventTrace({ previousEvent }: EventTrace): Block[] {
+export function explainEventTrace({ previousEvent }: EventTrace, options: ExplainEventOptions): Block[] {
   const blocks: Block[] = []
 
   blocks.push(paint.cyan.dim(`${` `.repeat(1)}${`-`.repeat(29)}`))
   blocks.push(paint.cyan(`◀ `))
   blocks.push(paint.dim.cyan.italic(`(${previousEvent.type}) `))
 
-  blocks.push(...explainEvent(previousEvent))
+  blocks.push(...explainEvent(previousEvent, options))
 
   return blocks
 }
