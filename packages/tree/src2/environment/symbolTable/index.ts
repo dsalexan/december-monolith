@@ -29,7 +29,7 @@ export class Simbol {
   }
 
   get key() {
-    return this.value
+    return this.value.trim()
   }
 
   getNode() {
@@ -346,6 +346,11 @@ export default class SymbolTable {
         color(proxiedKey),
       )
     else blocks.push(color(symbol.key))
+
+    if (isPresentInEnvironment) {
+      const value = environment.get(symbol.key).getValue.call(environment, symbol)
+      blocks.push(paint.grey.dim(` (${value})`))
+    }
 
     return blocks
   }

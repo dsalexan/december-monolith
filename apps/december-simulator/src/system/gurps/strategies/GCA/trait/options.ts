@@ -16,7 +16,7 @@ import { IGURPSCharacter, IGURPSTrait, Trait } from "@december/gurps"
 import { isNameExtensionValid, Type, IGURPSTraitMode, isAlias, getAliases } from "@december/gurps/trait"
 import { DamageTable } from "@december/gurps/character"
 
-import { GCACharacter, GCATrait } from "@december/gca"
+import { GCACharacter, GCATrait, isPropertyInvoker } from "@december/gca"
 
 import { StrategyProcessBuildOptions } from "@december/compiler/controller/strategy/processing"
 
@@ -29,11 +29,20 @@ export const GCAProcessingBuildOptions: Omit<StrategyProcessBuildOptions, `scope
 export const GCAProcessingListenOptions: Omit<StrategyProcessListenOptions, `reProcessingFunction`> = {
   canListenToSymbol: symbol => {
     const key = symbol.key
-    return isAlias(key)
+
+    if (isAlias(key)) return true
+
+    const property = isPropertyInvoker(key)
+    if (property && isAlias(property.target)) return true
+
+    return false
   },
   generatePropertyPatterns: (key: Simbol[`key`], symbols: Simbol[]) => {
-    if (isAlias(key)) {
-      return [PROPERTY(REFERENCE(`alias`, key), ANY_PROPERTY)]
+    const property = isPropertyInvoker(key)
+
+    if (isAlias(key) || (property && isAlias(property.target))) {
+      const alias = isAlias(key) ? key : (property as any).target
+      return [PROPERTY(REFERENCE(`alias`, alias), ANY_PROPERTY)]
     }
 
     throw new Error(`Get property patterns from symbol "${key}" not implemented`)
@@ -51,11 +60,19 @@ export const GCAProcessingSymbolOptionsGenerator: Generator<StrategyProcessSymbo
      *    value -> symbol reference found
      */
 
-    if (isAlias(key)) {
-      const [referencedObject] = object.controller.store.getByReference(new Reference(`alias`, key), false)
+    const propertyInvoker = isPropertyInvoker(key)
+
+    if (isAlias(key) || (propertyInvoker && isAlias(propertyInvoker.target))) {
+      const alias = isAlias(key) ? key : (propertyInvoker as any).target
+
+      const [referencedObject] = object.controller.store.getByReference(new Reference(`alias`, alias), false)
       if (referencedObject) {
+        const property = propertyInvoker ? propertyInvoker.property : `level`
+
         // TODO: Do for shit other than level
-        return referencedObject._getData(referencedObject.data.level, `level`)
+        if (property !== `level`) debugger
+
+        return referencedObject._getData(referencedObject.data.level, property)
       }
     }
 

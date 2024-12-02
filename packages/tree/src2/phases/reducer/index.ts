@@ -203,10 +203,11 @@ export default class Reducer {
       const asIdentifier = instruction.asIdentifier ?? node.type.id === `identifier`
 
       if (asIdentifier) {
-        const identifier = stringValue
-        assert(this.environment.has(identifier), `Identifier "${identifier}" is not defined in Environment`)
+        const symbol = SymbolTable.symbolFromNode(node, master)!
+        const key = symbol.key
+        assert(this.environment.has(key), `Identifier "${key}" is not defined in Environment`)
 
-        const _value = this.environment.get(identifier).getValue.call(this.environment, identifier, node)
+        const _value = this.environment.get(key).getValue.call(this.environment, symbol, node)
         if (Environment.isResolved(_value)) stringValue = _value
       }
 
