@@ -5,7 +5,7 @@ import assert from "assert"
 import uuid from "@december/utils/uuid"
 
 import { Environment, Processor, Simbol } from "@december/tree"
-import SymbolTable, { SymbolIndex, SymbolValueInvoker } from "@december/tree/environment/symbolTable"
+import { SymbolKey, SymbolTable, SymbolValueInvoker } from "@december/tree/environment/symbolTable"
 import { ProcessingOutput, ProcessorBuildOptions } from "@december/tree/processor"
 
 import { UnitManager } from "@december/utils/unit"
@@ -14,7 +14,6 @@ import { PropertyReferencePattern } from "@december/utils/access"
 import MutableObject from "../../object"
 import { IntegrityEntry } from "../integrityRegistry"
 import { Mutation } from "../../mutation/mutation"
-import { ProcessingSymbolTranslationTable, SymbolTranslationValue, TranslationTableValueInvoker } from "./translationTable"
 import { resolveTargetEvent } from "."
 import { PROPERTY_UPDATED } from "../eventEmitter/event"
 import { createListener, GenericListener, Listener } from "../eventEmitter/listener"
@@ -22,16 +21,15 @@ import { GenericMutationFrame } from "../frameRegistry"
 import { BareExecutionContext } from "../callQueue"
 
 // Parsing symbol into object sourced value (i.e. ALIAS -> TRAIT and such)
-export type StrategyProcessSymbolInvoker = (key: string, symbols: Nullable<Simbol[]>, symbolKey?: SymbolTranslationValue) => Nilable<AnyObject>
-export type StrategyProcessSymbolOptions = { fetchReference: StrategyProcessSymbolInvoker }
+export type StrategyProcessSymbolOptions = { getSymbolValue: SymbolValueInvoker }
 
 // Options for full procesing (build + solve) of expressions
 export type StrategyProcessBuildOptions = ProcessorBuildOptions & { unitManager: UnitManager }
 
 // Options for listening to missing symbols
 export type ReProcessingFunction = { name: GenericMutationFrame[`name`]; arguments: NonNil<BareExecutionContext[`arguments`]> }
-export type SymbolListenableChecker = (symbol: Simbol) => boolean
-export type PropertyPatternsGenerator = (key: Simbol[`key`], symbols: Simbol[]) => PropertyReferencePattern[]
+export type SymbolListenableChecker = (symbolKey: SymbolKey) => boolean
+export type PropertyPatternsGenerator = (symbolKey: SymbolKey) => PropertyReferencePattern[]
 
 export interface StrategyProcessListenOptions {
   reProcessingFunction: ReProcessingFunction | string
@@ -42,9 +40,8 @@ export interface StrategyProcessListenOptions {
 // Interfaces for processing data
 export interface StrategyProcessingPackage {
   expression: string
-  translationTable: ProcessingSymbolTranslationTable
   environment: Environment
-  fallbackEnvironment?: Environment
+  // fallbackEnvironment?: Environment
 }
 
 export interface StrategyProcessingState {
@@ -58,8 +55,8 @@ export interface StrategyProcessingState {
   resolved: ProcessingOutput // Semantic Tree -> Resolved Tree
   fallback: MaybeUndefined<ProcessingOutput> // Semantic Tree -> Resolved Tree (with fallback environment)
   // this environments are just used to determined missing symbols for listening
-  resolvedEnvironment: Environment
-  fallbackEnvironment: MaybeUndefined<Environment>
+  environment: Environment
+  // fallbackEnvironment: MaybeUndefined<Environment>
   //
   integrityEntries: IntegrityEntry[]
   listenedSymbols: Record<Simbol[`key`], Listener[]>
@@ -79,8 +76,8 @@ export class StrategyProcessor {
    */
 
   /** Process an expression */
-  public static process(processingPackage: StrategyProcessingPackage, { fetchReference, unitManager, ...options }: StrategyProcessBuildOptions & StrategyProcessSymbolOptions): StrategyProcessingState {
-    const { expression, environment: baseEnvironment, translationTable, fallbackEnvironment: baseFallbackEnvironment } = processingPackage
+  public static process(processingPackage: StrategyProcessingPackage, { getSymbolValue, unitManager, ...options }: StrategyProcessBuildOptions & StrategyProcessSymbolOptions): StrategyProcessingState {
+    const { expression, environment: baseEnvironment } = processingPackage
 
     let symbolTable: SymbolTable // CENTRALIZED CONTROL FOR ALL SYMBOLS RELATED TO EXPRESSION
 
@@ -96,19 +93,17 @@ export class StrategyProcessor {
 
     // 3. Setup environment with translation table and symbols from centralized control
     let environment = baseEnvironment.clone()
-    translationTable.injectIntoEnvironment(environment, (translation, symbolKey) => fetchReference(translation, null, symbolKey))
-    symbolTable.injectMissingSymbolsIntoEnvironment(environment, (key, symbols) => fetchReference(key, symbols))
+    SymbolTable.injectIntoEnvironment(symbolTable.getMissingSymbolKeys(environment), environment, getSymbolValue)
 
     // 4. Loop tree resolution until no new symbols are added to environment
-    let output: ProcessingOutput = processor.solveLoop(buildOutput, symbolTable, environment, (key, symbols) => fetchReference(key, symbols))
+    let output: ProcessingOutput = processor.solveLoop(buildOutput, symbolTable, environment, getSymbolValue)
     if (processor.isReady(output)) debugger // bail out if ready
 
     // 5. Loop tree resolution with default/fallback environment (changes are not cached/stored/propagated)
     let fallbackOutput: MaybeUndefined<ProcessingOutput> = undefined
-    let fallbackEnvironment: MaybeUndefined<Environment> = undefined
-    if (baseFallbackEnvironment) {
-      fallbackEnvironment = environment.merge(baseFallbackEnvironment) // merge fallback environment into current environment
-      fallbackOutput = processor.solveLoop(output, symbolTable, fallbackEnvironment, (key, symbols) => fetchReference(key, symbols))
+    if (!processor.isReady(output)) {
+      const fallbackEnvironment: MaybeUndefined<Environment> = environment.clone() //clone current environment into a temporary fallback one
+      fallbackOutput = processor.solveLoop(output, symbolTable, fallbackEnvironment, getSymbolValue, true)
     }
 
     // [SYMBOL TABLE] By here the table is filled with all symbols through all versions of the expression tree through all reductions (both from resolved and fallback)
@@ -124,8 +119,7 @@ export class StrategyProcessor {
       resolved: output,
       fallback: fallbackOutput,
       //
-      resolvedEnvironment: environment,
-      fallbackEnvironment,
+      environment,
       //
       integrityEntries: [],
       listenedSymbols: {},
@@ -150,43 +144,39 @@ export class StrategyProcessor {
 
   /** Listen for missing symbols in centralized controller */
   public static listenForMissingSymbols(
-    { symbolTable, resolvedEnvironment, listenedSymbols, package: { translationTable }, integrityEntries }: StrategyProcessingState,
+    { symbolTable, environment, listenedSymbols, integrityEntries }: StrategyProcessingState,
     object: MutableObject,
     path: string, //
     { reProcessingFunction, canListenToSymbol, generatePropertyPatterns }: StrategyProcessListenOptions,
   ): Listener[] {
-    // 1. Get all missing symbols in both main and fallback contexts
-    const missingSymbols: Simbol[] = [...symbolTable.getMissingSymbols(resolvedEnvironment)]
+    // 1. Get all missing symbol keys in latest environment (ignore fallback env, as whatever is in there is not the value we need)
+    const missingSymbols: SymbolKey[] = symbolTable.getMissingSymbolKeys(environment)
 
     // 2. Get all missing symbols that are not already being listened to
-    const notListenedSymbolsIndex: Record<Simbol[`key`], Simbol[]> = {}
-    for (const symbol of missingSymbols) {
-      const key = symbol.key
-
+    const notListenedSymbols: SymbolKey[] = []
+    for (const symbolKey of missingSymbols) {
       // check if symbol is already being listened to
-      const isAlreadyListened = listenedSymbols[key] && listenedSymbols[key].length > 0
+      const isAlreadyListened = listenedSymbols[symbolKey] && listenedSymbols[symbolKey].length > 0
       if (isAlreadyListened) continue
 
+      if (notListenedSymbols.includes(symbolKey)) continue
+
       // if not, add to list of not listened symbols
-      notListenedSymbolsIndex[key] ??= []
-      notListenedSymbolsIndex[key].push(symbol)
+      notListenedSymbols.push(symbolKey)
     }
 
     // 3. Get listenable symbols
-    const listenableSymbols = Object.entries(notListenedSymbolsIndex)
-      .filter(([key, symbols]) => {
-        const hasTranslationKey = symbols.some(symbol => translationTable.has(symbol))
-        const isListenable = symbols.some(symbol => canListenToSymbol(symbol))
+    const listenableSymbolKeys: SymbolKey[] = notListenedSymbols.filter(symbolKey => {
+      const isListenable = canListenToSymbol(symbolKey)
 
-        return hasTranslationKey || isListenable
-      })
-      .map(([key, symbols]) => ({ key, symbols }))
+      return isListenable
+    })
 
     // 4. Create listeners for each symbol key
     const listeners: Listener[] = []
-    for (const { key, symbols } of listenableSymbols) {
+    for (const symbolKey of listenableSymbolKeys) {
       // 4.1. Get property patterns for event
-      const propertyPatterns = generatePropertyPatterns(key, symbols)
+      const propertyPatterns = generatePropertyPatterns(symbolKey)
 
       // 4.2. Parse re-processing function name and arguments
       const name = isString(reProcessingFunction) ? reProcessingFunction : reProcessingFunction.name
@@ -201,7 +191,7 @@ export class StrategyProcessor {
           eventEmitter.controller.callQueue.enqueue(object.reference(), {
             eventDispatcher: event,
             name,
-            arguments: { ...args, symbols, processingStatePath: path },
+            arguments: { ...args, symbolKey, processingStatePath: path },
           })
         },
         // if any integrity entry changes, kill this listener
@@ -213,45 +203,44 @@ export class StrategyProcessor {
       listeners.push(listener)
 
       // 4.5. Update state index with listener
-      listenedSymbols[key] ??= []
-      listenedSymbols[key].push(listener)
+      listenedSymbols[symbolKey] ??= []
+      listenedSymbols[symbolKey].push(listener)
     }
 
     return listeners
+
+    return []
   }
 
   /** Tries to solve a expression from its built processed state (usually called when a expression was already processed before) */
-  public static solve(state: StrategyProcessingState, options: StrategyProcessSymbolOptions) {
+  public static solve(state: StrategyProcessingState, { getSymbolValue }: StrategyProcessSymbolOptions) {
     const {
       processor,
       symbolTable,
       built,
-      package: { translationTable, environment: baseEnvironment, fallbackEnvironment: baseFallbackEnvironment },
+      package: { environment: baseEnvironment },
     } = state
 
     // Previous outputs are ignored in favor of a fresh processing from built tree
 
     // 1. Setup environment with translation table and symbols from centralized control
     let environment = baseEnvironment.clone()
-    translationTable.injectIntoEnvironment(baseEnvironment, (translation, symbolKey) => options.fetchReference(translation, null, symbolKey))
-    symbolTable.injectIntoEnvironment(environment, (key, symbols) => options.fetchReference(key, symbols))
+    SymbolTable.injectIntoEnvironment(symbolTable.getMissingSymbolKeys(environment), environment, getSymbolValue)
 
     // 2. Loop tree resolution with environment
-    const output = processor.solveLoop(built, symbolTable, environment, (key, symbols) => options.fetchReference(key, symbols))
+    const output = processor.solveLoop(built, symbolTable, environment, getSymbolValue)
 
     // 3. Loop tree resolution with default/fallback environment (changes are not cached/stored/propagated) IF NEEDED
     let fallbackOutput: MaybeUndefined<ProcessingOutput> = undefined
-    let fallbackEnvironment: MaybeUndefined<Environment> = undefined
-    if (!processor.isReady(output) && baseFallbackEnvironment) {
-      fallbackEnvironment = environment.merge(baseFallbackEnvironment) // merge fallback environment into current environment
-      fallbackOutput = processor.solveLoop(output, symbolTable, fallbackEnvironment, (key, symbols) => options.fetchReference(key, symbols))
+    if (!processor.isReady(output)) {
+      const fallbackEnvironment: Environment = environment.clone() // clone current environment into a temporary fallback environment
+      fallbackOutput = processor.solveLoop(output, symbolTable, fallbackEnvironment, getSymbolValue, true)
     }
 
     // 4. Update state
     state.isReady = processor.isReady(output)
     state.resolved = output
     state.fallback = fallbackOutput
-    state.resolvedEnvironment = environment
-    state.fallbackEnvironment = fallbackEnvironment
+    state.environment = environment
   }
 }

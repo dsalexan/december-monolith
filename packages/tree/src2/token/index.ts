@@ -101,7 +101,9 @@ export default class Token<TValue = any> {
   evaluate(options: EvaluatorOptions) {
     assert(this.type, `Token type not set`)
 
-    this._attributes = this.type.lexical!.evaluate(this, options) ?? {}
+    const evaluate = this.type.lexical === undefined ? options.fallbackEvaluator! : this.type.lexical!.evaluate
+
+    this._attributes = evaluate(this, options) ?? {}
   }
 
   clone(attributes?: Partial<Attributes<TValue>>) {

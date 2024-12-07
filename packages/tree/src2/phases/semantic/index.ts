@@ -10,7 +10,7 @@ import { postOrder } from "../../node/traversal"
 import { RuleSet, NodeReplacementSystem } from "../../nrs"
 
 import type { BaseProcessingOptions } from "../../options"
-import SymbolTable from "../../environment/symbolTable"
+import { SymbolTable } from "../../environment/symbolTable"
 import { evaluateTreeScope } from "../../node/scope"
 import { NODE_BALANCING } from "../../node/node/type"
 
@@ -123,7 +123,7 @@ export default class Semantic {
     this.NRS.print(`semantic`)
 
     // 2. Build and print Symbol Table
-    const symbolTable = SymbolTable.from(this.ST, this.options.scope)
+    const symbolTable = SymbolTable.from(`semantic`, this.ST, this.options)
     symbolTable.print()
   }
 }

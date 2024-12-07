@@ -1,0 +1,246 @@
+import assert from "assert"
+import { groupBy, isString, max, orderBy, sum, uniq } from "lodash"
+import { AnyObject, MaybeNull, MaybeUndefined, Nilable } from "tsdef"
+
+import generateUUID from "@december/utils/uuid"
+
+import churchill, { Block, paint, Paint } from "../../logger"
+
+import type Environment from ".."
+
+import type Node from "../../node"
+import type { SubTree } from "../../node"
+import { BY_TYPE } from "../../type/styles"
+import { MasterScope } from "../../node/scope"
+import { byLevel } from "../../node/traversal"
+import Type from "../../type/base"
+
+import Simbol, { SymbolFromNodeOptions, SymbolTagger, SymbolValueInvoker } from "./symbol"
+import { explainSymbolTable, SimbolExplainOptions } from "./explain"
+
+export const _logger = churchill.child(`tree`, undefined, { separator: `` })
+
+export default class SymbolTable {
+  // public tree: SubTree
+  public symbols: Map<string, Simbol[]> = new Map() // key -> symbol
+  // private reverse_content: Map<Simbol[`content`], string[]> = new Map() // content -> key
+  // private reverse_value: Map<Simbol[`value`], string[]> = new Map() // value -> key
+
+  constructor() {}
+
+  static from(tree: SubTree, options: SymbolFromNodeOptions) {
+    const table = new SymbolTable()
+    table.from(tree, options)
+
+    return table
+  }
+
+  reset() {
+    this.symbols.clear()
+    this.reverse_content.clear()
+    this.reverse_value.clear()
+  }
+
+  set(symbol: Simbol) {
+    const key = symbol.key
+    const content = symbol.getContent()
+    const value = symbol.getValue()
+
+    const _content = this.reverse_content.get(content) || []
+    const _value = this.reverse_value.get(value) || []
+
+    if (this.symbols.has(key)) {
+      const byContent = _content?.includes(key)
+      const byValue = _value?.includes(key)
+      const byNode = this.symbols.get(key)?.some(symbol => symbol.getNode().id === symbol.getNode().id)
+
+      // no need to set symbol if it is already indexed
+      const symbolAlreadyIndexed = byContent && byValue && byNode
+      if (symbolAlreadyIndexed) return
+    }
+
+    // assert(!this.symbols.has(key), `Symbol key (node.name) already defined`)
+
+    const symbols = this.symbols.get(key) || []
+    symbols.push(symbol)
+    this.symbols.set(key, symbols)
+  }
+
+  get(key: string, type?: `key`): MaybeUndefined<Simbol>
+  get(key: string, type: `content` | `value`): Simbol[]
+  get(key: string, type: `key` | `content` | `value` = `key`): MaybeUndefined<Simbol> | Simbol[] {
+    if (type === `key`) return this.symbols.get(key)
+    else if (type === `content` || type === `value`) {
+      if (type === `value`) debugger // WARN: Untested
+
+      const keys = type === `content` ? this.reverse_content.get(key) : this.reverse_value.get(key)
+      return keys ? keys.map(key => this.get(key)!) : []
+    }
+
+    throw new Error(`Type ${type} not implemented for searching symbol table`)
+  }
+
+  from(tree: SubTree, options: SymbolFromNodeOptions, reset: boolean = true) {
+    if (reset) this.reset()
+
+    byLevel(tree.root, node => {
+      const symbol = Simbol.fromNode(node, options)
+      if (symbol) this.set(symbol)
+    })
+  }
+
+  print() {
+    console.log(``)
+    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
+    _logger
+      .add(paint.grey(`SYMBOL TABLE`)) //
+      .info()
+    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
+
+    console.log(``)
+    if (this.symbols.size === 0) _logger.add(paint.grey.italic(`(No symbols found)`)).info()
+
+    const rows: (Block | string)[][][] = []
+
+    for (const symbol of this.symbols.values()) {
+      const node = (symbol as any).node as Simbol[`node`]
+      const content = (symbol as any).content as Simbol[`content`]
+
+      const row: (Block | string)[][] = []
+
+      const color = BY_TYPE(node.type) || paint.white
+
+      row.push([color.dim.bold(node.name), color.dim(` (${node.type.toString()})`)])
+      row.push([`  `])
+      row.push([paint.bold(content)])
+
+      rows.push(row)
+    }
+
+    for (const [i, row] of rows.entries()) {
+      for (const [j, blocks] of row.entries()) {
+        const size = max(rows.map(row => sum(row[j].map(block => block.length))))!
+        const length = sum(blocks.map(block => block.length))
+
+        const padding = size - length
+
+        for (const block of blocks) _logger.add(block instanceof String ? paint.identity(block) : block)
+        if (padding) _logger.add(` `.repeat(padding))
+      }
+
+      _logger.info()
+    }
+
+    console.log(``)
+    _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
+
+    // 2. Print mock environment object
+    const symbols = [...this.symbols.values()].flat()
+    const identifiers: Record<string, Node[]> = {}
+    for (const symbol of symbols) {
+      const node = symbol.getNode()
+      const content = symbol.getContent()
+
+      identifiers[content] ??= []
+      identifiers[content].push(node)
+
+      // if (!identifiers[symbol.content].find(node => node.id === symbol.node.id)) identifiers[symbol.content].push(symbol.node)
+    }
+
+    let _identifiers = Object.entries(identifiers) as [string, Node[]][]
+    _identifiers = orderBy(_identifiers, ([identifier]) => identifier.length, `desc`)
+
+    _logger.add(`\n`).add(` `.repeat(26)).add(paint.grey.dim(`{\n`))
+    for (const [identifier, nodes] of _identifiers) {
+      // 1. compile types
+      const nodesByType = groupBy(nodes, node => node.type.getFullName())
+
+      // 2. Print types
+      _logger.add(` `.repeat(30)) //
+      for (const [, nodes] of Object.entries(nodesByType)) {
+        const type = nodes[0].type
+
+        let color = BY_TYPE(type)
+
+        _logger
+          .add(paint.grey.dim(`// `))
+          .add(paint.white(` `.repeat(identifier.length + 1)))
+          .add(color.dim(type.id + `:`))
+          .add(color.dim.bold(type.name))
+          .add(paint.grey(`, `))
+      }
+      _logger.add(`\n`)
+
+      // 3. Print identifier
+      _logger
+        .add(` `.repeat(30)) //
+        .add(paint.grey.dim(`"`))
+        .add(paint.white(`${identifier}`))
+        .add(paint.grey.dim(`": undefined, // `))
+
+      // 3. Print lexemes
+      for (const node of Object.values(nodesByType).flat()) {
+        _logger.add(paint.grey(node.name)).add(paint.grey.dim(`, `))
+      }
+
+      _logger.add(`\n`)
+    }
+    _logger.add(`\n`).add(` `.repeat(26)).add(paint.grey.dim(`}\n`)).info()
+  }
+
+  getMissingSymbols(environment: Environment): Simbol[] {
+    const missing: Simbol[] = []
+
+    for (const [key, symbols] of this.symbols.entries()) {
+      for (const symbol of symbols) {
+        const sources: string[] = []
+
+        const keyIsMissing = !environment.has(key, sources)
+        if (keyIsMissing) missing.push(symbol)
+      }
+    }
+
+    return missing
+  }
+
+  /** Inject list of symbols into environment */
+  public injectIntoEnvironment(environment: Environment, getValue: SymbolValueInvoker): boolean {
+    return SymbolTable.injectIntoEnvironment([...this.symbols.values()].flat(), environment, getValue)
+  }
+
+  /** Inject list of missing symbols from table into environment */
+  public injectMissingSymbolsIntoEnvironment(environment: Environment, getValue: SymbolValueInvoker): boolean {
+    const missingSymbols = this.getMissingSymbols(environment)
+
+    return SymbolTable.injectIntoEnvironment(missingSymbols, environment, getValue)
+  }
+
+  /** Inject list of symbols into environment */
+  public static injectIntoEnvironment(allSymbols: Simbol[], environment: Environment, getValue: SymbolValueInvoker): boolean {
+    if (allSymbols.length === 0) return false
+
+    const id = generateUUID().substring(0, 4)
+
+    assert(!environment.hasSource(`symbolTable_${id}`), `Symbol table already exists in environment`)
+
+    // 1. Group symbols by key
+    const symbolsByKey = groupBy(allSymbols, symbol => symbol.key)
+
+    // 2. For each key, inject symbol value into source
+    const symbolsSource: AnyObject = {}
+    for (const [key, symbols] of Object.entries(symbolsByKey)) Simbol.injectIntoObjectSource(symbolsSource, key, symbols, environment, getValue)
+
+    const sourceHasData = Object.keys(symbolsSource).length > 0
+    if (!sourceHasData) return false
+
+    environment.addObjectSource(`symbolTable_${id}`, symbolsSource)
+
+    return true
+  }
+
+  explain(options: SimbolExplainOptions = {}): Block[][] {
+    return explainSymbolTable(this, options)
+  }
+}
+
+export type SymbolIndex = Record<Simbol[`key`], Simbol[]>

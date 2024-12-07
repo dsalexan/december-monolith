@@ -1,0 +1,114 @@
+import assert from "assert"
+import { groupBy, isString, max, orderBy, sum, uniq } from "lodash"
+import { AnyObject, MaybeNull, MaybeUndefined, Nilable } from "tsdef"
+
+import generateUUID from "@december/utils/uuid"
+
+import churchill, { Block, paint, Paint } from "../../logger"
+
+import type Environment from ".."
+
+import type Node from "../../node"
+import type { SubTree } from "../../node"
+import { BY_TYPE } from "../../type/styles"
+import { MasterScope } from "../../node/scope"
+import { byLevel } from "../../node/traversal"
+import Type from "../../type/base"
+
+import { explainSymbol, SimbolExplainOptions } from "./explain"
+
+export interface SymbolFromNodeOptions {
+  scope: MasterScope
+}
+
+export default class Simbol {
+  private node: Node
+  private content: string // node content for symbol
+  private value: string // node value for symbol, usually a cleaner version of content (like removing quotes)
+  //
+  public tags: string[]
+
+  constructor(node: Node, content: string, value: string) {
+    this.node = node
+    this.content = content
+    this.value = value
+  }
+
+  get key() {
+    return this.value.trim()
+  }
+
+  getNode() {
+    return this.node
+  }
+
+  getContent() {
+    return this.content
+  }
+
+  getValue() {
+    return this.value
+  }
+
+  explain(options: SimbolExplainOptions = {}): Block[] {
+    return explainSymbol(this, options)
+  }
+
+  qualify(fn: SymbolTagger) {
+    this.tags = fn(this)
+  }
+
+  static fromNode(node: Node, { scope: masterScope }: SymbolFromNodeOptions): MaybeNull<Simbol> {
+    const isNil = node.type.name === `nil`
+    const isIdentifier = node.type.id === `identifier`
+    const isNonNumericLiteral = node.type.isLiteralLike() && ![`number`, `sign`].includes(node.type.name) && !isNil
+    const isOperand = node.type.modules.includes(`operand`)
+
+    // 1. Check if node is a valid symbol
+    let isSymbol = false
+    if (masterScope === `math-enabled`) {
+      isSymbol = isIdentifier || isNonNumericLiteral
+    } else throw new Error(`Unimplemented master scope "${masterScope}"`)
+
+    if (!isSymbol) return null
+
+    // 2. Build symbol
+    const content = node.content as string
+    assert(isString(content), `Non-string content`)
+
+    let value: string = node.content as string
+    if (node.attributes.tags.includes(`from-quotes`)) value = content.slice(1, -1)
+
+    return new Simbol(node, content, value)
+  }
+
+  /** Inject a symbol key (all symbols in list have the same key) into environment */
+  public static injectIntoObjectSource(objectSource: AnyObject, key: Simbol[`key`], symbols: Simbol[], environment: Environment, getValue: SymbolValueInvoker): boolean {
+    // 1. Check if environment already has symbol
+    if (environment.has(key)) {
+      debugger
+    }
+
+    // 2. Invoke symbol value
+
+    /**
+     * valueIvoker -> returns value for symbol
+     *    null -> symbol reference not found
+     *    undefined -> fetch scenario not implemented
+     *    value -> symbol reference found
+     */
+    const value = getValue(key, symbols)
+    if (value === null) return false
+
+    const keys = uniq(symbols.map(symbol => symbol.key))
+    assert(value !== undefined, `Fetch for symbol key "${key} (${keys.join(`, `)})" not implemented`)
+
+    // 3. Set value in object source
+    objectSource[key] = value
+
+    return true
+  }
+}
+
+export type SymbolTagger = (simbol: Simbol) => string[]
+export type SymbolValueInvoker = (key: string, symbols: Simbol[]) => Nilable<AnyObject>

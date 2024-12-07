@@ -9,7 +9,9 @@ import { BaseSemanticOptions } from "./phases/semantic"
 import { BaseSimplifyOptions } from "./phases/simplify"
 import { BaseReducerOptions } from "./phases/reducer"
 import { BaseResolverOptions } from "./phases/resolver"
+
 import { SubTree } from "./node"
+import { SymbolFromNodeOptions } from "./environment/symbolTable"
 
 export interface PhaseProcessingOptions {
   parser?: BaseParserOptions
@@ -22,14 +24,14 @@ export interface PhaseProcessingOptions {
 export interface InputProcessingOptions {
   logger?: typeof _logger
   debug?: boolean
-  scope: MasterScope
   AST?: SubTree
+  //
+  scope: MasterScope
 }
 
-export interface BaseProcessingOptions {
+export interface BaseProcessingOptions extends SymbolFromNodeOptions {
   logger?: typeof _logger
   debug: boolean
-  scope: MasterScope
 }
 
 export type ProcessingOptions = BaseProcessingOptions & PhaseProcessingOptions

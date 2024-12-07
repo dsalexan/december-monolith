@@ -2,10 +2,9 @@ import assert from "assert"
 import { AnyObject } from "tsdef"
 import { get, isNil, isNumber, set } from "lodash"
 
-import { SymbolTable } from "@december/tree"
+import { ObjectSource, Simbol, SymbolTable } from "@december/tree"
 import { Strategy, Mutation, SET } from "@december/compiler"
 
-import { Generator, ProcessingSymbolTranslationTable } from "@december/compiler/controller/strategy"
 import type { StrategyProcessingPackage, StrategyProcessListenOptions, StrategyProcessBuildOptions, StrategyProcessSymbolOptions } from "@december/compiler/controller/strategy"
 import { IntegrityEntry } from "@december/compiler/controller/integrityRegistry"
 import { REFERENCE_ADDED } from "@december/compiler/controller/eventEmitter/event"
@@ -103,15 +102,17 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     const mutations: Mutation[] = []
     const integrityEntries: IntegrityEntry[] = []
 
-    const options = { ...GCAProcessingBuildOptions, ...GCAProcessingSymbolOptionsGenerator(object) }
-
     // 1. Get mode (by merger data and metadata)
     const mode = get(object._getData(object.data.modes, `modes`), modeIndex)
     const path = `modes.[${modeIndex}].damage.form`
 
     // 2. Prepare stuff to process
-    const newTranslationTable = new ProcessingSymbolTranslationTable({ [`thr`]: mode.damage.basedOn })
     const baseEnvironment = Trait.makeGURPSTraitEnvironment(object, mode)
+    baseEnvironment.addSource(ObjectSource.fromDictionary(`mode`, { [`thr`]: { type: `proxy`, value: mode.damage.basedOn } }))
+
+    // const fallbackEnvironment =
+
+    const options = { ...GCAProcessingBuildOptions, ...GCAProcessingSymbolOptionsGenerator(object) }
 
     // 3. Process expression
     const outputs: ReturnType<(typeof Strategy)[`process`]>[] = []
@@ -122,7 +123,7 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     ]
     for (const path of paths) {
       const expression = get(object.data, path.expression)
-      const processingPackage: StrategyProcessingPackage = { expression, environment: baseEnvironment, translationTable: newTranslationTable }
+      const processingPackage: StrategyProcessingPackage = { expression, environment: baseEnvironment }
 
       outputs.push(Strategy.process(processingPackage, object, path.target, { ...options, scope: `math-enabled`, reProcessingFunction: `compute:re-processing` }))
     }
@@ -148,14 +149,12 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
           .add(paint.grey.dim(` ${state.resolved.tree.expression()}`))
           .debug()
 
-        for (const [key, symbols] of state.symbolTable.symbols.entries()) {
-          const [symbol] = symbols
-
+        for (const symbol of state.symbolTable.getSymbols()) {
           logger
             .add(paint.identity(` `.repeat(10)))
             .add(paint.grey.dim(`[${object.id}/`), paint.grey(object.data.name), paint.grey.dim(`]`))
             .add(paint.identity(` `))
-            .add(...SymbolTable.explainSymbol(symbol, state.resolvedEnvironment, { hidePresent: false, translationFn: symbol => state.package.translationTable.get(symbol) }))
+            .add(...symbol.explain({ environment: state.environment, hideIfPresentInEnvironment: false }))
           logger.debug()
         }
       }

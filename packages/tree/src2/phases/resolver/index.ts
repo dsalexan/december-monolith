@@ -1,7 +1,9 @@
 import { expression, simplify } from "mathjs"
 import assert from "assert"
 import { filter, isNil, range } from "lodash"
+
 import { Interval, Point, Range } from "@december/utils"
+import generateUUID from "@december/utils/uuid"
 
 import churchill, { Block, paint, Paint } from "../../logger"
 
@@ -9,18 +11,18 @@ import Node, { PrintOptions, print, SubTree } from "../../node"
 
 import type { BaseProcessingOptions } from "../../options"
 
-import Environment from "../../environment"
+import Environment, { SymbolTable } from "../../environment"
 import { postOrder } from "../../node/traversal"
 import Simplify, { SimplifyOptions } from "../simplify"
 import Reducer, { ReducerOptions } from "../reducer"
 import { evaluateTreeScope } from "../../node/scope"
-import SymbolTable from "../../environment/symbolTable"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export interface BaseResolverOptions {
   simplify?: SimplifyOptions
   reducer?: ReducerOptions
+  includesFallback?: boolean
 }
 
 export type ResolverOptions = BaseResolverOptions & BaseProcessingOptions
@@ -30,6 +32,7 @@ export default class Resolver {
   private simplify: Simplify
   private reducer: Reducer
   //
+  private uuid: string
   private tree: SubTree
   private environment: Environment
   public result: SubTree
@@ -47,6 +50,7 @@ export default class Resolver {
       logger: options.logger ?? _logger,
       debug: options.debug ?? false,
       scope: options.scope!,
+      includesFallback: options.includesFallback ?? false,
     }
 
     return this.options
@@ -61,13 +65,14 @@ export default class Resolver {
 
     this._process(symbolTable)
 
-    return this.tree
+    return this.result
   }
 
   private _process(symbolTable: SymbolTable) {
     let i = 0
     const STACK_OVERFLOW_PROTECTION = 100
 
+    this.uuid = generateUUID().substring(0, 4).toUpperCase()
     this.result = this.tree
 
     // 1. Resolve tree
@@ -121,7 +126,7 @@ export default class Resolver {
     // 2. Reduce expression
     global.__DEBUG_LABEL = `[${i}].reduce` // COMMENT
 
-    this.reducer.process(this.simplify.SST, this.environment, this.options.reducer)
+    this.reducer.process(this.simplify.SST, this.environment, { ...(this.options.reducer ?? {}), includesFallback: (this.options.reducer ?? {}).includesFallback ?? this.options.includesFallback })
     if (__DEBUG) {
       console.log(`\n`)
       _logger.add(paint.grey(global.__DEBUG_LABEL)).info()
@@ -131,7 +136,7 @@ export default class Resolver {
     }
 
     // 3. Index symbols in centralized table
-    symbolTable.from(this.reducer.RT, this.options.scope, false)
+    symbolTable.from(`${this.uuid}_${i}`, this.reducer.RT, this.options, false)
 
     return this.reducer.RT
   }

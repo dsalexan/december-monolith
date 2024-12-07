@@ -14,7 +14,7 @@ import { WHITESPACES } from "./type/declarations/whitespace"
 import { KEYWORDS } from "./type/declarations/keyword"
 import { defaultProcessingOptions, InputProcessingOptions, PhaseProcessingOptions, ProcessingOptions } from "./options"
 import Environment from "./environment"
-import SymbolTable, { SymbolValueInvoker } from "./environment/symbolTable"
+import { SymbolTable, SymbolValueInvoker } from "./environment/symbolTable"
 import { range } from "lodash"
 import logger, { paint } from "./logger"
 import { SubTree } from "./node"
@@ -139,7 +139,7 @@ export default class Processor {
     if (DEBUG) this.semantic.print({ expression }) // COMMENT
 
     // 2. Build symbol table to track ALL symbols related to expression
-    const symbolTable = SymbolTable.from(semanticTree, this.options.scope)
+    const symbolTable = SymbolTable.from(`semantic`, semanticTree, this.options)
 
     return {
       expression,
@@ -155,12 +155,12 @@ export default class Processor {
    *
    * Can be any tree, initially would be a semantic post-building
    */
-  public resolve(processingOutput: ProcessingOutput, symbolTable: SymbolTable, environment: Environment): ProcessingOutput {
+  public resolve(processingOutput: ProcessingOutput, symbolTable: SymbolTable, environment: Environment, includesFallback: boolean = false): ProcessingOutput {
     const DEBUG = this.options.debug // COMMENT
     const { tree } = processingOutput
 
     // Resolve (simplify + reduce) semantic tree
-    const resolvedTree = this.resolver.process(tree, symbolTable, environment, this.options.resolver)
+    const resolvedTree = this.resolver.process(tree, symbolTable, environment, { ...(this.options.resolver ?? {}), includesFallback })
     if (DEBUG) this.resolver.print({ expression: this.resolver.result.expression() }) // COMMENT
 
     return {
@@ -177,17 +177,17 @@ export default class Processor {
   public isReady(output: ProcessingOutput, symbolTable?: SymbolTable): boolean
   public isReady(treeOrOutput: SubTree | ProcessingOutput, symbolTable?: SymbolTable): boolean {
     const tree: SubTree = treeOrOutput instanceof SubTree ? treeOrOutput : treeOrOutput.tree
-    symbolTable ??= SymbolTable.from(tree, this.options.scope)
+    symbolTable ??= SymbolTable.from(`temp`, tree, this.options)
 
     // 2. Check if tree is ready
-    const nonNumericIdentifiers = symbolTable.filter(simbol => simbol.getNode().type.name !== `number`)
-    const isReady = tree.height <= 2 && nonNumericIdentifiers.length === 0
+    const nonNumericSymbols = symbolTable.getNodes().filter(node => node.type.name !== `number`)
+    const isReady = tree.height <= 2 && nonNumericSymbols.length === 0
 
     return isReady
   }
 
   /** Tries to resolve tree multiple times (until no new symbols can be resolved into the environment) */
-  public solveLoop(input: ProcessingOutput, symbolTable: SymbolTable, environment: Environment, getSymbolValue: SymbolValueInvoker): ProcessingOutput {
+  public solveLoop(input: ProcessingOutput, symbolTable: SymbolTable, environment: Environment, getSymbolValue: SymbolValueInvoker, includesFallback: boolean = false): ProcessingOutput {
     let output: ProcessingOutput = input
 
     const STACK_OVERFLOW_PROTECTION = 10
@@ -198,11 +198,12 @@ export default class Processor {
       newSymbolsWereAddedToEnvironment = false
 
       // 1. resolve with current environment
-      output = this.resolve(output, symbolTable, environment)
+      output = this.resolve(output, symbolTable, environment, includesFallback)
       if (this.isReady(output)) break // stop loop if output is ready
 
       // 2. get and inject resolved symbols into environment
-      newSymbolsWereAddedToEnvironment = symbolTable.injectMissingSymbolsIntoEnvironment(environment, (key, symbols) => getSymbolValue(key, symbols))
+      const missingSymbolKeys = symbolTable.getMissingSymbolKeys(environment, includesFallback)
+      newSymbolsWereAddedToEnvironment = SymbolTable.injectIntoEnvironment(missingSymbolKeys, environment, getSymbolValue)
 
       // only loop again if new symbols were added to environment
       runs++

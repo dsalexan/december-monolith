@@ -1,17 +1,16 @@
 import assert from "assert"
 
-import SymbolTable from "./symbolTable"
+import { Simbol, SymbolTable } from "./symbolTable"
 import { BaseSource, ObjectSource } from "./source"
 
 import churchill, { Block, paint, Paint } from "../logger"
-import { IdentifiedValue, BaseIdentifier, NamedIdentifier, Identifier, IdentifiedValueReturn, StrictIdentifiedValueReturn, isResolved, MISSING_VALUE } from "./identifier"
-import { InputObjectSourceData, isSourcedValue, ObjectSourceData, SourcedValue } from "./source/object"
+import { BaseIdentifier, NamedIdentifier, Identifier, IdentifiedData, MISSING_VALUE, IdentifiedDataContext } from "./identifier"
 import { AnyObject, Nilable } from "tsdef"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-export { Simbol, default as SymbolTable } from "./symbolTable"
-export { ObjectSourceData, default as ObjectSource } from "./source/object"
+export { Simbol, SymbolTable, SymbolFromNodeOptions, SymbolValueInvoker, SymbolKey, UndefinedValue, NullValue } from "./symbolTable"
+export { ObjectSource } from "./source"
 
 export interface IndexedSource<TSource extends BaseSource = BaseSource> {
   source: TSource
@@ -21,7 +20,8 @@ export interface IndexedSource<TSource extends BaseSource = BaseSource> {
 export default class Environment {
   public sources: Map<string, IndexedSource> = new Map()
 
-  clone() {
+  /** Clone environment (and all its sources) */
+  public clone() {
     const environment = new Environment()
 
     for (const { source, index } of this.sources.values()) environment.addSource(source)
@@ -29,7 +29,8 @@ export default class Environment {
     return environment
   }
 
-  merge(other: Environment) {
+  /** Merge two environments (and its sources) into a single one */
+  public merge(other: Environment) {
     const environment = this.clone()
 
     for (const { source, index } of other.sources.values()) environment.addSource(source)
@@ -37,11 +38,13 @@ export default class Environment {
     return environment
   }
 
-  hasSource(name: string) {
+  /** Check if a environment has a named source */
+  public hasSource(name: string) {
     return this.sources.has(name)
   }
 
-  addSource(source: BaseSource) {
+  /** Add new source to environment */
+  public addSource(source: BaseSource) {
     assert(!this.hasSource(source.name), `Source "${source.name}" already exists`)
 
     const index = this.sources.size
@@ -50,44 +53,43 @@ export default class Environment {
     return source
   }
 
-  addObjectSource(name: string, data: InputObjectSourceData) {
-    const source = new ObjectSource(name)
+  // #region SOURCE PROXY METHODS
 
-    for (const [key, value] of Object.entries(data)) {
-      let sourcedValue = value as SourcedValue
-
-      if (!isSourcedValue(value)) sourcedValue = { type: `simple`, value: value }
-
-      source.object[key] = sourcedValue
-    }
-
-    this.addSource(source)
-
-    return source
-  }
-
-  _has(_identifier: Identifier | string) {
+  /** Check if environment has an identifier */
+  private _has(_identifier: Identifier | string, includesFallback: boolean = false) {
     const identifier: Identifier = typeof _identifier === `string` ? new NamedIdentifier(_identifier) : _identifier
 
     type EnvironmentMatch = { source: string }
     const matches: EnvironmentMatch[] = []
 
     for (const { source } of this.sources.values()) {
-      if (source.has(identifier)) matches.push({ source: source.name })
+      if (source.has(this, identifier, includesFallback)) matches.push({ source: source.name })
     }
 
     return matches
   }
 
-  has(_identifier: Identifier | string) {
-    return this._has(_identifier).length > 0
+  /** Check if environment has an identifier */
+  public has(_identifier: Identifier | string, { sourcesOut, includesFallback }: { sourcesOut?: string[]; includesFallback?: boolean } = {}): boolean {
+    const matches = this._has(_identifier, includesFallback)
+
+    if (sourcesOut) {
+      sourcesOut.push(...matches.map(({ source }) => source))
+    }
+
+    return matches.length > 0
   }
 
-  get(_identifier: Identifier | string, confirmedSources: string[] | null = null): IdentifiedValue {
+  /** Get value for an identifier in environment */
+  public get<TValue, TContext extends IdentifiedDataContext = null>(
+    _identifier: Identifier | string,
+    { confirmedSources, includesFallback }: { confirmedSources?: string[]; includesFallback?: boolean } = {},
+  ): IdentifiedData<TValue, TContext> {
     const identifier: Identifier = typeof _identifier === `string` ? new NamedIdentifier(_identifier) : _identifier
 
-    type EnvironmentMatch = { source: string; value: IdentifiedValue }
+    type EnvironmentMatch = { source: string; data: IdentifiedData<unknown, IdentifiedDataContext> }
     const matches: EnvironmentMatch[] = []
+    const fallbacks: EnvironmentMatch[] = []
 
     const _sources = [...this.sources.values()].map(({ source }) => source.name)
     const sources = confirmedSources ? _sources.filter(name => confirmedSources.includes(name)) : _sources
@@ -95,33 +97,37 @@ export default class Environment {
     for (const name of sources) {
       const { source } = this.sources.get(name)!
 
-      if (source.has(identifier)) {
-        const value = source.get(identifier)
-        matches.push({ source: name, value: value })
+      if (source.has(this, identifier, includesFallback)) {
+        const data = source.get(this, identifier, includesFallback)
+
+        if (data.entry.fallback) fallbacks.push({ source: name, data })
+        else matches.push({ source: name, data })
       }
     }
 
-    assert(matches.length > 0, `We should ALWAYS first check if the identifier exists before getting it`)
-    assert(matches.length === 1, `Implement handling with multiple matches`)
+    assert(matches.length > 0 || fallbacks.length > 0, `We should ALWAYS first check if the identifier exists before getting it`)
+    assert(matches.length <= 1, `Implement handling with multiple matches`)
 
-    return matches[0].value
+    return (matches[0]?.data ?? fallbacks[0].data) as IdentifiedData<TValue, TContext>
   }
 
-  get _() {
-    return {
-      get: (_identifier: Identifier | string, confirmedSources: string[] | null = null) => {
-        if (!this.has(_identifier)) return undefined
+  /** Returns a list of associated identifiers for a specific identifier (mostly just returning itself, but a corner case are PROXY IDENTIFIERS) */
+  public getAssociatedIdentifiers(_identifier: Identifier | string, includesFallback: boolean = false): Identifier[] {
+    const identifier: Identifier = typeof _identifier === `string` ? new NamedIdentifier(_identifier) : _identifier
 
-        const sourceValue = this.get(_identifier, confirmedSources)
-        const value = sourceValue.getValue.call(this, null as any, null as any)
-        if (!Environment.isResolved(value)) return undefined
+    const identifiers: Identifier[] = [identifier]
 
-        return value
-      },
+    for (const { source } of this.sources.values()) {
+      identifiers.push(...source.getAssociatedIdentifiers(this, identifier, includesFallback))
     }
+
+    return identifiers
   }
 
-  print() {
+  // #endregion
+
+  /** Prints state of environment */
+  public print() {
     const logger = _logger
 
     // 1. Print Scope
@@ -134,10 +140,4 @@ export default class Environment {
 
     console.log(this)
   }
-
-  public static isResolved<TValue = any>(value: IdentifiedValueReturn<TValue>): value is StrictIdentifiedValueReturn<TValue> {
-    return isResolved<TValue>(value)
-  }
 }
-
-export type BaseValueInvoker = (...args: any[]) => Nilable<AnyObject>

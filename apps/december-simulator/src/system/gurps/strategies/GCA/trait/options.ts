@@ -3,10 +3,10 @@ import { AnyObject } from "tsdef"
 import { get, isNil, isNumber, set } from "lodash"
 
 import { Simbol, SymbolTable } from "@december/tree"
+import { UndefinedValue, NullValue } from "@december/tree/environment"
 import { Strategy, Mutation, SET, MutableObject } from "@december/compiler"
 
-import { Generator, ProcessingSymbolTranslationTable } from "@december/compiler/controller/strategy"
-import type { StrategyProcessingPackage, StrategyProcessListenOptions, StrategyProcessSymbolOptions } from "@december/compiler/controller/strategy"
+import type { ReProcessingOptionsGenerator, StrategyProcessingPackage, StrategyProcessListenOptions, StrategyProcessSymbolOptions } from "@december/compiler/controller/strategy"
 import { IntegrityEntry } from "@december/compiler/controller/integrityRegistry"
 import { REFERENCE_ADDED } from "@december/compiler/controller/eventEmitter/event"
 
@@ -27,43 +27,40 @@ export const GCAProcessingBuildOptions: Omit<StrategyProcessBuildOptions, `scope
 }
 
 export const GCAProcessingListenOptions: Omit<StrategyProcessListenOptions, `reProcessingFunction`> = {
-  canListenToSymbol: symbol => {
-    const key = symbol.key
+  canListenToSymbol: symbolKey => {
+    if (isAlias(symbolKey)) return true
 
-    if (isAlias(key)) return true
-
-    const property = isPropertyInvoker(key)
+    const property = isPropertyInvoker(symbolKey)
     if (property && isAlias(property.target)) return true
 
     return false
   },
-  generatePropertyPatterns: (key: Simbol[`key`], symbols: Simbol[]) => {
-    const property = isPropertyInvoker(key)
+  generatePropertyPatterns: symbolKey => {
+    const property = isPropertyInvoker(symbolKey)
 
-    if (isAlias(key) || (property && isAlias(property.target))) {
-      const alias = isAlias(key) ? key : (property as any).target
+    if (isAlias(symbolKey) || (property && isAlias(property.target))) {
+      const alias = isAlias(symbolKey) ? symbolKey : (property as any).target
       return [PROPERTY(REFERENCE(`alias`, alias), ANY_PROPERTY)]
     }
 
-    throw new Error(`Get property patterns from symbol "${key}" not implemented`)
+    throw new Error(`Get property patterns from symbol "${symbolKey}" not implemented`)
   },
 }
 
-export const GCAProcessingSymbolOptionsGenerator: Generator<StrategyProcessSymbolOptions & Omit<StrategyProcessListenOptions, `reProcessingFunction`>> = (object: MutableObject) => ({
+export const GCAProcessingSymbolOptionsGenerator: ReProcessingOptionsGenerator = (object: MutableObject) => ({
   ...GCAProcessingListenOptions,
   //
-  fetchReference: (key, symbols, symbolKey) => {
+  getSymbolValue: symbolKey => {
     /**
-     * valueIvoker -> returns value for symbol
-     *    null -> symbol reference not found
-     *    undefined -> fetch scenario not implemented
-     *    value -> symbol reference found
+     * SYMBOL VALUE INVOKER -> returns value for symbol
+     *    value -> symbol reference found (be it a "real" value or UndefinedValue or NullValue)
+     *    undefined -> symbol reference not found
      */
 
-    const propertyInvoker = isPropertyInvoker(key)
+    const propertyInvoker = isPropertyInvoker(symbolKey)
 
-    if (isAlias(key) || (propertyInvoker && isAlias(propertyInvoker.target))) {
-      const alias = isAlias(key) ? key : (propertyInvoker as any).target
+    if (isAlias(symbolKey) || (propertyInvoker && isAlias(propertyInvoker.target))) {
+      const alias = isAlias(symbolKey) ? symbolKey : (propertyInvoker as any).target
 
       const [referencedObject] = object.controller.store.getByReference(new Reference(`alias`, alias), false)
       if (referencedObject) {
@@ -76,7 +73,6 @@ export const GCAProcessingSymbolOptionsGenerator: Generator<StrategyProcessSymbo
       }
     }
 
-    return null
-    // throw new Error(`Fetch for reference "${key}/${symbolKey}" not implemented`)
+    return undefined
   },
 })

@@ -17,14 +17,13 @@ import { evaluateTreeScope, MasterScope, Scope } from "../../node/scope"
 import { BOOLEAN, NUMBER, QUANTITY, STRING } from "../../type/declarations/literal"
 import Token, { NON_EVALUATED_LEXICAL_TOKEN } from "../../token"
 import Grammar from "../../type/grammar"
-import SymbolTable from "../../environment/symbolTable"
 import { IDENTIFIER } from "../../type/declarations/identifier"
 import Type from "../../type/base"
 import { getType } from "../../type"
 import { ProcessedNode } from "../../type/rules/reducer"
 import { TypeName } from "../../type/declarations/name"
 import { Arguments } from "tsdef"
-import Environment from "../../environment"
+import Environment, { Simbol, SymbolTable } from "../../environment"
 // import { Operation, Operand, doAlgebra, OPERATIONS } from "./algebra"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
@@ -58,6 +57,7 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export interface BaseReducerOptions {
   ignoreTypes?: TypeName[]
+  includesFallback?: boolean
 }
 
 export type ReducerOptions = BaseReducerOptions & BaseProcessingOptions
@@ -66,7 +66,6 @@ export default class Reducer {
   public options: ReducerOptions
   public grammar: Grammar
   //
-  private symbolTable: SymbolTable
   private environment: Environment
   private T: SubTree
   public RT: SubTree
@@ -83,6 +82,7 @@ export default class Reducer {
       debug: options.debug ?? false,
       scope: options.scope!,
       ignoreTypes: options.ignoreTypes ?? [],
+      includesFallback: options.includesFallback ?? false,
     }
 
     return this.options
@@ -121,14 +121,12 @@ export default class Reducer {
 
       return PROCESS_CHILD()
     } else if (node.type.id === `identifier`) {
-      // A. Get symbol for content
-      const content = node.content!
-      const [symbol] = this.symbolTable.get(content, `content`).flat()
-      assert(symbol, `Identifier "${node.content}" is not defined in Symbol Table`)
+      // A. Get symbol from note
+      const symbol = Simbol.fromNode(node, this.options)!
+      assert(symbol, `Identifier "${node.content}" is not a eligible symbol`)
 
-      // B. Check environment by symbol's values (a "cleaner" version of content, following some pre-defined rules)
-      const key = symbol.key
-      return this.environment.has(key) ? GET_VALUE(`any`) : PASS()
+      // B. Check environment by symbol's key
+      return this.environment.has(symbol.key, { includesFallback: this.options.includesFallback }) ? GET_VALUE(`any`) : PASS()
     } else if (node.type.id === `literal`) {
       // TODO: Implement literality function in Environment
 
@@ -137,19 +135,15 @@ export default class Reducer {
       if (node.type.name === `number`) return GET_VALUE(`number`)
       else if (node.type.name === `quantity`) return GET_VALUE(`quantity`)
       else if (node.type.name === `string` || node.type.name === `string_collection`) {
-        // A. Get symbol for content
-        const content = node.content!
-        const [symbol] = this.symbolTable.get(content, `content`).flat()
-
-        // if node is a symbol
-        if (symbol) {
-          // B. Check environment by symbol's values (a "cleaner" version of content, following some pre-defined rules)
+        // A. Check if node qualifies as a symbol (aka "unknown shit we should ask environment for")
+        if (Simbol.isNodeEligible(node, this.options)) {
+          // B. Check environment by symbol's key
 
           // first try to get value from Environment
           //    if it is not in Environment, transform it into a identifier
 
-          const key = symbol.key
-          return this.environment.has(key) ? GET_VALUE(`any`, true) : NORMALIZE(IDENTIFIER)
+          const symbol = Simbol.fromNode(node, this.options)!
+          return this.environment.has(symbol.key, { includesFallback: this.options.includesFallback }) ? GET_VALUE(`any`, true) : NORMALIZE(IDENTIFIER)
         }
 
         debugger
@@ -203,12 +197,13 @@ export default class Reducer {
       const asIdentifier = instruction.asIdentifier ?? node.type.id === `identifier`
 
       if (asIdentifier) {
-        const symbol = SymbolTable.symbolFromNode(node, master)!
+        const symbol = Simbol.fromNode(node, { ...this.options, scope: master })!
         const key = symbol.key
-        assert(this.environment.has(key), `Identifier "${key}" is not defined in Environment`)
+        assert(this.environment.has(key, { includesFallback: this.options.includesFallback }), `Identifier "${key}" is not defined in Environment`)
 
-        const _value = this.environment.get(key).getValue.call(this.environment, symbol, node)
-        if (Environment.isResolved(_value)) stringValue = _value
+        const data = this.environment.get<any>(key, { includesFallback: this.options.includesFallback })
+        const _value = data.getValue(null, { symbol, node })
+        if (data.isResolved(_value)) stringValue = _value
       }
 
       if (instruction.type === `any`) return stringValue
@@ -230,10 +225,11 @@ export default class Reducer {
         const quantity = unit.toQuantity(value)
 
         const symbol = unit.getSymbol()
-        const isIdentified = this.environment.has(symbol)
+        const isIdentified = this.environment.has(symbol, { includesFallback: this.options.includesFallback })
         if (isIdentified) {
-          const value = this.environment.get(symbol).getValue.call(this.environment, quantity, node)
-          if (!Environment.isResolved(value)) return value // probably gon be used for unit conversions
+          const data = this.environment.get<unknown, Quantity<number>>(symbol, { includesFallback: this.options.includesFallback })
+          const value = data.getValue(quantity, { node }) // (this.environment, quantity, node)
+          if (!data.isResolved(value)) return value // probably gon be used for unit conversions
         }
 
         return quantity
@@ -322,7 +318,6 @@ export default class Reducer {
 
   /** Process tree with data from environment */
   private _process() {
-    this.symbolTable = SymbolTable.from(this.T, this.options.scope)
     const result = this._processNode(this.T.root)
 
     // encapsulate processed return into a tree

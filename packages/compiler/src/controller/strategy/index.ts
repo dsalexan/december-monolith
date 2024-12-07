@@ -28,10 +28,9 @@ import { Environment } from "../../tree"
 import { StrategyProcessingState, StrategyProcessListenOptions, StrategyProcessSymbolOptions } from "./processing"
 import { MutationFunctionMetadata, MutationFunctionOutput } from "../frameRegistry/mutationFrame"
 import logger, { paint } from "../../logger"
-import SymbolTable, { SymbolValueInvoker } from "@december/tree/environment/symbolTable"
+import { SymbolTable, SymbolValueInvoker } from "@december/tree/environment/symbolTable"
 import { StrategyProcessingPackage, StrategyProcessBuildOptions, StrategyProcessor } from "./processing"
 
-export { ProcessingSymbolTranslationTable } from "./translationTable"
 export type { StrategyProcessingPackage, StrategyProcessListenOptions, StrategyProcessSymbolOptions, StrategyProcessBuildOptions } from "./processing"
 
 export type Generator<TReturn> = (object: MutableObject) => TReturn
@@ -40,18 +39,6 @@ export interface ProxyListenerOptions {
   arguments?: BareExecutionContext[`arguments`]
   integrityEntries?: IntegrityEntry[]
 }
-
-// export type PreProcessOptions = _PreProcessOptions & {
-//   name?: string
-//   environmentGenerator?: EnvironmentGenerator
-//   executionContext: BareExecutionContext
-// } & ProxyListenerOptions
-
-// export type ReProcessOptions = _ReProcessOptions & {
-//   name?: string
-//   environmentGenerator?: EnvironmentGenerator
-// } & ProxyListenerOptions
-// export type ReProcessOptionsGenerator = (controller: ObjectController) => ReProcessOptions
 
 export class Strategy {
   frameRegistry: Map<GenericMutationFrame[`name`], GenericMutationFrame>
@@ -197,10 +184,6 @@ export class Strategy {
       if (processingPackage && !options.ignorePackageUpdate) {
         assert(state.package.expression === processingPackage.expression, `Expression in processing state must be the same as the one in processing package`)
         state.package.environment = processingPackage.environment
-        state.package.translationTable = processingPackage.translationTable
-        if (state.package.fallbackEnvironment || processingPackage.fallbackEnvironment) {
-          state.package.fallbackEnvironment = processingPackage.fallbackEnvironment
-        }
       }
 
       // 2.4. Process (solve) expression
@@ -230,7 +213,7 @@ export class Strategy {
   }
 
   /** Generator for a generic re-processing (aka only solves already processed expressions) function */
-  public registerReProcessingFunction(name: GenericMutationFrame[`name`], reProcessingOptionsGenerator: Generator<StrategyProcessSymbolOptions & Omit<StrategyProcessListenOptions, `reProcessingFunction`>>): this {
+  public registerReProcessingFunction(name: GenericMutationFrame[`name`], reProcessingOptionsGenerator: ReProcessingOptionsGenerator): this {
     // 0. Create and register a standard mutation function
     this.registerMutationFunction(name, (object: MutableObject, mutationOptions: MutationFunctionMetadata) => {
       // 1. Target path in object's metadata (where processing state is stored) ALWAYS comes as an argument
@@ -313,6 +296,8 @@ export class Strategy {
 
   // #endregion
 }
+
+export type ReProcessingOptionsGenerator = Generator<StrategyProcessSymbolOptions & Omit<StrategyProcessListenOptions, `reProcessingFunction`>>
 
 export interface CommonOptions {
   integrityEntries?: GenericListener[`integrityEntries`]

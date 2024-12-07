@@ -8,6 +8,7 @@ import { TrueMatchResult } from "./match"
 
 export interface EvaluatorOptions {
   match?: TrueMatchResult
+  fallbackEvaluator?: EvaluateFunction
 }
 
 export type EvaluateFunction = (token: Token, options: EvaluatorOptions) => Partial<Attributes>

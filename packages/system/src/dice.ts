@@ -2,9 +2,10 @@ import assert from "assert"
 import { isNil, isNumber, isString, range, sum } from "lodash"
 import { Arguments, MaybeUndefined } from "tsdef"
 
+import { SymbolTable } from "@december/tree"
+
 import { Node, Gardener, NodeFactory, SubTree, Grammar, Environment, ObjectSource, Processor, ProcessingOutput } from "./tree"
 import { D6, DICE, IUnit, Quantity, UnitManager } from "./units"
-import { SymbolTable } from "../../tree/src2"
 
 export function dice(unit: IUnit, base: number, modifier?: number): SubTree {
   const gardener = Gardener.make()
@@ -53,24 +54,31 @@ export class DiceRoller {
     this.processor.initialize(this.grammar)
 
     this.rollingDice = new ObjectSource(`dice`)
-    this.rollingDice.object[`d6`] = {
-      type: `function`,
-      value: (quantity: Quantity, node: Node) => {
-        const numberOfDice = quantity.value as number
-        assert(isNumber(numberOfDice), `d6: quantity must be a number`)
+    this.rollingDice.addKeyEntry(
+      {
+        value: {
+          type: `function`,
+          value: (quantity: Quantity, { node }) => {
+            assert(node, `Node must be informed`)
 
-        const numberOfFaces = 6
+            const numberOfDice = quantity.value as number
+            assert(isNumber(numberOfDice), `d6: quantity must be a number`)
 
-        const rolls: number[] = []
-        for (let i in range(numberOfDice)) {
-          const roll = Math.floor(Math.random() * numberOfFaces) + 1
-          console.log(node.name, ` roll #${i} `, roll)
-          rolls.push(roll)
-        }
+            const numberOfFaces = 6
 
-        return sum(rolls)
+            const rolls: number[] = []
+            for (let i in range(numberOfDice)) {
+              const roll = Math.floor(Math.random() * numberOfFaces) + 1
+              console.log(node.name, ` roll #${i} `, roll)
+              rolls.push(roll)
+            }
+
+            return sum(rolls)
+          },
+        },
       },
-    }
+      `d6`,
+    )
   }
 
   public static getEnvironment(options: DiceRollOptions = {}) {

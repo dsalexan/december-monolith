@@ -17,6 +17,7 @@ import { STRING_COLLECTION } from "./../type/declarations/literal"
 import { OPERATORS_BY_NAME, OperatorType, OperatorTypeName, SIGN } from "../type/declarations/operator"
 import { IDENTIFIER } from "../type/declarations/identifier"
 import { evaluateNodeScope, MasterScope } from "./scope"
+import { LexemeEvaluateFunction } from "../phases/lexer/evaluation"
 
 type StringObject = ProvidedString | ConcreteString | string
 type GuessableVariableType = typing.VariableType | `quantity`
@@ -127,7 +128,7 @@ export default class NodeFactory {
 
     // 3. Check token evaluation
     for (const token of node.tokens) {
-      if (token.isNonEvaluated) token.evaluate({})
+      if (token.isNonEvaluated) token.evaluate({ fallbackEvaluator: LexemeEvaluateFunction })
     }
 
     return node

@@ -88,7 +88,7 @@ import * as Simplifier from "./phases/simplify"
 import * as Reducer from "./phases/reducer"
 import * as Resolver from "./phases/resolver"
 
-export { default as Environment, Simbol, ObjectSourceData, ObjectSource, SymbolTable } from "./environment"
+export { default as Environment, Simbol, ObjectSource, SymbolTable } from "./environment"
 export { default as Processor, ProcessingOutput } from "./processor"
 
 export { ProcessingOptions, defaultProcessingOptions } from "./options"
