@@ -1,5 +1,5 @@
 import { Instruction, Strategy, Computed, Parity, Reaction, Reference } from "@december/compile"
-import * as Tree from "../../../../../packages/tree/src2"
+import * as Tree from "../../../../../packages/tree/src"
 import { get, mergeWith } from "lodash"
 import type CharacterSheet from ".."
 import { generateGURPSFunctions } from "./GURPSFunctions"

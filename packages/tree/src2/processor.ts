@@ -17,7 +17,7 @@ import Environment from "./environment"
 import { SymbolTable, SymbolValueInvoker } from "./environment/symbolTable"
 import { range } from "lodash"
 import logger, { paint } from "./logger"
-import { SubTree } from "./node"
+import { print, SubTree } from "./node"
 import assert from "assert"
 import { UnitManager } from "./unit"
 import { Stage } from "./stage"
@@ -180,7 +180,12 @@ export default class Processor {
     symbolTable ??= SymbolTable.from(`temp`, tree, this.options)
 
     // 2. Check if tree is ready
-    const nonNumericSymbols = symbolTable.getNodes().filter(node => node.type.name !== `number`)
+    const nonNumericSymbols = symbolTable.getNodes().filter(node => {
+      const isNil = node.type.name === `nil`
+      const isNonNumericLiteral = node.type.isLiteralLike() && ![`number`, `sign`, `boolean`, `quantity`].includes(node.type.name) && !isNil
+
+      return isNonNumericLiteral
+    })
     const isReady = tree.height <= 2 && nonNumericSymbols.length === 0
 
     return isReady
@@ -211,7 +216,11 @@ export default class Processor {
       assert(runs <= STACK_OVERFLOW_PROTECTION, `Stack overflow protection triggered`)
     } while (newSymbolsWereAddedToEnvironment)
 
-    return output
+    return {
+      expression: output.tree.expression(),
+      tree: output.tree,
+      stage: `reduction`,
+    }
   }
 }
 

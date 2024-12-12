@@ -1,3 +1,4 @@
+import { expression } from "mathjs"
 import assert from "assert"
 import { isBoolean, isNil, isNumber, isString, last, subtract, uniqBy } from "lodash"
 
@@ -22,7 +23,7 @@ import { KEYWORD_GROUP } from "../type/declarations/keyword"
 import { getType } from "../type"
 import Token from "../token"
 import NodeFactory from "./factory"
-import { evaluateTreeScope } from "./scope"
+import { debugScopeTree, evaluateTreeScope } from "./scope"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -289,7 +290,20 @@ export default class SubTree {
 
   /** Clone SubTree */
   clone(options: Partial<TreeCloningOptions> = {}) {
-    const tree = new SubTree(this.root.clone(options))
+    const expression = this.expression()
+
+    const clonedRoot = this.root.clone(options)
+    clonedRoot.setAttributes({
+      ...(clonedRoot.attributes ?? {}),
+      originalNodes: [this.root],
+      clonedFrom: this.root.id,
+    })
+
+    const tree = new SubTree(clonedRoot)
+
+    // this.root.getTreeContent({ hideContent: true })
+    // print(this.root, { expression })
+    // this.root.getTreeContent({ hideContent: true })
 
     const queue = [this.root]
 
@@ -297,26 +311,33 @@ export default class SubTree {
     while (queue.length) {
       const originalParent = queue.shift()!
 
-      const parent = tree.root.find(node => node.id === originalParent.id)!
-
+      const parent = tree.root.find(node => node.attributes.clonedFrom === originalParent.id)!
       assert(parent, `Parent node not found`)
 
       // insert node at ST
       for (const originalNode of originalParent.children.nodes) {
+        // print(tree.root, { expression })
+
         const node = originalNode.clone(options)
 
         node.setAttributes({
           ...(node.attributes ?? {}),
           originalNodes: [originalNode],
+          clonedFrom: originalNode.id,
         })
 
         parent.children.add(node, null, { refreshIndexing: false })
 
         queue.push(originalNode) // enqueue child
+
+        // if (node.id === `184c7d02-a5bd-4b6c-8d9e-f8001d4f1a43`) debugger
+        // const aaaa = tree.root.getDebugContent({ showType: false })
       }
     }
 
+    // const aaaa2 = tree.root.getDebugContent({ showType: false })
     tree.root.refreshIndexing()
+    // const aaaa3 = tree.root.getDebugContent({ showType: false })
 
     return tree
   }

@@ -12,7 +12,7 @@ import Node, { PrintOptions, print, SubTree } from "../../node"
 import type { BaseProcessingOptions } from "../../options"
 
 import Environment, { SymbolTable } from "../../environment"
-import { postOrder } from "../../node/traversal"
+import { postOrder, preOrder } from "../../node/traversal"
 import Simplify, { SimplifyOptions } from "../simplify"
 import Reducer, { ReducerOptions } from "../reducer"
 import { evaluateTreeScope } from "../../node/scope"
@@ -76,13 +76,14 @@ export default class Resolver {
     this.result = this.tree
 
     // 1. Resolve tree
-    this.result.expression()
+    const expression = this.result.expression()
     let lastExpression = this.result.root.getContent({ wrapInParenthesis: true })
+
     while (i < STACK_OVERFLOW_PROTECTION) {
       this.result = this._resolve(this.result, symbolTable, i)
 
       // check if we can stop
-      this.result.expression()
+      const updatedExpression = this.result.expression()
       const newExpression = this.result.root.getContent({ wrapInParenthesis: true })
       if (newExpression === lastExpression && i > 0) break
 
@@ -97,7 +98,7 @@ export default class Resolver {
     // 1. Simplify expression
     global.__DEBUG_LABEL = `[${i}].simplify` // COMMENT
 
-    tree.expression()
+    const exp = tree.expression()
     const beforeSimplify = tree.root.getContent({ wrapInParenthesis: true })
 
     this.simplify.process(tree, this.environment, [], this.options.simplify)
@@ -119,6 +120,8 @@ export default class Resolver {
       console.log(`\n`)
       _logger.add(paint.grey(global.__DEBUG_LABEL)).info()
 
+      this.simplify.SST.root.getTreeContent({ hideContent: true })
+
       const expression = this.simplify.SST.expression()
       this.simplify.print({ expression })
     }
@@ -130,6 +133,8 @@ export default class Resolver {
     if (__DEBUG) {
       console.log(`\n`)
       _logger.add(paint.grey(global.__DEBUG_LABEL)).info()
+
+      this.reducer.RT.root.getTreeContent({ hideContent: true })
 
       const expression = this.reducer.RT.expression()
       this.reducer.print({ expression })

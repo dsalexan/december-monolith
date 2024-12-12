@@ -25,7 +25,7 @@ export default class Simbol {
   static isNodeEligible(node: Node, { scope: masterScope }: SymbolFromNodeOptions): boolean {
     const isNil = node.type.name === `nil`
     const isIdentifier = node.type.id === `identifier`
-    const isNonNumericLiteral = node.type.isLiteralLike() && ![`number`, `sign`].includes(node.type.name) && !isNil
+    const isNonNumericLiteral = node.type.isLiteralLike() && ![`number`, `sign`, `boolean`, `quantity`].includes(node.type.name) && !isNil
     const isOperand = node.type.modules.includes(`operand`)
 
     // 1. Check if node is a valid symbol

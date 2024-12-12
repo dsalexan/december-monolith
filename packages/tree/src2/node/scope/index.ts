@@ -2,7 +2,7 @@ import assert from "assert"
 import { intersection, isString, last, uniq } from "lodash"
 import { Nullable } from "tsdef"
 
-import Node, { SubTree } from ".."
+import Node, { print, SubTree } from ".."
 
 import { IsolationScope, MasterScope, Scope } from "./types"
 import { inContext, postOrder, preOrder } from "../traversal"
@@ -31,6 +31,8 @@ export function evaluateTreeScope(tree: SubTree, options: ScopeEvaluationOptions
   }
   // if (global.__DEBUG_LABEL_NRS === `semantic[1]:s3.a`) debugger // COMMENT
 
+  const expression = tree.expression()
+
   // 1. Evaluate scopes in isolation (bottom -> up)
   postOrder(root, node => {
     const scope = evaluateNodeScopeInIsolation(node, options)
@@ -38,6 +40,7 @@ export function evaluateTreeScope(tree: SubTree, options: ScopeEvaluationOptions
     node.setScope(`contextualized`, undefined as any)
   })
 
+  // if (__DEBUG) print(root, { expression })
   if (__DEBUG) debugScopeTree(root, `isolation`)
 
   // 2. Contextualize scope base on isolation scope
@@ -46,12 +49,14 @@ export function evaluateTreeScope(tree: SubTree, options: ScopeEvaluationOptions
     node.setScope(`contextualized`, scope)
   })
 
+  // if (__DEBUG) print(root, { expression })
   if (__DEBUG) debugScopeTree(root, `contextualized`)
   // if (global.__DEBUG_LABEL_NRS === `semantic[3]:S2.a`) debugger
 
   // 3. Resolve derivations and Spread down scope where necessary
   postOrder(root, node => evaluateSubTreeScopeInDerivation(node, options))
 
+  // if (__DEBUG) print(root, { expression })
   if (__DEBUG) debugScopeTree(root, `contextualized`)
 
   // 4. Check if all derived scopes were resolved
@@ -88,7 +93,7 @@ function evaluateNodeScopeInIsolation(node: Node, options: ScopeEvaluationOption
   // C. Node is an operator, so it really depends on the context
   if (node.type.id === `operator`) scopes.push(`possible-operator`)
   // A. Scope comes literally from literal type if everything else fails
-  else if ([`string`, `string_collection`].includes(node.type.name) || node.type.modules.includes(`numeric`) || node.type.name === `boolean`) scopes.push(`literal`)
+  else if ([`string`, `string_collection`].includes(node.type.name) || node.type.modules.includes(`numeric`) || node.type.name === `boolean` || node.type.name === `unit`) scopes.push(`literal`)
   // B. Node is enclosed by quotes
   else if (node.type.name === `quotes` || node.type.name === `identifier`) scopes.push(`confirmed-string`)
   // D. Lists derive scope from chidren (since they act like a aggregator of shit)
@@ -129,7 +134,7 @@ function contextualizedScopeInIsolation(node: Node, { master, useTreeContext }: 
   else if (scope === `logical-expression`) scopes.push(`logical`)
   else if (scope === `literal`) {
     if ([`string`, `string_collection`].includes(node.type.name)) scopes.push(`textual`)
-    else if (node.type.modules.includes(`numeric`) || node.type.name === `boolean`) scopes.push(`logical`)
+    else if (node.type.modules.includes(`numeric`) || node.type.name === `boolean` || node.type.name === `quantity` || node.type.name === `unit`) scopes.push(`logical`)
     //
     else throw new Error(`Unimplemented type "${node.type.getFullName()}" for literal isolated scope`)
   } else if (scope === `n/a`) {
@@ -164,9 +169,20 @@ function contextualizedScopeInIsolation(node: Node, { master, useTreeContext }: 
         const parentFirst = intersect(node.parent!.getScope(`isolation`), [`possible-operator`])
 
         scopes.push(parentFirst ? parentThenChildren : childrenThenParent)
+        // } else if (parentThenChildren === childrenThenParent) {
+        //   scopes.push(parentThenChildren)
       } else if (scope === `irrelevant`) {
-        // mostly for things grouping other things
-        debugger
+        // TODO: Find a way to fix this. I'm bricking a function pattern here and calling it logical
+        const isComma = node.type.name === `comma`
+        const parentIsParenthesis = node.parent?.type.name === `parenthesis`
+        const previousUncleIsTextual = node.parent?.sibling(-1)?.getScope().includes(`textual`)
+
+        const looksLikeAFunction = isComma && parentIsParenthesis && previousUncleIsTextual
+        if (looksLikeAFunction) scopes.push(`logical`)
+        else {
+          // mostly for things grouping other things
+          debugger
+        }
       }
       //
       else throw new Error(`Unimplemented derived isolated scope ${scope}`)
@@ -250,6 +266,7 @@ function evaluateSubTreeScopeInDerivation(node: Node, options: ScopeEvaluationOp
 
     if (intersect<IsolationScope>(nodeScope.isolation, [`aggregator`, `possible-operator`, `n/a`, `irrelevant`, `logical-expression`])) directive = `resolve-derived`
     else if (nodeScope.isolation.includes(`confirmed-string`)) directive = `enforce-scope`
+    else if (nodeScope.isolation.includes(`literal`) && node.type.name === `quantity`) directive = `resolve-derived` // TODO: GAMBIRRA AQUI
     //
     else throw new Error(`Unimplemented isolation scope "${nodeScope.isolation.join(`, `)}" for ${node.name} in directive decision`)
 

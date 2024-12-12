@@ -107,7 +107,9 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     const path = `modes.[${modeIndex}].damage.form`
 
     // 2. Prepare stuff to process
-    const baseEnvironment = Trait.makeGURPSTraitEnvironment(object, mode)
+    const character = object.controller.store.getByID(`general`)
+    assert(character, `Character not found`)
+    const baseEnvironment = Trait.makeGURPSTraitEnvironment(character, mode)
     baseEnvironment.addSource(ObjectSource.fromDictionary(`mode`, { [`thr`]: { type: `proxy`, value: mode.damage.basedOn } }))
 
     // const fallbackEnvironment =
@@ -122,7 +124,7 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
       { expression: `_.GCA.modes.[${modeIndex}].damage`, target: `modes.[${modeIndex}].damage.value` },
     ]
     for (const path of paths) {
-      const expression = get(object.data, path.expression)
+      let expression = get(object.data, path.expression)
       const processingPackage: StrategyProcessingPackage = { expression, environment: baseEnvironment }
 
       outputs.push(Strategy.process(processingPackage, object, path.target, { ...options, scope: `math-enabled`, reProcessingFunction: `compute:re-processing` }))
@@ -146,8 +148,17 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
         logger //
           .add(paint.identity(` `.repeat(10)))
           .add(paint.grey.dim(`[${object.id}/`), paint.grey(object.data.name), paint.grey.dim(`]`))
+          .add(paint.grey.dim.italic(` output    `))
           .add(paint.grey.dim(` ${state.resolved.tree.expression()}`))
           .debug()
+
+        if (state.fallback)
+          logger //
+            .add(paint.identity(` `.repeat(10)))
+            .add(paint.grey.dim(`[${object.id}/`), paint.grey(object.data.name), paint.grey.dim(`]`))
+            .add(paint.grey.dim.italic(` fallback  `))
+            .add(paint.grey(` ${state.fallback.tree.expression()}`))
+            .debug()
 
         for (const symbol of state.symbolTable.getSymbols()) {
           logger

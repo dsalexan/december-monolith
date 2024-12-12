@@ -11,7 +11,7 @@ import { ConcreteString, ProvidedString } from "../string"
 
 import Type from "../type/base"
 import { BOOLEAN, NIL, NUMBER, QUANTITY, STRING, UNIT, PRIMITIVE_LITERALS, PrimitiveLiteral, PRIMITIVE_LITERAL_NAMES, PrimitiveLiteralName, LITERALS_BY_NAME } from "../type/declarations/literal"
-import { FUNCTION, LIST } from "../type/declarations/enclosure"
+import { ENCLOSURES_BY_NAME, EnclosureTypeName, FUNCTION, LIST } from "../type/declarations/enclosure"
 import { ROOT } from "../type/declarations/structural"
 import { STRING_COLLECTION } from "./../type/declarations/literal"
 import { OPERATORS_BY_NAME, OperatorType, OperatorTypeName, SIGN } from "../type/declarations/operator"
@@ -256,6 +256,20 @@ export default class NodeFactory {
     }
 
     return fn
+  }
+
+  public ENCLOSURE(type: EnclosureTypeName, range: Range): Node {
+    const opener = new Token({ type: `concrete`, value: `(` }, STRING)
+    const closer = new Token({ type: `concrete`, value: `)` }, STRING)
+
+    opener.setAttributes({ traversalIndex: 0 })
+    closer.setAttributes({ traversalIndex: -1 })
+
+    const enclosure = this.make(ENCLOSURES_BY_NAME[type], range)
+
+    enclosure.addToken([opener, closer])
+
+    return enclosure
   }
 
   public QUANTITY(unitOfMeasurement: IUnit, options?: Partial<{ unitString: string; wrap: boolean }>): Node

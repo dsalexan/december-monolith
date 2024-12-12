@@ -63,6 +63,8 @@ async function run() {
   const punch = character.store.getByID(`11290`) // ST:Punch
   const bite = character.store.getByID(`11178`) // ST:Bite
   const karate = character.store.getByID(`12899`) // SK:Karate
+
+  const stuff = punch?.getProperty(`modes.[${0}].damage.value`)
   debugger
 }
 

@@ -174,8 +174,10 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
       if (dontReduce && !(condition instanceof Node)) {
         _condition.children.removeAll()
 
-        const type = getType(typing.getType(condition)!)
-        condition = NodeFactory.abstract.make(condition.toString(), type)
+        // const type = getType(typing.getType(condition)!)
+        // condition = NodeFactory.abstract.make(condition.toString(), type)
+        const conditionNode = NodeFactory.abstract.makeByGuess(condition)
+        condition = conditionNode
         _condition.syntactical.addNode(condition)
       }
 
@@ -184,16 +186,20 @@ export const CONDITIONAL = new Type(`enclosure`, `conditional`, `if`, [`context:
         if (!(consequent instanceof Node)) {
           _consequent.children.removeAll()
 
-          const type = getType(typing.getType(consequent)!)
-          consequent = NodeFactory.abstract.make(consequent.toString(), type)
+          // const type = getType(typing.getType(consequent)!)
+          // consequent = NodeFactory.abstract.make(consequent.toString(), type)
+          const consequentNode = NodeFactory.abstract.makeByGuess(consequent)
+          consequent = consequentNode
           _consequent.syntactical.addNode(consequent)
         }
 
         if (!(alternative instanceof Node)) {
           _alternative.children.removeAll()
 
-          const type = getType(typing.getType(alternative)!)
-          alternative = NodeFactory.abstract.make(alternative.toString(), type)
+          // const type = getType(typing.getType(alternative)!)
+          // alternative = NodeFactory.abstract.make(alternative.toString(), type)
+          const alternativeNode = NodeFactory.abstract.makeByGuess(alternative)
+          alternative = alternativeNode
           _alternative.syntactical.addNode(alternative)
         }
 

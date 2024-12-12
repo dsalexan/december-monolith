@@ -32,6 +32,7 @@ import {
 import { ROOT } from "../../type/declarations/structural"
 import { IsolationScope } from "../scope/types"
 import logger, { Block, paint } from "../../logger"
+import { BY_TYPE } from "../../type/styles"
 
 export const NON_EVALUATED_SCOPE = Symbol.for(`NODE:NON_EVALUATED_SCOPE`)
 
@@ -220,7 +221,7 @@ export class Node {
       ...options,
     })
   }
-  public getTreeContent(options: Partial<{ maxLevel: number }> = {}) {
+  public getTreeContent(options: Partial<{ maxLevel: number; hideContent: boolean }> = {}) {
     const maxLevel = options.maxLevel === undefined ? Infinity : options.maxLevel + this.level
 
     console.log(` `)
@@ -230,9 +231,17 @@ export class Node {
       logger.add(` `.repeat(node.level * 2))
       logger.add(...paint.grey(paint.dim(`[`), node.name, paint.dim(`]`))).add(`  `)
 
-      const content = node.blocks
-      assert(content !== null, `Huh?`)
-      logger.add(...paint.white(content))
+      if (!options.hideContent) {
+        const content = node.blocks
+        assert(content !== null, `Huh?`)
+        logger.add(...paint.white(content))
+      }
+
+      const color = BY_TYPE(node.type)
+      logger.add(color(node.type.toString()))
+      logger.add(` `)
+      logger.add(paint.grey(node.id))
+
       logger.debug()
     })
   }

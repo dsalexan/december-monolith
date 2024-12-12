@@ -7,6 +7,8 @@
 
 import { range } from "lodash"
 
+// import { defaultUnitManager } from "@december/system"
+
 import logger, { paint } from "./logger"
 
 import { UnitManager, BASE_UNITS, DICE } from "./unit"
@@ -28,7 +30,7 @@ import { WHITESPACES } from "./type/declarations/whitespace"
 import { KEYWORDS } from "./type/declarations/keyword"
 
 import { defaultProcessingOptions } from "./options"
-import Environment from "./environment"
+import Environment, { ObjectSource, SymbolTable } from "./environment"
 import { NodeFactory } from "./node"
 
 let expression = `1 + 2`
@@ -256,6 +258,7 @@ expression = `thr-1 +
     )
   )
 )`
+expression = `thr-1 + @if("AD:Claws (Blunt Claws)::level" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Feet Only) = 0 then @basethdice(ST:Punch) else @if("AD:Claws (Long Talons)::level" = 1 & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 then @basethdice(ST:Punch) else 0)) + @max(@if("SK:Brawling::level" > ST:DX+1 then @basethdice(ST:Punch) ELSE 0),@if("SK:Boxing::level" = ST:DX+1 then @basethdice(ST:Punch) ELSE @if("SK:Boxing::level" > ST:DX+1 then 2 * @basethdice(ST:Punch) ELSE 0)),@if("SK:Karate::level" = ST:DX then @basethdice(ST:Punch) ELSE @if("SK:Karate::level" > ST:DX then 2 * @basethdice(ST:Punch) ELSE 0)))`
 
 expression = expression.replaceAll(/(\r\n|\n|\r) */gm, ``)
 const options = defaultProcessingOptions({
@@ -268,6 +271,7 @@ const options = defaultProcessingOptions({
   },
   reducer: {
     ignoreTypes: [],
+    includesFallback: true,
   },
 })
 
@@ -296,16 +300,23 @@ const reducer = new Reducer(grammar)
 const resolver = new Resolver(simplify, reducer)
 
 const environment = new Environment()
-environment.addObjectSource(`test`, {
-  //                               literal:string_collection,
-  "AD:Teeth (Sharp Teeth)::level": `level`, // S4.a,
-  //                              literal:string_collection,
-  "AD:Teeth (Sharp Beak)::level": 1, // S6.a,
-  //                         literal:string_collection,
-  "AD:Teeth (Fangs)::level": 1, // S8.a,
-  //                         literal:string_collection,
-  "AD:Vampiric Bite::level": 1, // S10.a,
-})
+const source = new ObjectSource(`test`)
+source.addMatchEntry(
+  {
+    name: `fallback::trait:level:any`,
+    fallback: true,
+    value: { type: `simple`, value: 0 },
+  },
+  identifier => {
+    function isAlias(value: string) {
+      return /^\w{2}\:[\w" \(\)\,\;\s]+$/.test(value)
+    }
+
+    if (isAlias(identifier.name)) return true
+    if (identifier.name === `SK:Karate::level`) return true
+    return false
+  },
+)
 
 // 1. Print expression
 console.log(` `)
@@ -344,6 +355,8 @@ parser.print({
 semantic.process(parser.AST, [RULESET_SEMANTIC], options.semantic)
 semantic.print({ expression })
 
+const symbolTable = SymbolTable.from(`semantic`, semantic.ST, { scope: options.scope })
+
 // environment.print()
 
 // simplify.process(semantic.ST, environment, [...RULESETS_SIMPLIFY], options.simplify)
@@ -353,5 +366,5 @@ semantic.print({ expression })
 // reducer.process(simplify.SST, environment, options.reducer)
 // reducer.print({ expression: reducer.RT.expression() })
 
-resolver.process(semantic.ST, environment, options.resolver)
+resolver.process(semantic.ST, symbolTable, environment, options.resolver)
 resolver.print({ expression: resolver.result.expression() })

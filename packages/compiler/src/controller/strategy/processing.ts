@@ -150,7 +150,7 @@ export class StrategyProcessor {
     { reProcessingFunction, canListenToSymbol, generatePropertyPatterns }: StrategyProcessListenOptions,
   ): Listener[] {
     // 1. Get all missing symbol keys in latest environment (ignore fallback env, as whatever is in there is not the value we need)
-    const missingSymbols: SymbolKey[] = symbolTable.getMissingSymbolKeys(environment)
+    const missingSymbols: SymbolKey[] = symbolTable.getSymbolKeys()
 
     // 2. Get all missing symbols that are not already being listened to
     const notListenedSymbols: SymbolKey[] = []

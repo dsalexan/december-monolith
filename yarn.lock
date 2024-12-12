@@ -8762,6 +8762,72 @@ ts-node@^10.9.1:
     v8-compile-cache-lib "^3.0.1"
     yn "3.1.1"
 
+ts-sort-bubble@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-bubble/-/ts-sort-bubble-1.0.1.tgz#6f782485b76d41224af5ad3b263838fd271dee51"
+  integrity sha512-RyBJHiAti+HhEO7OOG9c6HtD4MhCG3BZcDuhNJzKUEWQPQxM7valTUPcPG1m8GaUam8A73NK3T3qwWKSZ1oSkw==
+
+ts-sort-bucket@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-bucket/-/ts-sort-bucket-1.0.1.tgz#0904ee7c333c0f4f198c586acdef19469da925c4"
+  integrity sha512-oovznJomeRwvBg3fcSC6LBLWeiKWoF1qeZ5NKM9eIZAOY4kl/p/G1u7yFjTmByD7x/RY7rbNMiZ2qBz+bFVptA==
+
+ts-sort-counting@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-counting/-/ts-sort-counting-1.0.1.tgz#1788e0e143027606c78fdaf16d4ff298f9e9e9d4"
+  integrity sha512-QGbhdIKs/0ji/7c/ya9tDAxtV3gQoUPSxaM6n/oy4WKEpdpSO/YvXf2o5eXnduAGWewiEP57PVj2Ru0YbRMsQQ==
+
+ts-sort-heap@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-heap/-/ts-sort-heap-1.0.1.tgz#2182bc74ad0e0efbe663ec84386aad1034179571"
+  integrity sha512-JpSQtB0VYNdl64LzwJZgj0BHD3cpoHvpnRj45EhcYeLjL/CMO4Se/Qq8FDrqob3u+TuZtv5G8xcx0bdPdkm5cQ==
+
+ts-sort-insertion@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-insertion/-/ts-sort-insertion-1.0.1.tgz#9a3933f0fdf3d2c73335937872202eb309de91d7"
+  integrity sha512-0Weoc8lyOV5mSVvf0dCAQpS1nZQrTUC8vR6ZSrbVPcPOz9Pvy/vYWzuqfl4jo/ZZ8XlLyIAKtVp5whHpKqXXlA==
+
+ts-sort-merge@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-merge/-/ts-sort-merge-1.0.1.tgz#def1feb98665b4b071cbf2658cc146f51e3b9904"
+  integrity sha512-zbDyJKgobrVgKmdUq+vHeddrrajK1l0ONJp4xc3MXcGxSu5Ax4cMSSLFnUeDxGhNweBl2b/CxnryVY2ekjCm7Q==
+
+ts-sort-quick@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-quick/-/ts-sort-quick-1.0.1.tgz#a221f28738b059bbf91ee5d8ee4f58dffccfbcc3"
+  integrity sha512-lJQI+uhf3eMbm+jGg3TeNPA+o6jomXlnGhqYfj3NO+2sfz2vg74Z2esgxdyieB8/j29T4R2XeJufNn5H6m+tCQ==
+
+ts-sort-radix@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-radix/-/ts-sort-radix-1.0.1.tgz#c939d26d94e82ebee67c52e70cb3ef077c96bf9c"
+  integrity sha512-L02veeuNeqaMGdU7lJY7+UZtj6xXz6rmPDe0UsTPsvgN746o9gdhn7kuPvhTh89AvcrigbWDr2gzUUX2szrjzw==
+
+ts-sort-selection@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-selection/-/ts-sort-selection-1.0.1.tgz#ddbec7e7f313bbb745bb5ac6302d0b271863ce12"
+  integrity sha512-MjJIcdwQDmXyZFW/l4jeq/6VhRRrTuV4AYwFCOTnGFrXAoaUlVZTm0ZElB5DStEtWnhvpJcX1Wd2pL4LqL9IAg==
+
+ts-sort-shell@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-shell/-/ts-sort-shell-1.0.1.tgz#185ba9d7ec910ebaf695b0bdc6c85b36ae5cdec0"
+  integrity sha512-RIO2tCtNWXEqjWa43taqGYkt+CgSVygBCPvPv9u1axUPulIUd1xvOJabsi+zGjVYZxbmF3184Gcd25JqSCyDTA==
+
+ts-sort-utils@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ts-sort-utils/-/ts-sort-utils-1.0.1.tgz#04933290aa9257b5cfd788bf68dbad248cb9bbb8"
+  integrity sha512-C8EyzfzkZiWn+xbiJ3Z5SeMpJLny2cw/FIXQeW8FcntJuWgw6EOzHW7ow/lXLpmaKkni1HwjpBT7IVVY5ulkfw==
+  dependencies:
+    ts-sort-bubble "^1.0.1"
+    ts-sort-bucket "^1.0.1"
+    ts-sort-counting "^1.0.1"
+    ts-sort-heap "^1.0.1"
+    ts-sort-insertion "^1.0.1"
+    ts-sort-merge "^1.0.1"
+    ts-sort-quick "^1.0.1"
+    ts-sort-radix "^1.0.1"
+    ts-sort-selection "^1.0.1"
+    ts-sort-shell "^1.0.1"
+
 tsconfck@^2.1.0:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/tsconfck/-/tsconfck-2.1.2.tgz#f667035874fa41d908c1fe4d765345fcb1df6e35"

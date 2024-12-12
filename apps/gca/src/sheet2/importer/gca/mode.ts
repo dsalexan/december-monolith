@@ -1,5 +1,5 @@
 import { arrayJoin, conditionalSet, isNilOrEmpty } from "@december/utils"
-import { Parser, Printer, Syntax, SyntaxNode } from "../../../../../../packages/tree/src2"
+import { Parser, Printer, Syntax, SyntaxNode } from "../../../../../../packages/tree/src"
 import { Builder, paint } from "@december/logger"
 
 import { RawTrait, RawTraitMode } from "../../trait/schema"

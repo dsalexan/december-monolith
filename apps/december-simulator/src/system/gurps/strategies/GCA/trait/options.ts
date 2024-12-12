@@ -33,6 +33,8 @@ export const GCAProcessingListenOptions: Omit<StrategyProcessListenOptions, `reP
     const property = isPropertyInvoker(symbolKey)
     if (property && isAlias(property.target)) return true
 
+    if (symbolKey === `@basethdice`) return true
+
     return false
   },
   generatePropertyPatterns: symbolKey => {
@@ -42,6 +44,8 @@ export const GCAProcessingListenOptions: Omit<StrategyProcessListenOptions, `reP
       const alias = isAlias(symbolKey) ? symbolKey : (property as any).target
       return [PROPERTY(REFERENCE(`alias`, alias), ANY_PROPERTY)]
     }
+
+    if (symbolKey === `@basethdice`) return [PROPERTY(REFERENCE(`id`, `general`), `damageTable`)]
 
     throw new Error(`Get property patterns from symbol "${symbolKey}" not implemented`)
   },
@@ -59,20 +63,31 @@ export const GCAProcessingSymbolOptionsGenerator: ReProcessingOptionsGenerator =
 
     const propertyInvoker = isPropertyInvoker(symbolKey)
 
-    if (isAlias(symbolKey) || (propertyInvoker && isAlias(propertyInvoker.target))) {
-      const alias = isAlias(symbolKey) ? symbolKey : (propertyInvoker as any).target
+    const target = propertyInvoker ? propertyInvoker.target : symbolKey
+    const property = propertyInvoker ? propertyInvoker.property : DEFAULT_PROPERTY
 
-      const [referencedObject] = object.controller.store.getByReference(new Reference(`alias`, alias), false)
+    if (target === `me`) {
+      const value = object.getProperty(property)
+      return value as any
+    } else if (isAlias(target)) {
+      const alias = target
+
+      const [referencedObject] = object.controller.store.getByReference(new Reference(`alias`, alias), false) as MutableObject<IGURPSTrait>[]
       if (referencedObject) {
-        const property = propertyInvoker ? propertyInvoker.property : `level`
+        const type = referencedObject.getProperty(`type`) as Type.TraitType
+        const effectiveProperty = property !== DEFAULT_PROPERTY ? property : type === `attribute` ? `score` : `level`
 
         // TODO: Do for shit other than level
-        if (property !== `level`) debugger
+        if (effectiveProperty !== `level` && effectiveProperty !== `score`) debugger
 
-        return referencedObject._getData(referencedObject.data.level, property)
+        const value = object.getProperty(effectiveProperty)
+        return value as any
       }
     }
 
     return undefined
   },
 })
+
+export const DEFAULT_PROPERTY = Symbol.for(`gca:default_property`)
+export type DefaultProperty = typeof DEFAULT_PROPERTY

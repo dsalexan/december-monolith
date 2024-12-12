@@ -1,6 +1,7 @@
 import { cloneDeep, isString } from "lodash"
 
 import { Range, Interval } from "@december/utils"
+import uuid from "@december/utils/uuid"
 
 import Grammar from "../../type/grammar"
 import Token from "../../token"
@@ -14,6 +15,7 @@ import { ConcreteString, ProvidedString } from "../../string"
 export interface NodeCloningOptions {
   registerOriginalNodes: boolean
   cloneSubTree: boolean
+  refreshID: boolean
 }
 
 export function clone(this: Node, options: Partial<NodeCloningOptions> = {}) {
@@ -22,7 +24,7 @@ export function clone(this: Node, options: Partial<NodeCloningOptions> = {}) {
   if (this._tokens.length > 0) node = new Node(this._tokens[0])
   else node = Node.tokenless(this._type!, this._range ? this._range.clone() : this._range)
 
-  node.id = this.id
+  node.id = options.refreshID ? uuid() : this.id
   node._tokens = this._tokens.map(token => token.clone())
 
   if (this._attributes) node._attributes = cloneDeep(this._attributes)

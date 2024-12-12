@@ -24,6 +24,7 @@ import { ProcessedNode } from "../../type/rules/reducer"
 import { TypeName } from "../../type/declarations/name"
 import { Arguments } from "tsdef"
 import Environment, { Simbol, SymbolTable } from "../../environment"
+import { IdentifiedData } from "../../environment/identifier"
 // import { Operation, Operand, doAlgebra, OPERATIONS } from "./algebra"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
@@ -133,6 +134,7 @@ export default class Reducer {
       if (master !== `math-enabled`) debugger
 
       if (node.type.name === `number`) return GET_VALUE(`number`)
+      else if (node.type.name === `boolean`) return GET_VALUE(`boolean`)
       else if (node.type.name === `quantity`) return GET_VALUE(`quantity`)
       else if (node.type.name === `string` || node.type.name === `string_collection`) {
         // A. Check if node qualifies as a symbol (aka "unknown shit we should ask environment for")
@@ -297,15 +299,13 @@ export default class Reducer {
 
       assert(isFunction(fn), `identifier "${_name.content}" is not pointing to a function in ENVIRONMENT`)
 
-      if (listOfArguments.some(arg => arg instanceof Node)) {
-        // TODO: How to handle when arguments are not yet processed?
-        debugger
-      } else {
+      const childreAreProcessed = listOfArguments.every(arg => !isNil(arg))
+      if (childreAreProcessed) {
         const value = fn(...listOfArguments)
-
-        debugger
-        return value
+        if (IdentifiedData.isResolved(value)) return value
       }
+
+      return wrapProcessedChildren(node, listOfArguments, 1)
     } else if (instruction.protocol === `custom`) {
       const { processNodeInstruction } = node.type.reduce!
       assert(processNodeInstruction, `Missing custom node reduce process`)

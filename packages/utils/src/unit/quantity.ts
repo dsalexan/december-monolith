@@ -21,3 +21,7 @@ export default class Quantity<TValue extends string | number = string | number> 
     return `${this.value}${_space}${_unit}`
   }
 }
+
+export function isQuantity(value: unknown): value is Quantity {
+  return value instanceof Quantity
+}

@@ -1,21 +1,24 @@
 import { isArray, isBoolean, isFunction, isNil, isNumber, isObjectLike, isString, isSymbol } from "lodash"
-import { VariableType } from "./types"
-import { AnyObject } from "tsdef"
+import { AnyObject, MaybeUndefined } from "tsdef"
 import assert from "assert"
+
+import { VARIABLE_TYPES, PRIMITIVE_VARIABLE_TYPES, PRIMITIVE_DEFINED_VARIABLE_TYPES } from "./types"
+import { VariableType, PrimitiveVariableType, PrimitiveDefinedVariableType } from "./types"
+
+import { isQuantity } from "../unit/quantity"
 
 export type { ITyped } from "./custom"
 export { getTypes, isOfType, isTyped } from "./custom"
 
-export type { VariableType } from "./types"
+export { VARIABLE_TYPES, DEFINED_VARIABLE_TYPES, OBJECT_VARIABLE_TYPES, PRIMITIVE_VARIABLE_TYPES, PRIMITIVE_DEFINED_VARIABLE_TYPES } from "./types"
+export type { VariableType, DefinedVariableType, ObjectVariableType, PrimitiveVariableType, PrimitiveDefinedVariableType } from "./types"
 export type Primitive = string | number | boolean | symbol | null | undefined
 export type Maybe<T> = T | undefined
 export type Nullable<T> = T | null
 
 export type Indexed<T> = T & { _index: number }
 
-// export type VariableType = `string` | `number` | `bigint` | `boolean` | `symbol` | `undefined` | `object` | `function`
-
-export function isType(value: unknown, type: VariableType) {
+export function isType(value: unknown, type: VariableType): boolean {
   if (type === `string`) return isString(value)
   else if (type === `number`) return isNumber(value)
   else if (type === `boolean`) return isBoolean(value)
@@ -25,20 +28,23 @@ export function isType(value: unknown, type: VariableType) {
 
   // ERROR: Unimplemented
   debugger
+  return false
 }
 
-export function getType(value: unknown): VariableType | undefined {
+export function getType(value: unknown): MaybeUndefined<VariableType> {
   if (isSymbol(value)) return `symbol`
   else if (isString(value)) return `string`
   else if (isNumber(value)) return `number`
   else if (isBoolean(value)) return `boolean`
   else if (isFunction(value)) return `function`
   else if (isArray(value)) return `array`
+  // else if (isQuantity(value)) return `quantity`
   else if (isObjectLike(value)) return `object`
   else if (value === undefined) return `undefined`
   else if (value === null) return `null`
 
   // ERROR: Unimplemented
+  debugger
   return undefined
 }
 
@@ -57,7 +63,7 @@ export function asType(value: unknown, type: VariableType): Primitive {
   throw new Error(`Type "${type}" not implemented`)
 }
 
-export function guessType(value: unknown): VariableType | undefined {
+export function guessType(value: unknown): MaybeUndefined<VariableType> {
   if (!isString(value)) return getType(value)
 
   const trimmed = value.trim()
@@ -74,7 +80,7 @@ export function guessType(value: unknown): VariableType | undefined {
   return `string`
 }
 
-export function isPrimitive(value: unknown): value is string | number | boolean | symbol | null | undefined {
+export function isPrimitive(value: unknown): value is PrimitiveVariableType {
   return isString(value) || isNumber(value) || isBoolean(value) || isSymbol(value) || isNil(value)
 }
 

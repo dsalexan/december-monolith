@@ -1,4 +1,4 @@
-import { Interpreter } from "../../../../packages/tree/src2"
+import { Interpreter } from "../../../../packages/tree/src"
 import { typing } from "@december/utils"
 import { isBoolean } from "lodash"
 import { z } from "zod"

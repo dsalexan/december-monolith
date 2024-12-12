@@ -1,0 +1,14 @@
+export const DEFAULT_BINDING_POWERS = {
+  DEFAULT: 0,
+  THEN_ELSE: 10 ** 2,
+  COMMA: 10 ** 3,
+  ASSIGNMENT: 10 ** 6,
+  LOGICAL: 10 ** 8,
+  RELATIONAL: 10 ** 9,
+  ADDITIVE: 10 ** 10,
+  MULTIPLICATIVE: 10 ** 11,
+  PREFIX: 10 ** 12,
+  CALL: 10 ** 13,
+  MEMBER: 10 ** 14,
+  PRIMARY: 10 ** 15,
+}

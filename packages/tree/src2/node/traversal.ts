@@ -160,6 +160,12 @@ export function binaryInOrder(node: Node, iteratee: TraversalIteratee, maxDepth 
 
   const children = node.getChildren(maxDepth)
 
+  if (children.length > 2) {
+    console.log(node.name, `    `, node.tokens.map(t => t.lexeme).join(`, `))
+    console.log(`(children)`)
+    for (const child of children) console.log(child.name, `    `, child.tokens.map(t => t.lexeme).join(`, `))
+  }
+
   assert(children.length <= 2, `Binary nodes must have at most 2 children`)
   assert(node.tokens.length <= 1, `Binary nodes must have at most 1 token`)
 

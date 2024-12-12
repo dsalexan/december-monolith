@@ -82,11 +82,13 @@ export class NodeReplacementSystem {
   public processNode(node: Node, context: Omit<NodeReplacementSystemContext, `hash` | `wasRuleExecuted`>): Node | typeof NODE_REMOVED | false {
     let __DEBUG = false // COMMENT
     // __DEBUG = context.tag === `simplify` // COMMENT
+    // __DEBUG = global.__DEBUG_LABEL === `[1].simplify` // COMMENT
     // __DEBUG = global.__DEBUG // COMMENT
     global.__DEBUG_LABEL_NRS = `${context.tag}[${context.run}]:${node.name}` // COMMENT
 
     // if (global.__DEBUG_LABEL_NRS === `simplify[2]:+1.a`) debugger // COMMENT
     // if (node.name === `f1.a`) debugger
+    // if (__DEBUG) debugger // COMMENT
 
     const trace: RuleSetMutationTrace = {
       previousNodeState: {

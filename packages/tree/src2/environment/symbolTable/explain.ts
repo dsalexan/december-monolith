@@ -1,5 +1,5 @@
 import assert from "assert"
-import { groupBy, isString, max, orderBy, sum, uniq } from "lodash"
+import { groupBy, isFunction, isString, max, orderBy, sum, uniq } from "lodash"
 import { AnyObject, MaybeNull, MaybeUndefined, Nilable, Nullable } from "tsdef"
 
 import churchill, { Block, paint, Paint } from "../../logger"
@@ -56,7 +56,8 @@ export function explainSymbol(symbol: Simbol, { environment, hideIfPresentInEnvi
   // 3. Paint environment value if present
   if (environment && (isPresentInEnvironment || hasFallback)) {
     const data = environment.get(symbol.key, { includesFallback: true })
-    const value = data.getValue(null, { symbol })
+    let value = data.getValue(null, { symbol })
+    if (isFunction(value)) value = `${data.entry.name}(...) {...}`
 
     blocks.push(paint.grey.dim(` (${value})`))
   }

@@ -11,6 +11,7 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export { Simbol, SymbolTable, SymbolFromNodeOptions, SymbolValueInvoker, SymbolKey, UndefinedValue, NullValue } from "./symbolTable"
 export { ObjectSource } from "./source"
+export { NON_RESOLVED_VALUE } from "./identifier"
 
 export interface IndexedSource<TSource extends BaseSource = BaseSource> {
   source: TSource

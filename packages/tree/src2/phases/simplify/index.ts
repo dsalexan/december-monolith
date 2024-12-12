@@ -10,7 +10,7 @@ import Grammar from "../../type/grammar"
 import { STRING_COLLECTION } from "../../type/declarations/literal"
 import Node, { PrintOptions, print, SubTree } from "../../node"
 
-import { inOrder, postOrder } from "../../node/traversal"
+import { defaultInOrderBehaviour, inOrder, postOrder, preOrder } from "../../node/traversal"
 
 import { RuleSet, NodeReplacementSystem } from "../../nrs"
 
@@ -103,27 +103,46 @@ export default class Simplify {
 
   /** Simplify Semantic Tree based on environment */
   private _simplifySemanticTree(ST: SubTree, environment: Environment) {
-    const __DEBUG = true // COMMENT
+    let __DEBUG = false // COMMENT
+    // __DEBUG = global.__DEBUG_LABEL === `[1].simplify` // COMMENT
     global.__DEBUG_TREE_PHASE = `simplify` // COMMENT
 
     this.NRS = new NodeReplacementSystem()
     this.NRS.setRulesets(this.rulesets)
 
     // ST.root.debug()
+    // const exp = ST.expression(true)
+    // console.log(exp)
+    // console.log(`.`)
+
+    // if (__DEBUG) debugger // COMMENT
 
     const tree = ST.clone()
-    evaluateTreeScope(tree, { master: this.options.scope })
+
+    // _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
+    // _logger
+    //   .add(paint.grey(`WTF IS WRONG HERE?`)) //
+    //   .info()
+    // _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
+
+    // tree.root.getTreeContent({ hideContent: true })
+    // print(tree.root, { expression: exp })
+
+    // const aaaa2 = tree.root.getDebugContent({ showType: false })
+    // evaluateTreeScope(tree, { master: this.options.scope })
 
     // tree.root.debug()
+    // console.log(tree.expression(true))
+    // console.log(`.`)
 
-    this.NRS.process(tree.root, {
-      operationOptions: { refreshIndexing: false },
-      scope: this.options.scope,
-      grammar: this.grammar,
-      //
-      tag: `simplify`,
-      run: 1,
-    })
+    // this.NRS.process(tree.root, {
+    //   operationOptions: { refreshIndexing: false },
+    //   scope: this.options.scope,
+    //   grammar: this.grammar,
+    //   //
+    //   tag: `simplify`,
+    //   run: 1,
+    // })
 
     tree.root.refreshIndexing()
 

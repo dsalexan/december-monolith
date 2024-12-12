@@ -7,6 +7,7 @@ import { isPrimitive } from "@december/utils/typing"
 import { Node } from "./base"
 
 export interface SemanticalAttributes {
+  clonedFrom?: Node[`id`]
   originalNodes?: Node[]
   tags: string[]
   reorganized?: boolean

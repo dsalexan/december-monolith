@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { Interpreter } from "../../../../packages/tree/src2"
+import { Interpreter } from "../../../../packages/tree/src"
 import { Computed } from "@december/compile"
 
 export const MetadataSchema = z.object({

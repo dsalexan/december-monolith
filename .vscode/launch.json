@@ -151,11 +151,23 @@
     {
       "type": "node-terminal",
       "request": "launch",
-      "name": "v4 (Tree)",
+      "name": "v4 (Tree/lexer)",
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src2\\test.ts",
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src\\tests\\lexer.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "v4 (Tree/parser)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src\\tests\\parser.ts",
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },
@@ -167,7 +179,7 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src2\\testWrapper.ts",
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src\\testWrapper.ts",
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },
@@ -215,7 +227,7 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src2\\environment\\unit\\test.ts",
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src\\environment\\unit\\test.ts",
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },

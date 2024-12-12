@@ -11,7 +11,7 @@ import type MutableObject from "../object"
 import type { Mutation } from "../mutation/mutation"
 import { Strategy } from "../strategy"
 import assert from "assert"
-import { ObjectSourceData } from "../../../tree/src2/environment/source/object"
+import { ObjectSourceData } from "../../../tree/src/environment/source/object"
 import { Event_Listen } from "../manager/events"
 import { IntegrityEntry } from "../controller/integrityRegistry"
 

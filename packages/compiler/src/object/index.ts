@@ -1,7 +1,7 @@
 // import { MutationInstruction } from "./../mutation/instruction"
 
 import { EventEmitter } from "@billjs/event-emitter"
-import { cloneDeep, get, isArray, isEqual, isString, set } from "lodash"
+import { cloneDeep, get, isArray, isEqual, isString, last, set, toPath } from "lodash"
 import assert from "assert"
 import { AnyObject } from "tsdef"
 
@@ -66,7 +66,7 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
   public metadata: Record<string, any> = {}
 
   public getData(path: string = ``): TData {
-    return this._getData(this.data, ``) as TData
+    return this._getData(this.data, path) as TData
   }
 
   public _getData<TData>(value: any, path: string = ``): TData {
@@ -92,6 +92,11 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     for (const [key, local] of Object.entries(value)) other[key] = this._getData(local, `${path}.${key}`)
 
     return other as any
+  }
+
+  public getProperty<TKey extends keyof TData>(path: TKey): TData[TKey] {
+    const _path = toPath(path)
+    return this._getData(get(this.data, path), last(_path)!)
   }
 
   /** Store metadata in object (and also reference in "regular" data) */
