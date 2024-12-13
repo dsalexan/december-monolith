@@ -11,8 +11,8 @@ export class BinaryExpression extends Expression {
     super()
     this.operator = operator
 
-    this.addChild(left, 0)
-    this.addChild(right, 1)
+    this.addChild(left, 0, `left`)
+    this.addChild(right, 1, `right`)
   }
 
   public get left(): Expression {
@@ -30,8 +30,8 @@ export class CallExpression extends Expression {
   constructor(callee: Expression, args: Expression[]) {
     super()
 
-    this.addChild(callee, 0)
-    for (const arg of args) this.addChild(arg)
+    this.addChild(callee, 0, `callee`)
+    for (const [i, arg] of args.entries()) this.addChild(arg, i + 1, `arg${i}`)
   }
 
   public get callee(): Expression {
@@ -51,7 +51,7 @@ export class MemberExpression extends Expression {
     super()
     this.property = property
 
-    this.addChild(object, 0)
+    this.addChild(object, 0, `object`)
   }
 
   public get object(): Expression {
@@ -67,7 +67,7 @@ export class PrefixExpression extends Expression {
     super()
     this.operator = operator
 
-    this.addChild(right, 0)
+    this.addChild(right, 0, `right`)
   }
 
   public get right(): Expression {

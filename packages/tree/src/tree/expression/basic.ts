@@ -13,6 +13,10 @@ export class Identifier extends Expression {
     super()
     this.variableName = variableName
   }
+
+  public override getDebug(): string {
+    return `{${this.variableName.content}}`
+  }
 }
 
 export class NumericLiteral extends Expression {
@@ -28,6 +32,10 @@ export class NumericLiteral extends Expression {
     const color = NODE_TYPE_COLOR[this.type] ?? paint.red
     return [color(this.value.toString())]
   }
+
+  public override getDebug(): string {
+    return this.value.content
+  }
 }
 
 export class StringLiteral extends Expression {
@@ -38,22 +46,8 @@ export class StringLiteral extends Expression {
     super()
     this.values = values
   }
-}
 
-export class Property extends Expression {
-  type: NodeType = `Property`
-
-  constructor(key: Expression, value?: Expression) {
-    super()
-    this.addChild(key, 0)
-    if (value) this.addChild(value, 1)
-  }
-
-  public get key(): Expression {
-    return this.children[0]
-  }
-
-  public get value(): MaybeUndefined<Expression> {
-    return this.children[1]
+  public override getDebug(): string {
+    return this.values.map(value => value.content).join(``)
   }
 }

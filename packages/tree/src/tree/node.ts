@@ -6,6 +6,7 @@ import { numberToLetters } from "@december/utils"
 import { NODE_TYPE_PREFIX, NodeType } from "./type"
 import { Block } from "../logger"
 import { print } from "./printer"
+import { isNil } from "lodash"
 
 export interface NodeOptions {}
 
@@ -17,21 +18,20 @@ export class Node {
 
   // #region PARENT/CHILDREN
 
-  public parent: Nullable<Node>
-  public index: Nullable<number>
-  protected children: Node[]
+  public parent: Nullable<Node> = null
+  public index: Nullable<number> = null
+  public label: Nullable<string> = null
+  public children: Node[] = []
 
-  public setParent(parent: Node, index: number) {
+  public setParent(parent: Node, index: number, label: string) {
     this.parent = parent
     this.index = index
+    this.label = label
   }
 
-  public addChild(child: Node, index?: number) {
-    if (!this.children) this.children = []
-
-    index ??= this.children.length
+  public addChild(child: Node, index: number, label: string) {
     this.children.splice(index, 0, child)
-    child.setParent(this, index)
+    child.setParent(this, index, label)
   }
 
   // #endregion
@@ -42,11 +42,11 @@ export class Node {
   }
 
   public get letter() {
-    return this.index ? numberToLetters(this.index) : ``
+    return !isNil(this.index) ? numberToLetters(this.index) : ``
   }
 
   public get letters() {
-    return this.parent ? this.parent.letters + this.letter : ``
+    return this.parent ? this.parent.letters + this.letter : this.letter
   }
 
   public get name() {
@@ -65,6 +65,10 @@ export class Node {
 
   public toBlocks(): Block[] {
     throw new Error(`Method not implemented for type "${this.type}".`)
+  }
+
+  public getDebug(): string {
+    return `<${this.name}>`
   }
 
   // #endregion

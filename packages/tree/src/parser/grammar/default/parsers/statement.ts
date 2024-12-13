@@ -1,15 +1,15 @@
-import type Parser from "../../.."
+import { MaybeUndefined } from "tsdef"
 
+import type Parser from "../../.."
 import { Expression, ExpressionStatement, Statement } from "../../../../tree"
+import { IfStatement } from "../../../../tree/statement"
 
 import { DEFAULT_BINDING_POWERS } from "../bindingPowers"
-import { IfStatement } from "../../../../tree/statement"
-import { MaybeUndefined } from "tsdef"
-import { BindingPower } from "../.."
-import type { SyntacticalContext } from "../../.."
+import { BindingPower } from "../../bindingPower"
+import { SyntacticalContext } from "../../parserFunction"
 
 export function parseStatement(p: Parser, minimumBindingPower: BindingPower, context: SyntacticalContext): Statement {
-  const parse = p.grammar.getParser(`statement`, p.token(context).peek())
+  const parse = p.grammar.getParser(`statement`, p.peek())
   if (parse) return parse(p, context)
 
   return parseExpressionStatement(p, minimumBindingPower, context)
@@ -24,22 +24,22 @@ export function parseExpressionStatement(p: Parser, minimumBindingPower: Binding
 
 // @if(<condition> then <consequent> else <alternative>)
 export function parseIfStatement(p: Parser, context: SyntacticalContext): Statement {
-  debugger
-  p.token(context).next(`open_parenthesis`)
-
+  p.next(`if`)
+  p.next(`open_parenthesis`)
   const condition = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.COMMA, context)
-  debugger
-  p.token(context).next(`then`)
+
+  p.next(`then`)
   const consequent = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.COMMA, context)
 
   let alternative: MaybeUndefined<Expression> = undefined
-  if (p.token(context).peek() === `else`) {
-    p.token(context).next(`else`)
+  if (p.peek() === `whitespace`) debugger // ERROR: Untested
+  if (p.peek() === `else`) {
+    p.next(`else`)
     alternative = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.DEFAULT, context)
   }
 
-  p.token(context).next(`close_parenthesis`)
+  if (p.peek() === `whitespace`) debugger // ERROR: Untested
+  p.next(`close_parenthesis`)
 
-  debugger
   return new IfStatement(condition, consequent, alternative)
 }

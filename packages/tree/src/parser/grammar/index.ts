@@ -1,113 +1,119 @@
-import assert from "assert"
-import { MaybeUndefined } from "tsdef"
+import { MaybeUndefined, Nullable } from "tsdef"
 
-import { insertionSort, sortedInsert } from "@december/utils/sort"
-
-import type Parser from ".."
 import { TokenKindName } from "../../token/kind"
 import { Expression, Statement } from "../../tree"
-import type { SyntacticalContext } from ".."
-import { last } from "lodash"
-import { DEFAULT_BINDING_POWERS } from "./default"
 
-export { DEFAULT_GRAMMAR, DEFAULT_BINDING_POWERS, DEFAULT_PARSERS, DEFAULT_PARSE_EXPRESSION, DEFAULT_PARSE_STATEMENT } from "./default"
+import { BindingPower } from "./bindingPower"
+import { LEDParser, NUDParser, StatementParser, EntryParser, SyntacticalDenotation, ParserFunction } from "./parserFunction"
+import assert from "assert"
+import { last, uniq } from "lodash"
+import { ParseFunction } from "mathjs"
 
-export type BindingPower = number
+export type { BindingPower } from "./bindingPower"
 
-export type EntryParser = (p: Parser, minimumBindingPower: BindingPower, context: SyntacticalContext) => Expression
-export type StatementParser = (p: Parser, context: SyntacticalContext) => Statement
-export type NUDParser = (p: Parser, context: SyntacticalContext) => Expression
-export type LEDParser = (p: Parser, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext) => Expression
-
-export type SyntacticalParser = StatementParser | NUDParser | LEDParser
-export type SyntacticalParserType = `statement` | `nud` | `led`
-
-export interface BoundParser<TParser extends SyntacticalParser = SyntacticalParser> {
-  type: SyntacticalParserType
-  bindingPower: BindingPower
-  parser: TParser
-}
-export type TokenKindLookup<TValue> = Partial<Record<TokenKindName, TValue>>
+export type SyntacticalLookupKey = SyntacticalDenotation
 
 export class SyntacticalGrammar {
-  public bindingPower: TokenKindLookup<BindingPower[]>
-  public handlers: {
-    parseStatement: EntryParser
-    parseExpression: EntryParser
-    statement: TokenKindLookup<BoundParser<StatementParser>[]>
-    nud: TokenKindLookup<BoundParser<NUDParser>[]>
-    led: TokenKindLookup<BoundParser<LEDParser>[]>
+  public parseStatement: EntryParser<Statement>
+  public parseExpression: EntryParser<Expression>
+
+  protected bindingPowers: {
+    statement: Partial<Record<TokenKindName, BindingPower[]>>
+    nud: Partial<Record<TokenKindName, BindingPower[]>>
+    led: Partial<Record<TokenKindName, BindingPower[]>>
   }
 
-  public reset(parseStatement: EntryParser, parseExpression: EntryParser): void {
-    this.bindingPower = {
-      // TODO: Move this elsewhere, probably  to default
-      comma: [DEFAULT_BINDING_POWERS.COMMA],
-      close_parenthesis: [DEFAULT_BINDING_POWERS.COMMA],
-      close_braces: [DEFAULT_BINDING_POWERS.COMMA],
-      close_brackets: [DEFAULT_BINDING_POWERS.COMMA],
+  protected parsers: {
+    statement: Partial<Record<TokenKindName, StatementParser[]>>
+    nud: Partial<Record<TokenKindName, NUDParser[]>>
+    led: Partial<Record<TokenKindName, LEDParser[]>>
+  }
+
+  constructor(parseStatement: EntryParser<Statement>, parseExpression: EntryParser<Expression>) {
+    this.parseStatement = parseStatement
+    this.parseExpression = parseExpression
+
+    this.bindingPowers = { statement: {}, nud: {}, led: {} }
+    this.parsers = { statement: {}, nud: {}, led: {} }
+  }
+
+  /** Return binding power for tokenKind (can specify denonation) */
+  public getBindingPower(kind: TokenKindName, denotation: SyntacticalDenotation): MaybeUndefined<BindingPower> {
+    const StatementBindingPowers = this.bindingPowers.statement[kind]
+    const NUDBindingPowers = this.bindingPowers.nud[kind]
+    const LEDBindingPowers = this.bindingPowers.led[kind]
+
+    const bindingPowers: BindingPower[] = []
+    if (denotation === undefined || denotation === `statement`) bindingPowers.push(...(StatementBindingPowers ?? []))
+    if (denotation === undefined || denotation === `nud`) bindingPowers.push(...(NUDBindingPowers ?? []))
+    if (denotation === undefined || denotation === `led`) bindingPowers.push(...(LEDBindingPowers ?? []))
+
+    const uniqueBindingPowers = uniq(bindingPowers)
+
+    assert(uniqueBindingPowers.length <= 1, `Multiple binding powers for token kind "${kind}"${denotation ? ` and denotation "${denotation}"` : ``}`)
+
+    // always returning last one registered (because originally the last value registered would have overriden the previous ones)
+    return last(uniqueBindingPowers)
+  }
+
+  /** Return syntactical parser for specific denotation (stmt, nud, led) */
+  public getParser<TParserFunction extends ParserFunction = StatementParser>(denotation: `statement`, kind: TokenKindName): MaybeUndefined<TParserFunction>
+  public getParser<TParserFunction extends ParserFunction = NUDParser>(denotation: `nud`, kind: TokenKindName): MaybeUndefined<TParserFunction>
+  public getParser<TParserFunction extends ParserFunction = LEDParser>(denotation: `led`, kind: TokenKindName): MaybeUndefined<TParserFunction>
+  public getParser<TParserFunction extends ParserFunction>(denotation: SyntacticalDenotation, kind: TokenKindName): MaybeUndefined<TParserFunction> {
+    let parserFunctions: ParserFunction[] = this.parsers[denotation][kind] ?? []
+
+    assert(parserFunctions.length <= 1, `Multiple parsers for token kind "${kind}" and denotation "${denotation}"`)
+
+    return parserFunctions[0] as TParserFunction
+  }
+
+  /** Register binding power for tokenKind and denotation */
+  public addBindingPower(denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower) {
+    this.bindingPowers[denotation][kind] ??= []
+    this.bindingPowers[denotation][kind]!.push(bindingPower)
+  }
+
+  /** Register a denonation parser for a token kind */
+  public addParser<TParserFunction extends ParserFunction>(denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower, parser: TParserFunction) {
+    this.addBindingPower(denotation, kind, bindingPower)
+
+    this.parsers[denotation][kind] ??= []
+    const list = this.parsers[denotation][kind]! as ParserFunction[]
+    list.push(parser)
+  }
+
+  /** Generic mass entry register */
+  public add(...entries: SyntacticalGrammarEntry[]) {
+    for (const entry of entries) {
+      if (isParserFunctionEntry(entry)) this.addParser(entry.denotation, entry.kind, entry.bindingPower, entry.parser)
+      else if (isBindingPowerEntry(entry)) this.addBindingPower(entry.denotation, entry.kind, entry.bindingPower)
+      //
+      else throw new Error(`Invalid syntactical grammar entry`)
     }
-    this.handlers = {
-      parseStatement,
-      parseExpression,
-      statement: {},
-      nud: {},
-      led: {},
-    }
   }
+}
 
-  constructor(parseStatement: EntryParser, parseExpression: EntryParser) {
-    this.reset(parseStatement, parseExpression)
-  }
+export interface BindingPowerEntry {
+  denotation: SyntacticalDenotation
+  kind: TokenKindName
+  bindingPower: BindingPower
+}
 
-  public add(...parsers: (BoundParser & { tokenKind: TokenKindName })[]): void {
-    for (const parser of parsers) this.addBoundParser(parser.tokenKind, parser)
-  }
+export interface ParserFunctionEntry {
+  denotation: SyntacticalDenotation
+  kind: TokenKindName
+  parser: ParserFunction
+  //
+  bindingPower: BindingPower
+}
 
-  /** Add handler and binding power to tables */
-  public addBoundParser(tokenKind: TokenKindName, { type, bindingPower, parser }: BoundParser): void {
-    this.bindingPower[tokenKind] ??= []
-    if (!this.bindingPower[tokenKind]!.includes(bindingPower)) sortedInsert(this.bindingPower[tokenKind]!, bindingPower)
+export type SyntacticalGrammarEntry = BindingPowerEntry | ParserFunctionEntry
 
-    this.handlers[type][tokenKind] ??= []
-    sortedInsert(this.handlers[type][tokenKind]!, { type, bindingPower, parser }, handler => handler.bindingPower)
-  }
+export function isBindingPowerEntry(entry: SyntacticalGrammarEntry): entry is BindingPowerEntry {
+  return `bindingPower` in entry && !(`parser` in entry)
+}
 
-  /** Return binding handler (mostly internal) */
-  private getBoundParser<TParser extends SyntacticalParser = SyntacticalParser>(type: SyntacticalParserType, tokenKind: TokenKindName): MaybeUndefined<BoundParser<TParser>> {
-    const lookup = this.handlers[type] as TokenKindLookup<BoundParser<TParser>[]>
-    const handlers = lookup[tokenKind] ?? []
-    assert(handlers.length <= 1, `Multiple handlers for the same token kind "${tokenKind}"`)
-
-    const [handler] = handlers
-
-    return handler
-  }
-
-  /** Return handler function for token kind */
-  public getParser<TParser = StatementParser>(type: `statement`, tokenKind: TokenKindName): MaybeUndefined<TParser>
-  public getParser<TParser = NUDParser>(type: `nud`, tokenKind: TokenKindName): MaybeUndefined<TParser>
-  public getParser<TParser = LEDParser>(type: `led`, tokenKind: TokenKindName): MaybeUndefined<TParser>
-  public getParser<TParser extends SyntacticalParser = SyntacticalParser>(type: SyntacticalParserType, tokenKind: TokenKindName): MaybeUndefined<TParser> {
-    const entry = this.getBoundParser(type, tokenKind)
-
-    return entry?.parser as TParser
-  }
-
-  /** Return binding power for token kind */
-  public getBindingPower(tokenKind: TokenKindName): MaybeUndefined<BindingPower> {
-    const bindingPowers = this.bindingPower[tokenKind] ?? []
-    assert(bindingPowers.length > 0, `No binding power for token kind "${tokenKind}"`)
-    // assert(bindingPowers.length <= 1, `Multiple binding powers for the same token kind "${tokenKind}"`)
-
-    return last(bindingPowers)!
-  }
-
-  public parseStatement(p: Parser, minimumBindingPower: BindingPower, context: SyntacticalContext): Statement {
-    return this.handlers.parseStatement(p, minimumBindingPower, context)
-  }
-
-  public parseExpression(p: Parser, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression {
-    return this.handlers.parseExpression(p, minimumBindingPower, context)
-  }
+export function isParserFunctionEntry(entry: SyntacticalGrammarEntry): entry is ParserFunctionEntry {
+  return `parser` in entry
 }

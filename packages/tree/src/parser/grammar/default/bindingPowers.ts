@@ -1,5 +1,6 @@
 export const DEFAULT_BINDING_POWERS = {
   DEFAULT: 0,
+  GROUPING: 10 ** 1,
   THEN_ELSE: 10 ** 2,
   COMMA: 10 ** 3,
   ASSIGNMENT: 10 ** 6,

@@ -1,56 +1,63 @@
-import { BindingPower, BoundParser, SyntacticalParser, SyntacticalParserType } from ".."
-import { TokenKindName } from "../../../token/kind"
-
 import { DEFAULT_BINDING_POWERS } from "./bindingPowers"
 import { DEFAULT_PARSERS } from "./parsers"
 
 export { DEFAULT_BINDING_POWERS } from "./bindingPowers"
 export { DEFAULT_PARSERS } from "./parsers"
 
-/** Creates a bound parser (well, type + bindingPower + syntacticalParserFunction) */
-export function createBindingHandler<TParser extends SyntacticalParser>(type: SyntacticalParserType, tokenKind: TokenKindName, bindingPower: BindingPower, parser: TParser): BoundParser<TParser> & { tokenKind: TokenKindName } {
-  return { type, bindingPower, parser, tokenKind }
+import { BindingPower, BindingPowerEntry, ParserFunctionEntry } from ".."
+import { LEDParser, NUDParser, ParserFunction, StatementParser, SyntacticalDenotation } from "../parserFunction"
+import { TokenKindName } from "../../../token/kind"
+
+export const createBindingPowerEntry = (denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower): BindingPowerEntry => ({ denotation, kind, bindingPower })
+
+export function createParserFunctionEntry(denotation: `statement`, kind: TokenKindName, bindingPower: BindingPower, parser: StatementParser): ParserFunctionEntry
+export function createParserFunctionEntry(denotation: `nud`, kind: TokenKindName, bindingPower: BindingPower, parser: NUDParser): ParserFunctionEntry
+export function createParserFunctionEntry(denotation: `led`, kind: TokenKindName, bindingPower: BindingPower, parser: LEDParser): ParserFunctionEntry
+export function createParserFunctionEntry(denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower, parser: ParserFunction): ParserFunctionEntry {
+  return { denotation, kind, bindingPower, parser }
 }
 
 // LOGICAL
-const _AND = createBindingHandler(`led`, `ampersand`, DEFAULT_BINDING_POWERS.LOGICAL, DEFAULT_PARSERS.parseBinaryExpression)
-const _OR = createBindingHandler(`led`, `pipe`, DEFAULT_BINDING_POWERS.LOGICAL, DEFAULT_PARSERS.parseBinaryExpression)
+const _AND = createParserFunctionEntry(`led`, `ampersand`, DEFAULT_BINDING_POWERS.LOGICAL, DEFAULT_PARSERS.parseBinaryExpression)
+const _OR = createParserFunctionEntry(`led`, `pipe`, DEFAULT_BINDING_POWERS.LOGICAL, DEFAULT_PARSERS.parseBinaryExpression)
 
 // RELATIONAL
-const SMALLER = createBindingHandler(`led`, `smaller`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
-const SMALLER_OR_EQUAL = createBindingHandler(`led`, `smaller_or_equal`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
-const GREATER = createBindingHandler(`led`, `greater`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
-const GREATER_OR_EQUAL = createBindingHandler(`led`, `greater_or_equal`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
-const EQUALS = createBindingHandler(`led`, `equals`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
-const NOT_EQUALS = createBindingHandler(`led`, `not_equals`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
+const SMALLER = createParserFunctionEntry(`led`, `smaller`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
+const SMALLER_OR_EQUAL = createParserFunctionEntry(`led`, `smaller_or_equal`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
+const GREATER = createParserFunctionEntry(`led`, `greater`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
+const GREATER_OR_EQUAL = createParserFunctionEntry(`led`, `greater_or_equal`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
+const EQUALS = createParserFunctionEntry(`led`, `equals`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
+const NOT_EQUALS = createParserFunctionEntry(`led`, `not_equals`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
 
 // ADDITIVE/MULTIPLICATIVE
-const ADDITION = createBindingHandler(`led`, `plus`, DEFAULT_BINDING_POWERS.ADDITIVE, DEFAULT_PARSERS.parseBinaryExpression)
-const SUBTRACTION = createBindingHandler(`led`, `dash`, DEFAULT_BINDING_POWERS.ADDITIVE, DEFAULT_PARSERS.parseBinaryExpression)
-const DIVISION = createBindingHandler(`led`, `slash`, DEFAULT_BINDING_POWERS.MULTIPLICATIVE, DEFAULT_PARSERS.parseBinaryExpression)
-const MULTIPLICATION = createBindingHandler(`led`, `asterisk`, DEFAULT_BINDING_POWERS.MULTIPLICATIVE, DEFAULT_PARSERS.parseBinaryExpression)
+const ADDITION = createParserFunctionEntry(`led`, `plus`, DEFAULT_BINDING_POWERS.ADDITIVE, DEFAULT_PARSERS.parseBinaryExpression)
+const SUBTRACTION = createParserFunctionEntry(`led`, `dash`, DEFAULT_BINDING_POWERS.ADDITIVE, DEFAULT_PARSERS.parseBinaryExpression)
+const DIVISION = createParserFunctionEntry(`led`, `slash`, DEFAULT_BINDING_POWERS.MULTIPLICATIVE, DEFAULT_PARSERS.parseBinaryExpression)
+const MULTIPLICATION = createParserFunctionEntry(`led`, `asterisk`, DEFAULT_BINDING_POWERS.MULTIPLICATIVE, DEFAULT_PARSERS.parseBinaryExpression)
 
 // LITERALS/SYMBOLS
-const NUMBER = createBindingHandler(`nud`, `number`, DEFAULT_BINDING_POWERS.PRIMARY, DEFAULT_PARSERS.parsePrimaryExpression)
-const STRING = createBindingHandler(`nud`, `string`, DEFAULT_BINDING_POWERS.PRIMARY, DEFAULT_PARSERS.parsePrimaryExpression)
-const CONCATENATE_WHITESPACE = createBindingHandler(`led`, `whitespace`, DEFAULT_BINDING_POWERS.PRIMARY, DEFAULT_PARSERS.parseConcatenatedExpression)
-const CONCATENATE_STRING = createBindingHandler(`led`, `string`, DEFAULT_BINDING_POWERS.PRIMARY, DEFAULT_PARSERS.parseConcatenatedExpression)
-// const IDENTIFIER = createBindingHandler(`nud`, `identifier`, DEFAULT_BINDING_POWERS.PRIMARY, DEFAULT_PARSERS.parsePrimaryExpression)
+const NUMBER = createParserFunctionEntry(`nud`, `number`, DEFAULT_BINDING_POWERS.PRIMARY, DEFAULT_PARSERS.parsePrimaryExpression)
+const STRING = createParserFunctionEntry(`nud`, `string`, DEFAULT_BINDING_POWERS.PRIMARY, DEFAULT_PARSERS.parsePrimaryExpression)
+const CONCATENATE_WHITESPACE = createParserFunctionEntry(`led`, `whitespace`, DEFAULT_BINDING_POWERS.PRIMARY, DEFAULT_PARSERS.parseConcatenatedExpression)
+const CONCATENATE_STRING = createParserFunctionEntry(`led`, `string`, DEFAULT_BINDING_POWERS.PRIMARY, DEFAULT_PARSERS.parseConcatenatedExpression)
+// const IDENTIFIER = createParserFunctionEntry(`nud`, `identifier`, DEFAULT_BINDING_POWERS.PRIMARY, DEFAULT_PARSERS.parsePrimaryExpression)
 
 // UNARY/PREFIX
-const NEGATIVE = createBindingHandler(`nud`, `dash`, DEFAULT_BINDING_POWERS.PREFIX, DEFAULT_PARSERS.parsePrefixExpression)
-const POSITIVE = createBindingHandler(`nud`, `plus`, DEFAULT_BINDING_POWERS.PREFIX, DEFAULT_PARSERS.parsePrefixExpression)
+const NEGATIVE = createParserFunctionEntry(`nud`, `dash`, DEFAULT_BINDING_POWERS.PREFIX, DEFAULT_PARSERS.parsePrefixExpression)
+const POSITIVE = createParserFunctionEntry(`nud`, `plus`, DEFAULT_BINDING_POWERS.PREFIX, DEFAULT_PARSERS.parsePrefixExpression)
 
 // MEMBER/CALL
-const GCA_MEMBER = createBindingHandler(`led`, `double_colon`, DEFAULT_BINDING_POWERS.MEMBER, DEFAULT_PARSERS.parseMemberExpression)
-const CALL = createBindingHandler(`led`, `open_parenthesis`, DEFAULT_BINDING_POWERS.CALL, DEFAULT_PARSERS.parseCallExpression)
+const GCA_MEMBER = createParserFunctionEntry(`led`, `double_colon`, DEFAULT_BINDING_POWERS.MEMBER, DEFAULT_PARSERS.parseMemberExpression)
+const CALL = createParserFunctionEntry(`led`, `open_parenthesis`, DEFAULT_BINDING_POWERS.CALL, DEFAULT_PARSERS.parseCallExpression)
 
 // GROUPING
-const PARENTHESIS = createBindingHandler(`nud`, `open_parenthesis`, DEFAULT_BINDING_POWERS.DEFAULT, DEFAULT_PARSERS.parseGroupingExpression)
-const QUOTES = createBindingHandler(`nud`, `quotes`, DEFAULT_BINDING_POWERS.DEFAULT, DEFAULT_PARSERS.parseGroupingExpression)
+const PARENTHESIS = createParserFunctionEntry(`nud`, `open_parenthesis`, DEFAULT_BINDING_POWERS.GROUPING, DEFAULT_PARSERS.parseGroupingExpression)
+const BRACES = createParserFunctionEntry(`nud`, `open_braces`, DEFAULT_BINDING_POWERS.GROUPING, DEFAULT_PARSERS.parseGroupingExpression)
+const BRACKETS = createParserFunctionEntry(`nud`, `open_brackets`, DEFAULT_BINDING_POWERS.GROUPING, DEFAULT_PARSERS.parseGroupingExpression)
+const QUOTES = createParserFunctionEntry(`nud`, `quotes`, DEFAULT_BINDING_POWERS.GROUPING, DEFAULT_PARSERS.parseStringExpression)
 
 // STATEMENTS
-const _IF = createBindingHandler(`statement`, `if`, DEFAULT_BINDING_POWERS.DEFAULT, DEFAULT_PARSERS.parseIfStatement)
+const _IF = createParserFunctionEntry(`statement`, `if`, DEFAULT_BINDING_POWERS.DEFAULT, DEFAULT_PARSERS.parseIfStatement)
 
 export const DEFAULT_GRAMMAR = [
   // LOGICAL
@@ -88,6 +95,8 @@ export const DEFAULT_GRAMMAR = [
 
   // GROUPING
   PARENTHESIS,
+  BRACES,
+  BRACKETS,
   QUOTES,
 
   // STATEMENTS

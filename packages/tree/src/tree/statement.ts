@@ -14,7 +14,7 @@ export class ExpressionStatement extends Statement {
   constructor(expression: Expression) {
     super()
 
-    this.addChild(expression)
+    this.addChild(expression, 0, `expression`)
   }
 
   public get expression(): Expression {
@@ -27,14 +27,14 @@ export class ExpressionStatement extends Statement {
 }
 
 export class IfStatement extends Statement {
-  tyoe: NodeType = `IfStatement`
+  type: NodeType = `IfStatement`
 
   constructor(condition: Expression, consequent: Expression, alternative?: Expression) {
     super()
 
-    this.addChild(condition, 0)
-    this.addChild(consequent, 1)
-    if (alternative) this.addChild(alternative, 2)
+    this.addChild(condition, 0, `condition`)
+    this.addChild(consequent, 1, `consequent`)
+    if (alternative) this.addChild(alternative, 2, `alternative`)
   }
 
   public get condition(): Expression {

@@ -17,7 +17,7 @@ export function createEntry(priority: number, kind: TokenKind | TokenKindName, t
 const LITERAL_PRIORITY = 10 ** 11
 
 export const NUMBER = createEntry(LITERAL_PRIORITY + 2, `number`, REGEX(/^(([0-9]+)|([\.][0-9]+)|([0-9]+[\.][0-9]+))$/))
-const _stringPattern = `[0-9A-Za-z_$@:\\.]`
+const _stringPattern = `[0-9A-Za-z_$@:\\.\\?\\!]`
 export const STRING = createEntry(LITERAL_PRIORITY + 1, `string`, REGEX(new RegExp(`^${_stringPattern}+$`))) //  /^[0-9A-Za-z_$@:\.]+$/
 
 export const LITERAL = [NUMBER, STRING]

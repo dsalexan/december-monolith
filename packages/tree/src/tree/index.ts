@@ -10,4 +10,4 @@ export { Statement, ExpressionStatement } from "./statement"
 
 export { Expression } from "./expression"
 export { BinaryExpression, CallExpression, MemberExpression, PrefixExpression } from "./expression"
-export { Identifier, NumericLiteral, StringLiteral, Property } from "./expression"
+export { Identifier, NumericLiteral, StringLiteral } from "./expression"
