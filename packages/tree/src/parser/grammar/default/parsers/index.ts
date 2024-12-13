@@ -1,4 +1,15 @@
-import { parseBinaryExpression, parseCallExpression, parseExpression, parseGroupingExpression, parseMemberExpression, parsePrefixExpression, parsePrimaryExpression, parseConcatenatedExpression, parseStringExpression } from "./expression"
+import {
+  parseBinaryExpression,
+  parseCallExpression,
+  parseExpression,
+  parseGroupingExpression,
+  parseMemberExpression,
+  parsePrefixExpression,
+  parsePrimaryExpression,
+  parseConcatenatedExpression,
+  parseQuotedStringExpression,
+  parseStringExpression,
+} from "./expression"
 import { parseStatement, parseExpressionStatement, parseIfStatement } from "./statement"
 
 export const DEFAULT_PARSERS = {
@@ -13,6 +24,7 @@ export const DEFAULT_PARSERS = {
   parsePrimaryExpression,
   parseMemberExpression,
   parseGroupingExpression,
+  parseQuotedStringExpression,
   parseStringExpression,
   parseCallExpression,
 }

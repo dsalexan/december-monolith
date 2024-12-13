@@ -1,3 +1,5 @@
+import { EQUALS } from "@december/utils/match/element"
+
 import { UnitManager, BASE_UNITS, DICE } from "./unit"
 
 import {
@@ -8,7 +10,7 @@ import {
   //
   Parser,
 } from ".."
-import { SyntacticalGrammar } from "../parser/grammar"
+import { createIdentifierEntry, SyntacticalGrammar } from "../parser/grammar"
 import { DEFAULT_GRAMMAR as DEFAULT_SYNTACTICAL_GRAMMAR, DEFAULT_PARSE_EXPRESSION, DEFAULT_PARSE_STATEMENT } from "../parser/grammar/default"
 
 let expression = `10 + 2 * 3`
@@ -22,7 +24,7 @@ expression = `(10 + b) * 3x `
 expression = `10 * 3 + 6`
 expression = `[2d6 * d6]`
 expression = `(10 + b) * 3x + [2d6 * d6] / "ST:DX::level"`
-expression = `@if(1 = b then Are Strings Glued? else "no")`
+expression = `@if(1 = b then Are Strings Glued? else self)`
 // expression = `"string test"`
 // expression = `"string test else"`
 // expression = `@if(10 + b then "else" else [2d6 * d6 + "then"] / "ST:DX::level")`
@@ -38,6 +40,7 @@ lexicalGrammar.add(...DEFAULT_LEXICAL_GRAMMAR)
 
 const syntacticalGrammar = new SyntacticalGrammar(DEFAULT_PARSE_STATEMENT, DEFAULT_PARSE_EXPRESSION)
 syntacticalGrammar.add(...DEFAULT_SYNTACTICAL_GRAMMAR)
+syntacticalGrammar.add(createIdentifierEntry(`self`, EQUALS(`self`)))
 
 const lexer = new Lexer()
 const parser = new Parser()

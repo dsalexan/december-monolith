@@ -71,5 +71,9 @@ export class Node {
     return `<${this.name}>`
   }
 
+  public getContent(): string {
+    throw new Error(`Method not implemented for type "${this.type}".`)
+  }
+
   // #endregion
 }

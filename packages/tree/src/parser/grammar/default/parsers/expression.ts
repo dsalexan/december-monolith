@@ -94,15 +94,43 @@ export function parsePrimaryExpression(p: Parser, context: SyntacticalContext): 
     assert(!isNaN(number), `Invalid number "${number}"`)
 
     return new NumericLiteral(token)
-  } else if (tokenKind === `string`) return new StringLiteral(p.next())
+  } else if (tokenKind === `string`) return parseStringExpression(p, new StringLiteral(p.next()), context)
   // else if (tokenKind === `identifier`) return new Identifier(p.next())
 
   throw new Error(`Invalid primary expression token kind "${tokenKind}"`)
 }
+
 export function parseMemberExpression(p: Parser, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression {
   p.next(`double_colon`)
   const token = p.next(`string`)
   return new MemberExpression(left, token)
+}
+
+export function parseQuotedStringExpression(p: Parser, context: SyntacticalContext): Expression {
+  p.next(`quotes`)
+
+  // 1. Start literal with fist token
+  const stringLiteral = new StringLiteral(p.next())
+
+  // 2. Eat string and whitespace tokens
+  while (p.hasTokens() && p.peek() !== `quotes`) {
+    const token = p.next()
+    stringLiteral.values.push(token)
+  }
+
+  p.next(`quotes`)
+
+  return parseStringExpression(p, stringLiteral, context)
+}
+
+export function parseStringExpression(p: Parser, stringLiteral: StringLiteral, context: SyntacticalContext): Expression {
+  // if stringLiteral is a identifier (create lookup identifier), re-create node as Identifier
+
+  const content = stringLiteral.getContent()
+  const identifierTest = p.grammar.isIdentifier(content)
+  if (identifierTest?.isMatch) return new Identifier(...stringLiteral.values)
+
+  return stringLiteral
 }
 
 export function parseGroupingExpression(p: Parser, context: SyntacticalContext): Expression {
@@ -120,23 +148,6 @@ export function parseGroupingExpression(p: Parser, context: SyntacticalContext):
   p.next(closer)
 
   return expression
-}
-
-export function parseStringExpression(p: Parser, context: SyntacticalContext): Expression {
-  p.next(`quotes`)
-
-  // 1. Start literal with fist token
-  const stringLiteral = new StringLiteral(p.next())
-
-  // 2. Eat string and whitespace tokens
-  while (p.hasTokens() && p.peek() !== `quotes`) {
-    const token = p.next()
-    stringLiteral.values.push(token)
-  }
-
-  p.next(`quotes`)
-
-  return stringLiteral
 }
 
 export function parseCallExpression(p: Parser, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression {

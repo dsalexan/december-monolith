@@ -1,14 +1,19 @@
+import { Match } from "@december/utils"
+import { EQUALS } from "@december/utils/match/element"
+
 import { DEFAULT_BINDING_POWERS } from "./bindingPowers"
 import { DEFAULT_PARSERS } from "./parsers"
 
 export { DEFAULT_BINDING_POWERS } from "./bindingPowers"
 export { DEFAULT_PARSERS } from "./parsers"
 
-import { BindingPower, BindingPowerEntry, ParserFunctionEntry } from ".."
+import { BindingPower, BindingPowerEntry, IdentifierEntry, ParserFunctionEntry } from ".."
 import { LEDParser, NUDParser, ParserFunction, StatementParser, SyntacticalDenotation } from "../parserFunction"
 import { TokenKindName } from "../../../token/kind"
 
 export const createBindingPowerEntry = (denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower): BindingPowerEntry => ({ denotation, kind, bindingPower })
+
+export const createIdentifierEntry = (key: string, pattern: Match.Pattern): IdentifierEntry => ({ key, pattern })
 
 export function createParserFunctionEntry(denotation: `statement`, kind: TokenKindName, bindingPower: BindingPower, parser: StatementParser): ParserFunctionEntry
 export function createParserFunctionEntry(denotation: `nud`, kind: TokenKindName, bindingPower: BindingPower, parser: NUDParser): ParserFunctionEntry
@@ -26,7 +31,7 @@ const SMALLER = createParserFunctionEntry(`led`, `smaller`, DEFAULT_BINDING_POWE
 const SMALLER_OR_EQUAL = createParserFunctionEntry(`led`, `smaller_or_equal`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
 const GREATER = createParserFunctionEntry(`led`, `greater`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
 const GREATER_OR_EQUAL = createParserFunctionEntry(`led`, `greater_or_equal`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
-const EQUALS = createParserFunctionEntry(`led`, `equals`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
+const _EQUALS = createParserFunctionEntry(`led`, `equals`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
 const NOT_EQUALS = createParserFunctionEntry(`led`, `not_equals`, DEFAULT_BINDING_POWERS.RELATIONAL, DEFAULT_PARSERS.parseBinaryExpression)
 
 // ADDITIVE/MULTIPLICATIVE
@@ -54,10 +59,13 @@ const CALL = createParserFunctionEntry(`led`, `open_parenthesis`, DEFAULT_BINDIN
 const PARENTHESIS = createParserFunctionEntry(`nud`, `open_parenthesis`, DEFAULT_BINDING_POWERS.GROUPING, DEFAULT_PARSERS.parseGroupingExpression)
 const BRACES = createParserFunctionEntry(`nud`, `open_braces`, DEFAULT_BINDING_POWERS.GROUPING, DEFAULT_PARSERS.parseGroupingExpression)
 const BRACKETS = createParserFunctionEntry(`nud`, `open_brackets`, DEFAULT_BINDING_POWERS.GROUPING, DEFAULT_PARSERS.parseGroupingExpression)
-const QUOTES = createParserFunctionEntry(`nud`, `quotes`, DEFAULT_BINDING_POWERS.GROUPING, DEFAULT_PARSERS.parseStringExpression)
+const QUOTES = createParserFunctionEntry(`nud`, `quotes`, DEFAULT_BINDING_POWERS.GROUPING, DEFAULT_PARSERS.parseQuotedStringExpression)
 
 // STATEMENTS
 const _IF = createParserFunctionEntry(`statement`, `if`, DEFAULT_BINDING_POWERS.DEFAULT, DEFAULT_PARSERS.parseIfStatement)
+
+// IDENTIFIERS
+const IDENTIFIERS = []
 
 export const DEFAULT_GRAMMAR = [
   // LOGICAL
@@ -69,7 +77,7 @@ export const DEFAULT_GRAMMAR = [
   SMALLER_OR_EQUAL,
   GREATER,
   GREATER_OR_EQUAL,
-  EQUALS,
+  _EQUALS,
   NOT_EQUALS,
 
   // ADDITIVE/MULTIPLICATIVE
@@ -101,6 +109,10 @@ export const DEFAULT_GRAMMAR = [
 
   // STATEMENTS
   _IF,
+
+  // IDENTIFIERS
+  ...IDENTIFIERS,
 ]
+
 export const DEFAULT_PARSE_EXPRESSION = DEFAULT_PARSERS.parseExpression
 export const DEFAULT_PARSE_STATEMENT = DEFAULT_PARSERS.parseStatement

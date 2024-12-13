@@ -5,20 +5,6 @@ import { Expression } from "./expression"
 import { Block, paint } from "../../logger"
 import { Token } from "../../token/core"
 
-export class Identifier extends Expression {
-  type: NodeType = `Identifier`
-  public variableName: Token
-
-  constructor(variableName: Token) {
-    super()
-    this.variableName = variableName
-  }
-
-  public override getDebug(): string {
-    return `{${this.variableName.content}}`
-  }
-}
-
 export class NumericLiteral extends Expression {
   type: NodeType = `NumericLiteral`
   public value: Token
@@ -47,7 +33,23 @@ export class StringLiteral extends Expression {
     this.values = values
   }
 
-  public override getDebug(): string {
+  public override getContent(): string {
     return this.values.map(value => value.content).join(``)
+  }
+
+  public override getDebug(): string {
+    return this.getContent()
+  }
+}
+
+export class Identifier extends StringLiteral {
+  type: NodeType = `Identifier`
+
+  constructor(...variableNameTokens: Token[]) {
+    super(...variableNameTokens)
+  }
+
+  public get variableNameTokens(): Token[] {
+    return this.values
   }
 }
