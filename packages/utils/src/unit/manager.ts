@@ -1,27 +1,28 @@
 import { MaybeUndefined, Nullable } from "tsdef"
-import { IUnit, UnitSearchCriteria, UnitDefinition, UnitPrefixesCollection } from "./base"
+import { IUnit, UnitDefinition, PrefixedUnitFactory } from "./core"
+import { UnitSearchCriteria } from "./core/base"
 
 type UnitDefinitionComparator = (definition: UnitDefinition, value: string) => MaybeUndefined<IUnit>
 
 function unitDefinitionComparator_Name(definition: UnitDefinition, name: string): MaybeUndefined<IUnit> {
-  if (definition instanceof UnitPrefixesCollection) {
+  if (definition instanceof PrefixedUnitFactory) {
     const unit = definition.by(`name`, name)
     if (unit) return unit
-  } else if (definition.getName() === name) return definition
+  } else if (definition.name === name) return definition
 }
 
 function unitDefinitionComparator_Symbol(definition: UnitDefinition, symbol: string): MaybeUndefined<IUnit> {
-  if (definition instanceof UnitPrefixesCollection) {
+  if (definition instanceof PrefixedUnitFactory) {
     const unit = definition.by(`symbol`, symbol)
     if (unit) return unit
-  } else if (definition.getSymbol() === symbol) return definition
+  } else if (definition.symbol === symbol) return definition
 }
 
 function unitDefinitionComparator_Any(definition: UnitDefinition, symbol: string): MaybeUndefined<IUnit> {
-  if (definition instanceof UnitPrefixesCollection) {
+  if (definition instanceof PrefixedUnitFactory) {
     const unit = definition.by(`any`, symbol)
     if (unit) return unit
-  } else if (definition.getSymbol() === symbol || definition.getName() === symbol) return definition
+  } else if (definition.symbol === symbol || definition.name === symbol) return definition
 }
 
 export default class UnitManager {

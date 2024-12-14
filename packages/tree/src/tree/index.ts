@@ -6,8 +6,8 @@ export { Node } from "./node"
 export { NodeType } from "./type"
 export { print } from "./printer"
 
-export { Statement, ExpressionStatement, IfStatement } from "./statement"
+export { Statement, ExpressionStatement } from "./statement"
 
 export { Expression } from "./expression"
-export { BinaryExpression, CallExpression, MemberExpression, PrefixExpression } from "./expression"
+export { BinaryExpression, CallExpression, MemberExpression, PrefixExpression, IfExpression } from "./expression"
 export { Identifier, BooleanLiteral, NumericLiteral, StringLiteral, UnitLiteral } from "./expression"

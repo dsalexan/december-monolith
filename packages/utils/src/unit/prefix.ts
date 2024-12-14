@@ -21,6 +21,18 @@ export class Prefix {
     //
     this.noLabel = options.noLabel ?? false
   }
+
+  /** Apply prefix to text */
+  public apply(text: string, property: `name` | `symbol`, type?: `property`): string
+  public apply(text: string, value: string, type: `constant`): string
+  public apply(text: string, propertyOrValue: string | `name` | `symbol`, type: `property` | `constant` = `property`): string {
+    let prefix: string
+    if (type === `property`) prefix = this[propertyOrValue]
+    else if (type === `constant`) prefix = propertyOrValue
+    else throw new Error(`Unexpected apply type "${type}"`)
+
+    return this.noLabel ? text : `${prefix}${text}`
+  }
 }
 
 export type PrefixNames = string[]

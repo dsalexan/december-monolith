@@ -10,7 +10,7 @@ export const VALUE_TYPES = [`boolean`, `number`, `string`, `function`, `identifi
 export type ValueType = (typeof VALUE_TYPES)[number]
 
 export interface RuntimeValue<TValue> {
-  type: ValueType
+  type: string
   value: TValue
 }
 
@@ -37,6 +37,7 @@ export interface IdentifierValue extends RuntimeValue<string> {
 
 export interface UnitValue extends RuntimeValue<IUnit> {
   type: `unit`
+  content: string
 }
 
 export interface QuantityValue extends RuntimeValue<Quantity> {
@@ -71,30 +72,6 @@ export function isUnitValue(value: RuntimeValue<any>): value is UnitValue {
 
 export function isQuantityValue(value: RuntimeValue<any>): value is QuantityValue {
   return value.type === `quantity`
-}
-
-// #endregion
-
-// #region FACTORY
-
-export function parseRuntimeValueToExpression(value: BooleanValue): BooleanLiteral
-export function parseRuntimeValueToExpression(value: NumericValue): NumericLiteral
-export function parseRuntimeValueToExpression(value: StringValue): StringLiteral
-export function parseRuntimeValueToExpression(value: RuntimeValue<any>): Expression
-export function parseRuntimeValueToExpression(value: RuntimeValue<any>): Expression {
-  if (isBooleanValue(value)) return new BooleanLiteral(value.value)
-  if (isNumericValue(value)) return new NumericLiteral(new ArtificialToken(getTokenKind(`number`), String(value.value)))
-  if (isStringValue(value)) return new StringLiteral(new ArtificialToken(getTokenKind(`string`), value.value))
-  if (isUnitValue(value)) return new UnitLiteral(value.value, new ArtificialToken(getTokenKind(`string`), value.value.getSymbol()))
-  if (isQuantityValue(value)) {
-    assert(isNumber(value.value.value), `Quantity value must be a number.`)
-    const numericLeft = parseRuntimeValueToExpression({ type: `number`, value: value.value.value })
-    const unitRight = parseRuntimeValueToExpression({ type: `unit`, value: value.value.unit })
-
-    return new BinaryExpression(numericLeft, new ArtificialToken(getTokenKind(`asterisk`), `*`), unitRight)
-  }
-
-  throw new Error(`Cannot parse runtime value to expression string: ${value.type}`)
 }
 
 // #endregion

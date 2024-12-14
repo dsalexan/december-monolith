@@ -4,9 +4,9 @@ import assert, { match } from "assert"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
-import { ExpressionStatement, Node, Statement } from "../tree"
+import { Expression, ExpressionStatement, Node, Statement } from "../tree"
 import Environment from "./environment"
-import { parseRuntimeValueToExpression, RuntimeValue } from "./valueTypes"
+import { RuntimeValue } from "./valueTypes"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -14,13 +14,14 @@ export { default as Environment } from "./environment"
 export type { RuntimeValue, NumericValue, StringValue, FunctionValue } from "./valueTypes"
 export { isNumericValue, isStringValue, isFunctionValue } from "./valueTypes"
 
-export { evaluate as DEFAULT_EVALUATE } from "./default"
+export { evaluate as DEFAULT_EVALUATE, runtimeValueToNode as DEFAULT_RUNTIME_TO_NODE } from "./default"
 
 export interface InterpreterOptions {
   logger: typeof _logger
 }
 
 export type EvaluationFunction = (i: Interpreter, node: Node, environment: Environment) => RuntimeValue<any> | Node
+export type ParseToNodeFunction<TRuntimeValue extends RuntimeValue<any>> = (i: Interpreter, value: TRuntimeValue) => Node
 
 export default class Interpreter {
   public options: InterpreterOptions
@@ -28,10 +29,11 @@ export default class Interpreter {
   private environment: Environment
   private AST: Node
   public evaluate: EvaluationFunction
+  protected _runtimeValueToNode: ParseToNodeFunction<RuntimeValue<any>>
   //
   public result: Node
 
-  public process(AST: Node, environment: Environment, evaluateFunction: EvaluationFunction, options: WithOptionalKeys<InterpreterOptions, `logger`>) {
+  public process(AST: Node, environment: Environment, evaluateFunction: EvaluationFunction, runtimeValueToNode: ParseToNodeFunction<RuntimeValue<any>>, options: WithOptionalKeys<InterpreterOptions, `logger`>) {
     this.options = {
       logger: options.logger ?? _logger,
       ...options,
@@ -39,11 +41,17 @@ export default class Interpreter {
 
     this.AST = AST
     this.environment = environment
+
     this.evaluate = evaluateFunction
+    this._runtimeValueToNode = runtimeValueToNode
 
     this.result = this.interpret()
 
     return this.result
+  }
+
+  public runtimeValueToNode<TRuntimeValue extends RuntimeValue<any>>(i: Interpreter, value: TRuntimeValue): Node {
+    return this._runtimeValueToNode(i, value)
   }
 
   protected interpret() {
@@ -51,7 +59,9 @@ export default class Interpreter {
 
     let statement: Statement
     if (!Node.isNode(result)) {
-      const expression = parseRuntimeValueToExpression(result)
+      const expression = this.runtimeValueToNode(this, result)
+      assert(expression instanceof Expression, `This should be an Expression`)
+
       statement = new ExpressionStatement(expression)
     } else if (!(result instanceof Statement)) throw new Error(`Result of interpretation must be a Statement.`)
     else statement = result

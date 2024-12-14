@@ -2,6 +2,7 @@ import { NodeType } from "../type"
 import { Expression } from "./expression"
 
 import { Token } from "../../token/core"
+import { Node } from "../node"
 
 export class BinaryExpression extends Expression {
   type: NodeType = `BinaryExpression`
@@ -72,5 +73,29 @@ export class PrefixExpression extends Expression {
 
   public get right(): Expression {
     return this.children[0]
+  }
+}
+
+export class IfExpression extends Expression {
+  type: NodeType = `IfExpression`
+
+  constructor(condition: Expression, consequent: Expression, alternative?: Expression) {
+    super()
+
+    this.addChild(condition, 0, `condition`)
+    this.addChild(consequent, 1, `consequent`)
+    if (alternative) this.addChild(alternative, 2, `alternative`)
+  }
+
+  public get condition(): Expression {
+    return this.children[0]
+  }
+
+  public get consequent(): Expression {
+    return this.children[1]
+  }
+
+  public get alternative(): Expression {
+    return this.children[2]
   }
 }

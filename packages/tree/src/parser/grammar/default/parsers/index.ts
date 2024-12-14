@@ -1,30 +1,6 @@
-import {
-  parseBinaryExpression,
-  parseCallExpression,
-  parseExpression,
-  parseGroupingExpression,
-  parseMemberExpression,
-  parsePrefixExpression,
-  parsePrimaryExpression,
-  parseConcatenatedExpression,
-  parseQuotedStringExpression,
-  parseStringExpression,
-} from "./expression"
-import { parseStatement, parseExpressionStatement, parseIfStatement } from "./statement"
+import { Merge } from "type-fest"
+import { DEFAULT_EXPRESSION_PARSERS, DefaultExpressionParserFunctionIndex } from "./expression"
+import { DEFAULT_STATEMENT_PARSERS, DefaultStatementParserFunctionIndex } from "./statement"
 
-export const DEFAULT_PARSERS = {
-  parseStatement,
-  parseExpressionStatement,
-  parseIfStatement,
-  //
-  parseExpression,
-  parsePrefixExpression,
-  parseBinaryExpression,
-  parseConcatenatedExpression,
-  parsePrimaryExpression,
-  parseMemberExpression,
-  parseGroupingExpression,
-  parseQuotedStringExpression,
-  parseStringExpression,
-  parseCallExpression,
-}
+export type DefaultParserFunctionIndex = Merge<DefaultExpressionParserFunctionIndex, DefaultStatementParserFunctionIndex>
+export const DEFAULT_PARSERS = { ...DEFAULT_EXPRESSION_PARSERS, ...DEFAULT_STATEMENT_PARSERS } as DefaultParserFunctionIndex

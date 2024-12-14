@@ -3,12 +3,12 @@ import { paint, Paint, Block } from "../logger"
 export const NODE_TYPES = [
   // STATEMENTS
   `ExpressionStatement`,
-  `IfStatement`,
   // EXPRESSIONS
   `MemberExpression`,
   `CallExpression`,
   `BinaryExpression`,
   `PrefixExpression`,
+  `IfExpression`,
   // LITERALS
   `BooleanLiteral`,
   `NumericLiteral`,
@@ -21,12 +21,12 @@ export type NodeType = (typeof NODE_TYPES)[number]
 
 export const NODE_TYPE_PREFIX: Record<NodeType, string> = {
   ExpressionStatement: `ex`,
-  IfStatement: `if`,
   //
   MemberExpression: `m`,
   CallExpression: `c`,
   BinaryExpression: `o`,
   PrefixExpression: `p`,
+  IfExpression: `if`,
   //
   BooleanLiteral: `b`,
   NumericLiteral: `n`,

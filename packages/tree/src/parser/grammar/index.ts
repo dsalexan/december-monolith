@@ -1,47 +1,60 @@
 import assert from "assert"
-import { last, uniq } from "lodash"
+import { isNil, last, uniq } from "lodash"
 import { MaybeUndefined, Nullable } from "tsdef"
 
 import { Match } from "@december/utils"
 import { IUnit, UnitManager } from "@december/utils/unit"
 
 import { TokenKindName } from "../../token/kind"
-import { Expression, Statement } from "../../tree"
+import { Expression, NodeType, Statement } from "../../tree"
 
 import { BindingPower } from "./bindingPower"
-import { LEDParser, NUDParser, StatementParser, EntryParser, SyntacticalDenotation, ParserFunction } from "./parserFunction"
+import { LEDParser, NUDParser, StatementParser, EntryParser, SyntacticalDenotation, ParserFunction, ParserFunctionIndex, ParserFunctionName, ParserFunctionImplementation } from "./parserFunction"
+import { isBindingPowerEntry, isBindParserEntry, isRegisterParserEntry, isReTyperEntry, ReTyperEntry, SyntacticalGrammarEntry } from "./entries"
 
 export type { BindingPower } from "./bindingPower"
 
 export type SyntacticalLookupKey = SyntacticalDenotation
+export { createReTyperEntry, createBindParserEntry, createRegisterParserEntry, createBindingPowerEntry } from "./entries"
+
+export interface BaseParserFunctionIndex extends ParserFunctionIndex {
+  parseStatement: EntryParser<Statement>
+  parseExpression: EntryParser<Expression>
+}
 
 export class SyntacticalGrammar {
-  public parseStatement: EntryParser<Statement>
-  public parseExpression: EntryParser<Expression>
-
   protected bindingPowers: {
     statement: Partial<Record<TokenKindName, BindingPower[]>>
     nud: Partial<Record<TokenKindName, BindingPower[]>>
     led: Partial<Record<TokenKindName, BindingPower[]>>
   }
 
+  protected functions: BaseParserFunctionIndex
   protected parsers: {
-    statement: Partial<Record<TokenKindName, StatementParser[]>>
-    nud: Partial<Record<TokenKindName, NUDParser[]>>
-    led: Partial<Record<TokenKindName, LEDParser[]>>
+    statement: Partial<Record<TokenKindName, string[]>>
+    nud: Partial<Record<TokenKindName, string[]>>
+    led: Partial<Record<TokenKindName, string[]>>
   }
 
-  protected identifiers: Map<string, { pattern: Match.Pattern }> = new Map()
+  protected reTypers: Map<string, ReTyperEntry> = new Map()
   protected unitManager: UnitManager
 
-  constructor(parseStatement: EntryParser<Statement>, parseExpression: EntryParser<Expression>, unitManager: UnitManager) {
-    this.parseStatement = parseStatement
-    this.parseExpression = parseExpression
-
+  constructor(unitManager: UnitManager) {
     this.bindingPowers = { statement: {}, nud: {}, led: {} }
+    this.functions = {} as any
     this.parsers = { statement: {}, nud: {}, led: {} }
-    this.identifiers = new Map()
+    this.reTypers = new Map()
     this.unitManager = unitManager
+  }
+
+  public get parseStatement(): EntryParser<Statement> {
+    assert(this.functions[`parseStatement`], `parseStatement was nor registered`)
+    return this.functions[`parseStatement`]
+  }
+
+  public get parseExpression(): EntryParser<Expression> {
+    assert(this.functions[`parseExpression`], `parseExpression was nor registered`)
+    return this.functions[`parseExpression`]
   }
 
   /** Return binding power for tokenKind (can specify denonation) */
@@ -64,22 +77,34 @@ export class SyntacticalGrammar {
   }
 
   /** Return syntactical parser for specific denotation (stmt, nud, led) */
-  public getParser<TParserFunction extends ParserFunction = StatementParser>(denotation: `statement`, kind: TokenKindName): MaybeUndefined<TParserFunction>
-  public getParser<TParserFunction extends ParserFunction = NUDParser>(denotation: `nud`, kind: TokenKindName): MaybeUndefined<TParserFunction>
-  public getParser<TParserFunction extends ParserFunction = LEDParser>(denotation: `led`, kind: TokenKindName): MaybeUndefined<TParserFunction>
-  public getParser<TParserFunction extends ParserFunction>(denotation: SyntacticalDenotation, kind: TokenKindName): MaybeUndefined<TParserFunction> {
-    let parserFunctions: ParserFunction[] = this.parsers[denotation][kind] ?? []
+  public getParser(denotation: `statement`, kind: TokenKindName): MaybeUndefined<StatementParser>
+  public getParser(denotation: `nud`, kind: TokenKindName): MaybeUndefined<NUDParser>
+  public getParser(denotation: `led`, kind: TokenKindName): MaybeUndefined<LEDParser>
+  public getParser(denotation: SyntacticalDenotation, kind: TokenKindName): MaybeUndefined<Function> {
+    let functionNames: string[] = uniq(this.parsers[denotation][kind] ?? [])
 
-    assert(parserFunctions.length <= 1, `Multiple parsers for token kind "${kind}" and denotation "${denotation}"`)
+    assert(functionNames.length <= 1, `Multiple parsers for token kind "${kind}" and denotation "${denotation}"`)
 
-    return parserFunctions[0] as TParserFunction
+    const fns = functionNames.map(name => this.functions[name])
+    assert(fns.length === 0 || fns.some(fn => !isNil(fn)), `Some function is not indexed in centralized index`)
+    return fns[0]
   }
 
-  /** Return if string is an identifier */
-  public isIdentifier(variableName: string): MaybeUndefined<Match.BasePatternMatch> {
-    for (const [key, { pattern }] of this.identifiers) {
+  /** Returns syntactical parser function by name */
+  public call<TParserFunctionIndex extends ParserFunctionIndex, TParserName extends ParserFunctionName<TParserFunctionIndex>>(parserName: TParserName): ParserFunctionImplementation<TParserFunctionIndex, TParserName> {
+    assert(parserName !== `parseExpression` && parserName !== `parseStatement`, `Use parseExpression or parseStatement directly`)
+
+    const fn = this.functions[parserName as string]
+    assert(fn, `Parser "${String(parserName)}" doesn't exist`)
+
+    return fn as ParserFunctionImplementation<TParserFunctionIndex, TParserName>
+  }
+
+  /** Return if string should be re-typed as another thing */
+  public shouldReType(variableName: string): MaybeUndefined<{ match: Match.BasePatternMatch; type: NodeType }> {
+    for (const [key, { pattern, type }] of this.reTypers) {
       const match = pattern.match(variableName)
-      if (match.isMatch) return match
+      if (match.isMatch) return { match, type }
     }
 
     return undefined
@@ -96,74 +121,41 @@ export class SyntacticalGrammar {
     this.bindingPowers[denotation][kind]!.push(bindingPower)
   }
 
-  /** Register a denonation parser for a token kind */
-  public addParser<TParserFunction extends ParserFunction>(denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower, parser: TParserFunction) {
+  /** Register a parser function in centralized index */
+  public registerParser<TParserFunctionIndex extends ParserFunctionIndex>(name: ParserFunctionName<TParserFunctionIndex>, fn: ParserFunctionImplementation<TParserFunctionIndex>, forceRegistration: boolean = false) {
+    if (!forceRegistration) assert(!this.functions[name as string], `Parser function "${String(name)}" already exists`)
+
+    this.functions[name as string] = fn as Function
+  }
+
+  /** Bind a denonation parser for a token kind */
+  public bindParser<TParserFunctionIndex extends ParserFunctionIndex>(denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower, parser: ParserFunctionName<TParserFunctionIndex>) {
     this.addBindingPower(denotation, kind, bindingPower)
 
+    assert(this.functions[parser as string], `Parser function "${String(parser)}" doesn't exists`)
+
     this.parsers[denotation][kind] ??= []
-    const list = this.parsers[denotation][kind]! as ParserFunction[]
-    list.push(parser)
+
+    const list = this.parsers[denotation][kind]!
+    list.push(parser as string)
   }
 
   /** Register identifier by variable name */
-  public addIdentifier(key: string, pattern: Match.Pattern) {
-    assert(!this.identifiers.has(key), `Identifier entry "${key}" already registered`)
+  public addReTyper(key: string, type: NodeType, pattern: Match.Pattern) {
+    assert(!this.reTypers.has(key), `ReTyper entry "${key}" already registered`)
 
-    this.identifiers.set(key, { pattern })
+    this.reTypers.set(key, { key, pattern, type })
   }
 
   /** Generic mass entry register */
-  public add(...entries: SyntacticalGrammarEntry[]) {
+  public add<TParserFunctionIndex extends ParserFunctionIndex>(...entries: SyntacticalGrammarEntry<TParserFunctionIndex>[]) {
     for (const entry of entries) {
-      if (isParserFunctionEntry(entry)) this.addParser(entry.denotation, entry.kind, entry.bindingPower, entry.parser)
+      if (isRegisterParserEntry(entry)) this.registerParser(entry.name, entry.fn, entry.forceRegistration)
+      else if (isBindParserEntry(entry)) this.bindParser(entry.denotation, entry.kind, entry.bindingPower, entry.parser)
       else if (isBindingPowerEntry(entry)) this.addBindingPower(entry.denotation, entry.kind, entry.bindingPower)
-      else if (isIdentifierEntry(entry)) this.addIdentifier(entry.key, entry.pattern)
+      else if (isReTyperEntry(entry)) this.addReTyper(entry.key, entry.type, entry.pattern)
       //
       else throw new Error(`Invalid syntactical grammar entry`)
     }
   }
-}
-
-export interface BindingPowerEntry {
-  denotation: SyntacticalDenotation
-  kind: TokenKindName
-  bindingPower: BindingPower
-}
-
-export interface ParserFunctionEntry {
-  denotation: SyntacticalDenotation
-  kind: TokenKindName
-  parser: ParserFunction
-  //
-  bindingPower: BindingPower
-}
-
-export interface IdentifierEntry {
-  key: string
-  pattern: Match.Pattern
-}
-
-export type SyntacticalGrammarEntry = BindingPowerEntry | ParserFunctionEntry | IdentifierEntry
-
-export function isBindingPowerEntry(entry: SyntacticalGrammarEntry): entry is BindingPowerEntry {
-  return `bindingPower` in entry && !(`parser` in entry)
-}
-
-export function isParserFunctionEntry(entry: SyntacticalGrammarEntry): entry is ParserFunctionEntry {
-  return `parser` in entry
-}
-
-export function isIdentifierEntry(entry: SyntacticalGrammarEntry): entry is IdentifierEntry {
-  return `pattern` in entry
-}
-
-export const createBindingPowerEntry = (denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower): BindingPowerEntry => ({ denotation, kind, bindingPower })
-
-export const createIdentifierEntry = (key: string, pattern: Match.Pattern): IdentifierEntry => ({ key, pattern })
-
-export function createParserFunctionEntry(denotation: `statement`, kind: TokenKindName, bindingPower: BindingPower, parser: StatementParser): ParserFunctionEntry
-export function createParserFunctionEntry(denotation: `nud`, kind: TokenKindName, bindingPower: BindingPower, parser: NUDParser): ParserFunctionEntry
-export function createParserFunctionEntry(denotation: `led`, kind: TokenKindName, bindingPower: BindingPower, parser: LEDParser): ParserFunctionEntry
-export function createParserFunctionEntry(denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower, parser: ParserFunction): ParserFunctionEntry {
-  return { denotation, kind, bindingPower, parser }
 }

@@ -1,4 +1,4 @@
-import { IUnit } from "./base"
+import { IUnit } from "./core/base"
 
 export interface QuantityStringOptions {
   noSpace?: boolean
@@ -16,7 +16,7 @@ export default class Quantity<TValue extends string | number = string | number> 
 
   toString(options: Partial<QuantityStringOptions> = {}) {
     const _space = options.noSpace ? `` : ` `
-    const _unit = options.useUnitName ? this.unit.getName() : this.unit.getSymbol()
+    const _unit = options.useUnitName ? this.unit.name : this.unit.symbol
 
     return `${this.value}${_space}${_unit}`
   }
