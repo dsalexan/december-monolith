@@ -1,9 +1,31 @@
 import { MaybeUndefined } from "tsdef"
+import assert from "assert"
+
+import { IUnit } from "@december/utils/unit"
+
 import { NODE_TYPE_COLOR, NodeType } from "../type"
 import { Expression } from "./expression"
 
 import { Block, paint } from "../../logger"
 import { Token } from "../../token/core"
+
+export class BooleanLiteral extends Expression {
+  type: NodeType = `BooleanLiteral`
+  public value: boolean
+
+  constructor(value: boolean) {
+    super()
+    this.value = value
+  }
+
+  public getValue(): boolean {
+    return this.value
+  }
+
+  public override getDebug(): string {
+    return String(this.value)
+  }
+}
 
 export class NumericLiteral extends Expression {
   type: NodeType = `NumericLiteral`
@@ -12,6 +34,13 @@ export class NumericLiteral extends Expression {
   constructor(value: Token) {
     super()
     this.value = value
+  }
+
+  public getValue(): number {
+    const numericValue = parseFloat(this.value.content)
+    assert(!isNaN(numericValue), `Invalid numeric value: ${this.value.content}`)
+
+    return numericValue
   }
 
   public override toBlocks(): Block[] {
@@ -33,8 +62,12 @@ export class StringLiteral extends Expression {
     this.values = values
   }
 
-  public override getContent(): string {
+  public getValue(): string {
     return this.values.map(value => value.content).join(``)
+  }
+
+  public override getContent(): string {
+    return this.getValue()
   }
 
   public override getDebug(): string {
@@ -51,5 +84,23 @@ export class Identifier extends StringLiteral {
 
   public get variableNameTokens(): Token[] {
     return this.values
+  }
+}
+
+export class UnitLiteral extends StringLiteral {
+  type: NodeType = `UnitLiteral`
+  public unit: IUnit
+
+  constructor(unit: IUnit, ...values: Token[]) {
+    super(...values)
+    this.unit = unit
+  }
+
+  public override getContent(): string {
+    return super.getContent()
+  }
+
+  public override getDebug(): string {
+    return this.unit.toString()
   }
 }

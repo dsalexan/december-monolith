@@ -64,9 +64,6 @@ const QUOTES = createParserFunctionEntry(`nud`, `quotes`, DEFAULT_BINDING_POWERS
 // STATEMENTS
 const _IF = createParserFunctionEntry(`statement`, `if`, DEFAULT_BINDING_POWERS.DEFAULT, DEFAULT_PARSERS.parseIfStatement)
 
-// IDENTIFIERS
-const IDENTIFIERS = []
-
 export const DEFAULT_GRAMMAR = [
   // LOGICAL
   _AND,
@@ -109,9 +106,6 @@ export const DEFAULT_GRAMMAR = [
 
   // STATEMENTS
   _IF,
-
-  // IDENTIFIERS
-  ...IDENTIFIERS,
 ]
 
 export const DEFAULT_PARSE_EXPRESSION = DEFAULT_PARSERS.parseExpression

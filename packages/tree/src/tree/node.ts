@@ -16,6 +16,10 @@ export class Node {
 
   constructor() {}
 
+  static isNode(node: any): node is Node {
+    return node instanceof Node
+  }
+
   // #region PARENT/CHILDREN
 
   public parent: Nullable<Node> = null

@@ -3,6 +3,7 @@ import { last, uniq } from "lodash"
 import { MaybeUndefined, Nullable } from "tsdef"
 
 import { Match } from "@december/utils"
+import { IUnit, UnitManager } from "@december/utils/unit"
 
 import { TokenKindName } from "../../token/kind"
 import { Expression, Statement } from "../../tree"
@@ -30,16 +31,17 @@ export class SyntacticalGrammar {
     led: Partial<Record<TokenKindName, LEDParser[]>>
   }
 
-  // TODO: Decide identifier data
   protected identifiers: Map<string, { pattern: Match.Pattern }> = new Map()
+  protected unitManager: UnitManager
 
-  constructor(parseStatement: EntryParser<Statement>, parseExpression: EntryParser<Expression>) {
+  constructor(parseStatement: EntryParser<Statement>, parseExpression: EntryParser<Expression>, unitManager: UnitManager) {
     this.parseStatement = parseStatement
     this.parseExpression = parseExpression
 
     this.bindingPowers = { statement: {}, nud: {}, led: {} }
     this.parsers = { statement: {}, nud: {}, led: {} }
     this.identifiers = new Map()
+    this.unitManager = unitManager
   }
 
   /** Return binding power for tokenKind (can specify denonation) */
@@ -77,10 +79,15 @@ export class SyntacticalGrammar {
   public isIdentifier(variableName: string): MaybeUndefined<Match.BasePatternMatch> {
     for (const [key, { pattern }] of this.identifiers) {
       const match = pattern.match(variableName)
-      if (match) return match
+      if (match.isMatch) return match
     }
 
     return undefined
+  }
+
+  /** Return unit definition by symbol */
+  public getUnit(unitName: string): Nullable<IUnit> {
+    return this.unitManager.getUnit(`symbol`, unitName)
   }
 
   /** Register binding power for tokenKind and denotation */

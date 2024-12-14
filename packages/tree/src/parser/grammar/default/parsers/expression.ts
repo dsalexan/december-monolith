@@ -1,7 +1,7 @@
 import assert from "assert"
 
 import type Parser from "../../.."
-import { BinaryExpression, CallExpression, Expression, ExpressionStatement, Identifier, MemberExpression, NumericLiteral, PrefixExpression, Statement, StringLiteral } from "../../../../tree"
+import { BinaryExpression, CallExpression, Expression, ExpressionStatement, Identifier, MemberExpression, NumericLiteral, PrefixExpression, Statement, StringLiteral, UnitLiteral } from "../../../../tree"
 import { TokenKind, getTokenKind, TokenKindName } from "../../../../token/kind"
 
 import { DEFAULT_BINDING_POWERS } from "../bindingPowers"
@@ -127,8 +127,12 @@ export function parseStringExpression(p: Parser, stringLiteral: StringLiteral, c
   // if stringLiteral is a identifier (create lookup identifier), re-create node as Identifier
 
   const content = stringLiteral.getContent()
+
   const identifierTest = p.grammar.isIdentifier(content)
   if (identifierTest?.isMatch) return new Identifier(...stringLiteral.values)
+
+  const unit = p.grammar.getUnit(content)
+  if (unit) return new UnitLiteral(unit, ...stringLiteral.values)
 
   return stringLiteral
 }

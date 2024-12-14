@@ -1,4 +1,4 @@
-import { EQUALS } from "@december/utils/match/element"
+import { EQUALS, REGEX } from "@december/utils/match/element"
 
 import { UnitManager, BASE_UNITS, DICE } from "./unit"
 
@@ -12,6 +12,7 @@ import {
 } from ".."
 import { createIdentifierEntry, SyntacticalGrammar } from "../parser/grammar"
 import { DEFAULT_GRAMMAR as DEFAULT_SYNTACTICAL_GRAMMAR, DEFAULT_PARSE_EXPRESSION, DEFAULT_PARSE_STATEMENT } from "../parser/grammar/default"
+import Interpreter, { DEFAULT_EVALUATE, Environment } from "../interpreter"
 
 let expression = `10 + 2 * 3`
 expression = `One::level`
@@ -25,6 +26,7 @@ expression = `10 * 3 + 6`
 expression = `[2d6 * d6]`
 expression = `(10 + b) * 3x + [2d6 * d6] / "ST:DX::level"`
 expression = `@if(1 = b then Are Strings Glued? else self)`
+expression = `2 d6`
 // expression = `"string test"`
 // expression = `"string test else"`
 // expression = `@if(10 + b then "else" else [2d6 * d6 + "then"] / "ST:DX::level")`
@@ -40,10 +42,19 @@ lexicalGrammar.add(...DEFAULT_LEXICAL_GRAMMAR)
 
 const syntacticalGrammar = new SyntacticalGrammar(DEFAULT_PARSE_STATEMENT, DEFAULT_PARSE_EXPRESSION, unitManager)
 syntacticalGrammar.add(...DEFAULT_SYNTACTICAL_GRAMMAR)
+syntacticalGrammar.add(createIdentifierEntry(`b`, EQUALS(`b`)))
 syntacticalGrammar.add(createIdentifierEntry(`self`, EQUALS(`self`)))
+syntacticalGrammar.add(createIdentifierEntry(`alias`, REGEX(/^\w{2}::.+$/)))
+
+const environment = new Environment()
+// environment.assignVariable(`b`, { type: `number`, value: 2 })
+environment.assignVariable(`self`, { type: `number`, value: 15 })
+// environment.registerResolutionPattern(`alias`, `<ALIAS>`, REGEX(/^\w{2}::.+$/))
+// environment.assignVariable('<ALIAS>', )
 
 const lexer = new Lexer()
 const parser = new Parser()
+const interpreter = new Interpreter()
 
 printExpressionHeader(expression)
 
@@ -52,3 +63,6 @@ lexer.print()
 
 const AST = parser.process(syntacticalGrammar, tokens, { mode: `expression` }, {})
 parser.print()
+
+const result = interpreter.process(AST, environment, DEFAULT_EVALUATE, {})
+interpreter.print()
