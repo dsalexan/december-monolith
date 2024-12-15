@@ -40,4 +40,5 @@ export const NODE_TYPE_COLOR = {
   StringLiteral: paint.blue,
   Identifier: paint.magenta,
   UnitLiteral: paint.magenta,
+  BinaryExpression: paint.yellow,
 } as Record<NodeType, Paint>

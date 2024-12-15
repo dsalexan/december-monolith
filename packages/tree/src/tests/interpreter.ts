@@ -14,8 +14,8 @@ import {
 import { createReTyperEntry, SyntacticalGrammar } from "../parser/grammar"
 import { DEFAULT_GRAMMAR as DEFAULT_SYNTACTICAL_GRAMMAR } from "../parser/grammar/default"
 
-import Interpreter, { DEFAULT_EVALUATE, DEFAULT_RUNTIME_TO_NODE, Environment } from "../interpreter"
-import { DICE_MODULAR_SYNTACTICAL_GRAMMAR } from "../interpreter/default/dice"
+import Interpreter, { createNumericValue, DEFAULT_EVALUATE, DEFAULT_RUNTIME_TO_NODE, Environment } from "../interpreter"
+import { DICE_MODULAR_SYNTACTICAL_GRAMMAR, evaluateWithDice, runtimeValueToNodeWithDice } from "../interpreter/default/dice"
 
 let expression = `10 + 2 * 3`
 expression = `One::level`
@@ -30,6 +30,7 @@ expression = `[2d6 * d6]`
 expression = `(10 + b) * 3x + [2d6 * d6] / "ST:DX::level"`
 expression = `@if(1 = b then Are Strings Glued? else self)`
 expression = `2 d6kh1kl0`
+expression = `20 + d6`
 // expression = `"string test"`
 // expression = `"string test else"`
 // expression = `@if(10 + b then "else" else [2d6 * d6 + "then"] / "ST:DX::level")`
@@ -52,7 +53,7 @@ syntacticalGrammar.add(createReTyperEntry(`alias`, `Identifier`, REGEX(/^\w{2}::
 
 const environment = new Environment()
 // environment.assignVariable(`b`, { type: `number`, value: 2 })
-environment.assignVariable(`self`, { type: `number`, value: 15 })
+environment.assignVariable(`self`, createNumericValue(15, null as any))
 // environment.registerResolutionPattern(`alias`, `<ALIAS>`, REGEX(/^\w{2}::.+$/))
 // environment.assignVariable('<ALIAS>', )
 
@@ -68,5 +69,5 @@ lexer.print()
 const AST = parser.process(syntacticalGrammar, tokens, { mode: `expression` }, {})
 parser.print()
 
-const result = interpreter.process(AST, environment, DEFAULT_EVALUATE, DEFAULT_RUNTIME_TO_NODE, {})
+const result = interpreter.process(AST, environment, evaluateWithDice, runtimeValueToNodeWithDice, {})
 interpreter.print()

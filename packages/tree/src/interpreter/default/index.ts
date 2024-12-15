@@ -11,7 +11,7 @@ import { BinaryExpression, BooleanLiteral, CallExpression, ExpressionStatement, 
 import { Environment, EvaluationFunction, ParseToNodeFunction, RuntimeValue } from ".."
 import { evaluateBinaryExpression, evaluateCallExpression, evaluateIfExpression, evaluateIdentifier, evaluateNumericLiteral, evaluateStringLiteral, evaluateUnitLiteral } from "./expressions"
 import { evaluateExpressionStatement } from "./statements"
-import { NumericValue, UnitValue, isBooleanValue, isNumericValue, isQuantityValue, isStringValue, isUnitValue } from "../valueTypes"
+import { NumericValue, UnitValue, createNumericValue, createUnitValue, isBooleanValue, isNumericValue, isQuantityValue, isStringValue, isUnitValue } from "../valueTypes"
 
 export const evaluate: EvaluationFunction = (i: Interpreter, node: Node, environment: Environment): RuntimeValue<any> | Node => {
   if (node.type === `NumericLiteral`) return evaluateNumericLiteral(i, node as NumericLiteral, environment)
@@ -31,11 +31,13 @@ export const runtimeValueToNode: ParseToNodeFunction<RuntimeValue<any>> = (i: In
   if (isBooleanValue(value)) return new BooleanLiteral(value.value)
   if (isNumericValue(value)) return new NumericLiteral(new ArtificialToken(getTokenKind(`number`), String(value.value)))
   if (isStringValue(value)) return new StringLiteral(new ArtificialToken(getTokenKind(`string`), value.value))
-  if (isUnitValue(value)) return new UnitLiteral(value.value, new ArtificialToken(getTokenKind(`string`), value.content))
+  if (isUnitValue(value)) return new UnitLiteral(value.value, new ArtificialToken(getTokenKind(`string`), value.value.symbol))
   if (isQuantityValue(value)) {
+    if (value.node) debugger
+
     assert(isNumber(value.value.value), `Quantity value must be a number.`)
-    const numericLeft = i.runtimeValueToNode<NumericValue>(i, { type: `number`, value: value.value.value }) as NumericLiteral
-    const unitRight = i.runtimeValueToNode<UnitValue>(i, { type: `unit`, value: value.value.unit, content: null as any }) as UnitLiteral
+    const numericLeft = i.runtimeValueToNode<NumericValue>(i, createNumericValue(value.value.value, null as any)) as NumericLiteral
+    const unitRight = i.runtimeValueToNode<UnitValue>(i, createUnitValue(value.value.unit, null as any)) as UnitLiteral
 
     return new BinaryExpression(numericLeft, new ArtificialToken(getTokenKind(`asterisk`), `*`), unitRight)
   }

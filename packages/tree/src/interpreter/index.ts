@@ -12,7 +12,7 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export { default as Environment } from "./environment"
 export type { RuntimeValue, NumericValue, StringValue, FunctionValue } from "./valueTypes"
-export { isNumericValue, isStringValue, isFunctionValue } from "./valueTypes"
+export { isNumericValue, isStringValue, isFunctionValue, createNumericValue } from "./valueTypes"
 
 export { evaluate as DEFAULT_EVALUATE, runtimeValueToNode as DEFAULT_RUNTIME_TO_NODE } from "./default"
 
@@ -21,10 +21,10 @@ export interface InterpreterOptions {
 }
 
 export type EvaluationFunction = (i: Interpreter, node: Node, environment: Environment) => RuntimeValue<any> | Node
-export type ParseToNodeFunction<TRuntimeValue extends RuntimeValue<any>> = (i: Interpreter, value: TRuntimeValue) => Node
+export type ParseToNodeFunction<TRuntimeValue extends RuntimeValue<any>> = (i: Interpreter, value: Omit<TRuntimeValue, `node`>) => Node
 
-export default class Interpreter {
-  public options: InterpreterOptions
+export default class Interpreter<TOptions extends InterpreterOptions = InterpreterOptions> {
+  public options: TOptions
   //
   private environment: Environment
   private AST: Node
@@ -33,11 +33,11 @@ export default class Interpreter {
   //
   public result: Node
 
-  public process(AST: Node, environment: Environment, evaluateFunction: EvaluationFunction, runtimeValueToNode: ParseToNodeFunction<RuntimeValue<any>>, options: WithOptionalKeys<InterpreterOptions, `logger`>) {
+  public process(AST: Node, environment: Environment, evaluateFunction: EvaluationFunction, runtimeValueToNode: ParseToNodeFunction<RuntimeValue<any>>, options: WithOptionalKeys<TOptions, `logger`>) {
     this.options = {
       logger: options.logger ?? _logger,
       ...options,
-    }
+    } as TOptions
 
     this.AST = AST
     this.environment = environment

@@ -43,6 +43,10 @@ export class NumericLiteral extends Expression {
     return numericValue
   }
 
+  public toString(): string {
+    return this.value.content
+  }
+
   public override toBlocks(): Block[] {
     const color = NODE_TYPE_COLOR[this.type] ?? paint.red
     return [color(this.value.toString())]

@@ -29,6 +29,7 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export { BindingPower, SyntacticalGrammar } from "./grammar"
 export { SyntacticalContext, StatementParser, NUDParser, LEDParser } from "./grammar/parserFunction"
+export { createRegisterParserEntriesFromIndex, SyntacticalGrammarEntry } from "./grammar/entries"
 
 export interface ParserOptions {
   logger: typeof _logger

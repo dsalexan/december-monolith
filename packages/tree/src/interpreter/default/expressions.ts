@@ -7,7 +7,7 @@ import { Token } from "../../token/core"
 import { BinaryExpression, CallExpression, Identifier, IfExpression, Node, NumericLiteral, StringLiteral, UnitLiteral } from "../../tree"
 
 import type Interpreter from ".."
-import { BooleanValue, NumericValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../valueTypes"
+import { BooleanValue, createBooleanValue, createNumericValue, createQuantityValue, createStringValue, createUnitValue, NumericValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../valueTypes"
 import Environment, { VARIABLE_NOT_FOUND } from "../environment"
 import { EvaluationFunction } from ".."
 
@@ -29,7 +29,7 @@ export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter, bin
   const isAlgebraic = [`+`, `-`, `*`, `/`].includes(operator)
   const isLogical = [`=`, `!=`, `>`, `<`, `>=`, `<=`].includes(operator)
 
-  if (isLogical) return evaluateLogicalBinaryExpression(left, right, operator)
+  if (isLogical) return evaluateLogicalBinaryExpression(left, right, operator, binaryExpression)
   else if (isAlgebraic) {
     if (left.type === `number`) {
       // 1. Try to resolve right into something, IDK
@@ -38,8 +38,8 @@ export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter, bin
         debugger
       }
 
-      if (resolvedRight.type === `number`) return evaluateNumericAlgebraicOperation(left as NumericValue, resolvedRight as NumericValue, operator)
-      else if (resolvedRight.type === `unit` && operator === `*`) return evaluateQuantity(left as NumericValue, resolvedRight as UnitValue)
+      if (resolvedRight.type === `number`) return evaluateNumericAlgebraicOperation(left as NumericValue, resolvedRight as NumericValue, operator, binaryExpression)
+      else if (resolvedRight.type === `unit` && operator === `*`) return evaluateQuantity(left as NumericValue, resolvedRight as UnitValue, binaryExpression)
     }
   }
 
@@ -86,13 +86,13 @@ export const evaluateIfExpression: EvaluationFunction = (i: Interpreter, ifExpre
 // "PRIMITIVES"
 //    Evaluations that ALWAYS return a runtime value
 
-export const evaluateNumericLiteral: EvaluationFunction = (i: Interpreter, numericLiteral: NumericLiteral, environment: Environment): NumericValue => ({ type: `number`, value: numericLiteral.getValue() })
-export const evaluateStringLiteral: EvaluationFunction = (i: Interpreter, stringLiteral: StringLiteral, environment: Environment): StringValue => ({ type: `string`, value: stringLiteral.getValue() })
-export const evaluateUnitLiteral: EvaluationFunction = (i: Interpreter, unitLiteral: UnitLiteral, environment: Environment): UnitValue => ({ type: `unit`, value: unitLiteral.unit, content: unitLiteral.getContent() })
+export const evaluateNumericLiteral: EvaluationFunction = (i: Interpreter, numericLiteral: NumericLiteral, environment: Environment): NumericValue => createNumericValue(numericLiteral.getValue(), numericLiteral)
+export const evaluateStringLiteral: EvaluationFunction = (i: Interpreter, stringLiteral: StringLiteral, environment: Environment): StringValue => createStringValue(String(stringLiteral.getValue()), stringLiteral)
+export const evaluateUnitLiteral: EvaluationFunction = (i: Interpreter, unitLiteral: UnitLiteral, environment: Environment): UnitValue => createUnitValue(unitLiteral.unit, unitLiteral)
 
 // UTILS
 
-function evaluateNumericAlgebraicOperation(left: NumericValue, right: NumericValue, operator: string): NumericValue {
+function evaluateNumericAlgebraicOperation(left: NumericValue, right: NumericValue, operator: string, node: Node): NumericValue {
   let result: Nullable<number> = null
 
   if (operator === `+`) result = left.value + right.value
@@ -105,10 +105,10 @@ function evaluateNumericAlgebraicOperation(left: NumericValue, right: NumericVal
   assert(result !== null, `Result cannot be null.`)
   assert(!Number.isNaN(result), `Result cannot be NaN.`)
 
-  return { type: `number`, value: result }
+  return createNumericValue(result, node)
 }
 
-function evaluateLogicalBinaryExpression(left: RuntimeValue<any>, right: RuntimeValue<any>, operator: string): BooleanValue {
+function evaluateLogicalBinaryExpression(left: RuntimeValue<any>, right: RuntimeValue<any>, operator: string, node: Node): BooleanValue {
   let result: Nullable<boolean> = null
 
   if (operator === `=`) result = left.value === right.value
@@ -122,11 +122,11 @@ function evaluateLogicalBinaryExpression(left: RuntimeValue<any>, right: Runtime
 
   assert(result !== null, `Result cannot be null.`)
 
-  return { type: `boolean`, value: result }
+  return createBooleanValue(result, node)
 }
 
-function evaluateQuantity(left: NumericValue, right: UnitValue): QuantityValue {
+function evaluateQuantity(left: NumericValue, right: UnitValue, node: Node): QuantityValue {
   const quantity = new Quantity(left.value, right.value)
 
-  return { type: `quantity`, value: quantity }
+  return createQuantityValue(quantity, node)
 }

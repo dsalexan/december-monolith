@@ -54,7 +54,7 @@ export class Node {
   }
 
   public get name() {
-    const prefix = NODE_TYPE_PREFIX[this.type]
+    const prefix = NODE_TYPE_PREFIX[this.type] ?? this.type.replace(/[^A-Z]+/g, ``).toLowerCase()
     const letters = this.parent ? `.` + this.letters : ``
     return `${prefix}${this.level}${letters}`
   }
