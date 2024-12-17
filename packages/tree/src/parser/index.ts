@@ -5,7 +5,7 @@
  * Each token is analysed following some rules (grammar rules?) to decide how it's node should be inserted into the existing tree
  */
 
-import { MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
+import { AnyObject, MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
 import { orderBy, sum } from "lodash"
 import assert, { match } from "assert"
 
@@ -35,10 +35,10 @@ export interface ParserOptions {
   logger: typeof _logger
 }
 
-export default class Parser {
+export default class Parser<TGrammarDict extends AnyObject = any> {
   public options: ParserOptions
   //
-  public grammar: SyntacticalGrammar
+  public grammar: SyntacticalGrammar<TGrammarDict>
   private tokens: Token[]
   private cursor: number
   //
@@ -75,7 +75,7 @@ export default class Parser {
 
   // #endregion
 
-  public process(grammar: SyntacticalGrammar, tokens: Token[], context: SyntacticalContext, options: WithOptionalKeys<ParserOptions, `logger`>) {
+  public process(grammar: SyntacticalGrammar<TGrammarDict>, tokens: Token[], context: SyntacticalContext, options: WithOptionalKeys<ParserOptions, `logger`>) {
     this.options = {
       logger: options.logger ?? _logger,
       ...options,

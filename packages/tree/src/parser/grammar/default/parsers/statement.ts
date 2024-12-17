@@ -8,14 +8,13 @@ import { BindingPower } from "../../bindingPower"
 
 import { EntryParser, StatementParser, SyntacticalContext } from "../../parserFunction"
 
-export const parseStatement: EntryParser<Statement> = (p: Parser, minimumBindingPower: BindingPower, context: SyntacticalContext): Statement => {
+export const parseStatement: EntryParser<Statement> = (p: Parser<DefaultStatementParserProvider>, minimumBindingPower: BindingPower, context: SyntacticalContext): Statement => {
   const parse = p.grammar.getParser(`statement`, p.peek())
   if (parse) return parse(p, context)
 
   if (minimumBindingPower !== DEFAULT_BINDING_POWERS.DEFAULT) debugger
 
-  const parseExpressionStatement = p.grammar.call<DefaultStatementParserFunctionIndex, `parseExpressionStatement`>(`parseExpressionStatement`)
-  return parseExpressionStatement(p, minimumBindingPower, context)
+  return p.grammar.call(`parseExpressionStatement`)(p, minimumBindingPower, context)
 }
 
 export const parseExpressionStatement: EntryParser<Statement> = (p: Parser, minimumBindingPower: BindingPower, context: SyntacticalContext): ExpressionStatement => {
@@ -28,5 +27,5 @@ export const parseExpressionStatement: EntryParser<Statement> = (p: Parser, mini
 export const DEFAULT_STATEMENT_PARSERS = {
   parseStatement,
   parseExpressionStatement,
-} as const
-export type DefaultStatementParserFunctionIndex = typeof DEFAULT_STATEMENT_PARSERS
+}
+export type DefaultStatementParserProvider = typeof DEFAULT_STATEMENT_PARSERS

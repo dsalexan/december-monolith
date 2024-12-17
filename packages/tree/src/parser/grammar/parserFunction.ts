@@ -18,17 +18,3 @@ export type LEDParser = (p: Parser, left: Expression, minimumBindingPower: Bindi
 export type EntryParser<TEntry> = (p: Parser, minimumBindingPower: BindingPower, context: SyntacticalContext) => TEntry
 
 export type ParserFunction = StatementParser | NUDParser | LEDParser
-
-interface FunctionIndex {
-  [key: string]: Function
-}
-export interface ParserFunctionIndex extends FunctionIndex {
-  // parseStatement: EntryParser<Statement>
-  // parseExpression: EntryParser<Expression>
-  //
-}
-
-export type AnyParserFunctionIndex = Merge<ParserFunctionIndex, FunctionIndex>
-
-export type ParserFunctionName<TParserFunctionIndex extends ParserFunctionIndex> = keyof TParserFunctionIndex
-export type ParserFunctionImplementation<TParserFunctionIndex extends ParserFunctionIndex, TParserName extends keyof TParserFunctionIndex = keyof TParserFunctionIndex> = TParserFunctionIndex[TParserName]

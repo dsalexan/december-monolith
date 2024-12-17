@@ -1,35 +1,34 @@
+import { getName } from "./../../../src2/nrs_OLD/rule_old/index"
+import { parseExpression } from "./default/parsers/expression"
 import assert from "assert"
-import { isNil, last, uniq } from "lodash"
-import { MaybeUndefined, Nullable } from "tsdef"
+import { isNil, isString, last, uniq } from "lodash"
+import { AnyObject, MaybeUndefined, Nullable } from "tsdef"
 
 import { Match } from "@december/utils"
 import { IUnit, UnitManager } from "@december/utils/unit"
 
 import { TokenKindName } from "../../token/kind"
-import { Expression, NodeType, Statement } from "../../tree"
+import { Expression, Node, NodeType, Statement } from "../../tree"
 
 import { BindingPower } from "./bindingPower"
-import { LEDParser, NUDParser, StatementParser, EntryParser, SyntacticalDenotation, ParserFunction, ParserFunctionIndex, ParserFunctionName, ParserFunctionImplementation } from "./parserFunction"
+import { LEDParser, NUDParser, StatementParser, EntryParser, SyntacticalDenotation } from "./parserFunction"
 import { isBindingPowerEntry, isBindParserEntry, isRegisterParserEntry, isReTyperEntry, ReTyperEntry, SyntacticalGrammarEntry } from "./entries"
+import { FunctionProvider, GetFunction, GetKey } from "./../../utils"
 
 export type { BindingPower } from "./bindingPower"
 
 export type SyntacticalLookupKey = SyntacticalDenotation
 export { createReTyperEntry, createBindParserEntry, createRegisterParserEntry, createBindingPowerEntry } from "./entries"
 
-export interface BaseParserFunctionIndex extends ParserFunctionIndex {
-  parseStatement: EntryParser<Statement>
-  parseExpression: EntryParser<Expression>
-}
+export type BaseParserProvider = Record<string, (...args: any[]) => Node>
 
-export class SyntacticalGrammar {
+export class SyntacticalGrammar<TDict extends BaseParserProvider> extends FunctionProvider<TDict> {
   protected bindingPowers: {
     statement: Partial<Record<TokenKindName, BindingPower[]>>
     nud: Partial<Record<TokenKindName, BindingPower[]>>
     led: Partial<Record<TokenKindName, BindingPower[]>>
   }
 
-  protected functions: BaseParserFunctionIndex
   protected parsers: {
     statement: Partial<Record<TokenKindName, string[]>>
     nud: Partial<Record<TokenKindName, string[]>>
@@ -40,21 +39,20 @@ export class SyntacticalGrammar {
   protected unitManager: UnitManager
 
   constructor(unitManager: UnitManager) {
+    super()
+
     this.bindingPowers = { statement: {}, nud: {}, led: {} }
-    this.functions = {} as any
     this.parsers = { statement: {}, nud: {}, led: {} }
     this.reTypers = new Map()
     this.unitManager = unitManager
   }
 
   public get parseStatement(): EntryParser<Statement> {
-    assert(this.functions[`parseStatement`], `parseStatement was nor registered`)
-    return this.functions[`parseStatement`]
+    return this.getFunction(`parseStatement`)
   }
 
   public get parseExpression(): EntryParser<Expression> {
-    assert(this.functions[`parseExpression`], `parseExpression was nor registered`)
-    return this.functions[`parseExpression`]
+    return this.getFunction(`parseExpression`)
   }
 
   /** Return binding power for tokenKind (can specify denonation) */
@@ -85,19 +83,16 @@ export class SyntacticalGrammar {
 
     assert(functionNames.length <= 1, `Multiple parsers for token kind "${kind}" and denotation "${denotation}"`)
 
-    const fns = functionNames.map(name => this.functions[name])
+    const fns = functionNames.map(name => this.getFunction(name))
     assert(fns.length === 0 || fns.some(fn => !isNil(fn)), `Some function is not indexed in centralized index`)
     return fns[0]
   }
 
   /** Returns syntactical parser function by name */
-  public call<TParserFunctionIndex extends ParserFunctionIndex, TParserName extends ParserFunctionName<TParserFunctionIndex>>(parserName: TParserName): ParserFunctionImplementation<TParserFunctionIndex, TParserName> {
-    assert(parserName !== `parseExpression` && parserName !== `parseStatement`, `Use parseExpression or parseStatement directly`)
+  public override call<TKey extends GetKey<TDict> = GetKey<TDict>>(name: TKey): GetFunction<TDict, TKey> {
+    assert(name !== `parseExpression` && name !== `parseStatement`, `Use parseExpression or parseStatement directly`)
 
-    const fn = this.functions[parserName as string]
-    assert(fn, `Parser "${String(parserName)}" doesn't exist`)
-
-    return fn as ParserFunctionImplementation<TParserFunctionIndex, TParserName>
+    return super.call(name)
   }
 
   /** Return if string should be re-typed as another thing */
@@ -122,22 +117,22 @@ export class SyntacticalGrammar {
   }
 
   /** Register a parser function in centralized index */
-  public registerParser<TParserFunctionIndex extends ParserFunctionIndex>(name: ParserFunctionName<TParserFunctionIndex>, fn: ParserFunctionImplementation<TParserFunctionIndex>, forceRegistration: boolean = false) {
-    if (!forceRegistration) assert(!this.functions[name as string], `Parser function "${String(name)}" already exists`)
-
-    this.functions[name as string] = fn as Function
+  public registerParser(name: GetKey<TDict>, fn: GetFunction<TDict>, override: boolean = false) {
+    this.addFunction(name, fn, override)
   }
 
   /** Bind a denonation parser for a token kind */
-  public bindParser<TParserFunctionIndex extends ParserFunctionIndex>(denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower, parser: ParserFunctionName<TParserFunctionIndex>) {
+  public bindParser(denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower, parser: GetKey<TDict>) {
     this.addBindingPower(denotation, kind, bindingPower)
 
-    assert(this.functions[parser as string], `Parser function "${String(parser)}" doesn't exists`)
+    assert(this.getFunction(parser), `Parser function "${String(parser)}" doesn't exists`)
 
     this.parsers[denotation][kind] ??= []
 
     const list = this.parsers[denotation][kind]!
-    list.push(parser as string)
+
+    assert(isString(parser), `Parser name must be a string`)
+    list.push(parser)
   }
 
   /** Register identifier by variable name */
@@ -148,9 +143,9 @@ export class SyntacticalGrammar {
   }
 
   /** Generic mass entry register */
-  public add<TParserFunctionIndex extends ParserFunctionIndex>(...entries: SyntacticalGrammarEntry<TParserFunctionIndex>[]) {
+  public add<TDict>(...entries: SyntacticalGrammarEntry<TDict>[]) {
     for (const entry of entries) {
-      if (isRegisterParserEntry(entry)) this.registerParser(entry.name, entry.fn, entry.forceRegistration)
+      if (isRegisterParserEntry(entry)) this.registerParser(entry.name, entry.fn, entry.override)
       else if (isBindParserEntry(entry)) this.bindParser(entry.denotation, entry.kind, entry.bindingPower, entry.parser)
       else if (isBindingPowerEntry(entry)) this.addBindingPower(entry.denotation, entry.kind, entry.bindingPower)
       else if (isReTyperEntry(entry)) this.addReTyper(entry.key, entry.type, entry.pattern)

@@ -1,7 +1,8 @@
+/* eslint-disable no-inner-declarations */
 import { LEDParser } from "./../../parserFunction"
 import assert from "assert"
 
-import { BinaryExpression, CallExpression, Expression, ExpressionStatement, Identifier, IfExpression, MemberExpression, NumericLiteral, PrefixExpression, Statement, StringLiteral, UnitLiteral } from "../../../../tree"
+import { BinaryExpression, CallExpression, Expression, ExpressionStatement, Identifier, IfExpression, MemberExpression, Node, NumericLiteral, PrefixExpression, Statement, StringLiteral, UnitLiteral } from "../../../../tree"
 import { TokenKind, getTokenKind, TokenKindName } from "../../../../token/kind"
 import { ArtificialToken } from "../../../../token/core"
 
@@ -11,7 +12,7 @@ import { DEFAULT_BINDING_POWERS } from "../bindingPowers"
 import { BindingPower } from "../../bindingPower"
 import { EntryParser, NUDParser, SyntacticalContext, SyntaxMode } from "../../parserFunction"
 import { createRegisterParserEntry } from "../../entries"
-import { MaybeUndefined } from "tsdef"
+import { AnyObject, Arguments, MaybeUndefined } from "tsdef"
 
 /** Parse tokens into an expression (until we reach something below the minimum binding power) */
 export const parseExpression: EntryParser<Expression> = (p: Parser, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
@@ -66,11 +67,8 @@ export const parseBinaryExpression: LEDParser = (p: Parser, left: Expression, mi
   return new BinaryExpression(left, operator, right)
 }
 
-export const parseConcatenatedExpression: LEDParser = (p: Parser, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
-  if (left.type === `NumericLiteral`) {
-    const parseImplicitMultiplication = p.grammar.call<DefaultExpressionParserFunctionIndex, `parseImplicitMultiplication`>(`parseImplicitMultiplication`)
-    return parseImplicitMultiplication(p, left, minimumBindingPower, context)
-  }
+export const parseConcatenatedExpression: LEDParser = (p: Parser<DefaultExpressionParserProvider>, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
+  if (left.type === `NumericLiteral`) return p.grammar.call(`parseImplicitMultiplication`)(p, left, minimumBindingPower, context)
 
   assert(left.type === `StringLiteral`, `Only string literals can have multiple tokens (found "${left.type}")`)
   const stringLiteral = left as StringLiteral
@@ -92,7 +90,7 @@ export const parseImplicitMultiplication: LEDParser = (p: Parser, left: Expressi
   return new BinaryExpression(numericLiteral, operator, right)
 }
 
-export const parsePrimaryExpression: NUDParser = (p: Parser, context: SyntacticalContext): Expression => {
+export const parsePrimaryExpression: NUDParser = (p: Parser<DefaultExpressionParserProvider>, context: SyntacticalContext): Expression => {
   const tokenKind = p.peek()
 
   if (tokenKind === `number`) {
@@ -101,10 +99,7 @@ export const parsePrimaryExpression: NUDParser = (p: Parser, context: Syntactica
     assert(!isNaN(number), `Invalid number "${number}"`)
 
     return new NumericLiteral(token)
-  } else if (tokenKind === `string`) {
-    const parseStringExpression = p.grammar.call<DefaultExpressionParserFunctionIndex, `parseStringExpression`>(`parseStringExpression`)
-    return parseStringExpression(p, new StringLiteral(p.next()), context)
-  }
+  } else if (tokenKind === `string`) return p.grammar.call(`parseStringExpression`)(p, new StringLiteral(p.next()), context)
   // else if (tokenKind === `identifier`) return new Identifier(p.next())
 
   throw new Error(`Invalid primary expression token kind "${tokenKind}"`)
@@ -116,7 +111,7 @@ export const parseMemberExpression: LEDParser = (p: Parser, left: Expression, mi
   return new MemberExpression(left, token)
 }
 
-export const parseQuotedStringExpression: NUDParser = (p: Parser, context: SyntacticalContext): Expression => {
+export const parseQuotedStringExpression: NUDParser = (p: Parser<DefaultExpressionParserProvider>, context: SyntacticalContext): Expression => {
   p.next(`quotes`)
 
   // 1. Start literal with fist token
@@ -130,9 +125,7 @@ export const parseQuotedStringExpression: NUDParser = (p: Parser, context: Synta
 
   p.next(`quotes`)
 
-  // TODO: I hate this snippet so much
-  const parseStringExpression = p.grammar.call<DefaultExpressionParserFunctionIndex, `parseStringExpression`>(`parseStringExpression`)
-  return parseStringExpression(p, stringLiteral, context)
+  return p.grammar.call(`parseStringExpression`)(p, stringLiteral, context)
 }
 
 export const parseStringExpression = (p: Parser, stringLiteral: StringLiteral, context: SyntacticalContext): Expression => {
@@ -228,5 +221,5 @@ export const DEFAULT_EXPRESSION_PARSERS = {
   parseGroupingExpression,
   parseCallExpression,
   parseIfExpression,
-} as const
-export type DefaultExpressionParserFunctionIndex = typeof DEFAULT_EXPRESSION_PARSERS
+}
+export type DefaultExpressionParserProvider = typeof DEFAULT_EXPRESSION_PARSERS
