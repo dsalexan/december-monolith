@@ -187,6 +187,18 @@
     {
       "type": "node-terminal",
       "request": "launch",
+      "name": "v4 (Tree/rewriter)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src\\tests\\rewriter.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    
+    {
+      "type": "node-terminal",
+      "request": "launch",
       "name": "v4 (Tree/Wrapper)",
       "skipFiles": [
         "<node_internals>/**"

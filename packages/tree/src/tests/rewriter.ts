@@ -14,8 +14,9 @@ import {
 import { createReTyperEntry, SyntacticalGrammar } from "../parser/grammar"
 import { DEFAULT_GRAMMAR as DEFAULT_SYNTACTICAL_GRAMMAR } from "../parser/grammar/default"
 
-import Interpreter, { createNumericValue, DEFAULT_EVALUATE, DEFAULT_RUNTIME_TO_NODE, Environment } from "../interpreter"
-import { DICE_MODULAR_SYNTACTICAL_GRAMMAR, evaluateWithDice, runtimeValueToNodeWithDice } from "../interpreter/evaluator/default/dice"
+import Interpreter, { createNumericValue, DEFAULT_EVALUATOR, Environment, NodeEvaluator } from "../interpreter"
+import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR } from "../interpreter/evaluator/default/dice"
+import Rewriter, { GraphRewritingSystem, DEFAULT_GRAPH_REWRITING_RULESET } from "../rewriter"
 
 let expression = `10 + 2 * 3`
 expression = `One::level`
@@ -33,7 +34,9 @@ expression = `2 d6kh1kl0`
 expression = `20 + d6`
 // expression = `"string test"`
 // expression = `"string test else"`
-// expression = `@if(10 + b then "else" else [2d6 * d6 + "then"] / "ST:DX::level")`
+expression = `@if(10 + b then "else" else [2d6 * d6 + "then"] / "ST:DX::level")`
+//
+expression = `0 + 1`
 
 expression = expression.replaceAll(/(\r\n|\n|\r) */gm, ``)
 
@@ -51,6 +54,13 @@ syntacticalGrammar.add(createReTyperEntry(`b`, `Identifier`, EQUALS(`b`)))
 syntacticalGrammar.add(createReTyperEntry(`self`, `Identifier`, EQUALS(`self`)))
 syntacticalGrammar.add(createReTyperEntry(`alias`, `Identifier`, REGEX(/^\w{2}::.+$/)))
 
+const graphRewritingSystem = new GraphRewritingSystem()
+graphRewritingSystem.add(...DEFAULT_GRAPH_REWRITING_RULESET)
+
+const nodeEvaluator = new NodeEvaluator()
+nodeEvaluator.addDictionary(DEFAULT_EVALUATOR)
+nodeEvaluator.addDictionary(DICE_MODULAR_EVALUATOR_PROVIDER, true)
+
 const environment = new Environment()
 // environment.assignVariable(`b`, { type: `number`, value: 2 })
 environment.assignVariable(`self`, createNumericValue(15, null as any))
@@ -59,6 +69,7 @@ environment.assignVariable(`self`, createNumericValue(15, null as any))
 
 const lexer = new Lexer()
 const parser = new Parser()
+const simplifier = new Rewriter()
 const interpreter = new Interpreter()
 
 printExpressionHeader(expression)
@@ -69,5 +80,8 @@ lexer.print()
 const AST = parser.process(syntacticalGrammar, tokens, { mode: `expression` }, {})
 parser.print()
 
-const result = interpreter.process(AST, environment, evaluateWithDice, runtimeValueToNodeWithDice, {})
-interpreter.print()
+const simplifiedAST = simplifier.process(AST, graphRewritingSystem, {})
+simplifier.print()
+
+// const result = interpreter.process(simplifiedAST, environment, nodeEvaluator, {})
+// interpreter.print()

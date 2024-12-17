@@ -7,6 +7,7 @@ import { NODE_TYPE_PREFIX, NodeType } from "./type"
 import { Block } from "../logger"
 import { print } from "./printer"
 import { isNil } from "lodash"
+import assert from "assert"
 
 export interface NodeOptions {}
 
@@ -36,6 +37,20 @@ export class Node {
   public addChild(child: Node, index: number, label: string) {
     this.children.splice(index, 0, child)
     child.setParent(this, index, label)
+  }
+
+  public replaceChild(child: Node, index: number) {
+    const oldChild = this.children[index]
+    assert(oldChild, `Child at index ${index} does not exist.`)
+
+    const label = oldChild.label
+    assert(label, `Child at index ${index} lacks a label.`)
+
+    this.children[index] = child
+    child.setParent(this, index, label)
+
+    // @ts-ignore
+    oldChild.setParent(null, null, null)
   }
 
   // #endregion
@@ -77,6 +92,15 @@ export class Node {
 
   public getContent(): string {
     throw new Error(`Method not implemented for type "${this.type}".`)
+  }
+
+  // #endregion
+
+  // #region TRAVERSAL
+
+  public static postOrder(node: Node, iteratee: (node: Node) => void) {
+    for (const child of node.children) Node.postOrder(child, iteratee)
+    iteratee(node)
   }
 
   // #endregion

@@ -1,0 +1,3 @@
+import { STACK_OVERFLOW_RULESET } from "./stackOverflow"
+
+export const DEFAULT_GRAPH_REWRITING_RULESET = [...STACK_OVERFLOW_RULESET]
