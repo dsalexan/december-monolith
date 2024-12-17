@@ -57,6 +57,7 @@ export default class Rewriter<TOptions extends RewriterOptions = RewriterOptions
 
     console.log(` `)
 
+    // _logger.add(this.rewrittenAST.getContent()).info()
     this.rewrittenAST.print()
     // logger.add(paint.grey(this.result.type)).info()
     // logger.add(paint.white.bold(this.result.value)).info()

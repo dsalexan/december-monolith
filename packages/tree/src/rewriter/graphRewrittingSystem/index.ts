@@ -1,12 +1,29 @@
 import assert from "assert"
-import { Node } from "../../tree"
 import { MaybeUndefined, Nullable } from "tsdef"
 
-export type GraphRewritingPattern = (node: Node) => boolean
+import churchill, { Block, paint, Paint } from "../../logger"
+
+import { Node } from "../../tree"
+import { isBoolean, isNumber, isString } from "lodash"
+
+export interface PatternTargetMatch {
+  target: number | string // node index
+}
+
+export interface PatternTargetMapMatch {
+  target: Record<string, Node> // arbitrary tag/key -> node
+}
+
+export const _logger = churchill.child(`node`, undefined, { separator: `` })
+
+export type PatternBooleanMatch = boolean
+export type PatternMatch = PatternBooleanMatch | PatternTargetMatch | PatternTargetMapMatch
+
+export type GraphRewritingPattern = (node: Node) => PatternMatch
 
 export const REMOVE_NODE = Symbol.for(`graph-rewriting-system:remove-node`)
 export type RemoveNode = typeof REMOVE_NODE
-export type GraphRewritingReplacementFunction = (node: Node) => MaybeUndefined<Node | RemoveNode>
+export type GraphRewritingReplacementFunction = (node: Node, { match }: { match: PatternMatch }) => MaybeUndefined<Node | RemoveNode>
 
 export interface GraphRewritingRule {
   key: string
@@ -41,6 +58,7 @@ export default class GraphRewritingSystem {
 
     let root = originalRoot
     for (const [i, node] of nodes.entries()) {
+      _logger.add(paint.bold(node.name)).info()
       const changedNode = this.applyNode(node)
 
       // update root if necessary
@@ -52,6 +70,8 @@ export default class GraphRewritingSystem {
 
   /** Apply rewriting rules to node and its surroundings (the function already modifies the tree internally) */
   public applyNode(node: Node): Nullable<Node> {
+    let DEBUG = false // COMMENT
+
     let current: Node = node
 
     let overallChanges = 0
@@ -68,16 +88,51 @@ export default class GraphRewritingSystem {
           const parent = current.parent
           const index = current.index
 
-          const replacement = rule.replacement(current)
-          if (replacement === undefined) continue
+          let _match = String(match)
+          // check if match is PatternTargetMatch
+          if (!isBoolean(match)) {
+            const { target } = match as PatternTargetMatch | PatternTargetMapMatch
+
+            if (isNumber(target) || isString(target)) _match = String(target)
+            else {
+              const entries: string[] = []
+              for (const [key, value] of Object.entries(target)) entries.push(`${key}: ${value.name}`)
+              _match = `{ ${entries.join(`, `)} }`
+            }
+          }
+
+          const replacement = rule.replacement(current, { match })
+          if (replacement === undefined) {
+            if (DEBUG)
+              _logger
+                .add(`  `.repeat(changes + 1))
+                .add(paint.dim.grey(rule.key), ` `)
+                .add(paint.dim.grey(`match: ${_match}`))
+                .info()
+            continue
+          }
 
           if (replacement instanceof Node) {
+            if (DEBUG)
+              _logger
+                .add(`  `.repeat(changes + 1))
+                .add(paint.blue(rule.key), ` `)
+                .add(paint.dim.grey(`match: ${_match}`))
+                .info()
             if (parent) parent.replaceChild(replacement, index!)
 
             current = replacement
           } else {
+            if (DEBUG)
+              _logger
+                .add(`  `.repeat(changes + 1))
+                .add(paint.red(rule.key), ` `)
+                .add(paint.dim.grey(`match: ${_match}`))
+                .info()
             debugger
           }
+
+          current.print()
 
           // there was a change, so we need to re-apply the rules
           changes++

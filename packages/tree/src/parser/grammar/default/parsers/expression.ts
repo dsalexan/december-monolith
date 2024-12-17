@@ -76,7 +76,7 @@ export const parseConcatenatedExpression: LEDParser = (p: Parser<DefaultExpressi
   // 2. Eat string and whitespace tokens
   while (p.hasTokens() && [`string`, `whitespace`].includes(p.peek())) {
     const token = p.next()
-    stringLiteral.values.push(token)
+    stringLiteral.tokens.push(token)
   }
 
   return stringLiteral
@@ -120,7 +120,7 @@ export const parseQuotedStringExpression: NUDParser = (p: Parser<DefaultExpressi
   // 2. Eat string and whitespace tokens
   while (p.hasTokens() && p.peek() !== `quotes`) {
     const token = p.next()
-    stringLiteral.values.push(token)
+    stringLiteral.tokens.push(token)
   }
 
   p.next(`quotes`)
@@ -137,14 +137,14 @@ export const parseStringExpression = (p: Parser, stringLiteral: StringLiteral, c
   const reTypeTest = p.grammar.shouldReType(content)
   if (reTypeTest?.match?.isMatch) {
     const { type } = reTypeTest
-    if (type === `Identifier`) return new Identifier(...stringLiteral.values)
+    if (type === `Identifier`) return new Identifier(...stringLiteral.tokens)
 
     throw new Error(`Unimplemented re-type type "${type}"`)
   }
 
   // 2. Then check if it is a unit
   const unit = p.grammar.getUnit(content)
-  if (unit) return new UnitLiteral(unit, ...stringLiteral.values)
+  if (unit) return new UnitLiteral(unit, ...stringLiteral.tokens)
 
   return stringLiteral
 }

@@ -81,7 +81,7 @@ export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter<Defa
 }
 
 export const evaluateIdentifier: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, identifier: Identifier, environment: Environment): RuntimeValue<any> | Node => {
-  const variableName = identifier.getValue()
+  const variableName = identifier.getVariableName()
   const value = environment.get(variableName)
 
   if (value === VARIABLE_NOT_FOUND) return identifier

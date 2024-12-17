@@ -148,7 +148,7 @@ export const parseImplicitMultiplication: LEDParser = (p: Parser, left: Expressi
   const right = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.MULTIPLICATIVE, context)
 
   // 1. Check if right is a dice roll expression
-  const content = right.getContent().trim()
+  const content = right.getContent({ separator: ``, wrap: false }).trim()
   const diceData = parseDiceNotation(content)
   if (diceData) return new DiceRollExpression(numericLiteral, diceData.faces, diceData.keep)
 

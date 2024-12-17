@@ -29,22 +29,21 @@ export class BooleanLiteral extends Expression {
 
 export class NumericLiteral extends Expression {
   type: NodeType = `NumericLiteral`
-  public value: Token
+
+  public get value(): Token {
+    return this.tokens[0]
+  }
 
   constructor(value: Token) {
     super()
-    this.value = value
+    this.tokens = [value]
   }
 
   public getValue(): number {
-    const numericValue = parseFloat(this.value.content)
-    assert(!isNaN(numericValue), `Invalid numeric value: ${this.value.content}`)
+    const numericValue = parseFloat(this.getContent())
+    assert(!isNaN(numericValue), `Invalid numeric value: ${this.getContent()}`)
 
     return numericValue
-  }
-
-  public toString(): string {
-    return this.value.content
   }
 
   public override toBlocks(): Block[] {
@@ -53,25 +52,20 @@ export class NumericLiteral extends Expression {
   }
 
   public override getDebug(): string {
-    return this.value.content
+    return this.getContent()
   }
 }
 
 export class StringLiteral extends Expression {
   type: NodeType = `StringLiteral`
-  public values: Token[]
 
-  constructor(...values: Token[]) {
+  constructor(...tokens: Token[]) {
     super()
-    this.values = values
+    this.tokens = [...tokens]
   }
 
   public getValue(): string {
-    return this.values.map(value => value.content).join(``)
-  }
-
-  public override getContent(): string {
-    return this.getValue()
+    return this.getContent()
   }
 
   public override getDebug(): string {
@@ -87,7 +81,15 @@ export class Identifier extends StringLiteral {
   }
 
   public get variableNameTokens(): Token[] {
-    return this.values
+    return this.tokens
+  }
+
+  public getValue(): string {
+    throw new Error(`Don't use this method for identifiers.`)
+  }
+
+  public getVariableName(): string {
+    return this.getContent()
   }
 }
 
@@ -95,13 +97,9 @@ export class UnitLiteral extends StringLiteral {
   type: NodeType = `UnitLiteral`
   public unit: IUnit
 
-  constructor(unit: IUnit, ...values: Token[]) {
-    super(...values)
+  constructor(unit: IUnit, ...tokens: Token[]) {
+    super(...tokens)
     this.unit = unit
-  }
-
-  public override getContent(): string {
-    return super.getContent()
   }
 
   public override getDebug(): string {

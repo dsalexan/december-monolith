@@ -6,14 +6,17 @@ import { Node } from "../node"
 
 export class BinaryExpression extends Expression {
   type: NodeType = `BinaryExpression`
-  public operator: Token
 
   constructor(left: Expression, operator: Token, right: Expression) {
     super()
-    this.operator = operator
+    this.tokens = [operator]
 
     this.addChild(left, 0, `left`)
     this.addChild(right, 1, `right`)
+  }
+
+  public get operator(): Token {
+    return this.tokens[0]
   }
 
   public get left(): Expression {
@@ -46,13 +49,16 @@ export class CallExpression extends Expression {
 
 export class MemberExpression extends Expression {
   type: NodeType = `MemberExpression`
-  public property: Token
 
   constructor(object: Expression, property: Token) {
     super()
-    this.property = property
+    this.tokens = [property]
 
     this.addChild(object, 0, `object`)
+  }
+
+  public get property(): Token {
+    return this.tokens[0]
   }
 
   public get object(): Expression {
@@ -62,13 +68,16 @@ export class MemberExpression extends Expression {
 
 export class PrefixExpression extends Expression {
   type: NodeType = `PrefixExpression`
-  public operator: Token
 
   constructor(operator: Token, right: Expression) {
     super()
-    this.operator = operator
+    this.tokens = [operator]
 
     this.addChild(right, 0, `right`)
+  }
+
+  public get operator(): Token {
+    return this.tokens[0]
   }
 
   public get right(): Expression {

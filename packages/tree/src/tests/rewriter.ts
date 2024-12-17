@@ -36,7 +36,16 @@ expression = `20 + d6`
 // expression = `"string test else"`
 expression = `@if(10 + b then "else" else [2d6 * d6 + "then"] / "ST:DX::level")`
 //
-expression = `0 + 1`
+expression = `2 * 1`
+expression = `0 + 1 + 2 * 1`
+expression = `3 / 3`
+expression = `(4 * (b + d)) / 4`
+expression = `(2 * 5) + 5`
+expression = `(3 + 7) + 3` // (_1 + _2) + _1 -> (_1 + 2) * _2
+expression = `(o * t) + (th * t)` // (_1 * _2) + (_3 * _2) -> (_1 + _3) * _2
+expression = `((t * o) - 7) - 8` // (_NonLiteral - _Literal1) - _Literal2 -> _NonLiteral - (_Literal1 + _Literal2)
+// expression = `5 + (2 * 3)`
+// expression = `7 + ((b * c) + 3)`
 
 expression = expression.replaceAll(/(\r\n|\n|\r) */gm, ``)
 
@@ -51,6 +60,8 @@ const syntacticalGrammar = new SyntacticalGrammar(unitManager)
 syntacticalGrammar.add(...DEFAULT_SYNTACTICAL_GRAMMAR)
 syntacticalGrammar.add(...DICE_MODULAR_SYNTACTICAL_GRAMMAR)
 syntacticalGrammar.add(createReTyperEntry(`b`, `Identifier`, EQUALS(`b`)))
+syntacticalGrammar.add(createReTyperEntry(`t`, `Identifier`, EQUALS(`t`)))
+syntacticalGrammar.add(createReTyperEntry(`o`, `Identifier`, EQUALS(`o`)))
 syntacticalGrammar.add(createReTyperEntry(`self`, `Identifier`, EQUALS(`self`)))
 syntacticalGrammar.add(createReTyperEntry(`alias`, `Identifier`, REGEX(/^\w{2}::.+$/)))
 
@@ -83,5 +94,5 @@ parser.print()
 const simplifiedAST = simplifier.process(AST, graphRewritingSystem, {})
 simplifier.print()
 
-// const result = interpreter.process(simplifiedAST, environment, nodeEvaluator, {})
-// interpreter.print()
+const result = interpreter.process(simplifiedAST, environment, nodeEvaluator, {})
+interpreter.print()

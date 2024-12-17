@@ -81,6 +81,7 @@ export default class Interpreter<TEvaluatorDict extends AnyObject = any, TOption
 
     console.log(` `)
 
+    // _logger.add(this.result.getContent()).info()
     this.result.print()
     // logger.add(paint.grey(this.result.type)).info()
     // logger.add(paint.white.bold(this.result.value)).info()
