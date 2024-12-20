@@ -125,6 +125,8 @@ export const parseQuotedStringExpression: NUDParser = (p: Parser<DefaultExpressi
 
   p.next(`quotes`)
 
+  stringLiteral.quoted = true
+
   return p.grammar.call(`parseStringExpression`)(p, stringLiteral, context)
 }
 

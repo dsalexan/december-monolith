@@ -9,7 +9,8 @@ import GraphRewritingSystem from "./graphRewrittingSystem"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-export { default as GraphRewritingSystem } from "./graphRewrittingSystem"
+export { default as GraphRewritingSystem, createGraphRewritingRule } from "./graphRewrittingSystem"
+export type { GraphRewritingRule, PatternTargetMatch } from "./graphRewrittingSystem"
 export { DEFAULT_GRAPH_REWRITING_RULESET } from "./graphRewrittingSystem/default"
 
 export interface RewriterOptions {

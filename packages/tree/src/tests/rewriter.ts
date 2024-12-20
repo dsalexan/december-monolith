@@ -14,8 +14,8 @@ import {
 import { createReTyperEntry, SyntacticalGrammar } from "../parser/grammar"
 import { DEFAULT_GRAMMAR as DEFAULT_SYNTACTICAL_GRAMMAR } from "../parser/grammar/default"
 
-import Interpreter, { createNumericValue, DEFAULT_EVALUATOR, Environment, NodeEvaluator } from "../interpreter"
-import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR } from "../interpreter/evaluator/default/dice"
+import Interpreter, { NumericValue, DEFAULT_EVALUATOR, Environment, NodeEvaluator } from "../interpreter"
+import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR, DICE_RULESET } from "../_custom/dice"
 import Rewriter, { GraphRewritingSystem, DEFAULT_GRAPH_REWRITING_RULESET } from "../rewriter"
 
 let expression = `10 + 2 * 3`
@@ -44,7 +44,9 @@ expression = `(2 * 5) + 5`
 expression = `(3 + 7) + 3` // (_1 + _2) + _1 -> (_1 + 2) * _2
 expression = `(o * t) + (th * t)` // (_1 * _2) + (_3 * _2) -> (_1 + _3) * _2
 expression = `((t * o) - 7) - 8` // (_NonLiteral - _Literal1) - _Literal2 -> _NonLiteral - (_Literal1 + _Literal2)
-// expression = `5 + (2 * 3)`
+expression = `2d6 + 5 - 1d6`
+expression = `@if(@itemhasmod(AD:Flight, "Feet Only") then 99 else 10)`
+// expression = `` // (_NonLiteral1 + _Literal) - _NonLiteral2 -> (_NonLiteral1 - _NonLiteral2) + _Literal       {C}
 // expression = `7 + ((b * c) + 3)`
 
 expression = expression.replaceAll(/(\r\n|\n|\r) */gm, ``)
@@ -67,14 +69,15 @@ syntacticalGrammar.add(createReTyperEntry(`alias`, `Identifier`, REGEX(/^\w{2}::
 
 const graphRewritingSystem = new GraphRewritingSystem()
 graphRewritingSystem.add(...DEFAULT_GRAPH_REWRITING_RULESET)
+graphRewritingSystem.add(...DICE_RULESET)
 
 const nodeEvaluator = new NodeEvaluator()
-nodeEvaluator.addDictionary(DEFAULT_EVALUATOR)
-nodeEvaluator.addDictionary(DICE_MODULAR_EVALUATOR_PROVIDER, true)
+nodeEvaluator.addDictionaries(DEFAULT_EVALUATOR)
+nodeEvaluator.addDictionaries(DICE_MODULAR_EVALUATOR_PROVIDER, true)
 
 const environment = new Environment()
 // environment.assignVariable(`b`, { type: `number`, value: 2 })
-environment.assignVariable(`self`, createNumericValue(15, null as any))
+environment.assignVariable(`self`, new NumericValue(15))
 // environment.registerResolutionPattern(`alias`, `<ALIAS>`, REGEX(/^\w{2}::.+$/))
 // environment.assignVariable('<ALIAS>', )
 

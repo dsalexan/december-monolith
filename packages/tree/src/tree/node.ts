@@ -123,25 +123,28 @@ export class Node {
 
   public getContent({ depth, separator, wrap }: { depth?: number; separator?: string; wrap?: boolean } = {}): string {
     // if (this.type === `ExpressionStatement`) debugger
+    // if (this.name === `s3.aac` || this.children.some(child => child.name === `s3.aac`)) debugger // COMMENT
 
     depth ??= 0
+    let content: string[] = []
 
-    // 1. First concatenate all tokens (return it if there are no children)
-    const tokenContent = this.tokens.map(value => value.content).join(``)
-    if (this.children.length === 0) return tokenContent
-
-    // 2. Check if we CAN (not should) wrap content in something
+    // 1. Check if we CAN (not should) wrap content in something
     let canWrap = wrap ?? true
+    let shouldWrap = canWrap
 
-    // 3. Ask for children contents
-    const childrenContent = this.children.map(child => child.getContent({ depth: depth! + 1, separator, wrap }))
-    const content = [...childrenContent]
+    // 2. First concatenate all tokens (return it if there are no children)
+    const tokenContent = this.tokens.map(value => value.content).join(``)
+    if (this.children.length === 0) content = [tokenContent]
+    else {
+      // 3. Ask for children contents
+      const childrenContent = this.children.map(child => child.getContent({ depth: depth! + 1, separator, wrap }))
+      content = [...childrenContent]
 
-    // 4. By default inject content from tokens after first child
-    if (tokenContent.length > 0) content.splice(1, 0, tokenContent)
+      // 4. By default inject content from tokens after first child
+      if (tokenContent.length > 0) content.splice(1, 0, tokenContent)
+    }
 
     // 5. Check if we SHOULD wrap content
-    let shouldWrap = canWrap
     if (canWrap) {
       //    A) Node with only one child SHOULD NOT be wrapper
       shouldWrap = shouldWrap && this.children.length > 1
@@ -153,12 +156,23 @@ export class Node {
       shouldWrap = shouldWrap && depth > 0
     }
 
-    const [opener, closer] = shouldWrap ? [`(`, `)`] : [``, ``]
+    // 6. Override shouldWrap for some specific cases
+    if (!shouldWrap && this.forceWrap()) shouldWrap = true
+
+    const [opener, closer] = shouldWrap ? this.getWrappers() : [``, ``]
     return `${opener}${content.join(separator ?? ` `)}${closer}`
   }
 
   public toString(): string {
     return this.getContent()
+  }
+
+  public getWrappers(): [string, string] {
+    return [`(`, `)`]
+  }
+
+  public forceWrap(): boolean {
+    return false
   }
 
   // #endregion

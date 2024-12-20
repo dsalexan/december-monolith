@@ -45,6 +45,13 @@ export class CallExpression extends Expression {
   public get arguments(): Expression[] {
     return this.children.slice(1)
   }
+
+  public override getContent({ depth, separator, wrap }: { depth?: number; separator?: string; wrap?: boolean } = {}): string {
+    const callee = this.callee.getContent({ depth, separator, wrap })
+    const args = this.arguments.map(arg => arg.getContent({ depth, separator, wrap }))
+
+    return `${callee}(${args.join(`, `)})`
+  }
 }
 
 export class MemberExpression extends Expression {
@@ -106,5 +113,13 @@ export class IfExpression extends Expression {
 
   public get alternative(): Expression {
     return this.children[2]
+  }
+
+  public override getContent({ depth, separator, wrap }: { depth?: number; separator?: string; wrap?: boolean } = {}): string {
+    const condition = this.condition.getContent({ depth, separator, wrap })
+    const consequent = this.consequent.getContent({ depth, separator, wrap })
+    const alternative = this.alternative?.getContent({ depth, separator, wrap })
+
+    return `@if(${condition} then ${consequent} else ${alternative})`
   }
 }

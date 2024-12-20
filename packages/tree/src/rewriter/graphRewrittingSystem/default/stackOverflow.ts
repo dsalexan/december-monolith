@@ -9,9 +9,9 @@ import { ArtificialToken, getTokenKind } from "../../../token"
 
 import { isBinaryExpression, isLiteral, isNumericLiteral } from "../../../utils/guards"
 import { artificialize, artificializeTree, makeConstantLiteral } from "../../../utils/factories"
+import { getRepeatingNodes } from "../../../utils/other"
 
 import { createGraphRewritingRule, GraphRewritingRule, PatternTargetMapMatch, PatternTargetMatch } from ".."
-import { getRepeatingNodes } from "../../../utils/other"
 
 export const STACK_OVERFLOW_RULESET: GraphRewritingRule[] = []
 
@@ -333,6 +333,92 @@ STACK_OVERFLOW_RULESET.push(
       //    -> _NonLiteral <OUTER> (_LiteralA <INNER> _LiteralB)
       const innerOperation = new BinaryExpression(_LA, INNER, _LB)
       return new BinaryExpression(_NL, OUTER, innerOperation)
+    },
+  ),
+)
+
+// (2d6 + 5) - 1d6
+//
+// (_NonLiteral1 + _Literal) + _NonLiteral2 -> (_NonLiteral1 + _NonLiteral2) + _Literal       {A}
+// (_NonLiteral1 - _Literal) + _NonLiteral2 -> (_NonLiteral1 + _NonLiteral2) - _Literal       {B}
+// (_NonLiteral1 + _Literal) - _NonLiteral2 -> (_NonLiteral1 - _NonLiteral2) + _Literal       {C}
+// (_NonLiteral1 - _Literal) - _NonLiteral2 -> (_NonLiteral1 - _NonLiteral2) - _Literal       {D}
+//
+// _NonLiteral1 + (_NonLiteral2 + _Literal) -> (_NonLiteral1 + _NonLiteral2) + _Literal       {E}
+// _NonLiteral1 + (_NonLiteral2 - _Literal) -> (_NonLiteral1 + _NonLiteral2) - _Literal       {F}
+// _NonLiteral1 - (_NonLiteral2 + _Literal) -> (_NonLiteral1 - _NonLiteral2) - _Literal       {G}
+// _NonLiteral1 - (_NonLiteral2 - _Literal) -> (_NonLiteral1 - _NonLiteral2) + _Literal       {H}
+// (Group non-literals to allow the single literal node to be moved to the right)
+STACK_OVERFLOW_RULESET.push(
+  createGraphRewritingRule(
+    `GROUP_NON_LITERALS_TO_PUSH_LITERAL_TO_RIGHTMOST`,
+    node => {
+      if (!isBinaryExpression(node, [`+`, `-`])) return false
+
+      const operator = node.operator.content
+
+      if (isBinaryExpression(node.left, [`+`, `-`]) && !isLiteral(node.right)) {
+        const innerOperator = (node.left as BinaryExpression).operator.content
+
+        if (!isLiteral(node.left.left) && isLiteral(node.left.right)) {
+          if (operator === `+` && innerOperator == `+`) return { target: `A` }
+          else if (operator === `+` && innerOperator == `-`) return { target: `B` }
+          else if (operator === `-` && innerOperator == `+`) return { target: `C` }
+          else if (operator === `-` && innerOperator == `-`) return { target: `D` }
+        }
+      }
+      //
+      else if (!isLiteral(node.left) && isBinaryExpression(node.right, [`+`, `-`])) {
+        const innerOperator = (node.left as BinaryExpression).operator.content
+
+        if (!isLiteral(node.right.left) && isLiteral(node.right.right)) {
+          if (operator === `+` && innerOperator == `+`) return { target: `E` }
+          else if (operator === `+` && innerOperator == `-`) return { target: `F` }
+          else if (operator === `-` && innerOperator == `+`) return { target: `G` }
+          else if (operator === `-` && innerOperator == `-`) return { target: `H` }
+        }
+      }
+
+      return false
+    },
+    (node: BinaryExpression, { match }: { match: PatternTargetMatch }) => {
+      let INNER = new ArtificialToken(getTokenKind(`plus`), `+`)
+      let OUTER = new ArtificialToken(getTokenKind(`plus`), `+`)
+
+      let _L: Node, _NL1: Node, _NL2: Node
+
+      if ([`A`, `B`, `C`, `D`].includes(match.target as string)) {
+        _NL1 = (node.left as BinaryExpression).left
+        _NL2 = node.right
+        _L = (node.left as BinaryExpression).right
+      } else {
+        _NL1 = node.left
+        _NL2 = (node.right as BinaryExpression).left
+        _L = (node.right as BinaryExpression).right
+      }
+
+      if (match.target === `A`) {
+        // pass
+      } else if (match.target === `B`) {
+        INNER = new ArtificialToken(getTokenKind(`dash`), `-`)
+      } else if (match.target === `C`) {
+        OUTER = new ArtificialToken(getTokenKind(`dash`), `-`)
+      } else if (match.target === `D`) {
+        INNER = new ArtificialToken(getTokenKind(`dash`), `-`)
+        OUTER = new ArtificialToken(getTokenKind(`dash`), `-`)
+      } else if (match.target === `E`) {
+        // pass
+      } else if (match.target === `F`) {
+        INNER = new ArtificialToken(getTokenKind(`dash`), `-`)
+      } else if (match.target === `G`) {
+        OUTER = new ArtificialToken(getTokenKind(`dash`), `-`)
+      } else if (match.target === `H`) {
+        INNER = new ArtificialToken(getTokenKind(`dash`), `-`)
+        OUTER = new ArtificialToken(getTokenKind(`dash`), `-`)
+      }
+
+      const innerOperation = new BinaryExpression(_NL1, INNER, _NL2)
+      return new BinaryExpression(innerOperation, OUTER, _L)
     },
   ),
 )

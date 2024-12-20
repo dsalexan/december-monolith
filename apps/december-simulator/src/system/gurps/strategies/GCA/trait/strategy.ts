@@ -90,7 +90,7 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
 )
 
 // B. GENERIC PROCESSING
-IMPORT_TRAIT_FROM_GCA_STRATEGY.registerReProcessingFunction(`compute:re-processing`, GCAProcessingSymbolOptionsGenerator)
+// IMPORT_TRAIT_FROM_GCA_STRATEGY.registerReProcessingFunction(`compute:re-processing`, GCAProcessingSymbolOptionsGenerator)
 
 // C. SPECIFIC COMPUTES
 // C.1. modes

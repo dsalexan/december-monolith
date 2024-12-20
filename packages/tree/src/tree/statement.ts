@@ -5,7 +5,11 @@ import { Expression } from "./expression"
 import { Block } from "../logger"
 
 /** Statements do not result in a value at runtime. They contain one or more expressions internally */
-export class Statement extends Node {}
+export class Statement extends Node {
+  public static isStatement(value: any): value is Statement {
+    return value instanceof Statement
+  }
+}
 
 /** One expression to be evaluated. Kind of a "root" node or a "line" node */
 export class ExpressionStatement extends Statement {

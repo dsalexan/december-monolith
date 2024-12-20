@@ -1,5 +1,6 @@
 import assert from "assert"
 import { MaybeUndefined, Nullable } from "tsdef"
+import { sum } from "lodash"
 
 import { BinaryExpression, Expression, Node, NumericLiteral, StringLiteral } from "@december/tree/tree"
 import { getTokenKind, ArtificialToken } from "@december/tree/token"
@@ -9,17 +10,19 @@ import { DEFAULT_BINDING_POWERS, DEFAULT_PARSERS } from "@december/tree/parser/g
 
 import Interpreter, {
   Environment,
-  isNumericValue,
   RuntimeValue,
-  createNumericValue,
   InterpreterOptions,
   NodeConversionFunction,
   EvaluationFunction,
   DEFAULT_NODE_CONVERSORS,
   DEFAULT_EVALUATIONS,
   NumericValue,
+  EvaluationOutput,
+  RuntimeEvaluation,
 } from "@december/tree/interpreter"
-import { sum } from "lodash"
+import { GraphRewritingRule, createGraphRewritingRule, PatternTargetMatch } from "@december/tree/rewriter"
+import { isBinaryExpression, isLiteral, isNumericLiteral } from "@december/tree/utils/guards"
+import { makeConstantLiteral } from "@december/tree/utils/factories"
 
 /**
  * DICE NOTATION
@@ -136,6 +139,10 @@ export class DiceRollExpression extends Expression {
   }
 }
 
+export function isDiceRollExpression(value: Node): value is DiceRollExpression {
+  return (value as any).type === (`DiceRollExpression` as any)
+}
+
 // #endregion
 
 // #region    SYNTATICAL GRAMMAR
@@ -194,46 +201,40 @@ export interface DiceInterpreterOptions extends InterpreterOptions {
 
 // #region    VALUE TYPES
 
-export interface DiceRollValue<TNode extends Node = Node> extends RuntimeValue<Nullable<number[]>, TNode> {
-  type: `diceRoll`
-  value: Nullable<number[]> // rolled rolls
-  // wasRolled: () => this.value !== null
+export class DiceRollValue extends RuntimeValue<Nullable<number[]>> {
+  type = `diceRoll` as any
   size: number
   faces: number
   keep?: DiceKeep
-}
 
-export function addDiceRolls(A: DiceRollValue, B: DiceRollValue, node: Node, negate: boolean = false): DiceRollValue {
-  assert(A.faces === B.faces, `Dice rolls must have the same number of faces`)
-  assert(areDiceKeepEquals(A.keep, B.keep), `Dice rolls must have the same keep rules`)
+  constructor(size: number, faces: number, { keep, rolls }: { keep?: DiceKeep; rolls?: Nullable<number[]> } = {}) {
+    super(null)
+    this.size = size
+    this.faces = faces
+    if (keep) this.keep = { ...keep }
 
-  const size = negate ? A.size - B.size : A.size + B.size
-  return createDiceRollValue(size, A.faces, node, { keep: { ...(A.keep ?? {}) } })
-}
-
-export function isDiceRollValue(value: RuntimeValue<any>): value is DiceRollValue {
-  return value.type === `diceRoll`
-}
-
-export function createDiceRollValue(size: number, faces: number, node: Node, { keep, value }: Partial<Pick<DiceRollValue, `keep` | `value`>>): DiceRollValue {
-  const diceRoll: DiceRollValue = { type: `diceRoll`, value: value ?? null, size, faces, node }
-  if (keep && Object.keys(keep).length > 0) diceRoll.keep = keep
-
-  return diceRoll
-}
-
-export const convertDiceToExpression: NodeConversionFunction<DiceRollValue> = (i, diceRollValue: DiceRollValue<DiceRollExpression>): Expression => {
-  const wasRolled = diceRollValue.value !== null
-  if (!wasRolled) {
-    const leftNumericLiteral = i.evaluator.convertToNode(i, createNumericValue(diceRollValue.size, diceRollValue.node.size)) as Expression
-    assert(leftNumericLiteral.type === `NumericLiteral`, `Left NumericLiteral must be a NumericLiteral node`)
-
-    return new DiceRollExpression(leftNumericLiteral, diceRollValue.faces, diceRollValue.keep)
+    if (rolls) {
+      assert(rolls.length === size, `Rolls must have the same size as the dice roll`)
+      this.value = [...rolls]
+    }
   }
 
-  // throw new Error(`No reason to convert a ROLLED dice roll value to an expression.`) // TODO: Make this an option
-  const total = sum(diceRollValue.value)
-  return new NumericLiteral(new ArtificialToken(getTokenKind(`number`), total.toString()))
+  public wasRolled(): boolean {
+    return this.value !== null
+  }
+
+  public static isDiceRollValue(value: RuntimeValue<any>): value is DiceRollValue {
+    return value.type === (`diceRoll` as any)
+  }
+
+  /** Add dice rolls */
+  public add(diceRoll: DiceRollValue, negate: boolean = false): DiceRollValue {
+    assert(this.faces === diceRoll.faces, `Dice rolls must have the same number of faces`)
+    assert(areDiceKeepEquals(this.keep, this.keep), `Dice rolls must have the same keep rules`)
+
+    const size = negate ? this.size - diceRoll.size : this.size + diceRoll.size
+    return new DiceRollValue(size, this.faces, { keep: { ...(this.keep ?? {}) } })
+  }
 }
 
 // #endregion
@@ -241,15 +242,14 @@ export const convertDiceToExpression: NodeConversionFunction<DiceRollValue> = (i
 // #region    EVALUATOR
 
 // override @ evaluate
-export const evaluate: EvaluationFunction = (i: Interpreter<any, DiceInterpreterOptions>, node: Node, environment: Environment): RuntimeValue<any> | Node => {
-  if ((node.type as string) === `DiceRollExpression`) {
-    const diceRollExpression = node as DiceRollExpression
+export const evaluate: EvaluationFunction = (i: Interpreter<any, DiceInterpreterOptions>, node: Node, environment: Environment): EvaluationOutput => {
+  if (isDiceRollExpression(node)) {
+    // 1. Is size resolved?
+    const size = i.evaluator.evaluate(i, node.size, environment)
+    if (!NumericValue.isNumericValue(size)) return new RuntimeEvaluation(node)
 
-    const size = i.evaluator.evaluate(i, diceRollExpression.size, environment)
-    if (!isNumericValue(size)) return node
-
-    const faces = diceRollExpression.faces
-    const keep = diceRollExpression.keep
+    const faces = node.faces
+    const keep = node.keep
 
     let rolls: Nullable<number[]> = null
 
@@ -259,41 +259,50 @@ export const evaluate: EvaluationFunction = (i: Interpreter<any, DiceInterpreter
       for (let i = 0; i < size.value; i++) rolls.push(Math.floor(Math.random() * faces) + 1)
     }
 
-    return createDiceRollValue(size.value, faces, node, { keep, value: rolls })
+    // return createDiceRollValue(size.value, faces, node, { keep, value: rolls })
+    return new DiceRollValue(size.value, faces, { keep, rolls }).getEvaluation(node)
   }
 
   return DEFAULT_EVALUATIONS.evaluate(i, node, environment)
 }
 
 // override @ evaluateCustomOperation
-export const evaluateCustomOperation = (left: RuntimeValue<any>, right: RuntimeValue<any>, operator: string, node: Node): MaybeUndefined<RuntimeValue<any> | Node> => {
-  const allDiceRollsOrNumeric = [left, right].every(value => isDiceRollValue(value) || isNumericValue(value))
+export const evaluateCustomOperation = (left: RuntimeValue<any>, right: RuntimeValue<any>, operator: string, node: Node): EvaluationOutput => {
+  /**
+   * Return "undefined" if no use case falls under this implementation
+   */
+
+  const allDiceRollsOrNumeric = [left, right].every(value => DiceRollValue.isDiceRollValue(value) || NumericValue.isNumericValue(value))
 
   if (allDiceRollsOrNumeric) {
     if ([`+`, `-`].includes(operator)) {
-      // ADDITIVE only for same types AND same faces AND same keeps
-      if (!isDiceRollValue(left) || !isDiceRollValue(right)) return node
-      if (left.faces !== right.faces) return node
-      if (!areDiceKeepEquals(left.keep, right.keep)) return node
+      // 1. Add two dices if they are "the same"
+      if (DiceRollValue.isDiceRollValue(left) && DiceRollValue.isDiceRollValue(right)) {
+        if (left.faces === right.faces) {
+          if (areDiceKeepEquals(left.keep, right.keep)) return left.add(right, operator === `-`)
+        }
+      }
 
       if (left.value || right.value) debugger // TODO: what to do with this?
 
-      return addDiceRolls(left, right, node, operator === `-`)
+      // 2. No way to evaluate this yet, lacking implementation
+      return new RuntimeEvaluation(node)
     }
 
     if ([`*`, `/`].includes(operator)) {
-      if (isDiceRollValue(left) && isDiceRollValue(right)) return node // MULTIPLICATIVE only for NUMERIC and DICE (whatever the order)
+      // 1. MULTIPLICATIVE only for NUMERIC and DICE (whatever the order)
+      if (DiceRollValue.isDiceRollValue(left) && DiceRollValue.isDiceRollValue(right)) return new RuntimeEvaluation(node)
 
-      const numericValue: NumericValue = isNumericValue(left) ? left : (right as NumericValue)
-      const diceRollValue: DiceRollValue = isDiceRollValue(left) ? left : (right as DiceRollValue)
+      const numericValue: NumericValue = NumericValue.isNumericValue(left) ? left : (right as NumericValue)
+      const diceRollValue: DiceRollValue = DiceRollValue.isDiceRollValue(left) ? left : (right as DiceRollValue)
 
-      if (diceRollValue.value) debugger // TODO: what to do with this?
+      if (diceRollValue.wasRolled()) debugger // TODO: what to do with this?
 
       let factor = numericValue.value // operator === '*'
       if (operator === `/`) {
         // DIVIDEND / DIVISOR
-        const dividend = isNumericValue(left) ? left : right
-        const divisor = isNumericValue(left) ? right : left
+        const dividend = NumericValue.isNumericValue(left) ? left : right
+        const divisor = NumericValue.isNumericValue(left) ? right : left
 
         // TODO: Implement this kkkkkkk
         debugger
@@ -304,7 +313,8 @@ export const evaluateCustomOperation = (left: RuntimeValue<any>, right: RuntimeV
       const newSize = diceRollValue.size * factor
       assert(!isNaN(newSize), `New size must be a number`)
 
-      return createDiceRollValue(newSize, diceRollValue.faces, node, { keep: diceRollValue.keep })
+      // return createDiceRollValue(newSize, diceRollValue.faces, node, { keep: diceRollValue.keep })
+      return new DiceRollValue(newSize, diceRollValue.faces, { keep: diceRollValue.keep })
     }
 
     throw new Error(`Operator not implemented: ${operator}`)
@@ -314,15 +324,66 @@ export const evaluateCustomOperation = (left: RuntimeValue<any>, right: RuntimeV
 }
 
 // override @ convertToNode
-export const convertToNode: NodeConversionFunction<RuntimeValue<any>> = (i: Interpreter, value: RuntimeValue<any>): Node => {
-  if (isDiceRollValue(value)) return convertDiceToExpression(i, value)
+export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i: Interpreter, value: RuntimeValue<any>): Node => {
+  if (DiceRollValue.isDiceRollValue(value)) {
+    // 1. If DiceRoll was NOT ROLLED, update tree and return an expression
+    if (value.wasRolled()) {
+      const numberOfDice = new NumericValue(value.size)
+      const leftNumericLiteral = i.evaluator.convertToNode<NumericLiteral>(i, numberOfDice)
+
+      assert(leftNumericLiteral.type === `NumericLiteral`, `Left NumericLiteral must be a NumericLiteral node`)
+
+      return new DiceRollExpression(leftNumericLiteral, value.faces, value.keep)
+    }
+
+    // throw new Error(`No reason to convert a ROLLED dice roll value to an expression.`) // TODO: Make this an option
+    // 2. Already rolled dice could just yield a number, right?
+    return makeConstantLiteral(sum(value.value))
+  }
 
   return DEFAULT_NODE_CONVERSORS.convertToNode(i, value)
 }
 
-export const DICE_MODULAR_EVALUATOR_PROVIDER = { evaluate, evaluateCustomOperation, convertToNode }
-export type DiceModularEvaluatorProvider = typeof DICE_MODULAR_EVALUATOR_PROVIDER
+export const DICE_MODULAR_EVALUATOR_PROVIDER = { evaluations: { evaluate, evaluateCustomOperation }, conversions: { convertToNode } }
+export type DiceModularEvaluatorProvider = (typeof DICE_MODULAR_EVALUATOR_PROVIDER)[`evaluations`]
 
 // #endregion
+
+// #endregion
+
+// #region REWRITER
+
+export const DICE_RULESET: GraphRewritingRule[] = []
+
+// _DiceRoll1 * _Literal -> _DiceRoll2
+// _Literal * _DiceRoll1 -> _DiceRoll2
+DICE_RULESET.push(
+  createGraphRewritingRule(
+    `LITERAL_MULTIPLICATING_DICE_ROLL`,
+    node => {
+      if (!isBinaryExpression(node, `*`)) return false
+
+      if (isDiceRollExpression(node.left) && isNumericLiteral(node.right) && isNumericLiteral(node.left.size)) return { target: `A` }
+      if (isNumericLiteral(node.left) && isDiceRollExpression(node.right) && isNumericLiteral(node.right.size)) return { target: `B` }
+
+      return false
+    },
+    (node: BinaryExpression, { match }: { match: PatternTargetMatch }) => {
+      let _DR1: DiceRollExpression, _L: NumericLiteral
+
+      if (match.target === `A`) {
+        _DR1 = node.left as DiceRollExpression
+        _L = node.right as NumericLiteral
+      } else {
+        _DR1 = node.right as DiceRollExpression
+        _L = node.left as NumericLiteral
+      }
+
+      const size = _L.getValue() * (_DR1.size as NumericLiteral).getValue()
+      const SIZE = makeConstantLiteral(size)
+      return new DiceRollExpression(SIZE, _DR1.faces, _DR1.keep)
+    },
+  ),
+)
 
 // #endregion

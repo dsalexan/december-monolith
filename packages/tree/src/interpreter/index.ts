@@ -6,17 +6,14 @@ import churchill, { Block, paint, Paint } from "../logger"
 
 import { Expression, ExpressionStatement, Node, Statement } from "../tree"
 import Environment from "./environment"
-import { RuntimeValue } from "./valueTypes"
-import { EvaluationFunction, NodeConversionFunction, NodeEvaluator } from "./evaluator"
+import { EvaluationFunction, NodeConversionFunction, NodeEvaluator, RuntimeEvaluation, RuntimeValue } from "./evaluator"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-export { default as Environment } from "./environment"
-export type { RuntimeValue, NumericValue, StringValue, FunctionValue } from "./valueTypes"
-export { isNumericValue, isStringValue, isFunctionValue, createNumericValue } from "./valueTypes"
+export { default as Environment, UNDEFINED_VALUE } from "./environment"
 
-export type { EvaluationFunction, NodeConversionFunction } from "./evaluator"
-export { NodeEvaluator } from "./evaluator"
+export type { EvaluationFunction, NodeConversionFunction, EvaluationOutput } from "./evaluator"
+export { NodeEvaluator, RuntimeEvaluation, NumericValue, StringValue, FunctionValue, BooleanValue, UndefinedValue, IdentifierValue, UnitValue, QuantityValue, RuntimeValue } from "./evaluator"
 export { DEFAULT_EVALUATOR, DEFAULT_EVALUATIONS, DEFAULT_NODE_CONVERSORS } from "./evaluator/default"
 export type { DefaultEvaluatorProvider } from "./evaluator/default"
 
@@ -24,16 +21,16 @@ export interface InterpreterOptions {
   logger: typeof _logger
 }
 
-export default class Interpreter<TEvaluatorDict extends AnyObject = any, TOptions extends InterpreterOptions = InterpreterOptions> {
+export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOptions extends InterpreterOptions = InterpreterOptions> {
   public options: TOptions
   //
   private environment: Environment
   private AST: Node
-  public evaluator: NodeEvaluator<TEvaluatorDict>
+  public evaluator: NodeEvaluator<TEvaluationsDict, AnyObject>
   //
   public result: Node
 
-  public process(AST: Node, environment: Environment, evaluator: NodeEvaluator<TEvaluatorDict>, options: WithOptionalKeys<TOptions, `logger`>) {
+  public process(AST: Node, environment: Environment, evaluator: NodeEvaluator<TEvaluationsDict, AnyObject>, options: WithOptionalKeys<TOptions, `logger`>) {
     this.options = {
       logger: options.logger ?? _logger,
       ...options,
@@ -49,14 +46,17 @@ export default class Interpreter<TEvaluatorDict extends AnyObject = any, TOption
   }
 
   protected interpret() {
-    const result = this.evaluator.evaluate(this, this.AST, this.environment)
+    const evaluate: EvaluationFunction = this.evaluator.evaluationsProvider.getFunction(`evaluate`)
+    const result = evaluate(this, this.AST, this.environment)
+
+    assert(result !== undefined, `Result of interpretation cannot be undefined.`)
 
     let statement: Statement
-    if (!Node.isNode(result) || !(result instanceof Statement)) {
+    if (!Statement.isStatement(result)) {
       let expression: Expression
 
-      if (!Node.isNode(result)) expression = this.evaluator.convertToNode(this, result)
-      else expression = result
+      if (RuntimeValue.isRuntimeValue(result)) expression = this.evaluator.convertToNode(this, result)
+      else expression = result.toNode(this)
 
       assert(expression instanceof Expression, `This should be an Expression`)
 

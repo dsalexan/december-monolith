@@ -58,7 +58,7 @@ export default class GraphRewritingSystem {
 
     let root = originalRoot
     for (const [i, node] of nodes.entries()) {
-      _logger.add(paint.bold(node.name)).info()
+      // _logger.add(paint.bold(node.name)).info()
       const changedNode = this.applyNode(node)
 
       // update root if necessary
@@ -131,8 +131,6 @@ export default class GraphRewritingSystem {
                 .info()
             debugger
           }
-
-          current.print()
 
           // there was a change, so we need to re-apply the rules
           changes++

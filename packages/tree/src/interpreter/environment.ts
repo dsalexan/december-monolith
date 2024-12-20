@@ -2,7 +2,7 @@ import assert from "assert"
 
 import { Match } from "@december/utils"
 
-import { RuntimeValue } from "./valueTypes"
+import { RuntimeValue } from "./runtime"
 import { MaybeUndefined } from "tsdef"
 
 export type VariableName = string
@@ -19,6 +19,9 @@ export interface ResolvedVariableName {
 
 export const VARIABLE_NOT_FOUND = Symbol.for(`environment:variable-not-found`)
 export type VariableNotFound = typeof VARIABLE_NOT_FOUND
+
+export const UNDEFINED_VALUE = Symbol.for(`environment:undefined-value`)
+export type UndefinedValue = typeof UNDEFINED_VALUE
 
 export type EnvironmentGetter<TValue> = (variableName: VariableName, environment: Environment) => RuntimeValue<TValue>
 
@@ -77,7 +80,7 @@ export default class Environment {
   }
 
   /** Assigns a runtime value to a variable name */
-  public assignVariable<TValue = any>(variableName: VariableName, value: RuntimeValue<TValue>) {
+  public assignVariable<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>>(variableName: VariableName, value: TRuntimeValue) {
     assert(!this.variables.has(variableName), `Variable "${variableName}" already defined in this environment.`)
 
     this.variables.set(variableName, value)

@@ -58,10 +58,19 @@ export class NumericLiteral extends Expression {
 
 export class StringLiteral extends Expression {
   type: NodeType = `StringLiteral`
+  public quoted: boolean = false
 
   constructor(...tokens: Token[]) {
     super()
     this.tokens = [...tokens]
+  }
+
+  public override getWrappers(): [string, string] {
+    return [`"`, `"`]
+  }
+
+  public forceWrap(): boolean {
+    return this.quoted
   }
 
   public getValue(): string {
