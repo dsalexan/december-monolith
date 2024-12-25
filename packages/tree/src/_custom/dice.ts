@@ -2,7 +2,7 @@ import assert from "assert"
 import { MaybeUndefined, Nullable } from "tsdef"
 import { sum } from "lodash"
 
-import { BinaryExpression, Expression, Node, NumericLiteral, StringLiteral } from "@december/tree/tree"
+import { BinaryExpression, Expression, ExpressionStatement, Node, NumericLiteral, StringLiteral } from "@december/tree/tree"
 import { getTokenKind, ArtificialToken } from "@december/tree/token"
 
 import Parser, { BindingPower, SyntacticalContext, LEDParser, createRegisterParserEntriesFromIndex, SyntacticalGrammarEntry } from "@december/tree/parser"
@@ -12,10 +12,12 @@ import Interpreter, {
   Environment,
   RuntimeValue,
   InterpreterOptions,
-  NodeConversionFunction,
   EvaluationFunction,
+  NodeConversionFunction,
+  ReadyCheckerFunction,
   DEFAULT_NODE_CONVERSORS,
   DEFAULT_EVALUATIONS,
+  DEFAULT_READY_CHECKERS,
   NumericValue,
   EvaluationOutput,
   RuntimeEvaluation,
@@ -108,6 +110,7 @@ export class DiceRollExpression extends Expression {
 
   constructor(size: Expression, faces: number, keep?: DiceKeep) {
     super()
+    this.tags.push(`literal`)
 
     this.faces = faces
     this.keep = keep ?? {}
@@ -227,6 +230,10 @@ export class DiceRollValue extends RuntimeValue<Nullable<number[]>> {
     return value.type === (`diceRoll` as any)
   }
 
+  public static IsRolledDiceRollValue(value: RuntimeValue<any>): value is DiceRollValue & Required<Pick<DiceRollValue, `value`>> {
+    return DiceRollValue.isDiceRollValue(value) && value.wasRolled()
+  }
+
   /** Add dice rolls */
   public add(diceRoll: DiceRollValue, negate: boolean = false): DiceRollValue {
     assert(this.faces === diceRoll.faces, `Dice rolls must have the same number of faces`)
@@ -246,7 +253,7 @@ export const evaluate: EvaluationFunction = (i: Interpreter<any, DiceInterpreter
   if (isDiceRollExpression(node)) {
     // 1. Is size resolved?
     const size = i.evaluator.evaluate(i, node.size, environment)
-    if (!NumericValue.isNumericValue(size)) return new RuntimeEvaluation(node)
+    if (!RuntimeEvaluation.isResolved(size)) return new RuntimeEvaluation(node)
 
     const faces = node.faces
     const keep = node.keep
@@ -256,11 +263,11 @@ export const evaluate: EvaluationFunction = (i: Interpreter<any, DiceInterpreter
     // ONLY ROLL DICE if explicity asked to
     if (i.options.rollDice) {
       rolls = []
-      for (let i = 0; i < size.value; i++) rolls.push(Math.floor(Math.random() * faces) + 1)
+      for (let i = 0; i < size.runtimeValue.value; i++) rolls.push(Math.floor(Math.random() * faces) + 1)
     }
 
     // return createDiceRollValue(size.value, faces, node, { keep, value: rolls })
-    return new DiceRollValue(size.value, faces, { keep, rolls }).getEvaluation(node)
+    return new DiceRollValue(size.runtimeValue.value, faces, { keep, rolls }).getEvaluation(node)
   }
 
   return DEFAULT_EVALUATIONS.evaluate(i, node, environment)
@@ -283,7 +290,7 @@ export const evaluateCustomOperation = (left: RuntimeValue<any>, right: RuntimeV
         }
       }
 
-      if (left.value || right.value) debugger // TODO: what to do with this?
+      if (DiceRollValue.IsRolledDiceRollValue(left) || DiceRollValue.IsRolledDiceRollValue(right)) debugger // TODO: what to do with this?
 
       // 2. No way to evaluate this yet, lacking implementation
       return new RuntimeEvaluation(node)
@@ -327,7 +334,7 @@ export const evaluateCustomOperation = (left: RuntimeValue<any>, right: RuntimeV
 export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i: Interpreter, value: RuntimeValue<any>): Node => {
   if (DiceRollValue.isDiceRollValue(value)) {
     // 1. If DiceRoll was NOT ROLLED, update tree and return an expression
-    if (value.wasRolled()) {
+    if (!value.wasRolled()) {
       const numberOfDice = new NumericValue(value.size)
       const leftNumericLiteral = i.evaluator.convertToNode<NumericLiteral>(i, numberOfDice)
 
@@ -344,7 +351,39 @@ export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i
   return DEFAULT_NODE_CONVERSORS.convertToNode(i, value)
 }
 
-export const DICE_MODULAR_EVALUATOR_PROVIDER = { evaluations: { evaluate, evaluateCustomOperation }, conversions: { convertToNode } }
+// override @ isEvaluationReady
+export const isEvaluationReady: ReadyCheckerFunction = (i: Interpreter<any, DiceInterpreterOptions>, evaluation: RuntimeEvaluation<RuntimeValue<any>, Node>): boolean => {
+  // ONLY relevant if there were no dice rolls
+  if (!i.options.rollDice) {
+    if (evaluation.node instanceof ExpressionStatement) {
+      const expression = evaluation.node.expression
+
+      if (isBinaryExpression(expression, [`+`, `-`, `*`, `/`])) return i.isReady(expression)
+    }
+  }
+
+  debugger
+  return DEFAULT_READY_CHECKERS.isEvaluationReady(i, evaluation)
+}
+
+// override @ isNodeReady
+export const isNodeReady: ReadyCheckerFunction = (i: Interpreter<any, DiceInterpreterOptions>, node: Node): boolean => {
+  if (isDiceRollExpression(node)) return true
+
+  // ONLY relevant if there were no dice rolls
+  if (!i.options.rollDice) {
+    if (isBinaryExpression(node, [`+`, `-`, `*`, `/`])) {
+      const isLeftReady = isDiceRollExpression(node.left) || node.left.type === `NumericLiteral` || i.isReady(node.left)
+      const isRightReady = isDiceRollExpression(node.right) || node.right.type === `NumericLiteral` || i.isReady(node.right)
+
+      return isLeftReady && isRightReady
+    }
+  }
+
+  return DEFAULT_READY_CHECKERS.isNodeReady(i, node)
+}
+
+export const DICE_MODULAR_EVALUATOR_PROVIDER = { evaluations: { evaluate, evaluateCustomOperation }, conversions: { convertToNode }, readyCheckers: { isEvaluationReady, isNodeReady } }
 export type DiceModularEvaluatorProvider = (typeof DICE_MODULAR_EVALUATOR_PROVIDER)[`evaluations`]
 
 // #endregion

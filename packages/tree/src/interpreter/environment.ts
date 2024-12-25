@@ -1,95 +1,125 @@
-import assert from "assert"
-
 import { Match } from "@december/utils"
 
-import { RuntimeValue } from "./runtime"
-import { MaybeUndefined } from "tsdef"
+import { RuntimeValue, VariableValue } from "./runtime"
+import { MaybeUndefined, Nullable } from "tsdef"
+import assert from "assert"
 
 export type VariableName = string
 
-export interface ResolutionPattern {
-  pattern: Match.Pattern
-  variableName: VariableName
-}
-
-export interface ResolvedVariableName {
-  variableName: VariableName
-  environment: Environment
-}
-
-export const VARIABLE_NOT_FOUND = Symbol.for(`environment:variable-not-found`)
+export const VARIABLE_NOT_FOUND: unique symbol = Symbol.for(`environment:variable-not-found`)
 export type VariableNotFound = typeof VARIABLE_NOT_FOUND
 
-export const UNDEFINED_VALUE = Symbol.for(`environment:undefined-value`)
-export type UndefinedValue = typeof UNDEFINED_VALUE
-
-export type EnvironmentGetter<TValue> = (variableName: VariableName, environment: Environment) => RuntimeValue<TValue>
-
 export default class Environment {
-  private parent?: Environment
-  private variables: Map<VariableName, RuntimeValue<any>>
-  // private getters: Map<VariableName, EnvironmentGetter<any>>
-  private patterns: Map<string, ResolutionPattern>
-
-  constructor(parent?: Environment) {
-    this.parent = parent
-    this.variables = new Map()
-    // this.getters = new Map()
-    this.patterns = new Map()
+  private _version: number = 0
+  public name: string
+  public parent?: Environment
+  //
+  private values: {
+    byName: Map<VariableName, RuntimeValue<any>>
+    byPattern: Map<string, VariableNameByPattern>
   }
 
-  /** Check all patterns to resolve variable name */
-  public resolveByPattern(unresolvedVariableName: VariableName): MaybeUndefined<ResolvedVariableName> {
-    for (const [key, { pattern, variableName }] of this.patterns) {
-      const match = pattern.match(unresolvedVariableName)
-      if (match.isMatch) return { variableName, environment: this }
+  constructor(name: string, parent?: Environment) {
+    this.name = name
+    this.parent = parent
+    //
+    this.values = {
+      byName: new Map(),
+      byPattern: new Map(),
+    }
+  }
+
+  public getVersion(): string {
+    return `${this.parent ? this.parent.getVersion() : ``}${this._version}`
+  }
+
+  /** Checks values' maps for variable name (returning matching runtime value)  */
+  public getValue<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>>(variableName: string): Nullable<TRuntimeValue> {
+    // 1. Check by name
+    const value = this.values.byName.get(variableName)
+    if (value) return value as TRuntimeValue
+
+    // 2. Check by pattern
+    for (const { pattern, value } of this.values.byPattern.values()) {
+      const match = pattern.match(variableName)
+      if (match.isMatch) return value as TRuntimeValue
     }
 
-    return undefined
+    return null
   }
 
-  /** Resolve variable name in environment tree */
-  public resolve(unresolvedVariableName: VariableName): ResolvedVariableName | VariableNotFound {
-    // 1. Just a plain old variable
-    if (this.variables.has(unresolvedVariableName)) return { variableName: unresolvedVariableName, environment: this }
+  /** Resolve "final" variable name through proxy variables and environment chains */
+  public resolve(unresolvedVariableName: VariableName, entryEnvironment?: Environment): Nullable<ResolvedVariable> {
+    entryEnvironment ??= this
 
-    // 2. Variable following a dynamic pattern
-    const byPattern = this.resolveByPattern(unresolvedVariableName)
-    if (byPattern) return byPattern
+    // 1. First check if variable exists HERE
+    const value = this.getValue(unresolvedVariableName)
+    if (value) {
+      const resolvedVariable: ResolvedVariable = { variableName: unresolvedVariableName, environment: this }
 
-    // 3. Try to resolve in parent environment
-    if (this.parent) return this.parent.resolve(unresolvedVariableName)
+      // (a regular runtime variable )
+      if (!VariableValue.isVariableValue(value)) return resolvedVariable
 
-    // throw new Error(`Variable "${unresolvedVariableName}" not found in this environment.`)
-    return VARIABLE_NOT_FOUND
+      // 2. Run resolve from the bottom up for VARIABLE_VALUE
+      const resolvedVariableValue = entryEnvironment.resolve(value.value, entryEnvironment)
+      //     (variable not found in the environment chain, so just return "resolved, not found")
+      if (!resolvedVariableValue) return { variableName: value.value, environment: null, from: resolvedVariable }
+
+      //     (value found in chain, return it with from attached)
+      //     (value RESOLVED, not found, in chain, return it with from attached)
+      return {
+        variableName: resolvedVariableValue.variableName, //
+        environment: resolvedVariableValue.environment,
+        from: resolvedVariable,
+      }
+    }
+
+    // 2. If not, ask parent
+    if (this.parent) return this.parent.resolve(unresolvedVariableName, entryEnvironment)
+
+    return null
   }
 
-  /** Get variable name value from environment tree */
-  public get(unresolvedVariableName: VariableName): RuntimeValue<any> | VariableNotFound {
-    // 1. Resolve final variable name (if chained)
+  /** Resolve and get variable name through environment chain */
+  public get<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>>(unresolvedVariableName: VariableName): Nullable<TRuntimeValue> {
+    // 1. Resolve variable name
     const resolvedVariable = this.resolve(unresolvedVariableName)
-    if (resolvedVariable === VARIABLE_NOT_FOUND) return VARIABLE_NOT_FOUND
+    if (!resolvedVariable) return null
 
-    const { variableName, environment } = resolvedVariable
+    // 2. Was resolved, but value was not found
+    if (resolvedVariable.environment === null) return null
 
-    // 2. Get the value from the resolved variable name
-    if (environment.variables.has(variableName)) return environment.variables.get(variableName)!
+    // 3. Resolved AND found value, return it
+    const value = resolvedVariable.environment.getValue(resolvedVariable.variableName)
+    assert(RuntimeValue.isRuntimeValue(value), `Value must be a RuntimeValue`)
 
-    // throw new Error(`Variable "${unresolvedVariableName}" not found in this environment.`)
-    return VARIABLE_NOT_FOUND
+    return value as TRuntimeValue
   }
 
-  /** Assigns a runtime value to a variable name */
-  public assignVariable<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>>(variableName: VariableName, value: TRuntimeValue) {
-    assert(!this.variables.has(variableName), `Variable "${variableName}" already defined in this environment.`)
+  /** Assigns value to VariableName */
+  public assignValue(variableName: VariableName, value: RuntimeValue<any>) {
+    assert(!this.values.byName.has(variableName), `Variable name "${variableName}" already exists in environment.`)
 
-    this.variables.set(variableName, value)
+    this.values.byName.set(variableName, value)
+    this._version++
   }
 
-  /** Register a resolution pattern for "complex" variable names */
-  public registerResolutionPattern(key: string, variableName: VariableName, pattern: Match.Pattern) {
-    assert(!this.patterns.has(key), `Resolution pattern "${key}" already defined in this environment.`)
+  /** Assigns value to pattern */
+  public assignValueToPattern(name: string, pattern: Match.Pattern, value: RuntimeValue<any>) {
+    assert(!this.values.byPattern.has(name), `Pattern "${name}" already exists in environment.`)
 
-    this.patterns.set(key, { pattern, variableName })
+    this.values.byPattern.set(name, { pattern, value })
+    this._version++
   }
+}
+
+export interface VariableNameByPattern<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>> {
+  pattern: Match.Pattern
+  value: TRuntimeValue
+}
+
+export interface ResolvedVariable {
+  variableName: VariableName
+  environment: Nullable<Environment>
+  from?: MaybeUndefined<ResolvedVariable>
 }

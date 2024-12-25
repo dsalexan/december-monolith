@@ -4,7 +4,7 @@ import { isArray } from "lodash"
 import { BinaryExpression, BooleanLiteral, Identifier, Node, NumericLiteral, StringLiteral } from "../tree"
 
 export function isLiteral(node: Node): node is NumericLiteral | StringLiteral | BooleanLiteral | Identifier {
-  return isNumericLiteral(node) || isStringLiteral(node) || isBooleanLiteral(node) || isIdentifier(node)
+  return isNumericLiteral(node) || isStringLiteral(node) || isBooleanLiteral(node) || isIdentifier(node) || node.tags.includes(`literal`)
 }
 
 export function isBooleanLiteral(node: Node, value?: boolean): node is BooleanLiteral {

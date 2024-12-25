@@ -2,11 +2,17 @@ import assert from "assert"
 import { MaybeUndefined, Nullable } from "tsdef"
 
 import { isQuantity, isUnit, IUnit, Quantity } from "@december/utils/unit"
-import { Node } from "../../tree"
-import type Interpreter from ".."
 
-export const RUNTIME_VALUE_TYPES = [`undefined`, `boolean`, `number`, `string`, `function`, `identifier`, `unit`, `quantity`] as const
+import { Expression, ExpressionStatement, Node, Statement } from "../../tree"
+import type Interpreter from ".."
+import { RuntimeEvaluation } from "./evaluation"
+import { VariableName } from ".."
+
+export const RUNTIME_VALUE_TYPES = [`undefined`, `boolean`, `number`, `string`, `function`, `variable`, `unit`, `quantity`] as const
 export type RuntimeValueType = (typeof RUNTIME_VALUE_TYPES)[number]
+
+export { RuntimeEvaluation } from "./evaluation"
+export type { ResolvedRuntimeEvaluation } from "./evaluation"
 
 export class RuntimeValue<TValue> {
   __runtimeValue: true = true as const
@@ -24,44 +30,13 @@ export class RuntimeValue<TValue> {
   public getEvaluation(node: Node) {
     return new RuntimeEvaluation(this, node)
   }
-}
 
-export interface ResolvedRuntimeEvaluation<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>> {
-  runtimeValue: TRuntimeValue
-  node: Node
-}
-
-export class RuntimeEvaluation<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>> {
-  __runtimeEvaluation: true = true as const
-  runtimeValue: Nullable<TRuntimeValue> = null
-  node: Node
-
-  public static isResolved<TRuntimeValue extends RuntimeValue<any>>(evaluation: RuntimeEvaluation<TRuntimeValue>): evaluation is RuntimeEvaluation<TRuntimeValue> & ResolvedRuntimeEvaluation<TRuntimeValue> {
-    return RuntimeEvaluation.isRuntimeEvaluation(evaluation) && evaluation.runtimeValue !== null
+  public getContent() {
+    return String(this.value)
   }
 
-  public static isRuntimeEvaluation<TRuntimeValue extends RuntimeValue<any>>(evaluation: any): evaluation is RuntimeEvaluation<TRuntimeValue> {
-    return evaluation?.__runtimeEvaluation === true
-  }
-
-  constructor(node: Node)
-  constructor(runtimeValue: TRuntimeValue, node: Node)
-  constructor(runtimeValue: TRuntimeValue | Node, node?: Node) {
-    if (RuntimeValue.isRuntimeValue(runtimeValue)) {
-      this.runtimeValue = runtimeValue
-      this.node = node as Node
-    } else {
-      this.runtimeValue = null as any
-      this.node = runtimeValue as Node
-    }
-  }
-
-  public toNode<TNode extends Node = Node>(i: Interpreter): TNode {
-    // 1. If value is resolved, just pack data into node (since it could be different than original node)
-    if (RuntimeEvaluation.isResolved(this)) return i.evaluator.convertToNode(i, this.runtimeValue)
-
-    // 2. If value was never resolved, just send original node back
-    return this.node as TNode
+  public toString() {
+    return `<${this.type}> ${this.getContent()}`
   }
 }
 
@@ -77,6 +52,11 @@ export class UndefinedValue extends RuntimeValue<undefined> {
 
   public static isUndefinedValue(value: any): value is UndefinedValue {
     return value.type === `undefined`
+  }
+
+  public override getContent() {
+    throw new Error(`Cannot get content of undefined value.`)
+    return `undefined`
   }
 }
 
@@ -134,18 +114,23 @@ export class FunctionValue<TFunction extends Function = Function> extends Runtim
   public static isFunctionValue(value: any): value is FunctionValue {
     return value.type === `function`
   }
+
+  public override getContent() {
+    debugger
+    return `${this.name}`
+  }
 }
 
-export class IdentifierValue extends RuntimeValue<string> {
-  type: `identifier` = `identifier`
+export class VariableValue extends RuntimeValue<VariableName> {
+  type: `variable` = `variable`
 
-  constructor(variableName: string) {
+  constructor(variableName: VariableName) {
     super(variableName)
     assert(typeof variableName === `string`, `Variable Name must be a string.`)
   }
 
-  public static isIdentifierValue(value: any): value is IdentifierValue {
-    return value.type === `identifier`
+  public static isVariableValue(value: any): value is VariableValue {
+    return value.type === `variable`
   }
 }
 
@@ -160,6 +145,10 @@ export class UnitValue extends RuntimeValue<IUnit> {
   public static isUnitValue(value: any): value is UnitValue {
     return value.type === `unit`
   }
+
+  public override getContent() {
+    return this.value.symbol
+  }
 }
 
 export class QuantityValue extends RuntimeValue<Quantity> {
@@ -172,6 +161,10 @@ export class QuantityValue extends RuntimeValue<Quantity> {
 
   public static isQuantityValue(value: any): value is QuantityValue {
     return value.type === `quantity`
+  }
+
+  public override getContent() {
+    return this.value.toString()
   }
 }
 

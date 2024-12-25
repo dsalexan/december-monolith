@@ -199,6 +199,18 @@
     {
       "type": "node-terminal",
       "request": "launch",
+      "name": "v4 (Tree/processor)",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\tree\\src\\tests\\processor.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
+    
+    {
+      "type": "node-terminal",
+      "request": "launch",
       "name": "v4 (Tree/Wrapper)",
       "skipFiles": [
         "<node_internals>/**"

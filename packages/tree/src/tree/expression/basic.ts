@@ -9,7 +9,17 @@ import { Expression } from "./expression"
 import { Block, paint } from "../../logger"
 import { Token } from "../../token/core"
 
-export class BooleanLiteral extends Expression {
+export class Literal<TValue> extends Expression {
+  public getValue(): TValue {
+    throw new Error(`Unimplemented`)
+  }
+
+  public override getDebug(): string {
+    return String(this.getValue())
+  }
+}
+
+export class BooleanLiteral extends Literal<Boolean> {
   type: NodeType = `BooleanLiteral`
   public value: boolean
 
@@ -18,16 +28,12 @@ export class BooleanLiteral extends Expression {
     this.value = value
   }
 
-  public getValue(): boolean {
+  public override getValue(): boolean {
     return this.value
-  }
-
-  public override getDebug(): string {
-    return String(this.value)
   }
 }
 
-export class NumericLiteral extends Expression {
+export class NumericLiteral extends Literal<number> {
   type: NodeType = `NumericLiteral`
 
   public get value(): Token {
@@ -50,13 +56,9 @@ export class NumericLiteral extends Expression {
     const color = NODE_TYPE_COLOR[this.type] ?? paint.red
     return [color(this.value.toString())]
   }
-
-  public override getDebug(): string {
-    return this.getContent()
-  }
 }
 
-export class StringLiteral extends Expression {
+export class StringLiteral extends Literal<string> {
   type: NodeType = `StringLiteral`
   public quoted: boolean = false
 
@@ -69,15 +71,11 @@ export class StringLiteral extends Expression {
     return [`"`, `"`]
   }
 
-  public forceWrap(): boolean {
+  public override forceWrap(): boolean {
     return this.quoted
   }
 
   public getValue(): string {
-    return this.getContent()
-  }
-
-  public override getDebug(): string {
     return this.getContent()
   }
 }
@@ -93,12 +91,16 @@ export class Identifier extends StringLiteral {
     return this.tokens
   }
 
-  public getValue(): string {
-    throw new Error(`Don't use this method for identifiers.`)
-  }
-
   public getVariableName(): string {
     return this.getContent()
+  }
+
+  public override getValue(): string {
+    throw new Error(`Don't use this method for identifiers. Use getVariableName() instead.`)
+  }
+
+  public override getDebug(): string {
+    return String(this.getContent())
   }
 }
 

@@ -5,16 +5,18 @@ import assert, { match } from "assert"
 import churchill, { Block, paint, Paint } from "../logger"
 
 import { Expression, ExpressionStatement, Node, Statement } from "../tree"
-import Environment from "./environment"
+import Environment, { VariableName } from "./environment"
 import { EvaluationFunction, NodeConversionFunction, NodeEvaluator, RuntimeEvaluation, RuntimeValue } from "./evaluator"
+import { Simbol, SymbolTable } from "../symbolTable"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-export { default as Environment, UNDEFINED_VALUE } from "./environment"
+export { default as Environment, VARIABLE_NOT_FOUND } from "./environment"
+export type { VariableName } from "./environment"
 
-export type { EvaluationFunction, NodeConversionFunction, EvaluationOutput } from "./evaluator"
-export { NodeEvaluator, RuntimeEvaluation, NumericValue, StringValue, FunctionValue, BooleanValue, UndefinedValue, IdentifierValue, UnitValue, QuantityValue, RuntimeValue } from "./evaluator"
-export { DEFAULT_EVALUATOR, DEFAULT_EVALUATIONS, DEFAULT_NODE_CONVERSORS } from "./evaluator/default"
+export type { EvaluationFunction, NodeConversionFunction, ReadyCheckerFunction, EvaluationOutput } from "./evaluator"
+export { NodeEvaluator, RuntimeEvaluation, NumericValue, StringValue, FunctionValue, BooleanValue, UndefinedValue, VariableValue, UnitValue, QuantityValue, RuntimeValue } from "./evaluator"
+export { DEFAULT_EVALUATOR, DEFAULT_EVALUATIONS, DEFAULT_NODE_CONVERSORS, DEFAULT_READY_CHECKERS } from "./evaluator/default"
 export type { DefaultEvaluatorProvider } from "./evaluator/default"
 
 export interface InterpreterOptions {
@@ -24,48 +26,82 @@ export interface InterpreterOptions {
 export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOptions extends InterpreterOptions = InterpreterOptions> {
   public options: TOptions
   //
-  private environment: Environment
+  public id: string
   private AST: Node
+  private environment: Environment
+  private symbolTable: SymbolTable
   public evaluator: NodeEvaluator<TEvaluationsDict, AnyObject>
   //
-  public result: Node
+  public result: RuntimeEvaluation<RuntimeValue<any>, Statement>
 
-  public process(AST: Node, environment: Environment, evaluator: NodeEvaluator<TEvaluationsDict, AnyObject>, options: WithOptionalKeys<TOptions, `logger`>) {
+  public process<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>>(
+    id: string,
+    AST: Node,
+    environment: Environment,
+    symbolTable: SymbolTable,
+    evaluator: NodeEvaluator<TEvaluationsDict, AnyObject>,
+    options: WithOptionalKeys<TOptions, `logger`>,
+  ) {
     this.options = {
       logger: options.logger ?? _logger,
       ...options,
     } as TOptions
 
+    this.id = id
     this.AST = AST
     this.environment = environment
+    this.symbolTable = symbolTable
     this.evaluator = evaluator
 
-    this.result = this.interpret()
+    const result = this.interpret<TRuntimeValue>()
+    this.result = result
 
-    return this.result
+    return result
   }
 
-  protected interpret() {
-    const evaluate: EvaluationFunction = this.evaluator.evaluationsProvider.getFunction(`evaluate`)
-    const result = evaluate(this, this.AST, this.environment)
+  protected interpret<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>>(): RuntimeEvaluation<TRuntimeValue, Statement> {
+    // 1. Evaluate AST (using externally provided node evaluator instance)
+    const result = this.evaluator.evaluate(this, this.AST, this.environment)
+    assert(result !== undefined, `Result of interpretation cannot be undefined.`) // COMMENT
 
-    assert(result !== undefined, `Result of interpretation cannot be undefined.`)
+    // Evaluation output is a RuntimeEvaluation. It always as a equivalent NODE, and it can have a RUNTIME_VALUE.
+    //    - If it has a RUNTIME_VALUE, it means that the node was successfully resolved into something.
+    //    - If it does not have a RUNTIME_VALUE, it means that the node could not be resolved into a value. More work is necessary.
+    //    - Any output will have a NODE, indicating the "final form" of the SUB_TREE after all evaluations.
+    //    - That NODE can be a statement or an expression.
 
-    let statement: Statement
-    if (!Statement.isStatement(result)) {
-      let expression: Expression
+    let interpretationEvaluation: RuntimeEvaluation<TRuntimeValue, Statement>
 
-      if (RuntimeValue.isRuntimeValue(result)) expression = this.evaluator.convertToNode(this, result)
-      else expression = result.toNode(this)
+    // 2. If result is RESOLVED, repack runtimeValue into an expression (since it yields a value) and that expression into a statement
+    if (RuntimeEvaluation.isResolved(result)) {
+      const expression = this.evaluator.convertToNode(this, result.runtimeValue)
+      assert(expression instanceof Expression, `Anything that yields a value is an expression dude`) // COMMENT
 
-      assert(expression instanceof Expression, `This should be an Expression`)
+      const expressionStatement = new ExpressionStatement(expression)
+      interpretationEvaluation = new RuntimeEvaluation(result.runtimeValue as TRuntimeValue, expressionStatement)
+    }
+    // 3. If it is UNRESOLVED, just return the original node (repacking as statement if necessary)
+    else {
+      let statement: Statement = result.node as Statement
+      if (!Statement.isStatement(result.node)) statement = new ExpressionStatement(result.node as Expression)
+      interpretationEvaluation = new RuntimeEvaluation(null as any, statement)
+    }
 
-      statement = new ExpressionStatement(expression)
-    } else statement = result
+    return interpretationEvaluation
+  }
 
-    if (!(statement instanceof Statement)) throw new Error(`Result of interpretation must be a Statement.`)
+  /** Checks (through nodeEvaluator) if evaluationOutput is ready (i.e. doesn't require any more work) */
+  public isReady(evaluation: RuntimeEvaluation<RuntimeValue<any>, Statement>): boolean
+  public isReady(tree: Node): boolean
+  public isReady(evaluationOrTree: RuntimeEvaluation<RuntimeValue<any>, Statement> | Node): boolean {
+    return this.evaluator.isReady(this, evaluationOrTree as any)
+  }
 
-    return statement
+  /** Index a variable name in SymbolTable  */
+  public indexVariableNameAsSymbol(variableName: VariableName, node: Node) {
+    const treeName: string = this.id
+
+    this.symbolTable.index(variableName, treeName, node)
   }
 
   public print() {
@@ -74,15 +110,26 @@ export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOpti
     console.log(`\n`)
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
     _logger
-      .add(paint.grey(`INTERPRETED AST`)) //
+      .add(paint.grey(`INTERPRETED AST (${this.id})`)) //
       .info()
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
     console.log(``)
 
     console.log(` `)
 
-    // _logger.add(this.result.getContent()).info()
-    this.result.print()
+    if (this.isReady(this.result)) _logger.add(paint.green(`Ready`)).info()
+    else _logger.add(paint.yellow.bold(`NOT READY!`)).info()
+
+    _logger.add(paint.grey(`RuntimeValue: `))
+
+    if (this.result.runtimeValue) {
+      _logger.add(this.result.runtimeValue.getContent()).add(paint.dim.grey(` (${this.result.runtimeValue.type})`))
+    } else {
+      _logger.add(paint.red.bold(`(unresolved)`))
+    }
+
+    _logger.info()
+    this.result.node.print()
     // logger.add(paint.grey(this.result.type)).info()
     // logger.add(paint.white.bold(this.result.value)).info()
   }

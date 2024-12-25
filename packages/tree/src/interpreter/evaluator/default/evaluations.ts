@@ -67,7 +67,9 @@ export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter<Defa
     if (RuntimeEvaluation.isResolved(output)) return output
 
     // throw new Error(`Both sides of the BinaryExpression must be evaluated before the BinaryExpression itself can be evaluated.`)
-    return new RuntimeEvaluation(new BinaryExpression(left.toNode(i), binaryExpression.operator, right.toNode(i)))
+    const leftNode = left.toNode(i)
+    const rightNode = right.toNode(i)
+    return new RuntimeEvaluation(new BinaryExpression(leftNode, binaryExpression.operator, rightNode))
   }
 
   throw new Error(`BinaryExpression not implemented for types: "${left.runtimeValue.type}" and "${right.runtimeValue.type}"`)
@@ -77,7 +79,11 @@ export const evaluateIdentifier: EvaluationFunction = (i: Interpreter<DefaultEva
   const variableName = identifier.getVariableName()
   const value = environment.get(variableName)
 
-  if (value === VARIABLE_NOT_FOUND) return new RuntimeEvaluation(identifier)
+  // always index symbol, regardless of it being found or not
+  i.indexVariableNameAsSymbol(variableName, identifier)
+
+  if (!value) return new RuntimeEvaluation(identifier)
+
   return value.getEvaluation(identifier)
 }
 
@@ -91,9 +97,13 @@ export const evaluateCallExpression: EvaluationFunction = (i: Interpreter<Defaul
     return new RuntimeEvaluation(new CallExpression(callExpression.callee, nodeArguments))
   }
 
+  // always index symbol, regardless of it being found or not
+  //    (should we index CALL_EXPRESSION or CALL_EXPRESSION.CALLEE?)
+  i.indexVariableNameAsSymbol(callee, callExpression)
+
   // 2. If callee function implementation is missing, bail out
   const fn = environment.get(callee)
-  if (fn === VARIABLE_NOT_FOUND) return new RuntimeEvaluation(callExpression)
+  if (!fn) return new RuntimeEvaluation(callExpression)
 
   assert(FunctionValue.isFunctionValue(fn), `Callee does not correspond to a function in environment.`)
 

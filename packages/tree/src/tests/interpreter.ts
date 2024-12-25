@@ -14,7 +14,7 @@ import {
 import { createReTyperEntry, SyntacticalGrammar } from "../parser/grammar"
 import { DEFAULT_GRAMMAR as DEFAULT_SYNTACTICAL_GRAMMAR } from "../parser/grammar/default"
 
-import Interpreter, { createNumericValue, DEFAULT_EVALUATOR, Environment, NodeEvaluator } from "../interpreter"
+import Interpreter, { DEFAULT_EVALUATOR, Environment, NodeEvaluator, NumericValue } from "../interpreter"
 import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR } from "../_custom/dice"
 
 let expression = `10 + 2 * 3`
@@ -52,12 +52,12 @@ syntacticalGrammar.add(createReTyperEntry(`self`, `Identifier`, EQUALS(`self`)))
 syntacticalGrammar.add(createReTyperEntry(`alias`, `Identifier`, REGEX(/^\w{2}::.+$/)))
 
 const nodeEvaluator = new NodeEvaluator()
-nodeEvaluator.addDictionary(DEFAULT_EVALUATOR)
-nodeEvaluator.addDictionary(DICE_MODULAR_EVALUATOR_PROVIDER, true)
+nodeEvaluator.addDictionaries(DEFAULT_EVALUATOR)
+nodeEvaluator.addDictionaries(DICE_MODULAR_EVALUATOR_PROVIDER, true)
 
 const environment = new Environment()
-// environment.assignVariable(`b`, { type: `number`, value: 2 })
-environment.assignVariable(`self`, createNumericValue(15, null as any))
+// environment.assignVariable(`b`, new NumericValue(2))
+environment.assignVariable(`self`, new NumericValue(15))
 // environment.registerResolutionPattern(`alias`, `<ALIAS>`, REGEX(/^\w{2}::.+$/))
 // environment.assignVariable('<ALIAS>', )
 

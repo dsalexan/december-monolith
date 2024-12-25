@@ -19,6 +19,7 @@ export const STACK_OVERFLOW_RULESET: GraphRewritingRule[] = []
 
 // 0 + _1 -> _1
 // _1 + 0 -> _1
+// _1 - 0 -> _1
 // (Remove term zero from ADDITION)
 //        addRule( new TARuleFromString( '0+_1', '_1' ) );
 //        addRule( new TARuleFromString( '_1+0', '_1' ) );
@@ -27,14 +28,22 @@ STACK_OVERFLOW_RULESET.push(
     `REMOVE_ZERO_FROM_ADDITION`,
     node => {
       // if (!(node instanceof BinaryExpression) || node.operator.content !== `+`) return false
-      if (!isBinaryExpression(node, `+`)) return false
-
-      if (isNumericLiteral(node.left, 0)) return { target: `right` }
-      if (isNumericLiteral(node.right, 0)) return { target: `left` }
+      if (isBinaryExpression(node, `+`)) {
+        if (isNumericLiteral(node.left, 0)) return { target: `right` }
+        if (isNumericLiteral(node.right, 0)) return { target: `left` }
+      } else if (isBinaryExpression(node, [`-`])) {
+        if (isNumericLiteral(node.right, 0)) return { target: `left` }
+      }
 
       return false
     },
-    (node: BinaryExpression, { match }: { match: PatternTargetMatch }) => node[match.target],
+    (node: BinaryExpression, { match }: { match: PatternTargetMatch }) => {
+      if (match.target === `A`) return node[`right`]
+      else if (match.target === `B`) return node[`left`]
+      else {
+        return (node.left as BinaryExpression).right
+      }
+    },
   ),
 )
 
@@ -369,7 +378,7 @@ STACK_OVERFLOW_RULESET.push(
       }
       //
       else if (!isLiteral(node.left) && isBinaryExpression(node.right, [`+`, `-`])) {
-        const innerOperator = (node.left as BinaryExpression).operator.content
+        const innerOperator = (node.right as BinaryExpression).operator.content
 
         if (!isLiteral(node.right.left) && isLiteral(node.right.right)) {
           if (operator === `+` && innerOperator == `+`) return { target: `E` }

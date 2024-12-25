@@ -16,6 +16,7 @@ export interface NodeOptions {}
 export class Node {
   public id: string = uuid()
   public type: NodeType
+  public tags: string[] = []
 
   constructor() {}
 
@@ -25,6 +26,16 @@ export class Node {
 
   public clone(): Node {
     throw new Error(`Method not implemented for type "${this.type}".`)
+  }
+
+  public getSignature(): string {
+    return `${this.type}::${this.getContent()}`
+  }
+
+  public isSimilar(other: Node): boolean {
+    const signature = this.getSignature()
+    const otherSignature = other.getSignature()
+    return signature === otherSignature
   }
 
   // #region PARENT/CHILDREN
@@ -106,19 +117,9 @@ export class Node {
     return `${prefix}${this.level}${letters}`
   }
 
-  public getSignature(): string {
-    return `${this.type}::${this.getContent()}`
-  }
-
-  public isSimilar(other: Node): boolean {
-    const signature = this.getSignature()
-    const otherSignature = other.getSignature()
-    return signature === otherSignature
-  }
-
   // #endregion
 
-  // #region TOKENS
+  // #region TOKENS AND CONTENT
   public tokens: Token[] = []
 
   public getContent({ depth, separator, wrap }: { depth?: number; separator?: string; wrap?: boolean } = {}): string {
@@ -200,6 +201,10 @@ export class Node {
     for (const child of node.children) Node.postOrder(child, iteratee)
     iteratee(node)
   }
+
+  // #endregion
+
+  // #region VALUE, NODE TYPES AND SHIT
 
   // #endregion
 }
