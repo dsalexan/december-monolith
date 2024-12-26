@@ -28,6 +28,10 @@ export class BooleanLiteral extends Literal<Boolean> {
     this.value = value
   }
 
+  public override constructClone(options): this {
+    return new BooleanLiteral(this.value) as this
+  }
+
   public override getValue(): boolean {
     return this.value
   }
@@ -43,6 +47,10 @@ export class NumericLiteral extends Literal<number> {
   constructor(value: Token) {
     super()
     this.tokens = [value]
+  }
+
+  public override constructClone(options): this {
+    return new NumericLiteral(this.value.clone(options)) as this
   }
 
   public getValue(): number {
@@ -67,6 +75,10 @@ export class StringLiteral extends Literal<string> {
     this.tokens = [...tokens]
   }
 
+  public override constructClone(options): this {
+    return new StringLiteral(...this.tokens.map(token => token.clone(options))) as this
+  }
+
   public override getWrappers(): [string, string] {
     return [`"`, `"`]
   }
@@ -85,6 +97,10 @@ export class Identifier extends StringLiteral {
 
   constructor(...variableNameTokens: Token[]) {
     super(...variableNameTokens)
+  }
+
+  public override constructClone(options): this {
+    return new Identifier(...this.tokens.map(token => token.clone(options))) as this
   }
 
   public get variableNameTokens(): Token[] {
@@ -111,6 +127,10 @@ export class UnitLiteral extends StringLiteral {
   constructor(unit: IUnit, ...tokens: Token[]) {
     super(...tokens)
     this.unit = unit
+  }
+
+  public override constructClone(options): this {
+    return new UnitLiteral(this.unit, ...this.tokens.map(token => token.clone())) as this
   }
 
   public override getDebug(): string {

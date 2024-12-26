@@ -2,7 +2,7 @@ import { MaybeNull } from "tsdef"
 
 import { CharacterInformation, CharacterTransforms, CharacterGeneralData as GCACharacterGeneralData } from "@december/gca/character"
 import { Reference } from "@december/utils/access"
-import { SubTree } from "@december/tree"
+import { Node } from "@december/tree"
 
 import IGURPSTrait from "../trait"
 
@@ -19,4 +19,4 @@ export default interface IGURPSCharacter {
   }
 }
 
-export type DamageTable = Record<number, { thr: SubTree; sw: SubTree }>
+export type DamageTable = Record<number, { thr: Node; sw: Node }>

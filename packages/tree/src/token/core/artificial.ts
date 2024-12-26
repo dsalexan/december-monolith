@@ -7,7 +7,7 @@
 
 import { Interval } from "@december/utils"
 import { TokenKind } from "../kind"
-import { IToken } from "./base"
+import { IToken, TokenCloneOptions } from "./base"
 
 export default class ArtificialToken implements IToken {
   public readonly type: `artificial` = `artificial`
@@ -20,8 +20,8 @@ export default class ArtificialToken implements IToken {
     this.content = content
   }
 
-  clone() {
-    return new ArtificialToken(this.kind, this.content)
+  clone(options: TokenCloneOptions = {}): this {
+    return new ArtificialToken(this.kind, this.content) as this
   }
 
   toString() {

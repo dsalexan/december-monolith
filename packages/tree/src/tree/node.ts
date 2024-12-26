@@ -1,4 +1,4 @@
-import { Nullable } from "tsdef"
+import { AnyClass, Nullable } from "tsdef"
 import { isNil } from "lodash"
 import assert from "assert"
 
@@ -10,8 +10,14 @@ import { NODE_TYPE_PREFIX, NodeType } from "./type"
 import { Block } from "../logger"
 import { print } from "./printer"
 import { Token } from "../token/core"
+import { TokenCloneOptions } from "../token/core/base"
 
 export interface NodeOptions {}
+
+export interface NodeCloneOptions extends TokenCloneOptions {
+  refreshID?: boolean
+  // keepParent?: boolean
+}
 
 export class Node {
   public id: string = uuid()
@@ -24,8 +30,32 @@ export class Node {
     return node instanceof Node
   }
 
-  public clone(): Node {
+  public constructClone(options: NodeCloneOptions = {}): this {
     throw new Error(`Method not implemented for type "${this.type}".`)
+  }
+
+  public clone(options: NodeCloneOptions = {}): this {
+    const { refreshID } = options
+
+    const clone = this.constructClone(options)
+
+    clone.id = refreshID ? uuid() : this.id
+    clone.tags = [...this.tags]
+
+    // (parent, children and tokens are deal with automatically by constructing subclasses)
+    //
+    // PARENT/CHILDREN
+    // if (keepParent) {
+    //   clone.parent = this.parent
+    //   clone.index = this.index
+    //   clone.label = this.label
+    // }
+    // this.children = [...this.children.map(child => child.clone(options))]
+
+    // TOKENS AND CONTENT
+    // clone.tokens = [...this.tokens.map(token => token.clone())]
+
+    return clone
   }
 
   public getSignature(): string {
@@ -122,7 +152,7 @@ export class Node {
   // #region TOKENS AND CONTENT
   public tokens: Token[] = []
 
-  public getContent({ depth, separator, wrap }: { depth?: number; separator?: string; wrap?: boolean } = {}): string {
+  public getContent({ depth, separator, wrap, injectTokenBeforeFirstChild }: { depth?: number; separator?: string; wrap?: boolean; injectTokenBeforeFirstChild?: boolean } = {}): string {
     // if (this.type === `ExpressionStatement`) debugger
     // if (this.name === `s3.aac` || this.children.some(child => child.name === `s3.aac`)) debugger // COMMENT
 
@@ -142,7 +172,10 @@ export class Node {
       content = [...childrenContent]
 
       // 4. By default inject content from tokens after first child
-      if (tokenContent.length > 0) content.splice(1, 0, tokenContent)
+      if (tokenContent.length > 0) {
+        const index: number = injectTokenBeforeFirstChild ? 0 : 1
+        content.splice(index, 0, tokenContent)
+      }
     }
 
     // 5. Check if we SHOULD wrap content

@@ -19,8 +19,12 @@
 import { range } from "lodash"
 import logger, { paint } from "./logger"
 
+export { Node, NodeCloneOptions } from "./tree"
+
 export { default as Lexer, LexicalGrammar, LexicalGrammarMatch, DEFAULT_GRAMMAR } from "./lexer"
 export { default as Parser } from "./parser"
+export { Environment } from "./interpreter"
+export { SymbolTable } from "./symbolTable"
 
 /** Prints expression as header */
 export function printExpressionHeader(expression: string) {

@@ -1,6 +1,6 @@
 import { ArtificialToken, getTokenKind } from "../token"
 import { Token } from "../token/core"
-import { Node, NodeType, NumericLiteral, StringLiteral } from "../tree"
+import { Identifier, Node, NodeType, NumericLiteral, StringLiteral } from "../tree"
 
 // export function getClass(type: NodeType): Node {
 //   if (type === `NumericLiteral`) return NumericLiteral
@@ -13,7 +13,13 @@ export function makeConstantLiteral(value: number): NumericLiteral
 export function makeConstantLiteral(value: string): StringLiteral
 export function makeConstantLiteral(value: number | string): NumericLiteral | StringLiteral {
   if (typeof value === `number`) return new NumericLiteral(new ArtificialToken(getTokenKind(`number`), String(value)))
-  else return new StringLiteral(new ArtificialToken(getTokenKind(`string`), value))
+  else if (typeof value === `string`) return new StringLiteral(new ArtificialToken(getTokenKind(`string`), value))
+
+  throw new Error(`Not implemented for value "${value}"`)
+}
+
+export function makeIdentifier(name: string): Node {
+  return new Identifier(new ArtificialToken(getTokenKind(`string`), name))
 }
 
 export function artificialize(token: Token) {

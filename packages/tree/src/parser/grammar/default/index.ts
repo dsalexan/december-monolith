@@ -48,6 +48,7 @@ const POSITIVE = createBindParserEntry<DefaultParserProvider>(`nud`, `plus`, DEF
 
 // MEMBER/CALL
 const GCA_MEMBER = createBindParserEntry<DefaultParserProvider>(`led`, `double_colon`, DEFAULT_BINDING_POWERS.MEMBER, `parseMemberExpression`)
+// const FUNCTION_NAME = createBindParserEntry<DefaultParserProvider>(`nud`, `identifier`, DEFAULT_BINDING_POWERS.MEMBER, `parseFunctionNameExpression`)
 const CALL = createBindParserEntry<DefaultParserProvider>(`led`, `open_parenthesis`, DEFAULT_BINDING_POWERS.CALL, `parseCallExpression`)
 
 // GROUPING

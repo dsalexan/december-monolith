@@ -15,6 +15,11 @@ export class SymbolTable {
     this.table = new Map()
   }
 
+  /** Reset all links between nodes and symbols */
+  public resetLinks() {
+    for (const symbol of this.table.values()) symbol.linkedNodes.clear()
+  }
+
   /** Packages and indexed symbol (through data) */
   public index(variableName: VariableName, treeName?: string, node?: Node): Simbol {
     // 1. If symbol is already indexed, just link its node
@@ -77,6 +82,31 @@ export class SymbolTable {
 
     // debugger
     return missing
+  }
+
+  /** Return all symbols contextualized for a specific environment (i.e. resolving them in that env) */
+  public getAllSymbols(environment: Environment): Simbol[] {
+    const symbols: Record<Simbol[`name`], Simbol> = {}
+
+    const tableSymbols = Array.from(this.table.values())
+    for (const symbol of tableSymbols) {
+      const resolvedVariable = environment.resolve(symbol.name)
+
+      // 2. Variable is either present in environment or missing altogether, doesn't matter
+      if (!symbols[symbol.name]) symbols[symbol.name] = symbol
+
+      // 1. Variable was resolved into ANOTHER variable
+      if (!!resolvedVariable && resolvedVariable.variableName !== symbol.name) {
+        // (so we index a new symbol and push it)
+        // (it being missing or not is irrelevant)
+        const newSymbol = this.index(resolvedVariable.variableName)
+        if (!symbols[newSymbol.name]) symbols[newSymbol.name] = newSymbol
+      }
+
+      // 2. Variable is either present in environment or missing altogether
+    }
+
+    return Object.values(symbols)
   }
 
   /** Prints table state */

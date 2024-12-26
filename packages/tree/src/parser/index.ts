@@ -27,7 +27,7 @@ import { SyntacticalContext } from "./grammar/parserFunction"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-export { BindingPower, SyntacticalGrammar } from "./grammar"
+export { BindingPower, SyntacticalGrammar, DEFAULT_GRAMMAR, createReTyperEntry } from "./grammar"
 export { SyntacticalContext, StatementParser, NUDParser, LEDParser } from "./grammar/parserFunction"
 export { createRegisterParserEntriesFromIndex, SyntacticalGrammarEntry } from "./grammar/entries"
 

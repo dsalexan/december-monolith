@@ -1,5 +1,5 @@
 import assert from "assert"
-import { isNil, maxBy, range, uniq } from "lodash"
+import { isNil, max, maxBy, range, uniq } from "lodash"
 
 import { MutableObject, ObjectController } from "@december/compiler"
 import { Reference } from "@december/utils/access"
@@ -7,98 +7,81 @@ import { Reference } from "@december/utils/access"
 import { Quantity } from "@december/utils/unit"
 import { typing } from "@december/utils"
 
-import { Environment, FunctionValue, createFunctionValue, UNDEFINED_VALUE } from "@december/tree/interpreter"
+import { Node } from "@december/tree/tree"
+import Interpreter, { Environment, FunctionValue, Contextualized, RuntimeFunction, RuntimeEvaluation, RuntimeValue, NumericValue, ObjectValue, StringValue, BooleanValue } from "@december/tree/interpreter"
 
 import { DamageTable } from "./character"
+import { AnyFunction } from "tsdef"
 
-export function makeGURPSEnvironment(character: MutableObject) {
-  const environment = new Environment()
+export function makeGURPSEnvironment() {
+  const environment = new Environment(`gurps:global`)
 
-  environment.assignVariable<FunctionValue<typeof basethdice>>(`@basethdice`, createFunctionValue(basethdice, `@basethdice`, null as any))
+  environment.assignValue(`@basethdice`, new FunctionValue(basethdice, `@basethdice`))
+  environment.assignValue(`@itemhasmod`, new FunctionValue(itemhasmod, `@itemhasmod`))
+
+  environment.assignValue(`@max`, new FunctionValue(_max, `@max`))
+
+  return environment
 }
 
-export function basethdice(level: number) {
-  const damageTable: DamageTable = character.getProperty(`damageTable`)
-  if (!damageTable) return UNDEFINED_VALUE
+export const basethdice: Contextualized = (i: Interpreter, node: Node, environment: Environment) => (runtimeLevel: RuntimeValue<any>) => {
+  assert(runtimeLevel.hasNumericRepresentation(), `Level should be a number (or at least have a numeric representation)`)
 
+  const character: MutableObject = environment.get(`character`)?.value
+  if (!character) return null
+
+  const damageTable: DamageTable = character.getProperty(`damageTable`)
+  if (!damageTable) return null
+
+  const level = runtimeLevel.asNumber()
+  assert(level > 0, `Level should be a positive number`)
   const damage = damageTable[level]
-  if (!damage) return UNDEFINED_VALUE
+  if (!damage) return null
 
   const dice = damage.thr.clone({ refreshID: true })
-  assert(dice.root.children.length === 1, `Tree root should have only one child`)
-
-  const firstChild = dice.root.children.remove(0)
-
-  const parenthesis = NodeFactory.abstract.ENCLOSURE(`parenthesis`, firstChild.range)
-  parenthesis.children.add(firstChild, 0, { refreshIndexing: false })
-
-  return parenthesis
+  return dice
 }
 
-// export function makeGURPSEnvironment(character: MutableObject) {
-//   const environment = new Environment()
+/*
+ * This function is used to determine if the specified trait has a certain modifier applied to it.
+ *
+ * @ITEMHASMOD( TRAITNAME, MODNAME)
+ *
+ * TRAITNAME             is the name of a trait.
+ * MODNAME               is the name of a modifier.
+ *
+ *
+ * If the specified trait is found on the character, and the specified modifier is applied to that trait, then this function returns the level of the modifier. Otherwise, this function returns 0.
+ *
+ * TRAITNAME and MODNAME may be enclosed in quotes or braces, and should be if either might contain a comma.
+ * This function will look for modifiers that have name extensions using either the old NAME (NAME EXT) format, or the newer NAME, NAME EXT format that modifiers display in the UI now.
+ * */
+export const itemhasmod: Contextualized = (i: Interpreter, node: Node, environment: Environment) => (trait: RuntimeValue<any>, modName: RuntimeValue<any>) => {
+  assert(ObjectValue.isObjectValue(trait), `First argument should be an object (specifically, a TRAIT)`)
+  assert(StringValue.isStringValue(modName), `Second argument should be a string (specifically, a MODNAME)`)
 
-//   const source = ObjectSource.fromDictionary(`global:gurps`, {
-//     character: { type: `simple`, value: character },
-//     // This function takes a value and returns the base Thrust damage dice that would result if the value was a ST score.
-//     [`@basethdice`]: {
-//       type: `function`,
-//       value: (context, options) => (level: number) => {
-//         const damageTable: DamageTable = character.getProperty(`damageTable`)
-//         if (!damageTable) return NON_RESOLVED_VALUE
+  if (trait.isEmptyObject()) return new BooleanValue(false)
 
-//         const damage = damageTable[level]
-//         if (!damage) return NON_RESOLVED_VALUE
+  debugger
+  return null as any
+}
 
-//         const dice = damage.thr.clone({ refreshID: true })
-//         assert(dice.root.children.length === 1, `Tree root should have only one child`)
+export const _max: Contextualized =
+  (i: Interpreter, node: Node, environment: Environment) =>
+  (...args: RuntimeValue<any>[]) => {
+    assert(args.length > 0, `At least one argument is required`)
 
-//         const firstChild = dice.root.children.remove(0)
+    const numericValues: number[] = []
+    for (const runtimeValue of args) {
+      assert(runtimeValue.hasNumericRepresentation(), `All arguments must be numbers`)
+      const value = runtimeValue.asNumber()
+      numericValues.push(value)
+    }
 
-//         const parenthesis = NodeFactory.abstract.ENCLOSURE(`parenthesis`, firstChild.range)
-//         parenthesis.children.add(firstChild, 0, { refreshIndexing: false })
+    const maxValue = max(numericValues)!
 
-//         return parenthesis
-//       },
-//     },
-//     [`@itemhasmod`]: {
-//       type: `simple`,
-//       value: () => {
-//         debugger
-//         return undefined
-//       },
-//     },
-//     [`@max`]: {
-//       type: `simple`,
-//       value: (...args: any[]) => {
-//         const types = args.map(entry => {
-//           if (entry instanceof Node) return `node`
-//           else if (entry instanceof Quantity) {
-//             const quantity = entry as Quantity
-//             return `quantity:${quantity.unit.getSymbol()}`
-//           } else {
-//             const type = typing.guessType(entry)
+    return new NumericValue(maxValue)
+  }
 
-//             if (type === `number` && parseInt(entry) === 0) return `zero`
-//             return type
-//           }
-//         })
-
-//         const sameAlgebraicType = uniq(types).filter(type => type !== `zero`)
-//         assert(sameAlgebraicType.length > 0, `Zero thing is probably messing things up`)
-//         assert(sameAlgebraicType.length === 1, `All arguments must be of the same type`)
-
-//         if (sameAlgebraicType[0]?.startsWith(`quantity:`)) {
-//           // 1. Same quantity UNIT, so we should just compare max number
-//           const maxValue = maxBy(args, arg => (parseInt(arg) === 0 ? 0 : (arg as Quantity).value))
-//           return maxValue
-//         }
-
-//         throw new Error(`Not implemented yet for type "${sameAlgebraicType[0]}"`)
-//       },
-//     },
-//   })
-
-//   environment.addSource(source)
-//   return environment
-// }
+if (!global.__GURPS_ENVIRONMENT) global.__GURPS_ENVIRONMENT = makeGURPSEnvironment()
+export const GURPSEnvironment: Environment = global.__GURPS_ENVIRONMENT

@@ -129,6 +129,13 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     return aliases
   }
 
+  public toString(): string {
+    const [alias] = this.getAliases()
+
+    if (!alias) return this.id
+    else return `${alias} <id:${this.id}>`
+  }
+
   public reference(type: `id` | `alias` = `id`): ObjectReference {
     if (type === `id`) return new Reference(`id`, this.id)
     else if (type === `alias`) {

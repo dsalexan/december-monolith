@@ -28,8 +28,8 @@ export const IMPORT_CHARACTER_FROM_GCA_STRATEGY = new Strategy() //
 
       const damageTable: DamageTable = {}
       for (const [level, damage] of Object.entries(_damageTable)) {
-        const thr = Dice.d6(damage.thr.base, damage.thr.modifier)
-        const sw = Dice.d6(damage.sw.base, damage.sw.modifier)
+        const thr = Dice.d6(damage.thr.base).plus(damage.thr.modifier)
+        const sw = Dice.d6(damage.sw.base).plus(damage.sw.modifier)
 
         damageTable[parseInt(level)] = { thr, sw }
       }

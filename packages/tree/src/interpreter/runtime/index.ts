@@ -1,14 +1,14 @@
 import assert from "assert"
-import { MaybeUndefined, Nullable } from "tsdef"
+import { AnyFunction, AnyObject, Arguments, MaybeUndefined, Nullable } from "tsdef"
 
 import { isQuantity, isUnit, IUnit, Quantity } from "@december/utils/unit"
 
 import { Expression, ExpressionStatement, Node, Statement } from "../../tree"
-import type Interpreter from ".."
 import { RuntimeEvaluation } from "./evaluation"
-import { VariableName } from ".."
+import type Interpreter from ".."
+import type { Environment, VariableName } from ".."
 
-export const RUNTIME_VALUE_TYPES = [`undefined`, `boolean`, `number`, `string`, `function`, `variable`, `unit`, `quantity`] as const
+export const RUNTIME_VALUE_TYPES = [`undefined`, `boolean`, `number`, `string`, `function`, `variable`, `unit`, `quantity`, `object`] as const
 export type RuntimeValueType = (typeof RUNTIME_VALUE_TYPES)[number]
 
 export { RuntimeEvaluation } from "./evaluation"
@@ -37,6 +37,18 @@ export class RuntimeValue<TValue> {
 
   public toString() {
     return `<${this.type}> ${this.getContent()}`
+  }
+
+  public isEquals(value: RuntimeValue<any>) {
+    return this.type === value.type && this.value === value.value
+  }
+
+  public hasNumericRepresentation(): boolean {
+    return false
+  }
+
+  public asNumber(): number {
+    throw new Error(`Unsupported operation`)
   }
 }
 
@@ -84,6 +96,14 @@ export class NumericValue extends RuntimeValue<number> {
   public static isNumericValue(value: any): value is NumericValue {
     return value.type === `number`
   }
+
+  public override hasNumericRepresentation(): boolean {
+    return true
+  }
+
+  public override asNumber(): number {
+    return this.value
+  }
 }
 
 export class StringValue extends RuntimeValue<string> {
@@ -99,11 +119,11 @@ export class StringValue extends RuntimeValue<string> {
   }
 }
 
-export class FunctionValue<TFunction extends Function = Function> extends RuntimeValue<TFunction> {
+export class FunctionValue<TFunction extends RuntimeFunction = RuntimeFunction> extends RuntimeValue<Contextualized<TFunction>> {
   type: `function` = `function`
   name: string
 
-  constructor(fn: TFunction, name: string) {
+  constructor(fn: Contextualized<TFunction>, name: string) {
     super(fn)
     this.name = name
 
@@ -116,8 +136,55 @@ export class FunctionValue<TFunction extends Function = Function> extends Runtim
   }
 
   public override getContent() {
+    return `${this.name}(...)`
+  }
+
+  public override isEquals(value: RuntimeValue<any>) {
     debugger
-    return `${this.name}`
+    // TODO: How to compare functions?
+    return FunctionValue.isFunctionValue(value)
+  }
+}
+
+export type RuntimeFunction = (...args: any[]) => Nullable<Node | RuntimeValue<any> | RuntimeEvaluation>
+export type Contextualized<TFunction extends RuntimeFunction = RuntimeFunction> = (i: Interpreter, node: Node, environment: Environment) => TFunction
+
+export class ObjectValue<TObject extends AnyObject> extends RuntimeValue<TObject> {
+  type: `object` = `object`
+  _numberValue: Nullable<number> = null
+  _stringValue: Nullable<string> = null
+
+  constructor(value: TObject, { numberValue, stringValue }: { numberValue?: number; stringValue?: string } = {}) {
+    super(value)
+    assert(typeof value === `object`)
+
+    assert(numberValue === undefined || typeof numberValue === `number`, `Number Value must be a number.`)
+    assert(stringValue === undefined || typeof stringValue === `string`, `String Value must be a string.`)
+
+    this._numberValue = numberValue ?? null
+    this._stringValue = stringValue ?? null
+  }
+
+  public static isObjectValue<TObject extends AnyObject>(value: any): value is ObjectValue<TObject> {
+    return value.type === `object`
+  }
+
+  public isEmptyObject(): boolean {
+    return Object.keys(this.value).length === 0
+  }
+
+  public override hasNumericRepresentation(): boolean {
+    return this._numberValue !== null
+  }
+
+  public override asNumber(): number {
+    assert(this._numberValue !== null, `Object Value has no number value.`)
+    return this._numberValue
+  }
+
+  public asString(): string {
+    assert(this._stringValue !== null, `Object Value has no string value.`)
+    return this._stringValue
   }
 }
 
@@ -169,3 +236,9 @@ export class QuantityValue extends RuntimeValue<Quantity> {
 }
 
 // #endregion
+
+export function makeRuntimeValue(value: unknown): NumericValue {
+  if (typeof value === `number`) return new NumericValue(value)
+
+  throw new Error(`Unsupported value type.`)
+}

@@ -2,14 +2,15 @@ import assert from "assert"
 import { AnyObject, MaybeArray, MaybeUndefined, Nilable, Nullable } from "tsdef"
 import { get, isNil, isString, property, set, uniq } from "lodash"
 
-import { Processor, Simbol } from "@december/tree"
-import { ProcessorBuildOptions } from "@december/tree/processor"
+import { Environment } from "@december/tree"
+
 import generateUUID from "@december/utils/uuid"
 import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, Reference, REFERENCE } from "@december/utils/access"
 import { PropertyReferencePatternMatchInfo } from "@december/utils/access/match"
 import { BasePattern, PatternMatchInfo } from "@december/utils/match/base"
 import { RegexPatternMatchInfo } from "@december/utils/match/element"
 
+import logger, { paint } from "../../logger"
 import MutableObject from "../../object"
 
 import ObjectIntegrityRegistry, { IntegrityEntry } from "../integrityRegistry"
@@ -24,20 +25,19 @@ import { DELETE, Mutation, OVERRIDE, SET } from "../../mutation/mutation"
 import type ObjectController from ".."
 import { ArgumentProvider } from "../callQueue/executionContext"
 // import { ProcessingPackage, ProcessingPath, ProcessingState, ProcessingSymbolTranslationTable } from "../../processor/base"
-import { Environment } from "../../tree"
-import { StrategyProcessingState, StrategyProcessListenOptions, StrategyProcessSymbolOptions } from "./processing"
 import { MutationFunctionMetadata, MutationFunctionOutput } from "../frameRegistry/mutationFrame"
-import logger, { paint } from "../../logger"
-import { SymbolTable, SymbolValueInvoker } from "@december/tree/environment/symbolTable"
-import { StrategyProcessingPackage, StrategyProcessBuildOptions, StrategyProcessor } from "./processing"
-
-export type { StrategyProcessingPackage, StrategyProcessListenOptions, StrategyProcessSymbolOptions, StrategyProcessBuildOptions } from "./processing"
+import { MutationInput, StrategyProcessor, StrategyProcessorListenOptions, StrategyProcessorParseOptions, StrategyProcessorResolveOptions, StrategyProcessState } from "./processor"
 
 export type Generator<TReturn> = (object: MutableObject) => TReturn
 
 export interface ProxyListenerOptions {
   arguments?: BareExecutionContext[`arguments`]
   integrityEntries?: IntegrityEntry[]
+}
+
+export interface StrategyProcessorInputOptions {
+  expression?: string
+  environment?: Environment
 }
 
 export class Strategy {
@@ -151,85 +151,74 @@ export class Strategy {
 
   // #region PROCESSING/COMPILLING
 
-  /** Generic processing for any expression */
+  /** Generic processing for an expression (which is contained inside (object, path) pair) */
   public static process(
-    processingPackage: Nullable<StrategyProcessingPackage>,
     object: MutableObject,
     path: string,
-    options: StrategyProcessSymbolOptions & StrategyProcessListenOptions & StrategyProcessBuildOptions & { ignorePackageUpdate?: boolean },
-  ): { state: StrategyProcessingState; mutations: Mutation[]; integrityEntries: IntegrityEntry[] } {
+    options: StrategyProcessorInputOptions & StrategyProcessorParseOptions & StrategyProcessorResolveOptions & StrategyProcessorListenOptions,
+  ): MutationInput & { state: StrategyProcessState } {
+    const mutationInput: MutationInput = { mutations: [], integrityEntries: [] }
     const listeners: Listener[] = []
-    const mutations: Mutation[] = []
-    const integrityEntries: IntegrityEntry[] = []
 
-    // 1. Check if expression was processed previously
-    let state: StrategyProcessingState = get(object.metadata, path)
+    // 0. Check if expression was processed previously (i.e. if processing state exists in metadata)
+    let state: StrategyProcessState = get(object.metadata, path)
 
-    // 2. Process expression
+    // 1. Process (parse + resolve) expression
     if (!state) {
-      // EXPRESSION WAS NOT PROCESSED YET
-      assert(processingPackage, `Processing package must be provided for new expressions`)
+      assert(options.expression, `Expression must be provided for new expressions`) // COMMENT
+      assert(options.environment, `Environment must be provided for new expressions`) // COMMENT
+      // 1.A. Process expression
+      state = StrategyProcessor.process(options.expression, options.environment, options)
 
-      // 2.1. Process (build + solve) expression
-      state = StrategyProcessor.process(processingPackage, options)
-
-      // 2.2. Store processing state in metadata
-      const output = StrategyProcessor.cacheProcessingState(state, object, path)
-      mutations.push(...output.mutations)
-      integrityEntries.push(...output.integrityEntries)
-    } else {
-      // EXPRESSION WAS PROCESSED PREVIOUSLY
-
-      // 2.3. Update package information in state
-      if (processingPackage && !options.ignorePackageUpdate) {
-        assert(state.package.expression === processingPackage.expression, `Expression in processing state must be the same as the one in processing package`)
-        state.package.environment = processingPackage.environment
-      }
-
-      // 2.4. Process (solve) expression
-      StrategyProcessor.solve(state, options)
+      // 1.B. Store state in metadata
+      const output = StrategyProcessor.cache(state, object, path)
+      mutationInput.mutations.push(...output.mutations)
+      mutationInput.integrityEntries.push(...output.integrityEntries)
+    }
+    // 2. Resolve expression (well, actually resolve processing state)
+    else {
+      const environment = options.environment ?? state.environment!
+      assert(environment, `Where should I find the environment then genius`)
+      StrategyProcessor.resolve(state, environment, options)
     }
 
-    // 3. Listen for missing symbols
-    listeners.push(...StrategyProcessor.listenForMissingSymbols(state, object, path, options))
-
-    // 4. Register event listeners (for symbol updates)
+    // 3. Listen for new symbols
+    listeners.push(...StrategyProcessor.listenForSymbols(state, object, path, options))
     for (const listener of listeners) object.controller.eventEmitter.addListener(listener)
 
-    // 5. No new mutations are generated in re-processing UNLESS the state is ready
+    // 4. If processing is finished, update value in object's data
     if (state.isReady) {
-      const processedValue = state.resolved.tree.value()
-
-      mutations.push(OVERRIDE(path, processedValue))
-    }
-    // 6. If there is a fallback ready, assign its value to the target path
-    else if (state.fallback && state.processor.isReady(state.fallback)) {
-      const processedValue = state.fallback.tree.value()
-
-      mutations.push(OVERRIDE(path, processedValue))
+      const value = state.evaluation!.runtimeValue?.value
+      assert(!isNil(value), `Value must be resolved`)
+      mutationInput.mutations.push(OVERRIDE(path, value))
     }
 
-    return { state, mutations, integrityEntries }
+    return { state, ...mutationInput }
   }
 
-  /** Generator for a generic re-processing (aka only solves already processed expressions) function */
-  public registerReProcessingFunction(name: GenericMutationFrame[`name`], reProcessingOptionsGenerator: ReProcessingOptionsGenerator): this {
-    // 0. Create and register a standard mutation function
+  /** Generator of a generic re-processing strategy function (useful to just re-run resolution loop for already processed expressions) */
+  public registerReProcessingFunction(name: GenericMutationFrame[`name`], resolveOptionsGenerator: Generator<StrategyProcessorResolveOptions>, listenOptions: Omit<StrategyProcessorListenOptions, `reProcessingFunction`>): this {
+    // It is a regular mutation function at the end
     this.registerMutationFunction(name, (object: MutableObject, mutationOptions: MutationFunctionMetadata) => {
       // 1. Target path in object's metadata (where processing state is stored) ALWAYS comes as an argument
-      //      (check compiler/controller/processing :: listenForMissingSymbols for more)
+      //      (check StrategyProcessor :: listenForSymbols for more)
       const path = mutationOptions.arguments.processingStatePath as string
-      const state: StrategyProcessingState = get(object.metadata, path)
+      const state: StrategyProcessState = get(object.metadata, path)
 
-      // 2. Re-solve processing state (basically reuses the original build tree in solve loop)
-      const options = reProcessingOptionsGenerator(object)
-      StrategyProcessor.solve(state, options)
+      // 2. Resolve expression
+      const options = resolveOptionsGenerator(object)
+      const environment = state.environment!
+      assert(environment, `Where should I find the environment then genius`)
 
-      // 3. Listen for missing symbols
-      const listeners = StrategyProcessor.listenForMissingSymbols(state, object, path, { ...options, reProcessingFunction: { name, arguments: { ...mutationOptions.arguments, genericReProcessing: true } } })
+      StrategyProcessor.resolve(state, environment, options)
 
-      // 4. Register event listeners (for symbol updates)
-      if (listeners.length > 0) debugger
+      // 3. Listen for new symbols
+      //      (using this very function as reProcessing target)
+      const listeners = StrategyProcessor.listenForSymbols(state, object, path, {
+        ...options,
+        ...listenOptions,
+        reProcessingFunction: { name, arguments: { ...mutationOptions.arguments, genericReProcessing: true } },
+      })
       for (const listener of listeners) object.controller.eventEmitter.addListener(listener)
 
       // // DEBUG: This is just to simulate a "signature change" in re-process
@@ -237,19 +226,11 @@ export class Strategy {
       // return [OVERRIDE(path.computed, `aaaaa`), processedValue.signature.instruction()]
       // // ====================================================
 
-      // [PATH] It is the same as processing state path inside metadata, but inside "data"
-
-      // 5. No new mutations are generated in re-processing UNLESS the state is ready
+      // 4. If processing is finished, update value in object's data
       if (state.isReady) {
-        const processedValue = state.resolved.tree.value()
-
-        return [OVERRIDE(path, processedValue)]
-      }
-      // 6. If there is a fallback ready, assign its value to the target path
-      else if (state.fallback && state.processor.isReady(state.fallback)) {
-        const processedValue = state.fallback.tree.value()
-
-        return [OVERRIDE(path, processedValue)]
+        const value = state.evaluation!.runtimeValue?.value
+        assert(!isNil(value), `Value must be resolved`)
+        return [OVERRIDE(path, value)]
       }
 
       return []
@@ -297,7 +278,7 @@ export class Strategy {
   // #endregion
 }
 
-export type ReProcessingOptionsGenerator = Generator<StrategyProcessSymbolOptions & Omit<StrategyProcessListenOptions, `reProcessingFunction`>>
+// export type ReProcessingOptionsGenerator = Generator<StrategyProcessSymbolOptions & Omit<StrategyProcessListenOptions, `reProcessingFunction`>>
 
 export interface CommonOptions {
   integrityEntries?: GenericListener[`integrityEntries`]
@@ -305,6 +286,7 @@ export interface CommonOptions {
   argumentProvider?: MaybeArray<ArgumentProvider>
 }
 
+/** Resolve some generic properties inside events (like "self reference") */
 export function resolveTargetEvent(object: MutableObject, targetEvent: TargetEvent): TargetEvent {
   if (targetEvent.type === `property:updated`) {
     return {

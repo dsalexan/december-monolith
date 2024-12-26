@@ -1,12 +1,17 @@
 import assert from "assert"
-import { AnyObject } from "tsdef"
+import { AnyObject, Nullable } from "tsdef"
 import { get, isNil, isNumber, set } from "lodash"
 
-import { Simbol, SymbolTable } from "@december/tree"
-import { UndefinedValue, NullValue } from "@december/tree/environment"
+import { EQUALS, FUNCTION, REGEX } from "@december/utils/match/element"
+
+import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR, DICE_MODULAR_REWRITER_RULESET } from "@december/system/dice"
+import { makeDefaultProcessor } from "@december/tree/processor"
+import { ObjectValue, RuntimeValue } from "@december/tree/interpreter"
+import { createReTyperEntry } from "@december/tree/parser"
+import { Simbol } from "@december/tree/symbolTable"
+
 import { Strategy, Mutation, SET, MutableObject } from "@december/compiler"
 
-import type { ReProcessingOptionsGenerator, StrategyProcessingPackage, StrategyProcessListenOptions, StrategyProcessSymbolOptions } from "@december/compiler/controller/strategy"
 import { IntegrityEntry } from "@december/compiler/controller/integrityRegistry"
 import { REFERENCE_ADDED } from "@december/compiler/controller/eventEmitter/event"
 
@@ -16,78 +21,106 @@ import { IGURPSCharacter, IGURPSTrait, Trait } from "@december/gurps"
 import { isNameExtensionValid, Type, IGURPSTraitMode, isAlias, getAliases } from "@december/gurps/trait"
 import { DamageTable } from "@december/gurps/character"
 
-import { GCACharacter, GCATrait, isPropertyInvoker } from "@december/gca"
-
-import { StrategyProcessBuildOptions } from "@december/compiler/controller/strategy/processing"
+import { GCACharacter, GCATrait } from "@december/gca"
 
 import { unitManager } from "../../../../../unit"
 
-export const GCAProcessingBuildOptions: Omit<StrategyProcessBuildOptions, `scope`> = {
+// TODO: uhu
+import { StrategyProcessorListenOptions, StrategyProcessorParseOptions, StrategyProcessorResolveOptions } from "@december/compiler/controller/strategy/processor"
+
+export const GCAStrategyProcessorParseOptions: Omit<StrategyProcessorParseOptions, `syntacticalContext`> = {
   unitManager,
-}
+  processorFactory: options => {
+    const processor = makeDefaultProcessor(options)
 
-export const GCAProcessingListenOptions: Omit<StrategyProcessListenOptions, `reProcessingFunction`> = {
-  canListenToSymbol: symbolKey => {
-    if (isAlias(symbolKey)) return true
+    processor.syntacticalGrammar.add(...DICE_MODULAR_SYNTACTICAL_GRAMMAR)
+    processor.graphRewriteSystem.add(...DICE_MODULAR_REWRITER_RULESET)
+    processor.nodeEvaluator.addDictionaries(DICE_MODULAR_EVALUATOR_PROVIDER, true)
 
-    const property = isPropertyInvoker(symbolKey)
-    if (property && isAlias(property.target)) return true
+    processor.syntacticalGrammar.add(createReTyperEntry(`me`, `Identifier`, EQUALS(`me`)))
+    processor.syntacticalGrammar.add(createReTyperEntry(`thr`, `Identifier`, EQUALS(`thr`)))
+    processor.syntacticalGrammar.add(createReTyperEntry(`sw`, `Identifier`, EQUALS(`sw`)))
+    processor.syntacticalGrammar.add(createReTyperEntry(`alias`, `Identifier`, FUNCTION(isAlias)))
 
-    if (symbolKey === `@basethdice`) return true
-
-    return false
-  },
-  generatePropertyPatterns: symbolKey => {
-    const property = isPropertyInvoker(symbolKey)
-
-    if (isAlias(symbolKey) || (property && isAlias(property.target))) {
-      const alias = isAlias(symbolKey) ? symbolKey : (property as any).target
-      return [PROPERTY(REFERENCE(`alias`, alias), ANY_PROPERTY)]
-    }
-
-    if (symbolKey === `@basethdice`) return [PROPERTY(REFERENCE(`id`, `general`), `damageTable`)]
-
-    throw new Error(`Get property patterns from symbol "${symbolKey}" not implemented`)
+    return processor
   },
 }
 
-export const GCAProcessingSymbolOptionsGenerator: ReProcessingOptionsGenerator = (object: MutableObject) => ({
-  ...GCAProcessingListenOptions,
-  //
-  getSymbolValue: symbolKey => {
-    /**
-     * SYMBOL VALUE INVOKER -> returns value for symbol
-     *    value -> symbol reference found (be it a "real" value or UndefinedValue or NullValue)
-     *    undefined -> symbol reference not found
-     */
+const REMOVE_VALUE: unique symbol = Symbol.for(`gca:remove_value`)
+type RemoveValue = typeof REMOVE_VALUE
 
-    const propertyInvoker = isPropertyInvoker(symbolKey)
+export const GCAStrategyProcessorResolveOptionsGenerator: (object: MutableObject) => StrategyProcessorResolveOptions = (object: MutableObject) => ({
+  isValidFunctionName: (functionName: string) => functionName.startsWith(`@`),
+  environmentUpdateCallback: (environment, symbolTable) => {
+    const symbols: Map<Simbol[`name`], Simbol> = new Map()
 
-    const target = propertyInvoker ? propertyInvoker.target : symbolKey
-    const property = propertyInvoker ? propertyInvoker.property : DEFAULT_PROPERTY
+    const variableReassignmentSymbols = environment.getVariableReassignmentAsSymbols() // a runtime VARIABLE_VALUE is basically proxy a value to another value, so we speed things up by trying to link the value here before it is event found in symbol table
+    for (const symbol of variableReassignmentSymbols) if (!symbols.has(symbol.name)) symbols.set(symbol.name, symbol)
 
-    if (target === `me`) {
-      const value = object.getProperty(property)
-      return value as any
-    } else if (isAlias(target)) {
-      const alias = target
+    const tableSymbols = symbolTable.getAllSymbols(environment) // we are ALWAYS looking to update any symbol present in table, making this reactive would be a pain
+    for (const symbol of tableSymbols) if (!symbols.has(symbol.name)) symbols.set(symbol.name, symbol)
 
-      const [referencedObject] = object.controller.store.getByReference(new Reference(`alias`, alias), false) as MutableObject<IGURPSTrait>[]
-      if (referencedObject) {
-        const type = referencedObject.getProperty(`type`) as Type.TraitType
-        const effectiveProperty = property !== DEFAULT_PROPERTY ? property : type === `attribute` ? `score` : `level`
+    const allSymbols: Simbol[] = [...symbols.values()]
 
-        // TODO: Do for shit other than level
-        if (effectiveProperty !== `level` && effectiveProperty !== `score`) debugger
+    for (const symbol of allSymbols) {
+      let value: Nullable<RuntimeValue<any> | RemoveValue> = null
 
-        const value = object.getProperty(effectiveProperty)
-        return value as any
+      // ===========================================================================================================================
+
+      const target = symbol.name
+
+      if (isAlias(target)) {
+        const alias = target
+
+        const [referencedObject] = object.controller.store.getByReference(new Reference(`alias`, alias), false) as MutableObject<IGURPSTrait>[]
+        if (referencedObject) {
+          const type = referencedObject.getProperty(`type`) as Type.TraitType
+          const effectiveProperty = type === `attribute` ? `score` : `level`
+
+          const numberValue = referencedObject.getProperty(effectiveProperty) as number
+          value = new ObjectValue(referencedObject, { numberValue })
+        }
+      }
+
+      // ===========================================================================================================================
+      // ?. Assign value into environment
+      if (value !== null) {
+        //  What to do if a value suddenly vanishes?
+        if ((value as any) === REMOVE_VALUE) {
+          const currentlyHasValue = !!environment.resolve(symbol.name)?.environment
+          debugger
+        } else {
+          environment.assignValue(symbol.name, value, true)
+        }
       }
     }
-
-    return undefined
   },
 })
 
-export const DEFAULT_PROPERTY = Symbol.for(`gca:default_property`)
+export const GCAStrategyProcessorOptionsGenerator: (object: MutableObject) => Omit<StrategyProcessorParseOptions, `syntacticalContext`> & StrategyProcessorResolveOptions = (object: MutableObject) => ({
+  ...GCAStrategyProcessorParseOptions,
+  ...GCAStrategyProcessorResolveOptionsGenerator(object),
+})
+
+export const GCAStrategyProcessorListenOptions: Omit<StrategyProcessorListenOptions, `reProcessingFunction`> = {
+  isSymbolListenable: symbol => {
+    if (isAlias(symbol.name)) return true
+
+    if (symbol.name === `@basethdice`) return true
+
+    return false
+  },
+  generatePropertyPatterns: symbol => {
+    if (isAlias(symbol.name)) {
+      const alias = symbol.name
+      return [PROPERTY(REFERENCE(`alias`, alias), ANY_PROPERTY)]
+    }
+
+    if (symbol.name === `@basethdice`) return [PROPERTY(REFERENCE(`id`, `general`), `damageTable`)]
+
+    throw new Error(`Get property patterns from symbol "${symbol.name}" not implemented`)
+  },
+}
+
+export const DEFAULT_PROPERTY: unique symbol = Symbol.for(`gca:default_property`)
 export type DefaultProperty = typeof DEFAULT_PROPERTY

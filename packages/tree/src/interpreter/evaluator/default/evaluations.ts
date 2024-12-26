@@ -1,24 +1,32 @@
-import { FunctionValue, RuntimeEvaluation } from "./../../runtime/index"
+import { get, isNil } from "lodash"
 import { MaybeUndefined, Nullable } from "tsdef"
 import assert from "assert"
 
 import { Quantity } from "@december/utils/unit"
 
-import { Token } from "../../../token/core"
-import { BinaryExpression, CallExpression, ExpressionStatement, Identifier, IfExpression, Node, NumericLiteral, StringLiteral, UnitLiteral } from "../../../tree"
+import { ArtificialToken, Token } from "../../../token/core"
+import { BinaryExpression, BooleanLiteral, CallExpression, Expression, ExpressionStatement, Identifier, IfExpression, MemberExpression, Node, NumericLiteral, PrefixExpression, StringLiteral, UnitLiteral } from "../../../tree"
 
 import type Interpreter from "../.."
+import { FunctionValue, makeRuntimeValue, ObjectValue, RuntimeEvaluation } from "./../../runtime"
 import { BooleanValue, NumericValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../../runtime"
 import Environment, { VARIABLE_NOT_FOUND } from "../../environment"
 import { EvaluationFunction, EvaluationOutput } from ".."
+import { makeConstantLiteral, makeIdentifier } from "../../../utils/factories"
+import { getTokenKind } from "../../../token"
+import type Parser from "../../../parser"
+import { DefaultExpressionParserProvider } from "../../../parser/grammar/default/parsers/expression"
 
 export const evaluate: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, node: Node, environment: Environment): EvaluationOutput => {
-  if (node.type === `NumericLiteral`) return i.evaluator.call(`evaluateNumericLiteral`, i, node as NumericLiteral, environment)
+  if (node.type === `BooleanLiteral`) return i.evaluator.call(`evaluateBooleanLiteral`, i, node as BooleanLiteral, environment)
+  else if (node.type === `NumericLiteral`) return i.evaluator.call(`evaluateNumericLiteral`, i, node as NumericLiteral, environment)
   else if (node.type === `StringLiteral`) return i.evaluator.call(`evaluateStringLiteral`, i, node as StringLiteral, environment)
   else if (node.type === `UnitLiteral`) return i.evaluator.call(`evaluateUnitLiteral`, i, node as StringLiteral, environment)
   else if (node.type === `Identifier`) return i.evaluator.call(`evaluateIdentifier`, i, node as Identifier, environment)
+  else if (node.type === `PrefixExpression`) return i.evaluator.call(`evaluatePrefixExpression`, i, node as PrefixExpression, environment)
   else if (node.type === `BinaryExpression`) return i.evaluator.call(`evaluateBinaryExpression`, i, node as BinaryExpression, environment)
   else if (node.type === `CallExpression`) return i.evaluator.call(`evaluateCallExpression`, i, node as CallExpression, environment)
+  else if (node.type === `MemberExpression`) return i.evaluator.call(`evaluateMemberExpression`, i, node as MemberExpression, environment)
   else if (node.type === `IfExpression`) return i.evaluator.call(`evaluateIfExpression`, i, node as IfExpression, environment)
   //
   else if (node.type === `ExpressionStatement`) return i.evaluator.call(`evaluateExpressionStatement`, i, node as ExpressionStatement, environment)
@@ -30,23 +38,49 @@ export const evaluateExpressionStatement: EvaluationFunction = (i: Interpreter<D
   return i.evaluator.evaluate(i, expressionStatement.expression, environment)
 }
 
+export const evaluatePrefixExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, prefixExpression: PrefixExpression, environment: Environment): RuntimeEvaluation => {
+  const operator = prefixExpression.operator.content
+
+  const right = i.evaluator.evaluate(i, prefixExpression.right, environment)
+  if (!RuntimeEvaluation.isResolved(right)) return new RuntimeEvaluation(new PrefixExpression(prefixExpression.operator, right.toNode(i)))
+
+  assert([`-`, `+`].includes(operator), `Operator not implemented: ${operator}`)
+  assert(right.runtimeValue.hasNumericRepresentation(), `Right value must be a numeric value (or at least have a numeric representation)`)
+
+  const modifier = operator === `-` ? -1 : 1
+  const result: number = right.runtimeValue.asNumber() * modifier
+
+  return new NumericValue(result).getEvaluation(prefixExpression)
+
+  // throw new Error(`PrefixExpression (${operator}) not implemented for type "${right.runtimeValue.type}"`)
+}
+
 export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, binaryExpression: BinaryExpression, environment: Environment): RuntimeEvaluation => {
-  const left = i.evaluator.evaluate(i, binaryExpression.left, environment)
-  const right = i.evaluator.evaluate(i, binaryExpression.right, environment)
-
-  // throw new Error(`Both sides of the BinaryExpression must be evaluated before the BinaryExpression itself can be evaluated.`)
-  if (!RuntimeEvaluation.isResolved(left) || !RuntimeEvaluation.isResolved(right)) return new RuntimeEvaluation(new BinaryExpression(left.toNode(i), binaryExpression.operator, right.toNode(i)))
-
   const operator = binaryExpression.operator.content
 
   const isAlgebraic = [`+`, `-`, `*`, `/`].includes(operator)
   const isLogical = [`=`, `!=`, `>`, `<`, `>=`, `<=`].includes(operator)
+  const isLogicalConnective = [`|`, `&`].includes(operator)
+
+  const left = i.evaluator.evaluate(i, binaryExpression.left, environment)
+  const right = i.evaluator.evaluate(i, binaryExpression.right, environment)
+
+  // throw new Error(`Both sides of the BinaryExpression must be evaluated before the BinaryExpression itself can be evaluated.`)
+  if (!RuntimeEvaluation.isResolved(left) || !RuntimeEvaluation.isResolved(right)) {
+    if (isLogicalConnective && (RuntimeEvaluation.isResolved(left) || !RuntimeEvaluation.isResolved(right))) {
+      // EXCEPTION: Logical connectives can be evaluated without both sides being resolved (in some cases)
+      debugger // TODO: this
+    }
+
+    return new RuntimeEvaluation(new BinaryExpression(left.toNode(i), binaryExpression.operator, right.toNode(i)))
+  }
 
   let output: EvaluationOutput = undefined
 
   if (isLogical) return logicalBinaryOperation(left.runtimeValue, right.runtimeValue, operator).getEvaluation(binaryExpression)
+  else if (isLogicalConnective) return logicalConnectiveBinaryOperation(left.runtimeValue, right.runtimeValue, operator).getEvaluation(binaryExpression)
   else if (isAlgebraic) {
-    if (NumericValue.isNumericValue(left.runtimeValue)) {
+    if (left.runtimeValue.hasNumericRepresentation()) {
       // ???
       if (StringValue.isStringValue(right.runtimeValue)) debugger
 
@@ -77,39 +111,97 @@ export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter<Defa
 
 export const evaluateIdentifier: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, identifier: Identifier, environment: Environment): RuntimeEvaluation => {
   const variableName = identifier.getVariableName()
-  const value = environment.get(variableName)
-
-  // always index symbol, regardless of it being found or not
-  i.indexVariableNameAsSymbol(variableName, identifier)
-
-  if (!value) return new RuntimeEvaluation(identifier)
-
-  return value.getEvaluation(identifier)
+  return getValueFromEnvironment(i, environment, variableName, identifier)
 }
 
 export const evaluateCallExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, callExpression: CallExpression, environment: Environment): RuntimeEvaluation => {
   const callee = callExpression.callee.getContent()
-  const args = callExpression.arguments.map(argument => i.evaluator.evaluate(i, argument, environment))
 
-  // 1. If some argument could not be evaluated bail out
-  if (args.some(Node.isNode)) {
-    const nodeArguments = args.map(arg => arg.toNode(i))
-    return new RuntimeEvaluation(new CallExpression(callExpression.callee, nodeArguments))
+  // 0. Check if call is a valid function, if now we should transform it in a regular StringExpression
+  //     for example, AD:Claws (Blunt) is not a function, but @basethdice(...) is (in GCA terms)
+  if (!i.isValidFunctionName(callee)) {
+    const stringLiteral = new StringLiteral()
+    stringLiteral.tokens.push(...callExpression.callee.tokens)
+    // debugger // TODO: How do I detect if there were a WHITESPACE here?
+    stringLiteral.tokens.push(new ArtificialToken(getTokenKind(`open_parenthesis`), `(`))
+    stringLiteral.tokens.push(...callExpression.arguments.flatMap(arg => arg.tokens))
+    stringLiteral.tokens.push(new ArtificialToken(getTokenKind(`close_parenthesis`), `)`))
+
+    const parser: Parser<DefaultExpressionParserProvider> = i.parser
+    const expression: Expression = parser.grammar.call(`parseStringExpression`)(parser, stringLiteral, null as any)
+
+    return i.evaluator.evaluate(i, expression, environment)
   }
 
   // always index symbol, regardless of it being found or not
   //    (should we index CALL_EXPRESSION or CALL_EXPRESSION.CALLEE?)
   i.indexVariableNameAsSymbol(callee, callExpression)
 
-  // 2. If callee function implementation is missing, bail out
-  const fn = environment.get(callee)
-  if (!fn) return new RuntimeEvaluation(callExpression)
+  const args = callExpression.arguments.map(argument => i.evaluator.evaluate(i, argument, environment))
 
+  // 1. If some argument could not be evaluated bail out
+  if (args.some(arg => !RuntimeEvaluation.isResolved(arg))) {
+    const nodeArguments = args.map(arg => arg.toNode(i))
+    return new RuntimeEvaluation(new CallExpression(callExpression.callee, nodeArguments))
+  }
+
+  // 2. If callee function implementation is missing, bail out
+  const resolvedFunctionName = environment.resolve(callee)
+  const isPresent = !!resolvedFunctionName && !!resolvedFunctionName.environment
+
+  if (!isPresent) {
+    if (!resolvedFunctionName) return new RuntimeEvaluation(callExpression)
+    else if (resolvedFunctionName.variableName === callee) return new RuntimeEvaluation(callExpression)
+    else {
+      const calleeNode = makeConstantLiteral(resolvedFunctionName.variableName)
+      const nodeArguments = args.map(arg => arg.toNode(i))
+      return new RuntimeEvaluation(new CallExpression(calleeNode, nodeArguments))
+    }
+  }
+
+  // X. Call function
+  //      (first parse args to values)
+  const argumentValues = args.map(arg => arg.runtimeValue)
+  if (argumentValues.some(arg => !RuntimeValue.isRuntimeValue(arg))) {
+    debugger
+  }
+
+  const fn = resolvedFunctionName.environment!.getValue(resolvedFunctionName.variableName)!
   assert(FunctionValue.isFunctionValue(fn), `Callee does not correspond to a function in environment.`)
 
-  debugger
-  const value = fn.value(...args)
-  return value
+  const returnedValue = fn.value(i, callExpression, environment)(...argumentValues)
+
+  // 3. Function could not return a value, bail out
+  if (returnedValue === null) return new RuntimeEvaluation(callExpression)
+
+  // 4. Function returned a NODE, evalute it
+  if (Node.isNode(returnedValue)) return i.evaluator.evaluate(i, returnedValue, environment)
+
+  // 5. Function returned a RUNTIME_VALUE, nice, just pack it with expression
+  if (RuntimeValue.isRuntimeValue(returnedValue)) return returnedValue.getEvaluation(callExpression)
+
+  // 6. Function returned EXACTLY a RUNTIME_EVALUATION, nice, just return it
+  if (RuntimeEvaluation.isRuntimeEvaluation(returnedValue)) return returnedValue
+
+  throw new Error(`CallExpression evalution should return an evaluation`)
+}
+
+export const evaluateMemberExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, memberExpression: MemberExpression, environment: Environment): RuntimeEvaluation => {
+  const object = i.evaluator.evaluate(i, memberExpression.object, environment)
+
+  // 1. If object could not be evaluated bail out
+  if (!RuntimeEvaluation.isResolved(object)) new RuntimeEvaluation(memberExpression)
+
+  const propertyName = memberExpression.getPropertyName()
+  assert(ObjectValue.isObjectValue(object.runtimeValue), `Object must be an object duuh`)
+
+  const propertyValue = get(object.runtimeValue.value, propertyName)
+
+  // 2. If property could not be found, bail out
+  assert(!isNil(propertyValue), `Property "${propertyName}" not found in object.`)
+
+  const runtimePropertyValue = makeRuntimeValue(propertyValue)
+  return runtimePropertyValue.getEvaluation(memberExpression)
 }
 
 export const evaluateIfExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, ifExpression: IfExpression, environment: Environment): RuntimeEvaluation => {
@@ -140,6 +232,8 @@ export const evaluateIfExpression: EvaluationFunction = (i: Interpreter<DefaultE
 // "PRIMITIVES"
 //    Evaluations that ALWAYS return a runtime value
 
+export const evaluateBooleanLiteral: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, booleanLiteral: BooleanLiteral, environment: Environment): RuntimeEvaluation<BooleanValue> =>
+  new BooleanValue(booleanLiteral.getValue()).getEvaluation(booleanLiteral)
 export const evaluateNumericLiteral: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, numericLiteral: NumericLiteral, environment: Environment): RuntimeEvaluation<NumericValue> =>
   new NumericValue(numericLiteral.getValue()).getEvaluation(numericLiteral)
 export const evaluateStringLiteral: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, stringLiteral: StringLiteral, environment: Environment): RuntimeEvaluation<StringValue> =>
@@ -149,9 +243,9 @@ export const evaluateUnitLiteral: EvaluationFunction = (i: Interpreter<DefaultEv
 
 // "INJECTABLES"
 //    Evaluation positioned for easy override
-export const evaluateNumericAndOtherAlgebraicOperation = (left: NumericValue, right: RuntimeValue<any>, operator: string): MaybeUndefined<RuntimeValue<any>> => {
+export const evaluateNumericAndOtherAlgebraicOperation = (left: RuntimeValue<any>, right: RuntimeValue<any>, operator: string): MaybeUndefined<RuntimeValue<any>> => {
   if (right.type === `unit` && operator === `*`) {
-    const quantity = new Quantity(left.value, right.value)
+    const quantity = new Quantity(left.asNumber(), right.value)
     return new QuantityValue(quantity)
   }
 
@@ -170,10 +264,13 @@ export const DEFAULT_EVALUATIONS = {
   //
   evaluateExpressionStatement,
   //
+  evaluatePrefixExpression,
   evaluateBinaryExpression,
   evaluateIdentifier,
   evaluateCallExpression,
+  evaluateMemberExpression,
   evaluateIfExpression,
+  evaluateBooleanLiteral,
   evaluateNumericLiteral,
   evaluateStringLiteral,
   evaluateUnitLiteral,
@@ -185,13 +282,13 @@ export type DefaultEvaluationsProvider = typeof DEFAULT_EVALUATIONS
 
 // #region UTILS
 
-function numericAlgebraicOperation(left: NumericValue, right: NumericValue, operator: string): NumericValue {
+function numericAlgebraicOperation(left: RuntimeValue<any>, right: RuntimeValue<any>, operator: string): NumericValue {
   let result: Nullable<number> = null
 
-  if (operator === `+`) result = left.value + right.value
-  else if (operator === `-`) result = left.value - right.value
-  else if (operator === `*`) result = left.value * right.value
-  else if (operator === `/`) result = left.value / right.value
+  if (operator === `+`) result = left.asNumber() + right.asNumber()
+  else if (operator === `-`) result = left.asNumber() - right.asNumber()
+  else if (operator === `*`) result = left.asNumber() * right.asNumber()
+  else if (operator === `/`) result = left.asNumber() / right.asNumber()
   //
   else throw new Error(`Operator not implemented: ${operator}`)
 
@@ -215,6 +312,40 @@ function logicalBinaryOperation(left: RuntimeValue<any>, right: RuntimeValue<any
   assert(result !== null, `Result cannot be null.`)
 
   return new BooleanValue(result)
+}
+
+function logicalConnectiveBinaryOperation(left: RuntimeValue<any>, right: RuntimeValue<any>, operator: string): BooleanValue {
+  let result: Nullable<boolean> = null
+
+  assert(BooleanValue.isBooleanValue(left), `Left value must be a boolean value`)
+  assert(BooleanValue.isBooleanValue(right), `Right value must be a boolean value`)
+
+  if (operator === `|`) result = left.value || right.value
+  else if (operator === `&`) result = left.value && right.value
+  //
+  else throw new Error(`Operator not implemented: ${operator}`)
+
+  assert(result !== null, `Result cannot be null.`)
+
+  return new BooleanValue(result)
+}
+
+function getValueFromEnvironment(i: Interpreter, environment: Environment, variableName: string, node: Node): RuntimeEvaluation {
+  i.indexVariableNameAsSymbol(variableName, node) // always index symbol, regardless of it being found or not
+
+  const resolvedVariable = environment.resolve(variableName)
+  const isPresent = !!resolvedVariable && !!resolvedVariable.environment
+
+  if (!isPresent) {
+    if (!resolvedVariable) return new RuntimeEvaluation(node)
+    else if (resolvedVariable.variableName === variableName) return new RuntimeEvaluation(node)
+    else return new RuntimeEvaluation(makeIdentifier(resolvedVariable.variableName))
+  }
+
+  const value = resolvedVariable.environment!.getValue(resolvedVariable.variableName)!
+  assert(RuntimeValue.isRuntimeValue(value), `Value must be a RuntimeValue`)
+
+  return value.getEvaluation(node)
 }
 
 // #endregion

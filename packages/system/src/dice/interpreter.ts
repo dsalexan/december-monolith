@@ -1,12 +1,9 @@
 import assert from "assert"
-import { MaybeUndefined, Nullable } from "tsdef"
+import { MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
 import { sum } from "lodash"
 
 import { BinaryExpression, Expression, ExpressionStatement, Node, NumericLiteral, StringLiteral } from "@december/tree/tree"
-import { getTokenKind, ArtificialToken } from "@december/tree/token"
-
-import Parser, { BindingPower, SyntacticalContext, LEDParser, createRegisterParserEntriesFromIndex, SyntacticalGrammarEntry } from "@december/tree/parser"
-import { DEFAULT_BINDING_POWERS, DEFAULT_PARSERS } from "@december/tree/parser/grammar/default"
+import { isBinaryExpression } from "@december/tree/utils/guards"
 
 import Interpreter, {
   Environment,
@@ -22,181 +19,15 @@ import Interpreter, {
   EvaluationOutput,
   RuntimeEvaluation,
 } from "@december/tree/interpreter"
-import { GraphRewritingRule, createGraphRewritingRule, PatternTargetMatch } from "@december/tree/rewriter"
-import { isBinaryExpression, isLiteral, isNumericLiteral } from "@december/tree/utils/guards"
+
 import { makeConstantLiteral } from "@december/tree/utils/factories"
 
-/**
- * DICE NOTATION
- *
- * AdXk[hlc]Y
- *
- * A: number of dice
- * X: number of faces
- *
- * kh, kl, kc: keep some dice; h: highest, l: lowest, c: player's choice
- * Y: number of dice to keep
- *
- */
-
-export interface DiceKeep {
-  highest?: number
-  lowest?: number
-  playersChoice?: number
-}
-
-export function areDiceKeepEquals(A: MaybeUndefined<DiceKeep>, B: MaybeUndefined<DiceKeep>) {
-  const keys = [`highest`, `lowest`, `playersChoice`] as const
-  for (const key of keys) {
-    const a = A?.[key] ?? 0
-    const b = B?.[key] ?? 0
-
-    if (a !== b) return false
-  }
-
-  return true
-}
-
-export interface DiceData {
-  faces: number
-  keep?: DiceKeep
-}
-
-export function parseDiceNotation(notation: string): Nullable<DiceData> {
-  const match = notation.match(/^(d\d+)(k[hlc]\d+)?(k[hlc]\d+)?(k[hlc]\d+)?$/i)
-  if (match) {
-    const [_, d, k1, k2, k3] = match
-    const keeps = [k1, k2, k3]
-
-    const faces = parseInt(d.slice(1))
-    assert(!isNaN(faces), `Faces must be a number`)
-
-    const keep: DiceKeep = {}
-    for (const k of keeps) {
-      if (k === undefined || k.trim().length === 0) continue
-
-      const FT = k.slice(0, 2).toLocaleLowerCase()
-      let mode: keyof DiceKeep
-      if (FT === `kh`) mode = `highest`
-      else if (FT === `kl`) mode = `lowest`
-      else if (FT === `kc`) mode = `playersChoice`
-      //
-      else throw new Error(`Unimplement dice keep mode "${FT}"`)
-
-      const value = parseInt(k.slice(2))
-      assert(!isNaN(value), `Dice keep rule must be a number`)
-
-      keep[mode] = value
-    }
-
-    return { faces, keep }
-  }
-
-  return null
-}
-
-// #region PARSER
-
-// #region    NODES
-
-export class DiceRollExpression extends Expression {
-  public type = `DiceRollExpression` as any
-  public readonly faces: number // number of faces
-  public readonly keep: {
-    highest?: number
-    lowest?: number
-    playersChoice?: number // TODO: implement
-  }
-
-  constructor(size: Expression, faces: number, keep?: DiceKeep) {
-    super()
-    this.tags.push(`literal`)
-
-    this.faces = faces
-    this.keep = keep ?? {}
-
-    this.addChild(size, 0, `size`)
-  }
-
-  public get size(): Expression {
-    return this.children[0] as Expression
-  }
-
-  public override toString() {
-    const { size, faces } = this
-
-    let keep = ``
-    if (this.keep.highest) keep = `kh${this.keep.highest}`
-    if (this.keep.lowest) keep = `kl${this.keep.lowest}`
-    if (this.keep.playersChoice) keep = `kc${this.keep.playersChoice}`
-
-    return `${size.toString()}d${faces}${keep}`
-  }
-
-  public override getContent(): string {
-    return this.toString()
-  }
-
-  public override getDebug(): string {
-    return this.toString()
-  }
-}
-
-export function isDiceRollExpression(value: Node): value is DiceRollExpression {
-  return (value as any).type === (`DiceRollExpression` as any)
-}
-
-// #endregion
-
-// #region    SYNTATICAL GRAMMAR
-
-// override @ parseImplicitMultiplication
-export const parseImplicitMultiplication: LEDParser = (p: Parser, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
-  assert(left.type === `NumericLiteral`, `Left must be a numeric literal expression`)
-  const numericLiteral = left as NumericLiteral
-
-  const right = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.MULTIPLICATIVE, context)
-
-  // 1. Check if right is a dice roll expression
-  const content = right.getContent({ separator: ``, wrap: false }).trim()
-  const diceData = parseDiceNotation(content)
-  if (diceData) return new DiceRollExpression(numericLiteral, diceData.faces, diceData.keep)
-
-  // 2. Not a dice roll, just return a multiplication
-  const operator = new ArtificialToken(getTokenKind(`asterisk`), `*`)
-
-  return new BinaryExpression(numericLiteral, operator, right)
-}
-
-// override @ parseStringExpression
-export const parseStringExpression = (p: Parser, stringLiteral: StringLiteral, context: SyntacticalContext): Expression => {
-  // transforms StringLiteral in other shit
-  const content = stringLiteral.getContent().trim()
-  const diceData = parseDiceNotation(content)
-  if (diceData) {
-    const oneNumericLiteral = new NumericLiteral(new ArtificialToken(getTokenKind(`number`), `1`))
-    return new DiceRollExpression(oneNumericLiteral, diceData.faces, diceData.keep)
-  }
-
-  return DEFAULT_PARSERS.parseStringExpression(p, stringLiteral, context)
-}
-
-export const DICE_MODULAR_PARSER_PROVIDER = { parseImplicitMultiplication, parseStringExpression }
-export type DiceModularParserProvider = typeof DICE_MODULAR_PARSER_PROVIDER
-
-export const DICE_MODULAR_SYNTACTICAL_GRAMMAR: SyntacticalGrammarEntry<DiceModularParserProvider>[] = [
-  ...createRegisterParserEntriesFromIndex<DiceModularParserProvider>(DICE_MODULAR_PARSER_PROVIDER, true), //
-]
-
-// #endregion
-
-// #endregion
-
-// #region INTERPRETER
+import { areDiceKeepEquals, DiceKeep, parseDiceNotation } from "./dice"
+import { DiceRollExpression } from "./parser"
 
 // #region    OPTIONS
 
-export interface DiceInterpreterOptions extends InterpreterOptions {
+export interface DiceInterpreterOptions extends WithOptionalKeys<InterpreterOptions, `logger`> {
   rollDice?: boolean
 }
 
@@ -242,6 +73,19 @@ export class DiceRollValue extends RuntimeValue<Nullable<number[]>> {
     const size = negate ? this.size - diceRoll.size : this.size + diceRoll.size
     return new DiceRollValue(size, this.faces, { keep: { ...(this.keep ?? {}) } })
   }
+
+  public override getContent(): string {
+    const { size, faces } = this
+
+    let keep = ``
+    if (this.keep) {
+      if (this.keep.highest) keep = `kh${this.keep.highest}`
+      if (this.keep.lowest) keep = `kl${this.keep.lowest}`
+      if (this.keep.playersChoice) keep = `kc${this.keep.playersChoice}`
+    }
+
+    return `${size.toString()}d${faces}${keep}`
+  }
 }
 
 // #endregion
@@ -250,7 +94,7 @@ export class DiceRollValue extends RuntimeValue<Nullable<number[]>> {
 
 // override @ evaluate
 export const evaluate: EvaluationFunction = (i: Interpreter<any, DiceInterpreterOptions>, node: Node, environment: Environment): EvaluationOutput => {
-  if (isDiceRollExpression(node)) {
+  if (DiceRollExpression.isDiceRollExpression(node)) {
     // 1. Is size resolved?
     const size = i.evaluator.evaluate(i, node.size, environment)
     if (!RuntimeEvaluation.isResolved(size)) return new RuntimeEvaluation(node)
@@ -362,19 +206,18 @@ export const isEvaluationReady: ReadyCheckerFunction = (i: Interpreter<any, Dice
     }
   }
 
-  debugger
   return DEFAULT_READY_CHECKERS.isEvaluationReady(i, evaluation)
 }
 
 // override @ isNodeReady
 export const isNodeReady: ReadyCheckerFunction = (i: Interpreter<any, DiceInterpreterOptions>, node: Node): boolean => {
-  if (isDiceRollExpression(node)) return true
+  if (DiceRollExpression.isDiceRollExpression(node)) return true
 
   // ONLY relevant if there were no dice rolls
   if (!i.options.rollDice) {
     if (isBinaryExpression(node, [`+`, `-`, `*`, `/`])) {
-      const isLeftReady = isDiceRollExpression(node.left) || node.left.type === `NumericLiteral` || i.isReady(node.left)
-      const isRightReady = isDiceRollExpression(node.right) || node.right.type === `NumericLiteral` || i.isReady(node.right)
+      const isLeftReady = DiceRollExpression.isDiceRollExpression(node.left) || node.left.type === `NumericLiteral` || i.isReady(node.left)
+      const isRightReady = DiceRollExpression.isDiceRollExpression(node.right) || node.right.type === `NumericLiteral` || i.isReady(node.right)
 
       return isLeftReady && isRightReady
     }
@@ -385,44 +228,5 @@ export const isNodeReady: ReadyCheckerFunction = (i: Interpreter<any, DiceInterp
 
 export const DICE_MODULAR_EVALUATOR_PROVIDER = { evaluations: { evaluate, evaluateCustomOperation }, conversions: { convertToNode }, readyCheckers: { isEvaluationReady, isNodeReady } }
 export type DiceModularEvaluatorProvider = (typeof DICE_MODULAR_EVALUATOR_PROVIDER)[`evaluations`]
-
-// #endregion
-
-// #endregion
-
-// #region REWRITER
-
-export const DICE_RULESET: GraphRewritingRule[] = []
-
-// _DiceRoll1 * _Literal -> _DiceRoll2
-// _Literal * _DiceRoll1 -> _DiceRoll2
-DICE_RULESET.push(
-  createGraphRewritingRule(
-    `LITERAL_MULTIPLICATING_DICE_ROLL`,
-    node => {
-      if (!isBinaryExpression(node, `*`)) return false
-
-      if (isDiceRollExpression(node.left) && isNumericLiteral(node.right) && isNumericLiteral(node.left.size)) return { target: `A` }
-      if (isNumericLiteral(node.left) && isDiceRollExpression(node.right) && isNumericLiteral(node.right.size)) return { target: `B` }
-
-      return false
-    },
-    (node: BinaryExpression, { match }: { match: PatternTargetMatch }) => {
-      let _DR1: DiceRollExpression, _L: NumericLiteral
-
-      if (match.target === `A`) {
-        _DR1 = node.left as DiceRollExpression
-        _L = node.right as NumericLiteral
-      } else {
-        _DR1 = node.right as DiceRollExpression
-        _L = node.left as NumericLiteral
-      }
-
-      const size = _L.getValue() * (_DR1.size as NumericLiteral).getValue()
-      const SIZE = makeConstantLiteral(size)
-      return new DiceRollExpression(SIZE, _DR1.faces, _DR1.keep)
-    },
-  ),
-)
 
 // #endregion

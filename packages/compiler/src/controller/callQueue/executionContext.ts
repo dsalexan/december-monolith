@@ -51,6 +51,7 @@ export function hashExecutionContextArguments(bareExecutionContext: BareExecutio
     else if (Reference.isReference(value) || PropertyReference.isPropertyReference(value)) hash = value.toString()
     else if (has(value, `expression`) && has(value, `target`)) hash = `${value.expression}|${value.target}` // ProcessingPath
     else if (has(value, `id`)) hash = value.id // Generic (anything with an id)
+    else if (has(value, `name`)) hash = value.name // Generic (anything with a name)
     else throw new Error(`Implement hashing for this`)
 
     _arguments.push(`${key}:${hash}`)

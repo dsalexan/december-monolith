@@ -1,7 +1,7 @@
 import uuid from "@december/utils/uuid"
 
 import { ICharacter } from "@december/system"
-import { SubTree } from "@december/tree"
+import { Node } from "@december/tree"
 import { GCATrait } from "../trait"
 
 export default class GCACharacter implements ICharacter {

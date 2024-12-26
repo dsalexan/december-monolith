@@ -9,3 +9,5 @@ export interface IToken {
   clone(): IToken
   toString(): string
 }
+
+export interface TokenCloneOptions {}

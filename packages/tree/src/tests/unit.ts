@@ -1,5 +1,4 @@
 import { Unit, PrefixedUnit, PrefixedUnitFactory, SI_PREFIXES_COLLECTION } from "@december/utils/unit"
-import { REGEX } from "@december/utils/match/element"
 
 export { UnitManager } from "@december/utils/unit"
 

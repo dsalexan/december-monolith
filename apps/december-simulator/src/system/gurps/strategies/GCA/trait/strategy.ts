@@ -2,10 +2,11 @@ import assert from "assert"
 import { AnyObject } from "tsdef"
 import { get, isNil, isNumber, set } from "lodash"
 
-import { ObjectSource, Simbol, SymbolTable } from "@december/tree"
-import { Strategy, Mutation, SET } from "@december/compiler"
+import { Strategy, Mutation, SET, MutableObject } from "@december/compiler"
 
-import type { StrategyProcessingPackage, StrategyProcessListenOptions, StrategyProcessBuildOptions, StrategyProcessSymbolOptions } from "@december/compiler/controller/strategy"
+import { Environment } from "@december/tree"
+import { VariableValue } from "@december/tree/interpreter"
+
 import { IntegrityEntry } from "@december/compiler/controller/integrityRegistry"
 import { REFERENCE_ADDED } from "@december/compiler/controller/eventEmitter/event"
 
@@ -16,9 +17,10 @@ import { isNameExtensionValid, Type, IGURPSTraitMode, isAlias, getAliases } from
 import { DamageTable } from "@december/gurps/character"
 
 import { GCACharacter, GCATrait } from "@december/gca"
-import { GCAProcessingBuildOptions, GCAProcessingListenOptions, GCAProcessingSymbolOptionsGenerator } from "./options"
+import { GCAStrategyProcessorListenOptions, GCAStrategyProcessorOptionsGenerator, DEFAULT_PROPERTY, GCAStrategyProcessorResolveOptionsGenerator } from "./options"
 
 import logger, { Block, paint } from "../../../../../logger"
+import { StrategyProcessState } from "@december/compiler/controller/strategy/processor"
 
 //
 //
@@ -71,12 +73,19 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
       const mode: Omit<IGURPSTraitMode, `damage`> & { damage: Omit<IGURPSTraitMode[`damage`], `form` | `type` | `value`> } = {
         name: _mode.name,
         damage: { basedOn: _mode.damagebasedon! },
+        // TODO: Create integrity entry for basedOn
       }
+
+      const BASED_ON_INTEGRITY_ENTRY = object.makeIntegrityEntry(`modes.[${i}].damage.basedOn`, mode.damage.basedOn)
+      integrityEntries.push(BASED_ON_INTEGRITY_ENTRY)
 
       mutations.push(SET(`modes.[${i}]`, mode))
 
       // basedOn attribute is necessary to calculate base thr or sw
-      Strategy.addProxyListener(REFERENCE_ADDED(REFERENCE(`alias`, mode.damage.basedOn)), `compute:mode`, { arguments: { modeIndex: i } })(object)
+      Strategy.addProxyListener(REFERENCE_ADDED(REFERENCE(`alias`, mode.damage.basedOn)), `compute:mode`, {
+        arguments: { modeIndex: i }, //
+        integrityEntries: [BASED_ON_INTEGRITY_ENTRY],
+      })(object)
     }
 
     // ALIASES
@@ -90,7 +99,7 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
 )
 
 // B. GENERIC PROCESSING
-// IMPORT_TRAIT_FROM_GCA_STRATEGY.registerReProcessingFunction(`compute:re-processing`, GCAProcessingSymbolOptionsGenerator)
+IMPORT_TRAIT_FROM_GCA_STRATEGY.registerReProcessingFunction(`compute:re-processing`, GCAStrategyProcessorResolveOptionsGenerator, GCAStrategyProcessorListenOptions)
 
 // C. SPECIFIC COMPUTES
 // C.1. modes
@@ -99,22 +108,23 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
   [SELF_PROPERTY(/modes\.\[(\d+)\].damage.basedOn/)],
   `compute:mode`,
   (object, { arguments: { modeIndex, ...args } }) => {
+    // TODO: If this was fired becaused basedOn changed, create a new proxy listener for alias reference
+
     const mutations: Mutation[] = []
     const integrityEntries: IntegrityEntry[] = []
 
     // 1. Get mode (by merger data and metadata)
-    const mode = get(object._getData(object.data.modes, `modes`), modeIndex)
+    const mode: IGURPSTraitMode = get(object._getData(object.data.modes, `modes`), modeIndex)
     const path = `modes.[${modeIndex}].damage.form`
 
     // 2. Prepare stuff to process
     const character = object.controller.store.getByID(`general`)
     assert(character, `Character not found`)
-    const baseEnvironment = Trait.makeGURPSTraitEnvironment(character, mode)
-    baseEnvironment.addSource(ObjectSource.fromDictionary(`mode`, { [`thr`]: { type: `proxy`, value: mode.damage.basedOn } }))
 
-    // const fallbackEnvironment =
+    const baseEnvironment = new Environment(`gurps:local`, Trait.makeGURPSTraitEnvironment(character, object.data))
+    baseEnvironment.assignValue(`thr`, new VariableValue(mode.damage.basedOn))
 
-    const options = { ...GCAProcessingBuildOptions, ...GCAProcessingSymbolOptionsGenerator(object) }
+    const options = { ...GCAStrategyProcessorListenOptions, ...GCAStrategyProcessorOptionsGenerator(object) }
 
     // 3. Process expression
     const outputs: ReturnType<(typeof Strategy)[`process`]>[] = []
@@ -125,51 +135,27 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     ]
     for (const path of paths) {
       let expression = get(object.data, path.expression)
-      const processingPackage: StrategyProcessingPackage = { expression, environment: baseEnvironment }
 
-      outputs.push(Strategy.process(processingPackage, object, path.target, { ...options, scope: `math-enabled`, reProcessingFunction: `compute:re-processing` }))
+      outputs.push(
+        Strategy.process(object, path.target, {
+          ...options,
+          //
+          expression,
+          environment: baseEnvironment,
+          //
+          syntacticalContext: { mode: `expression` },
+          reProcessingFunction: `compute:re-processing`,
+        }),
+      )
     }
 
     // [DEBUG]
-    const nonReady = outputs.filter(output => !output.state.isReady)
-    if (nonReady.length > 0) {
-      // DEBUG: Show missing references for progressive testing
-      for (const [i, { state }] of outputs.entries()) {
-        if (state.isReady) continue
-
-        const path = paths[i]
-
-        logger //
-          .add(paint.identity(` `.repeat(10)))
-          .add(paint.grey.dim(`[${object.id}/`), paint.grey(object.data.name), paint.grey.dim(`]`))
-          .add(paint.grey.dim(` ${path.target}`))
-          .debug()
-
-        logger //
-          .add(paint.identity(` `.repeat(10)))
-          .add(paint.grey.dim(`[${object.id}/`), paint.grey(object.data.name), paint.grey.dim(`]`))
-          .add(paint.grey.dim.italic(` output    `))
-          .add(paint.grey.dim(` ${state.resolved.tree.expression()}`))
-          .debug()
-
-        if (state.fallback)
-          logger //
-            .add(paint.identity(` `.repeat(10)))
-            .add(paint.grey.dim(`[${object.id}/`), paint.grey(object.data.name), paint.grey.dim(`]`))
-            .add(paint.grey.dim.italic(` fallback  `))
-            .add(paint.grey(` ${state.fallback.tree.expression()}`))
-            .debug()
-
-        for (const symbol of state.symbolTable.getSymbols()) {
-          logger
-            .add(paint.identity(` `.repeat(10)))
-            .add(paint.grey.dim(`[${object.id}/`), paint.grey(object.data.name), paint.grey.dim(`]`))
-            .add(paint.identity(` `))
-            .add(...symbol.explain({ environment: state.environment, hideIfPresentInEnvironment: false }))
-          logger.debug()
-        }
-      }
+    // ===========================================================================================================================
+    for (const { state } of outputs) {
+      const rows = explainProcessOutput(object, path, state)
+      for (const row of rows) logger.add(...row).debug()
     }
+    // ===========================================================================================================================
 
     // 4. Return mutations (if any)
     mutations.push(...outputs.flatMap(({ mutations }) => mutations))
@@ -181,3 +167,50 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     argumentProvider: Strategy.argumentProvider_PropertyUpdatedRegexIndexes(`modeIndex`),
   },
 )
+
+function explainProcessOutput(object: MutableObject, path: string, state: StrategyProcessState): Block[][] {
+  // if (state.isReady) return []
+
+  const rows: Block[][] = []
+
+  function prefix(): Block[] {
+    return [
+      paint.identity(` `.repeat(10)), //
+      paint.grey.dim(`[${object.id}/`),
+      paint.grey(object.data.name as string),
+      paint.grey.dim(`] `),
+    ]
+  }
+
+  if (state.isReady) rows.push([...prefix(), paint.blue.bold(`IS READY!!!!!!`)])
+  else rows.push([...prefix(), paint.yellow.dim(`Not Ready`)])
+
+  rows.push([...prefix(), paint.grey.dim(`${path}`)])
+
+  if (!state.isReady) {
+    const tree = state.evaluation?.node ?? state.AST
+    rows.push([...prefix(), paint.grey.dim.italic(`output    `), paint.grey.dim(` ${tree.getContent()}`)])
+  } else {
+    const runtimeValue = state.evaluation?.runtimeValue
+    rows.push([
+      ...prefix(), //
+      paint.grey.dim.italic(`output    `),
+      paint.grey(`<${runtimeValue!.type}> `),
+      paint.bold(String(runtimeValue!.value)),
+    ])
+  }
+
+  if (!state.environment) {
+    rows.push([
+      paint.identity(` `.repeat(10)), //
+      paint.italic.red(`(no environment)`),
+    ])
+  } else {
+    const allSymbols = state.symbolTable.getAllSymbols(state.environment)
+    for (const symbol of allSymbols) {
+      rows.push([...prefix(), ...symbol.explain(state.environment).flat()])
+    }
+  }
+
+  return rows
+}

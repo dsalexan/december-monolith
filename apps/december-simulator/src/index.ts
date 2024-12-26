@@ -41,8 +41,9 @@ async function run() {
     if (
       ![
         11290, // ST:Punch
-        // 11178, // ST:Bite
+        11178, // ST:Bite
         12899, // SK:Karate
+        11193, // ST:DX
       ].includes(trait.id)
     )
       continue

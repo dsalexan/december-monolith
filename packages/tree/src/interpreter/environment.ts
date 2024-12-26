@@ -3,6 +3,7 @@ import { Match } from "@december/utils"
 import { RuntimeValue, VariableValue } from "./runtime"
 import { MaybeUndefined, Nullable } from "tsdef"
 import assert from "assert"
+import { Simbol } from "../symbolTable"
 
 export type VariableName = string
 
@@ -97,19 +98,59 @@ export default class Environment {
   }
 
   /** Assigns value to VariableName */
-  public assignValue(variableName: VariableName, value: RuntimeValue<any>) {
-    assert(!this.values.byName.has(variableName), `Variable name "${variableName}" already exists in environment.`)
+  public assignValue(variableName: VariableName, value: RuntimeValue<any>, update: boolean = false) {
+    if (!update) assert(!this.values.byName.has(variableName), `Variable name "${variableName}" already exists in environment.`)
+
+    if (update && this.values.byName.has(variableName)) {
+      const currentValue = this.values.byName.get(variableName)!
+      if (currentValue.isEquals(value)) return
+    }
 
     this.values.byName.set(variableName, value)
     this._version++
   }
 
   /** Assigns value to pattern */
-  public assignValueToPattern(name: string, pattern: Match.Pattern, value: RuntimeValue<any>) {
-    assert(!this.values.byPattern.has(name), `Pattern "${name}" already exists in environment.`)
+  public assignValueToPattern(name: string, pattern: Match.Pattern, value: RuntimeValue<any>, update: boolean = false) {
+    if (!update) assert(!this.values.byPattern.has(name), `Pattern "${name}" already exists in environment.`)
 
     this.values.byPattern.set(name, { pattern, value })
     this._version++
+  }
+
+  /** Get all VARIABLE_VALUEs in environment chain and return as symbols */
+  public getVariableReassignmentAsSymbols(): Simbol[] {
+    const symbols: Map<Simbol[`name`], Simbol> = new Map()
+
+    this._getVariableReassignmentAsSymbols(symbols)
+    if (this.parent) this.parent._getVariableReassignmentAsSymbols(symbols)
+
+    return [...symbols.values()]
+  }
+
+  /** Get all VARIABLE_VALUEs in environment chain and populate symbol map */
+  protected _getVariableReassignmentAsSymbols(symbolMap: Map<Simbol[`name`], Simbol>) {
+    // 1. Index variable values byName
+    for (const value of this.values.byName.values()) {
+      if (!VariableValue.isVariableValue(value)) continue
+
+      const variableName = value.value
+      if (symbolMap.has(variableName)) continue
+
+      const symbol = new Simbol(variableName)
+      symbolMap.set(symbol.name, symbol)
+    }
+
+    // 2. Index variable values byPattern
+    for (const { value } of this.values.byPattern.values()) {
+      if (!VariableValue.isVariableValue(value)) continue
+
+      const variableName = value.value
+      if (symbolMap.has(variableName)) continue
+
+      const symbol = new Simbol(variableName)
+      symbolMap.set(symbol.name, symbol)
+    }
   }
 }
 

@@ -8,22 +8,25 @@ import { Expression, ExpressionStatement, Node, Statement } from "../tree"
 import Environment, { VariableName } from "./environment"
 import { EvaluationFunction, NodeConversionFunction, NodeEvaluator, RuntimeEvaluation, RuntimeValue } from "./evaluator"
 import { Simbol, SymbolTable } from "../symbolTable"
+import type Parser from "../parser"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export { default as Environment, VARIABLE_NOT_FOUND } from "./environment"
 export type { VariableName } from "./environment"
 
-export type { EvaluationFunction, NodeConversionFunction, ReadyCheckerFunction, EvaluationOutput } from "./evaluator"
-export { NodeEvaluator, RuntimeEvaluation, NumericValue, StringValue, FunctionValue, BooleanValue, UndefinedValue, VariableValue, UnitValue, QuantityValue, RuntimeValue } from "./evaluator"
+export type { EvaluationFunction, NodeConversionFunction, ReadyCheckerFunction, EvaluationOutput, makeRuntimeValue } from "./evaluator"
+export { NodeEvaluator, RuntimeEvaluation, NumericValue, StringValue, FunctionValue, ObjectValue, BooleanValue, UndefinedValue, VariableValue, UnitValue, QuantityValue, RuntimeValue } from "./evaluator"
+export type { Contextualized, RuntimeFunction } from "./evaluator"
 export { DEFAULT_EVALUATOR, DEFAULT_EVALUATIONS, DEFAULT_NODE_CONVERSORS, DEFAULT_READY_CHECKERS } from "./evaluator/default"
 export type { DefaultEvaluatorProvider } from "./evaluator/default"
 
 export interface InterpreterOptions {
   logger: typeof _logger
+  isValidFunctionName?: (functionName: string) => boolean
 }
 
-export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOptions extends InterpreterOptions = InterpreterOptions> {
+export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOptions extends WithOptionalKeys<InterpreterOptions, `logger`> = WithOptionalKeys<InterpreterOptions, `logger`>> {
   public options: TOptions
   //
   public id: string
@@ -31,6 +34,7 @@ export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOpti
   private environment: Environment
   private symbolTable: SymbolTable
   public evaluator: NodeEvaluator<TEvaluationsDict, AnyObject>
+  public parser: Parser
   //
   public result: RuntimeEvaluation<RuntimeValue<any>, Statement>
 
@@ -40,6 +44,7 @@ export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOpti
     environment: Environment,
     symbolTable: SymbolTable,
     evaluator: NodeEvaluator<TEvaluationsDict, AnyObject>,
+    parser: Parser,
     options: WithOptionalKeys<TOptions, `logger`>,
   ) {
     this.options = {
@@ -52,6 +57,7 @@ export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOpti
     this.environment = environment
     this.symbolTable = symbolTable
     this.evaluator = evaluator
+    this.parser = parser
 
     const result = this.interpret<TRuntimeValue>()
     this.result = result
@@ -102,6 +108,12 @@ export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOpti
     const treeName: string = this.id
 
     this.symbolTable.index(variableName, treeName, node)
+  }
+
+  /** Checks if function name is a VALID function name (otherwise it will become part of a string) */
+  public isValidFunctionName(functionName: string) {
+    const fn = this.options.isValidFunctionName ?? ((fn: string) => true)
+    return fn(functionName)
   }
 
   public print() {

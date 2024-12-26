@@ -3,7 +3,7 @@ export { default as GCACharacter } from "./character"
 
 export type { GCATrait, GCATraitMode } from "./trait"
 
-export function isPropertyInvoker(value: string) {
+function isPropertyInvoker(value: string) {
   const split = value.split(`::`)
 
   const propertyAccessor = split.length === 2

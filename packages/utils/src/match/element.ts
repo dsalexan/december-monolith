@@ -77,10 +77,37 @@ export class IsElementOfSetPattern<TElementValue = unknown> extends BasePattern<
   }
 }
 
-export const ElementPatternTypes = [`equals`, `regex`, `is_element_of`] as const
+export interface FunctionMatchInfo extends PatternMatchInfo {
+  // result: unknown
+}
+
+export type TestFunction = (...args: any[]) => boolean
+
+export class FunctionPattern<TFunction extends TestFunction> extends BasePattern<FunctionMatchInfo> {
+  declare type: `function`
+  public fn: TFunction
+
+  constructor(fn: TFunction, options: Partial<BasePatternOptions> = {}) {
+    super(`function`, options)
+    this.fn = fn
+  }
+
+  override _match<TValue = any>(value: TValue): FunctionMatchInfo {
+    const result = this.fn(value)
+    return {
+      isMatch: result,
+    }
+  }
+
+  override _toString() {
+    return `${this.fn.name}(...)`
+  }
+}
+
+export const ElementPatternTypes = [`equals`, `regex`, `is_element_of`, `function`] as const
 export type ElementPatternType = (typeof ElementPatternTypes)[number]
 
-export type ElementPattern<TValue = any> = EqualsElementPattern<TValue> | RegexElementPattern | IsElementOfSetPattern<TValue>
+export type ElementPattern<TValue = any> = EqualsElementPattern<TValue> | RegexElementPattern | IsElementOfSetPattern<TValue> | FunctionPattern<TestFunction>
 
 export function isElementPattern<TValue = any>(pattern: BasePattern): pattern is ElementPattern<TValue> {
   return ElementPatternTypes.includes(pattern.type as any)
@@ -100,6 +127,10 @@ export function EQUALS<TValue = any>(value: TValue, caseInsensitive: boolean = f
 
 export function REGEX(pattern: RegExp): RegexElementPattern {
   return new RegexElementPattern(pattern)
+}
+
+export function FUNCTION<TFunction extends TestFunction>(fn: TFunction): FunctionPattern<TFunction> {
+  return new FunctionPattern(fn)
 }
 
 // #endregion

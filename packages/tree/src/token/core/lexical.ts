@@ -8,7 +8,7 @@
 import { Interval } from "@december/utils"
 import { TokenKind } from "../kind"
 import { Lexeme } from "../lexeme"
-import { IToken } from "./base"
+import { IToken, TokenCloneOptions } from "./base"
 
 export default class LexicalToken implements IToken {
   public readonly type: `lexical` = `lexical`
@@ -31,10 +31,10 @@ export default class LexicalToken implements IToken {
     return Interval.fromLength(this.lexeme.start, this.lexeme.length)
   }
 
-  clone() {
+  clone(options: TokenCloneOptions = {}): this {
     const token = new LexicalToken(this.lexeme.clone())
 
-    return token
+    return token as this
   }
 
   toString() {

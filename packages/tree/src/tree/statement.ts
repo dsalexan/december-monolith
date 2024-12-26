@@ -1,4 +1,4 @@
-import { Node } from "./node"
+import { Node, NodeCloneOptions } from "./node"
 import { NodeType } from "./type"
 import { Expression } from "./expression"
 
@@ -19,6 +19,10 @@ export class ExpressionStatement extends Statement {
     super()
 
     this.addChild(expression, 0, `expression`)
+  }
+
+  public override constructClone(options): this {
+    return new ExpressionStatement(this.expression.clone(options)) as this
   }
 
   public get expression(): Expression {

@@ -19,6 +19,7 @@ export type { BindingPower } from "./bindingPower"
 
 export type SyntacticalLookupKey = SyntacticalDenotation
 export { createReTyperEntry, createBindParserEntry, createRegisterParserEntry, createBindingPowerEntry } from "./entries"
+export { DEFAULT_GRAMMAR } from "./default"
 
 export type BaseParserProvider = Record<string, (...args: any[]) => Node>
 

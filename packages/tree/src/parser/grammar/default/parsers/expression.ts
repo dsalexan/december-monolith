@@ -170,7 +170,7 @@ export const parseGroupingExpression: NUDParser = (p: Parser, context: Syntactic
 
 export const parseCallExpression: LEDParser = (p: Parser, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
   // 1. What are we eating?
-  p.next()
+  p.next(`open_parenthesis`)
   const args: Expression[] = []
 
   // 2. Look until we eat a )

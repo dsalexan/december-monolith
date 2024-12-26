@@ -1,51 +1,28 @@
-// import { Environment, Node, ObjectSource } from "@december/tree"
+import { isNil } from "lodash"
+import { AnyObject } from "tsdef"
 import assert from "assert"
 
-import { MutableObject, ObjectController } from "@december/compiler"
-import { Environment } from "@december/tree/interpreter"
+import { FUNCTION, REGEX } from "@december/utils/match/element"
 import { Reference } from "@december/utils/access"
+
+import { MutableObject, ObjectController } from "@december/compiler"
+import Interpreter, { Environment, ObjectValue, FunctionValue, Contextualized, RuntimeFunction, RuntimeEvaluation, RuntimeValue, VariableValue, NumericValue } from "@december/tree/interpreter"
+
 import { isAlias } from "."
-import { isNil } from "lodash"
 // import { NON_RESOLVED_VALUE } from "../../../tree/src/environment/identifier"
-import { isPropertyInvoker } from "../../../gca/src"
-import { makeGURPSEnvironment } from "../environment"
 
-export function makeGURPSTraitEnvironment(character: MutableObject, self: unknown) {}
+import { GURPSEnvironment } from "../environment"
 
-// export function makeGURPSTraitEnvironment(character: MutableObject, self: unknown) {
-//   const environment = makeGURPSEnvironment(character)
+export function makeGURPSTraitEnvironment(character: MutableObject, self: AnyObject) {
+  const environment = new Environment(`gurps:trait`, GURPSEnvironment)
 
-//   const source = ObjectSource.fromDictionary(`global:gurps:trait`, {
-//     self: { type: `simple`, value: self },
-//   })
+  // environment.assignValue(`@basethdice`, new FunctionValue(basethdice, `@basethdice`))
+  environment.assignValue(`character`, new ObjectValue(character))
+  environment.assignValue(`me`, new ObjectValue(self))
 
-//   source.addMatchEntry(
-//     {
-//       name: `fallback::trait:level:any`,
-//       fallback: true,
-//       value: { type: `simple`, value: 0 },
-//     },
-//     identifier => {
-//       if (isAlias(identifier.name)) return true
+  // environment.assignValueToPattern(`alias`, REGEX(/^"?\w{2}:.+"?$/), new VariableValue(`alias_level::fallback`))
+  environment.assignValueToPattern(`alias`, FUNCTION(isAlias), new VariableValue(`alias_level::fallback`))
+  environment.assignValue(`alias_level::fallback`, new ObjectValue({}, { numberValue: 0 }))
 
-//       const property = isPropertyInvoker(identifier.name)
-//       if (property && isAlias(property.target) && property.property === `level`) return true
-
-//       return false
-//     },
-//   )
-
-//   environment.addSource(source)
-//   return environment
-// }
-
-// export function makeGURPSTraitFallbackEnvironment(character: unknown, self: unknown) {
-//   const environment = BaseGURPSTraitEnvironment.clone()
-
-//   environment.addObjectSource(`global:gurps:fallback`, {
-//     character: { type: `simple`, value: character },
-//     self: { type: `simple`, value: self },
-//   })
-
-//   return environment
-// }
+  return environment
+}

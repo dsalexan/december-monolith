@@ -2,7 +2,7 @@ import { Node, NodeOptions } from "./node"
 import { NodeType } from "./type"
 import { Expression } from "./expression"
 
-export { Node } from "./node"
+export { Node, NodeCloneOptions } from "./node"
 export { NodeType } from "./type"
 export { print } from "./printer"
 

@@ -15,7 +15,7 @@ import { createReTyperEntry, SyntacticalGrammar } from "../parser/grammar"
 import { DEFAULT_GRAMMAR as DEFAULT_SYNTACTICAL_GRAMMAR } from "../parser/grammar/default"
 
 import Interpreter, { DEFAULT_EVALUATOR, Environment, NodeEvaluator, NumericValue } from "../interpreter"
-import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR } from "../_custom/dice"
+import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR } from "../../../system/src/dice/treeModule"
 
 let expression = `10 + 2 * 3`
 expression = `One::level`

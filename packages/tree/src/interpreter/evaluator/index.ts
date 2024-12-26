@@ -8,7 +8,8 @@ import { FunctionProvider, GetFunction, GetKey } from "../../utils"
 import Environment from "../environment"
 import { RuntimeEvaluation, RuntimeValue } from "../runtime"
 
-export { RuntimeEvaluation, RuntimeValue, NumericValue, BooleanValue, StringValue, UnitValue, VariableValue, QuantityValue, UndefinedValue, FunctionValue } from "../runtime"
+export { RuntimeEvaluation, RuntimeValue, NumericValue, BooleanValue, StringValue, UnitValue, VariableValue, QuantityValue, UndefinedValue, FunctionValue, ObjectValue } from "../runtime"
+export type { Contextualized, RuntimeFunction, makeRuntimeValue } from "../runtime"
 
 export type EvaluationOutput<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>> = RuntimeEvaluation<TRuntimeValue> | MaybeUndefined<TRuntimeValue>
 

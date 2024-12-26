@@ -6,7 +6,7 @@ import { numberToLetters } from "@december/utils"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
-import Interpreter, { Environment, NodeEvaluator, RuntimeEvaluation, RuntimeValue } from "../interpreter"
+import Interpreter, { Environment, InterpreterOptions, NodeEvaluator, RuntimeEvaluation, RuntimeValue } from "../interpreter"
 import Lexer, { LexicalGrammar } from "../lexer"
 import Parser, { SyntacticalContext, SyntacticalGrammar } from "../parser"
 import Rewriter, { GraphRewritingSystem } from "../rewriter"
@@ -14,6 +14,9 @@ import { Node, Statement } from "../tree"
 import { SymbolTable } from "../symbolTable"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
+
+export { makeDefaultProcessor } from "./default"
+export type { ProcessorOptions, ProcessorFactoryFunction } from "./default"
 
 export interface BaseProcessorRunOptions {
   logger?: typeof _logger
@@ -27,7 +30,7 @@ export interface ProcessorPruneOptions extends BaseProcessorRunOptions {
   pruningRun: number
 }
 
-export default class Processor {
+export default class Processor<TInterpreterOptions extends WithOptionalKeys<InterpreterOptions, `logger`> = WithOptionalKeys<InterpreterOptions, `logger`>> {
   //
   private lexer: Lexer
   public lexicalGrammar: LexicalGrammar
@@ -38,7 +41,7 @@ export default class Processor {
   private rewriter: Rewriter
   public graphRewriteSystem: GraphRewritingSystem
   //
-  private interpreter: Interpreter
+  private interpreter: Interpreter<any, TInterpreterOptions>
   public symbolTable: SymbolTable
   public nodeEvaluator: NodeEvaluator<any, any>
   //
@@ -49,7 +52,7 @@ export default class Processor {
     this.lexer = new Lexer()
     this.parser = new Parser()
     this.rewriter = new Rewriter()
-    this.interpreter = new Interpreter()
+    this.interpreter = new Interpreter<any, TInterpreterOptions>()
     //
     this.lexicalGrammar = lexicalGrammar
     this.syntacticalGrammar = syntacticalGrammar
@@ -72,7 +75,7 @@ export default class Processor {
   }
 
   /** Tries to resolve an Abstract Syntax Tree into some value (by "pruning" the tree as much as possible)*/
-  public resolve(AST: Node, environment: Environment, symbolTable: SymbolTable, options: BaseProcessorRunOptions): ResolutionOutput {
+  public resolve(AST: Node, environment: Environment, symbolTable: SymbolTable, options: BaseProcessorRunOptions & TInterpreterOptions): ResolutionOutput {
     const RESOLUTION_RUN = options.resolutionRun ?? 0
     const STACK_OVERFLOW_PROTECTION = 5
 
@@ -123,7 +126,7 @@ export default class Processor {
   }
 
   /** Reduces tree (by simplifying and then evaluating) */
-  protected prune(AST: Node, environment: Environment, symbolTable: SymbolTable, options: ProcessorPruneOptions): Nullable<PruningOutput> {
+  protected prune(AST: Node, environment: Environment, symbolTable: SymbolTable, options: ProcessorPruneOptions & TInterpreterOptions): Nullable<PruningOutput> {
     const DEBUG = options.debug ?? false // COMMENT
     const logger = options.logger ?? _logger // COMMENT
 
@@ -149,7 +152,7 @@ export default class Processor {
 
     // 2. Evaluate simplified AST
     //      (we ALWAYS evaluate post-simplification, it is super fast)
-    const evaluatedOutput = this.interpreter.process(`${numberToLetters(options.resolutionRun ?? 0).toLowerCase()}I${options.pruningRun}`, tree, environment, symbolTable, this.nodeEvaluator, {})
+    const evaluatedOutput = this.interpreter.process(`${numberToLetters(options.resolutionRun ?? 0).toLowerCase()}I${options.pruningRun}`, tree, environment, symbolTable, this.nodeEvaluator, this.parser, { ...options })
     if (DEBUG) this.interpreter.print() // COMMENT
     const evaluatedContent = evaluatedOutput.getContent()
     const isReady = this.interpreter.isReady(evaluatedOutput)

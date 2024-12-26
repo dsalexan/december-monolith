@@ -15,7 +15,7 @@ import { createReTyperEntry, SyntacticalGrammar } from "../parser/grammar"
 import { DEFAULT_GRAMMAR as DEFAULT_SYNTACTICAL_GRAMMAR } from "../parser/grammar/default"
 
 import Interpreter, { NumericValue, DEFAULT_EVALUATOR, Environment, NodeEvaluator } from "../interpreter"
-import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR, DICE_RULESET } from "../_custom/dice"
+import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR, DICE_RULESET } from "../../../system/src/dice/treeModule"
 import Rewriter, { GraphRewritingSystem, DEFAULT_GRAPH_REWRITING_RULESET } from "../rewriter"
 
 let expression = `10 + 2 * 3`
