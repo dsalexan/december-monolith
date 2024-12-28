@@ -16,6 +16,7 @@ export interface SetMutation<TValue = unknown> extends BaseMutation<TValue> {
 
 export interface OverrideMutation<TValue = unknown> extends BaseMutation<TValue> {
   type: `OVERRIDE`
+  force?: boolean
 }
 
 export interface MergeMutation<TValue extends AnyObject = AnyObject> extends BaseMutation<TValue> {
@@ -29,7 +30,7 @@ export type ValuedMutation = SetMutation | OverrideMutation | MergeMutation
 
 export const DELETE = (property: string): DeleteMutation => ({ type: `DELETE`, property })
 export const SET = <TValue = unknown>(property: string, value: TValue): SetMutation<TValue> => ({ type: `SET`, property, value })
-export const OVERRIDE = <TValue = unknown>(property: string, value: TValue): OverrideMutation<TValue> => ({ type: `OVERRIDE`, property, value })
+export const OVERRIDE = <TValue = unknown>(property: string, value: TValue, force?: boolean): OverrideMutation<TValue> => ({ type: `OVERRIDE`, property, value, force })
 export const MERGE = <TValue extends AnyObject = AnyObject>(property: string, value: TValue): MergeMutation<TValue> => ({ type: `MERGE`, property, value })
 
 // #endregion

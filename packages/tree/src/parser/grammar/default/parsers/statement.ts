@@ -9,7 +9,7 @@ import { BindingPower } from "../../bindingPower"
 import { EntryParser, StatementParser, SyntacticalContext } from "../../parserFunction"
 
 export const parseStatement: EntryParser<Statement> = (p: Parser<DefaultStatementParserProvider>, minimumBindingPower: BindingPower, context: SyntacticalContext): Statement => {
-  const parse = p.grammar.getParser(`statement`, p.peek())
+  const parse = p.grammar.getParser(`statement`, p.peek(), p.before())
   if (parse) return parse(p, context)
 
   if (minimumBindingPower !== DEFAULT_BINDING_POWERS.DEFAULT) debugger

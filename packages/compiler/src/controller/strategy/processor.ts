@@ -6,7 +6,7 @@ import { Simbol, SymbolTable } from "@december/tree/symbolTable"
 
 import { Node, Statement } from "@december/tree/tree"
 import { SyntacticalContext } from "@december/tree/parser"
-import { Environment, InterpreterOptions, RuntimeEvaluation } from "@december/tree/interpreter"
+import { Environment, InterpreterOptions, RuntimeEvaluation, RuntimeValue } from "@december/tree/interpreter"
 import Processor, { BaseProcessorRunOptions, makeDefaultProcessor, ProcessorFactoryFunction } from "@december/tree/processor"
 
 import { PropertyReferencePattern } from "@december/utils/access"
@@ -36,6 +36,7 @@ export interface StrategyProcessorParseOptions {
 }
 
 export interface StrategyProcessorResolveOptions {
+  syntacticalContext: SyntacticalContext
   environmentUpdateCallback: Exclude<BaseProcessorRunOptions[`environmentUpdateCallback`], undefined>
   isValidFunctionName?: InterpreterOptions[`isValidFunctionName`]
 }
@@ -70,7 +71,7 @@ export class StrategyProcessor {
     const processor = factory({ unitManager: options.unitManager, symbolTable })
 
     // 2. Parse expression into AST
-    const AST = processor.parse(expression, options.syntacticalContext, {})
+    const AST = processor.parse(expression, { ...options })
 
     return new StrategyProcessState(expression, symbolTable, processor, AST)
   }
@@ -90,11 +91,10 @@ export class StrategyProcessor {
 
     // 3. Run resolution loop
     const { originalContent, content, evaluation, isReady } = processor.resolve(latestTree, environment, symbolTable, {
-      environmentUpdateCallback: options.environmentUpdateCallback, //
-      isValidFunctionName: options.isValidFunctionName,
+      ...options,
     })
 
-    return state.resolve({ environment, evaluation, isReady })
+    return state.resolve({ environment, evaluation })
   }
 
   /** Process expression into evaluation */
@@ -189,7 +189,6 @@ export class StrategyProcessState {
   //
   public AST: Statement
   public evaluation: Nullable<RuntimeEvaluation> = null
-  public isReady: boolean = false
   //
   public integrityEntries: IntegrityEntry[] = []
   public listenedSymbols: Record<Simbol[`name`], Listener[]> = {}
@@ -208,11 +207,22 @@ export class StrategyProcessState {
     return this.evaluation !== null
   }
 
-  public resolve({ environment, evaluation, isReady }: { environment: Environment; evaluation: RuntimeEvaluation; isReady: boolean }): this & StrategyProcessResolvedState {
+  public resolve({ environment, evaluation }: { environment: Environment; evaluation: RuntimeEvaluation }): this & StrategyProcessResolvedState {
     this.environment = environment
     this.evaluation = evaluation
-    this.isReady = isReady
 
     return this as this & StrategyProcessResolvedState
+  }
+
+  /** Check if evaluation is ready */
+  public isReady(): boolean {
+    return this.isResolved() && this.evaluation.runtimeValue !== null
+  }
+
+  /** Get processed value */
+  public getValue<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>>(): TRuntimeValue {
+    assert(this.isReady(), `Cannot get value from unready state.`)
+
+    return this.evaluation!.runtimeValue! as TRuntimeValue
   }
 }

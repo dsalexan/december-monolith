@@ -22,7 +22,7 @@ export const parseExpression: EntryParser<Expression> = (p: Parser, minimumBindi
   while (p.peek() === `whitespace`) tokenKind = p.next() && p.peek() // REFACTOR: Do better
 
   // 1. Start of expression, there is no left context yet (so use NUD to determine left-context)
-  const NUD = p.grammar.getParser(`nud`, tokenKind)
+  const NUD = p.grammar.getParser(`nud`, tokenKind, p.before())
   assert(NUD, `No NUD parser for token kind "${tokenKind}"`)
 
   let left = NUD(p, context) // probably advances the cursor
@@ -42,7 +42,7 @@ export const parseExpression: EntryParser<Expression> = (p: Parser, minimumBindi
       }
     }
 
-    const LED = p.grammar.getParser(`led`, tokenKind) // probably advances the cursor
+    const LED = p.grammar.getParser(`led`, tokenKind, p.before()) // probably advances the cursor
     assert(LED, `No LED parser for token kind "${tokenKind}"`)
 
     left = LED(p, left, minimumBindingPower, context)
@@ -70,14 +70,30 @@ export const parseBinaryExpression: LEDParser = (p: Parser, left: Expression, mi
 export const parseConcatenatedExpression: LEDParser = (p: Parser<DefaultExpressionParserProvider>, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
   if (left.type === `NumericLiteral`) return p.grammar.call(`parseImplicitMultiplication`)(p, left, minimumBindingPower, context)
 
-  assert(left.type === `StringLiteral`, `Only string literals can have multiple tokens (found "${left.type}")`)
-  const stringLiteral = left as StringLiteral
+  // if (left.toString() === `Feet`) debugger
 
-  // 2. Eat string and whitespace tokens
-  while (p.hasTokens() && [`string`, `whitespace`].includes(p.peek())) {
+  const STRING_TOKENS: TokenKindName[] = [`string`, `whitespace`]
+
+  let stringLiteral: StringLiteral = left as StringLiteral
+
+  let reParseStringExpression = false
+  if (left.type === `Identifier`) {
+    reParseStringExpression = true
+    stringLiteral = new StringLiteral(...left.tokens)
+  }
+
+  assert(stringLiteral.type === `StringLiteral`, `Only string literals can have multiple tokens (found "${stringLiteral.type}")`)
+
+  // // 2. Eat string and whitespace tokens
+  // while (p.hasTokens() && p.grammar.getBindingPower(p.peek(), `led`)! > minimumBindingPower) {
+  //   //
+  // }
+  while (p.hasTokens() && STRING_TOKENS.includes(p.peek())) {
     const token = p.next()
     stringLiteral.tokens.push(token)
   }
+
+  if (reParseStringExpression) return p.grammar.call(`parseStringExpression`)(p, stringLiteral, context)
 
   return stringLiteral
 }
@@ -161,14 +177,34 @@ export const parseGroupingExpression: NUDParser = (p: Parser, context: Syntactic
 
   const mode: SyntaxMode = opener === `quotes` ? `string` : context.mode
 
-  p.next(opener)
+  const openerToken = p.next(opener)
   const expression = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.GROUPING, { ...context, mode })
-  p.next(closer)
+  const closerToken = p.next(closer)
+
+  if (context.mode === `string`) {
+    assert(expression.type === `StringLiteral`, `Invalid string expression type "${expression.type}"`)
+    expression.tokens.unshift(openerToken)
+    expression.tokens.push(closerToken)
+  }
 
   return expression
 }
 
 export const parseCallExpression: LEDParser = (p: Parser, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
+  const before = p.before()
+
+  if (before === `whitespace`) {
+    left.tokens.push(p.beforeToken())
+    const expression = p.grammar.parseExpression(p, minimumBindingPower, { ...context, mode: `string` })
+
+    assert(expression.type === `StringLiteral`, `Invalid string expression type "${expression.type}"`)
+    left.tokens.push(...expression.tokens)
+
+    return p.grammar.call(`parseStringExpression`)(p, left as StringLiteral, context)
+  }
+
+  // if (left.toString() === `@itemhasmod`) debugger
+
   // 1. What are we eating?
   p.next(`open_parenthesis`)
   const args: Expression[] = []

@@ -6,7 +6,7 @@ import type Interpreter from "../.."
 import { ArtificialToken, getTokenKind } from "../../../token"
 
 import { BinaryExpression, BooleanLiteral, Node, NumericLiteral, StringLiteral, UnitLiteral } from "../../../tree"
-import { BooleanValue, NumericValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../../runtime"
+import { BooleanValue, ExpressionValue, NumericValue, ObjectValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../../runtime"
 import { NodeConversionFunction } from ".."
 
 export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i: Interpreter<DefaultNodeConversionProvider>, value: RuntimeValue<any>): Node => {
@@ -26,6 +26,12 @@ export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i
 
     return new BinaryExpression(numericLeft, ASTERISK, unitRight)
   }
+  if (ObjectValue.isObjectValue(value)) {
+    if (value.hasNumericRepresentation()) return new NumericLiteral(new ArtificialToken(getTokenKind(`number`), String(value.asNumber())))
+
+    throw new Error(`Cannot parse runtime value to expression string: ${value.type}`)
+  }
+  if (ExpressionValue.isExpressionValue(value)) return value.value
 
   throw new Error(`Cannot parse runtime value to expression string: ${value.type}`)
 }

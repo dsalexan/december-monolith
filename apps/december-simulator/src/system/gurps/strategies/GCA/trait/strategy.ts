@@ -1,11 +1,14 @@
+import { Nullable } from "./../../../../../../../../packages/utils/src/typing/index"
 import assert from "assert"
-import { AnyObject } from "tsdef"
-import { get, isNil, isNumber, set } from "lodash"
+import { AnyObject, NonNil } from "tsdef"
+import { get, isNil, isNumber, isString, set } from "lodash"
 
 import { Strategy, Mutation, SET, MutableObject } from "@december/compiler"
 
 import { Environment } from "@december/tree"
-import { VariableValue } from "@december/tree/interpreter"
+import { CallExpression, ExpressionStatement, Identifier } from "@december/tree/tree"
+import { ExpressionValue, VariableValue } from "@december/tree/interpreter"
+import { makeToken } from "@december/tree/utils/factories"
 
 import { IntegrityEntry } from "@december/compiler/controller/integrityRegistry"
 import { REFERENCE_ADDED } from "@december/compiler/controller/eventEmitter/event"
@@ -61,31 +64,58 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     // MODES
     const M = _trait.modes?.length ?? 0
     for (let i = 0; i < M; i++) {
-      /**
-       * How damage works?
-       *
-       *  damage        — damage value in dice
-       *  dmg           — damage form (swing or thrust)
-       *  damagebasedon — source for the damage form base value (i.e. where to get value for sw or thr)
-       */
       const _mode = _trait.modes![i]
 
-      const mode: Omit<IGURPSTraitMode, `damage`> & { damage: Omit<IGURPSTraitMode[`damage`], `form` | `type` | `value`> } = {
+      // 1. First find out allowed roll traits
+      let rollBasedOn: Nullable<IGURPSTraitMode[`rollBasedOn`]> = null
+
+      if (_mode.skillused?.includes(`"`)) debugger // TODO: Test this
+      if (_mode.skillused) rollBasedOn = _mode.skillused.split(`,`).map(s => s.trim())
+
+      assert(!isNil(rollBasedOn) && rollBasedOn.every(s => isString(s)), `Skill should be a list of strings`)
+
+      // 2. Create mode
+      const mode: IGURPSTraitMode = {
         name: _mode.name,
-        damage: { basedOn: _mode.damagebasedon! },
-        // TODO: Create integrity entry for basedOn
+        rollBasedOn,
       }
 
-      const BASED_ON_INTEGRITY_ENTRY = object.makeIntegrityEntry(`modes.[${i}].damage.basedOn`, mode.damage.basedOn)
-      integrityEntries.push(BASED_ON_INTEGRITY_ENTRY)
+      // 3. Specific shit for damaging modes
+      const isDamaging = _mode.dmg !== undefined
+      if (isDamaging) {
+        /**
+         * How damage works?
+         *
+         *  damage        — damage value in dice
+         *  dmg           — damage form (swing or thrust)
+         *  damagebasedon — source for the damage form base value (i.e. where to get value for sw or thr)
+         */
 
+        // 1. Make sure we have a valid DamageBasedOn
+        const damageBasedOn = _mode.damagebasedon ?? null
+        assert(damageBasedOn === null || isString(damageBasedOn), `BasedOn should be a string OR null`)
+
+        // 2. Update mode
+        set(mode, `damage`, { basedOn: damageBasedOn } as IGURPSTraitMode[`damage`])
+
+        // 3. Create integrity entry for BASED_ON (since damage could change based on this)
+        //        (basically everytime we update basedOn we should send a new integrityEntry for the same path with the new value)
+        const BASED_ON_INTEGRITY_ENTRY = object.makeIntegrityEntry(`modes.[${i}].damage.basedOn`, String(damageBasedOn))
+        integrityEntries.push(BASED_ON_INTEGRITY_ENTRY)
+
+        // 4. Add listener for changes in basedOn reference
+        //  (basedOn attribute is necessary to calculate base thr or sw)
+        //  (basedOn === null most likely means that the damage is fixed, so we dont need to watch any external updates)
+        if (damageBasedOn) {
+          Strategy.addProxyListener(REFERENCE_ADDED(REFERENCE(`alias`, damageBasedOn)), `compute:mode`, {
+            arguments: { modeIndex: i }, //
+            integrityEntries: [BASED_ON_INTEGRITY_ENTRY],
+          })(object)
+        }
+      }
+
+      // 4. Push mutation
       mutations.push(SET(`modes.[${i}]`, mode))
-
-      // basedOn attribute is necessary to calculate base thr or sw
-      Strategy.addProxyListener(REFERENCE_ADDED(REFERENCE(`alias`, mode.damage.basedOn)), `compute:mode`, {
-        arguments: { modeIndex: i }, //
-        integrityEntries: [BASED_ON_INTEGRITY_ENTRY],
-      })(object)
     }
 
     // ALIASES
@@ -99,7 +129,7 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
 )
 
 // B. GENERIC PROCESSING
-IMPORT_TRAIT_FROM_GCA_STRATEGY.registerReProcessingFunction(`compute:re-processing`, GCAStrategyProcessorResolveOptionsGenerator, GCAStrategyProcessorListenOptions)
+IMPORT_TRAIT_FROM_GCA_STRATEGY.registerReProcessingFunction(`compute:re-processing`, { mode: `expression` }, GCAStrategyProcessorResolveOptionsGenerator, GCAStrategyProcessorListenOptions)
 
 // C. SPECIFIC COMPUTES
 // C.1. modes
@@ -115,6 +145,7 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
 
     // 1. Get mode (by merger data and metadata)
     const mode: IGURPSTraitMode = get(object._getData(object.data.modes, `modes`), modeIndex)
+    assert(mode.damage, `Unimplemented for non-damaging modes`)
     const path = `modes.[${modeIndex}].damage.form`
 
     // 2. Prepare stuff to process
@@ -122,15 +153,19 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     assert(character, `Character not found`)
 
     const baseEnvironment = new Environment(`gurps:local`, Trait.makeGURPSTraitEnvironment(character, object.data))
-    baseEnvironment.assignValue(`thr`, new VariableValue(mode.damage.basedOn))
+    // baseEnvironment.assignValue(`thr`, new VariableValue(mode.damage.basedOn))
+
+    assert(mode.damage.basedOn, `Unimplem,asdasd`)
+    baseEnvironment.assignValue(`thr`, new ExpressionValue(new CallExpression(new Identifier(makeToken(`@basethdice`)), [new Identifier(makeToken(mode.damage.basedOn!))])))
+    baseEnvironment.assignValue(`sw`, new ExpressionValue(new CallExpression(new Identifier(makeToken(`@baseswdice`)), [new Identifier(makeToken(mode.damage.basedOn!))])))
 
     const options = { ...GCAStrategyProcessorListenOptions, ...GCAStrategyProcessorOptionsGenerator(object) }
 
     // 3. Process expression
     const outputs: ReturnType<(typeof Strategy)[`process`]>[] = []
     const paths: { expression: string; target: string }[] = [
-      // { expression: `_.GCA.modes.[${modeIndex}].dmg`, target: `modes.[${modeIndex}].damage.form` },
-      // { expression: `_.GCA.modes.[${modeIndex}].damtype`, target: `modes.[${modeIndex}].damage.type` },
+      { expression: `_.GCA.modes.[${modeIndex}].dmg`, target: `modes.[${modeIndex}].damage.form` },
+      { expression: `_.GCA.modes.[${modeIndex}].damtype`, target: `modes.[${modeIndex}].damage.type` },
       { expression: `_.GCA.modes.[${modeIndex}].damage`, target: `modes.[${modeIndex}].damage.value` },
     ]
     for (const path of paths) {
@@ -171,6 +206,13 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
 function explainProcessOutput(object: MutableObject, path: string, state: StrategyProcessState): Block[][] {
   // if (state.isReady) return []
 
+  let SHOULD_PRINT = true
+
+  // 1. If we are not ready
+  if (!state.isReady) SHOULD_PRINT = true
+
+  if (!SHOULD_PRINT) return []
+
   const rows: Block[][] = []
 
   function prefix(): Block[] {
@@ -182,21 +224,21 @@ function explainProcessOutput(object: MutableObject, path: string, state: Strate
     ]
   }
 
-  if (state.isReady) rows.push([...prefix(), paint.blue.bold(`IS READY!!!!!!`)])
+  if (state.isReady()) rows.push([...prefix(), paint.blue.bold(`IS READY!!!!!!`)])
   else rows.push([...prefix(), paint.yellow.dim(`Not Ready`)])
 
   rows.push([...prefix(), paint.grey.dim(`${path}`)])
 
-  if (!state.isReady) {
+  if (!state.isReady()) {
     const tree = state.evaluation?.node ?? state.AST
     rows.push([...prefix(), paint.grey.dim.italic(`output    `), paint.grey.dim(` ${tree.getContent()}`)])
   } else {
-    const runtimeValue = state.evaluation?.runtimeValue
+    const runtimeValue = state.getValue()
     rows.push([
       ...prefix(), //
       paint.grey.dim.italic(`output    `),
       paint.grey(`<${runtimeValue!.type}> `),
-      paint.bold(String(runtimeValue!.value)),
+      paint.bold(runtimeValue!.getContent()),
     ])
   }
 

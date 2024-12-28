@@ -33,6 +33,7 @@ export { createRegisterParserEntriesFromIndex, SyntacticalGrammarEntry } from ".
 
 export interface ParserOptions {
   logger: typeof _logger
+  syntacticalContext: SyntacticalContext
 }
 
 export default class Parser<TGrammarDict extends AnyObject = any> {
@@ -62,6 +63,18 @@ export default class Parser<TGrammarDict extends AnyObject = any> {
     return this.current(increment).kind.name
   }
 
+  /** Peek tokenKind before current one */
+  public before(): MaybeUndefined<TokenKindName> {
+    return this.current(-1)?.kind?.name
+  }
+
+  /** Peek tokenKind before current one */
+  public beforeToken(): Token {
+    const token = this.current(-1)
+    assert(token, `No token before current one`)
+    return token
+  }
+
   /** Advance token */
   public next(expectedKind?: TokenKindName): Token {
     const previous = this.tokens[this.cursor]
@@ -75,7 +88,7 @@ export default class Parser<TGrammarDict extends AnyObject = any> {
 
   // #endregion
 
-  public process(grammar: SyntacticalGrammar<TGrammarDict>, tokens: Token[], context: SyntacticalContext, options: WithOptionalKeys<ParserOptions, `logger`>) {
+  public process(grammar: SyntacticalGrammar<TGrammarDict>, tokens: Token[], options: WithOptionalKeys<ParserOptions, `logger`>) {
     this.options = {
       logger: options.logger ?? _logger,
       ...options,
@@ -85,15 +98,15 @@ export default class Parser<TGrammarDict extends AnyObject = any> {
     this.tokens = tokens
     this.cursor = 0
 
-    this.AST = this.parse(context)
+    this.AST = this.parse()
 
     return this.AST
   }
 
-  protected parse(context: SyntacticalContext): Node {
+  protected parse(): Node {
     const statements: Statement[] = []
     while (this.hasTokens()) {
-      const statement = this.grammar.parseStatement(this, DEFAULT_BINDING_POWERS.DEFAULT, context)
+      const statement = this.grammar.parseStatement(this, DEFAULT_BINDING_POWERS.DEFAULT, this.options.syntacticalContext)
       statements.push(statement)
     }
 

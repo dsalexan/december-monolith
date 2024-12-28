@@ -29,10 +29,10 @@ STACK_OVERFLOW_RULESET.push(
     node => {
       // if (!(node instanceof BinaryExpression) || node.operator.content !== `+`) return false
       if (isBinaryExpression(node, `+`)) {
-        if (isNumericLiteral(node.left, 0)) return { target: `right` }
-        if (isNumericLiteral(node.right, 0)) return { target: `left` }
+        if (isNumericLiteral(node.left, 0)) return { target: `A` }
+        if (isNumericLiteral(node.right, 0)) return { target: `B` }
       } else if (isBinaryExpression(node, [`-`])) {
-        if (isNumericLiteral(node.right, 0)) return { target: `left` }
+        if (isNumericLiteral(node.right, 0)) return { target: `C` }
       }
 
       return false

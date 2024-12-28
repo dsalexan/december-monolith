@@ -8,7 +8,7 @@ import { ArtificialToken, Token } from "../../../token/core"
 import { BinaryExpression, BooleanLiteral, CallExpression, Expression, ExpressionStatement, Identifier, IfExpression, MemberExpression, Node, NumericLiteral, PrefixExpression, StringLiteral, UnitLiteral } from "../../../tree"
 
 import type Interpreter from "../.."
-import { FunctionValue, makeRuntimeValue, ObjectValue, RuntimeEvaluation } from "./../../runtime"
+import { ExpressionValue, FunctionValue, makeRuntimeValue, ObjectValue, RuntimeEvaluation } from "./../../runtime"
 import { BooleanValue, NumericValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../../runtime"
 import Environment, { VARIABLE_NOT_FOUND } from "../../environment"
 import { EvaluationFunction, EvaluationOutput } from ".."
@@ -61,6 +61,8 @@ export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter<Defa
   const isAlgebraic = [`+`, `-`, `*`, `/`].includes(operator)
   const isLogical = [`=`, `!=`, `>`, `<`, `>=`, `<=`].includes(operator)
   const isLogicalConnective = [`|`, `&`].includes(operator)
+
+  // if (binaryExpression.left.getContent() === `thr`) debugger
 
   const left = i.evaluator.evaluate(i, binaryExpression.left, environment)
   const right = i.evaluator.evaluate(i, binaryExpression.right, environment)
@@ -300,8 +302,8 @@ function numericAlgebraicOperation(left: RuntimeValue<any>, right: RuntimeValue<
 function logicalBinaryOperation(left: RuntimeValue<any>, right: RuntimeValue<any>, operator: string): BooleanValue {
   let result: Nullable<boolean> = null
 
-  if (operator === `=`) result = left.value === right.value
-  else if (operator === `!=`) result = left.value !== right.value
+  if (operator === `=`) result = left.value == right.value
+  else if (operator === `!=`) result = left.value != right.value
   else if (operator === `>`) result = left.value > right.value
   else if (operator === `<`) result = left.value < right.value
   else if (operator === `>=`) result = left.value >= right.value
@@ -344,6 +346,14 @@ function getValueFromEnvironment(i: Interpreter, environment: Environment, varia
 
   const value = resolvedVariable.environment!.getValue(resolvedVariable.variableName)!
   assert(RuntimeValue.isRuntimeValue(value), `Value must be a RuntimeValue`)
+
+  // Evaluate expression value
+  if (ExpressionValue.isExpressionValue(value)) {
+    const evaluatedValue = i.evaluator.evaluate(i, value.value, environment)
+    assert(RuntimeEvaluation.isRuntimeEvaluation(evaluatedValue), `Expected RuntimeEvaluation`)
+
+    return evaluatedValue
+  }
 
   return value.getEvaluation(node)
 }

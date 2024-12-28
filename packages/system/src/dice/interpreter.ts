@@ -3,7 +3,7 @@ import { MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
 import { sum } from "lodash"
 
 import { BinaryExpression, Expression, ExpressionStatement, Node, NumericLiteral, StringLiteral } from "@december/tree/tree"
-import { isBinaryExpression } from "@december/tree/utils/guards"
+import { isBinaryExpression, isNumericLiteral, isPrefixExpression } from "@december/tree/utils/guards"
 
 import Interpreter, {
   Environment,
@@ -11,10 +11,10 @@ import Interpreter, {
   InterpreterOptions,
   EvaluationFunction,
   NodeConversionFunction,
-  ReadyCheckerFunction,
+  PostProcessFunction,
   DEFAULT_NODE_CONVERSORS,
   DEFAULT_EVALUATIONS,
-  DEFAULT_READY_CHECKERS,
+  DEFAULT_POST_PROCESS,
   NumericValue,
   EvaluationOutput,
   RuntimeEvaluation,
@@ -24,6 +24,7 @@ import { makeConstantLiteral } from "@december/tree/utils/factories"
 
 import { areDiceKeepEquals, DiceKeep, parseDiceNotation } from "./dice"
 import { DiceRollExpression } from "./parser"
+import { SyntacticalContext } from "../../../tree/src"
 
 // #region    OPTIONS
 
@@ -74,7 +75,7 @@ export class DiceRollValue extends RuntimeValue<Nullable<number[]>> {
     return new DiceRollValue(size, this.faces, { keep: { ...(this.keep ?? {}) } })
   }
 
-  public override getContent(): string {
+  public getNotation(): string {
     const { size, faces } = this
 
     let keep = ``
@@ -85,6 +86,55 @@ export class DiceRollValue extends RuntimeValue<Nullable<number[]>> {
     }
 
     return `${size.toString()}d${faces}${keep}`
+  }
+
+  public override getContent(): string {
+    if (this.wasRolled()) {
+      const roll = sum(this.value!)
+      return `${roll} (${this.getNotation()})`
+    }
+
+    return this.getNotation()
+  }
+}
+
+export class DiceNotationValue extends RuntimeValue<Expression> {
+  type = `diceNotation` as any
+
+  public get expression(): Expression {
+    return this.value
+  }
+
+  constructor(expression: Expression) {
+    super(expression)
+    assert(expression instanceof Expression, `Dice Notation must be an expression`)
+  }
+
+  public static isDiceNotationValue(value: RuntimeValue<any>): value is DiceNotationValue {
+    return value.type === (`diceNotation` as any)
+  }
+
+  /** Checks if an expression can be PART (or component) of a dice notation */
+  public static isValidDiceNotationComponent(expression: Expression): boolean {
+    if (isNumericLiteral(expression)) return true
+    if (DiceRollExpression.isDiceRollExpression(expression)) return true
+    if (DiceNotationValue.isValidDiceNotation(expression)) return true
+
+    return false
+  }
+
+  /** Checks if an expression is a valid dice notation */
+  public static isValidDiceNotation(expression: Expression): boolean {
+    const isRootValid = isBinaryExpression(expression, [`+`, `-`, `*`, `/`]) || isPrefixExpression(expression, [`+`, `-`])
+
+    if (isRootValid) {
+      const isLeftValid = expression.type === `PrefixExpression` ? true : DiceNotationValue.isValidDiceNotationComponent((expression as BinaryExpression).left)
+      const isRightValid = DiceNotationValue.isValidDiceNotationComponent(expression.right)
+
+      return isLeftValid && isRightValid
+    }
+
+    return false
   }
 }
 
@@ -192,41 +242,32 @@ export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i
     return makeConstantLiteral(sum(value.value))
   }
 
+  if (DiceNotationValue.isDiceNotationValue(value)) return value.expression
+
   return DEFAULT_NODE_CONVERSORS.convertToNode(i, value)
 }
 
-// override @ isEvaluationReady
-export const isEvaluationReady: ReadyCheckerFunction = (i: Interpreter<any, DiceInterpreterOptions>, evaluation: RuntimeEvaluation<RuntimeValue<any>, Node>): boolean => {
-  // ONLY relevant if there were no dice rolls
-  if (!i.options.rollDice) {
-    if (evaluation.node instanceof ExpressionStatement) {
-      const expression = evaluation.node.expression
+// override @ postProcess
+export const postProcess: PostProcessFunction = (i: Interpreter<any, DiceInterpreterOptions>, evaluation: RuntimeEvaluation<RuntimeValue<any>, Expression>, syntacticalContext: SyntacticalContext): Nullable<RuntimeValue<any>> => {
+  const { node, runtimeValue } = evaluation
 
-      if (isBinaryExpression(expression, [`+`, `-`, `*`, `/`])) return i.isReady(expression)
-    }
+  if (i.options.rollDice) {
+    if (runtimeValue && DiceRollValue.isDiceRollValue(runtimeValue) && !runtimeValue.wasRolled()) debugger // ops, no dice rolls
   }
-
-  return DEFAULT_READY_CHECKERS.isEvaluationReady(i, evaluation)
-}
-
-// override @ isNodeReady
-export const isNodeReady: ReadyCheckerFunction = (i: Interpreter<any, DiceInterpreterOptions>, node: Node): boolean => {
-  if (DiceRollExpression.isDiceRollExpression(node)) return true
 
   // ONLY relevant if there were no dice rolls
   if (!i.options.rollDice) {
-    if (isBinaryExpression(node, [`+`, `-`, `*`, `/`])) {
-      const isLeftReady = DiceRollExpression.isDiceRollExpression(node.left) || node.left.type === `NumericLiteral` || i.isReady(node.left)
-      const isRightReady = DiceRollExpression.isDiceRollExpression(node.right) || node.right.type === `NumericLiteral` || i.isReady(node.right)
+    if (runtimeValue === null) {
+      assert(Expression.isExpression(node), `Node must be an expression`)
 
-      return isLeftReady && isRightReady
+      if (DiceNotationValue.isValidDiceNotation(node)) return new DiceNotationValue(node)
     }
   }
 
-  return DEFAULT_READY_CHECKERS.isNodeReady(i, node)
+  return DEFAULT_POST_PROCESS.postProcess(i, evaluation, syntacticalContext)
 }
 
-export const DICE_MODULAR_EVALUATOR_PROVIDER = { evaluations: { evaluate, evaluateCustomOperation }, conversions: { convertToNode }, readyCheckers: { isEvaluationReady, isNodeReady } }
+export const DICE_MODULAR_EVALUATOR_PROVIDER = { evaluations: { evaluate, evaluateCustomOperation }, conversions: { convertToNode }, postProcess: { postProcess } }
 export type DiceModularEvaluatorProvider = (typeof DICE_MODULAR_EVALUATOR_PROVIDER)[`evaluations`]
 
 // #endregion

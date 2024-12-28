@@ -49,7 +49,7 @@ export const GCAStrategyProcessorParseOptions: Omit<StrategyProcessorParseOption
 const REMOVE_VALUE: unique symbol = Symbol.for(`gca:remove_value`)
 type RemoveValue = typeof REMOVE_VALUE
 
-export const GCAStrategyProcessorResolveOptionsGenerator: (object: MutableObject) => StrategyProcessorResolveOptions = (object: MutableObject) => ({
+export const GCAStrategyProcessorResolveOptionsGenerator: (object: MutableObject) => Omit<StrategyProcessorResolveOptions, `syntacticalContext`> = (object: MutableObject) => ({
   isValidFunctionName: (functionName: string) => functionName.startsWith(`@`),
   environmentUpdateCallback: (environment, symbolTable) => {
     const symbols: Map<Simbol[`name`], Simbol> = new Map()
@@ -97,7 +97,7 @@ export const GCAStrategyProcessorResolveOptionsGenerator: (object: MutableObject
   },
 })
 
-export const GCAStrategyProcessorOptionsGenerator: (object: MutableObject) => Omit<StrategyProcessorParseOptions, `syntacticalContext`> & StrategyProcessorResolveOptions = (object: MutableObject) => ({
+export const GCAStrategyProcessorOptionsGenerator: (object: MutableObject) => Omit<StrategyProcessorParseOptions & StrategyProcessorResolveOptions, `syntacticalContext`> = (object: MutableObject) => ({
   ...GCAStrategyProcessorParseOptions,
   ...GCAStrategyProcessorResolveOptionsGenerator(object),
 })

@@ -2,7 +2,7 @@ import assert from "assert"
 import { AnyObject, MaybeArray, MaybeUndefined, Nilable, Nullable } from "tsdef"
 import { get, isNil, isString, property, set, uniq } from "lodash"
 
-import { Environment } from "@december/tree"
+import { Environment, SyntacticalContext } from "@december/tree"
 
 import generateUUID from "@december/utils/uuid"
 import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, Reference, REFERENCE } from "@december/utils/access"
@@ -160,23 +160,30 @@ export class Strategy {
     const mutationInput: MutationInput = { mutations: [], integrityEntries: [] }
     const listeners: Listener[] = []
 
+    let skipMutation = false
+
     // 0. Check if expression was processed previously (i.e. if processing state exists in metadata)
     let state: StrategyProcessState = get(object.metadata, path)
 
     // 1. Process (parse + resolve) expression
     if (!state) {
+      // if (options.expression === `thr`) debugger
+
       assert(options.expression, `Expression must be provided for new expressions`) // COMMENT
       assert(options.environment, `Environment must be provided for new expressions`) // COMMENT
       // 1.A. Process expression
       state = StrategyProcessor.process(options.expression, options.environment, options)
 
       // 1.B. Store state in metadata
+      skipMutation = true
       const output = StrategyProcessor.cache(state, object, path)
       mutationInput.mutations.push(...output.mutations)
       mutationInput.integrityEntries.push(...output.integrityEntries)
     }
     // 2. Resolve expression (well, actually resolve processing state)
     else {
+      // if (state.expression === `thr`) debugger
+
       const environment = options.environment ?? state.environment!
       assert(environment, `Where should I find the environment then genius`)
       StrategyProcessor.resolve(state, environment, options)
@@ -187,17 +194,25 @@ export class Strategy {
     for (const listener of listeners) object.controller.eventEmitter.addListener(listener)
 
     // 4. If processing is finished, update value in object's data
-    if (state.isReady) {
-      const value = state.evaluation!.runtimeValue?.value
-      assert(!isNil(value), `Value must be resolved`)
-      mutationInput.mutations.push(OVERRIDE(path, value))
+    if (state.isReady()) {
+      const value = state.getValue()
+      assert(!isNil(value), `Value must be resolved AND ready`)
+      assert(!(value instanceof MutableObject), `Value cannot be a MutableObject, problems with circular references`)
+
+      // force update property with the same value just to trigger listeners
+      if (!skipMutation) mutationInput.mutations.push(...object.setReferenceToMetadata(path, true))
     }
 
     return { state, ...mutationInput }
   }
 
   /** Generator of a generic re-processing strategy function (useful to just re-run resolution loop for already processed expressions) */
-  public registerReProcessingFunction(name: GenericMutationFrame[`name`], resolveOptionsGenerator: Generator<StrategyProcessorResolveOptions>, listenOptions: Omit<StrategyProcessorListenOptions, `reProcessingFunction`>): this {
+  public registerReProcessingFunction(
+    name: GenericMutationFrame[`name`],
+    syntacticalContext: SyntacticalContext,
+    resolveOptionsGenerator: Generator<Omit<StrategyProcessorResolveOptions, `syntacticalContext`>>,
+    listenOptions: Omit<StrategyProcessorListenOptions, `reProcessingFunction`>,
+  ): this {
     // It is a regular mutation function at the end
     this.registerMutationFunction(name, (object: MutableObject, mutationOptions: MutationFunctionMetadata) => {
       // 1. Target path in object's metadata (where processing state is stored) ALWAYS comes as an argument
@@ -210,7 +225,7 @@ export class Strategy {
       const environment = state.environment!
       assert(environment, `Where should I find the environment then genius`)
 
-      StrategyProcessor.resolve(state, environment, options)
+      StrategyProcessor.resolve(state, environment, { ...options, syntacticalContext })
 
       // 3. Listen for new symbols
       //      (using this very function as reProcessing target)
@@ -227,10 +242,13 @@ export class Strategy {
       // // ====================================================
 
       // 4. If processing is finished, update value in object's data
-      if (state.isReady) {
-        const value = state.evaluation!.runtimeValue?.value
+      if (state.isReady()) {
+        const value = state.getValue()
         assert(!isNil(value), `Value must be resolved`)
-        return [OVERRIDE(path, value)]
+        assert(!(value instanceof MutableObject), `Value cannot be a MutableObject, problems with circular references`)
+
+        // force update property with the same value just to trigger listeners
+        return object.setReferenceToMetadata(path, true)
       }
 
       return []

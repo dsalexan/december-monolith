@@ -36,12 +36,12 @@ export default class Profiler {
 
   done(): Builder
   done(showDuration: true): Builder
-  done(doneCallback: (duration: number) => void): Builder
-  done(doneCallback?: ((duration: number) => void) | true) {
+  done(doneCallback: (duration: number, profiler: string) => void): Builder
+  done(doneCallback?: ((duration: number, profiler: string) => void) | true) {
     const duration = this.stop()
 
     if (doneCallback) {
-      if (doneCallback !== true) doneCallback(duration)
+      if (doneCallback !== true) doneCallback(duration, this.name)
       else if (doneCallback === true) this.builder.duration(this.name)
     }
 

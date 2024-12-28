@@ -1,6 +1,6 @@
 import { isString } from "lodash"
 
-import { Environment, Node, SymbolTable } from "@december/tree"
+import { Environment, Node, SymbolTable, SyntacticalContext } from "@december/tree"
 import Processor, { makeDefaultProcessor, ProcessorOptions, ResolutionOutput } from "@december/tree/processor"
 import { makeConstantLiteral } from "@december/tree/utils/factories"
 
@@ -37,12 +37,13 @@ export function rollDice(diceNotationOrAST: string | Node, processor?: Processor
    */
 
   processor ??= DEFAULT_DICE_PROCESSOR
+  const syntacticalContext: SyntacticalContext = { mode: `expression` }
 
   let AST: Node
-  if (isString(diceNotationOrAST)) AST = processor.parse(diceNotationOrAST, { mode: `expression` }, {})
+  if (isString(diceNotationOrAST)) AST = processor.parse(diceNotationOrAST, { syntacticalContext })
   else AST = diceNotationOrAST
 
-  const resolvedOutput = processor.resolve(AST, new Environment(`root`), processor.symbolTable, { rollDice: true })
+  const resolvedOutput = processor.resolve(AST, new Environment(`root`), processor.symbolTable, { syntacticalContext, rollDice: true })
 
   const { originalContent, evaluation, content, isReady } = resolvedOutput
 

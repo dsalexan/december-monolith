@@ -11,12 +11,14 @@ import { getDeepProperties, isPrimitive } from "@december/utils/typing"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
-import { DeleteMutation, doesMutationHaveValue, Mutation, OverrideMutation, SET, SetMutation } from "../mutation/mutation"
+import { DeleteMutation, doesMutationHaveValue, Mutation, OVERRIDE, OverrideMutation, SET, SetMutation } from "../mutation/mutation"
 
 import type ObjectController from "../controller"
 import { IntegrityEntry } from "../controller/integrityRegistry"
 import { ObjectPropertyReference } from "./property"
 import { EventTrace } from "../controller/eventEmitter/event"
+
+export const logger = churchill.child(`mutableObject`, undefined, { separator: `` })
 
 export const MUTABLE_OBJECT_RANDOM_ID = Symbol.for(`MUTABLE_OBJECT_RANDOM_ID`)
 
@@ -99,6 +101,11 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     return this._getData(get(this.data, path), last(_path)!)
   }
 
+  /** Return mutation instructios to set reference to metadata in specific path */
+  public setReferenceToMetadata(path: string, force?: boolean): Mutation[] {
+    return [OVERRIDE(path, new PropertyReference(this.reference(), `metadata.${path}`), force)]
+  }
+
   /** Store metadata in object (and also reference in "regular" data) */
   public storeMetadata(value: unknown, targetPath: string, integrityEntries: IntegrityEntry[] = []): Mutation[] {
     assert(integrityEntries.length > 0, `Integrity entries must be provided when storing metadata`)
@@ -107,7 +114,7 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     set(this.metadata, targetPath, value)
 
     // 2. Return mutation instructions (since we should still register in "regular" data the reference to metadata)
-    return [SET(targetPath, new PropertyReference(this.reference(), `metadata.${targetPath}`))]
+    return this.setReferenceToMetadata(targetPath)
   }
 
   constructor(controller: ObjectController, id: ObjectID | typeof MUTABLE_OBJECT_RANDOM_ID = MUTABLE_OBJECT_RANDOM_ID) {
@@ -214,7 +221,7 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     // 5.B. Emit this shitton of events
     //      A object could be listening for changes in itself (OBJECT LEVEL)
     //      A object A could be listening for changes in object B (CONTROLLER LEVEL)
-    for (const propertyReference of referencedProperties) {
+    for (const [i, propertyReference] of referencedProperties.entries()) {
       this.controller.eventEmitter.emit({
         type: `property:updated`,
         property: propertyReference,
@@ -233,11 +240,14 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     throw new Error(`Method "${mutation.type}" not implemented.`)
   }
 
-  protected SET(mutableData: TData, { type, property, value }: SetMutation | OverrideMutation): MutationInstruction {
+  protected SET(mutableData: TData, { type, property, value, ...mutation }: SetMutation | OverrideMutation): MutationInstruction {
     const currentValue = get(mutableData, property)
 
     if (type !== `OVERRIDE`) assert(currentValue === undefined, `Property "${property}" already exists in data`)
-    if (isEqual(currentValue, value)) return { type: `skip` } // property is already set
+
+    const shouldForce = type === `OVERRIDE` && (mutation as OverrideMutation).force
+
+    if (isEqual(currentValue, value) && !shouldForce) return { type: `skip` } // property is already set
 
     set(mutableData, property, value) // mutate mutableData
 

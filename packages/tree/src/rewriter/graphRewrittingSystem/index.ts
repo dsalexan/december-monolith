@@ -58,8 +58,14 @@ export default class GraphRewritingSystem {
 
     let root = originalRoot
     for (const [i, node] of nodes.entries()) {
-      // _logger.add(paint.bold(node.name)).info()
+      // _logger.add(paint.bold(node.name))
+
       const changedNode = this.applyNode(node)
+
+      // _logger
+      //   .add(paint.grey.dim(` -> `))
+      //   .add(changedNode?.getContent() ?? `<nothing>`)
+      //   .info()
 
       // update root if necessary
       if (i === nodes.length - 1 && changedNode) root = changedNode
@@ -71,6 +77,8 @@ export default class GraphRewritingSystem {
   /** Apply rewriting rules to node and its surroundings (the function already modifies the tree internally) */
   public applyNode(node: Node): Nullable<Node> {
     let DEBUG = false // COMMENT
+
+    // if (node.name === `o1.a`) debugger
 
     let current: Node = node
 

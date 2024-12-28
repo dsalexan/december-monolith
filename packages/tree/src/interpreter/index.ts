@@ -1,29 +1,31 @@
 import { AnyObject, MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
-import { orderBy, sum } from "lodash"
+import { isNil, orderBy, sum } from "lodash"
 import assert, { match } from "assert"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
 import { Expression, ExpressionStatement, Node, Statement } from "../tree"
 import Environment, { VariableName } from "./environment"
-import { EvaluationFunction, NodeConversionFunction, NodeEvaluator, RuntimeEvaluation, RuntimeValue } from "./evaluator"
+import { EvaluationFunction, NodeConversionFunction, NodeEvaluator, NumericValue, ObjectValue, RuntimeEvaluation, RuntimeValue, StringValue } from "./evaluator"
 import { Simbol, SymbolTable } from "../symbolTable"
 import type Parser from "../parser"
+import { SyntacticalContext } from "../parser"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export { default as Environment, VARIABLE_NOT_FOUND } from "./environment"
 export type { VariableName } from "./environment"
 
-export type { EvaluationFunction, NodeConversionFunction, ReadyCheckerFunction, EvaluationOutput, makeRuntimeValue } from "./evaluator"
-export { NodeEvaluator, RuntimeEvaluation, NumericValue, StringValue, FunctionValue, ObjectValue, BooleanValue, UndefinedValue, VariableValue, UnitValue, QuantityValue, RuntimeValue } from "./evaluator"
+export type { EvaluationFunction, NodeConversionFunction, PostProcessFunction, EvaluationOutput, makeRuntimeValue } from "./evaluator"
+export { NodeEvaluator, RuntimeEvaluation, NumericValue, StringValue, FunctionValue, ObjectValue, BooleanValue, UndefinedValue, VariableValue, UnitValue, QuantityValue, ExpressionValue, RuntimeValue } from "./evaluator"
 export type { Contextualized, RuntimeFunction } from "./evaluator"
-export { DEFAULT_EVALUATOR, DEFAULT_EVALUATIONS, DEFAULT_NODE_CONVERSORS, DEFAULT_READY_CHECKERS } from "./evaluator/default"
+export { DEFAULT_EVALUATOR, DEFAULT_EVALUATIONS, DEFAULT_NODE_CONVERSORS, DEFAULT_POST_PROCESS } from "./evaluator/default"
 export type { DefaultEvaluatorProvider } from "./evaluator/default"
 
 export interface InterpreterOptions {
   logger: typeof _logger
   isValidFunctionName?: (functionName: string) => boolean
+  syntacticalContext: SyntacticalContext
 }
 
 export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOptions extends WithOptionalKeys<InterpreterOptions, `logger`> = WithOptionalKeys<InterpreterOptions, `logger`>> {
@@ -76,31 +78,27 @@ export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOpti
     //    - Any output will have a NODE, indicating the "final form" of the SUB_TREE after all evaluations.
     //    - That NODE can be a statement or an expression.
 
-    let interpretationEvaluation: RuntimeEvaluation<TRuntimeValue, Statement>
+    let runtimeValue: Nullable<RuntimeValue<any>> = result.runtimeValue
 
-    // 2. If result is RESOLVED, repack runtimeValue into an expression (since it yields a value) and that expression into a statement
-    if (RuntimeEvaluation.isResolved(result)) {
-      const expression = this.evaluator.convertToNode(this, result.runtimeValue)
-      assert(expression instanceof Expression, `Anything that yields a value is an expression dude`) // COMMENT
+    // 2. Tries to post-process the resulting tree (or resulting runtimeValue) into an RuntimeValue (mostly used for external modules, also for ObjectValue with numeric representation in expressionMode)
+    assert(Expression.isExpression(result.node), `Expecting a Expression as resulting node`)
+    const postProcessedRuntimeValue = this.evaluator.postProcess(this, result, this.options.syntacticalContext) ?? runtimeValue
 
-      const expressionStatement = new ExpressionStatement(expression)
-      interpretationEvaluation = new RuntimeEvaluation(result.runtimeValue as TRuntimeValue, expressionStatement)
-    }
-    // 3. If it is UNRESOLVED, just return the original node (repacking as statement if necessary)
-    else {
+    // 3. If result is UNRESOLVED (lacks final RuntimeValue) still, pack node into Statement
+    if (postProcessedRuntimeValue === null) {
       let statement: Statement = result.node as Statement
       if (!Statement.isStatement(result.node)) statement = new ExpressionStatement(result.node as Expression)
-      interpretationEvaluation = new RuntimeEvaluation(null as any, statement)
+
+      return new RuntimeEvaluation(null as any, statement)
     }
 
-    return interpretationEvaluation
-  }
+    // 4. RESOLVED evaluation, rebuild RuntimeEvaluation from RuntimeValue
+    assert(postProcessedRuntimeValue !== null && RuntimeValue.isRuntimeValue(postProcessedRuntimeValue), `Post-processed runtime value must be a RuntimeValue`) // COMMENT
 
-  /** Checks (through nodeEvaluator) if evaluationOutput is ready (i.e. doesn't require any more work) */
-  public isReady(evaluation: RuntimeEvaluation<RuntimeValue<any>, Statement>): boolean
-  public isReady(tree: Node): boolean
-  public isReady(evaluationOrTree: RuntimeEvaluation<RuntimeValue<any>, Statement> | Node): boolean {
-    return this.evaluator.isReady(this, evaluationOrTree as any)
+    const expression = this.evaluator.convertToNode(this, postProcessedRuntimeValue)
+    assert(expression instanceof Expression, `Anything that yields a value is an expression dude`) // COMMENT
+
+    return new RuntimeEvaluation(postProcessedRuntimeValue as TRuntimeValue, new ExpressionStatement(expression))
   }
 
   /** Index a variable name in SymbolTable  */
@@ -129,7 +127,7 @@ export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOpti
 
     console.log(` `)
 
-    if (this.isReady(this.result)) _logger.add(paint.green(`Ready`)).info()
+    if (!isNil(this.result.runtimeValue)) _logger.add(paint.green(`Ready`)).info()
     else _logger.add(paint.yellow.bold(`NOT READY!`)).info()
 
     _logger.add(paint.grey(`RuntimeValue: `))

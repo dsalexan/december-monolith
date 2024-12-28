@@ -76,10 +76,10 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
   }
 
   /** Return syntactical parser for specific denotation (stmt, nud, led) */
-  public getParser(denotation: `statement`, kind: TokenKindName): MaybeUndefined<StatementParser>
-  public getParser(denotation: `nud`, kind: TokenKindName): MaybeUndefined<NUDParser>
-  public getParser(denotation: `led`, kind: TokenKindName): MaybeUndefined<LEDParser>
-  public getParser(denotation: SyntacticalDenotation, kind: TokenKindName): MaybeUndefined<Function> {
+  public getParser(denotation: `statement`, kind: TokenKindName, before: MaybeUndefined<TokenKindName>): MaybeUndefined<StatementParser>
+  public getParser(denotation: `nud`, kind: TokenKindName, before: MaybeUndefined<TokenKindName>): MaybeUndefined<NUDParser>
+  public getParser(denotation: `led`, kind: TokenKindName, before: MaybeUndefined<TokenKindName>): MaybeUndefined<LEDParser>
+  public getParser(denotation: SyntacticalDenotation, kind: TokenKindName, before: MaybeUndefined<TokenKindName>): MaybeUndefined<Function> {
     let functionNames: string[] = uniq(this.parsers[denotation][kind] ?? [])
 
     assert(functionNames.length <= 1, `Multiple parsers for token kind "${kind}" and denotation "${denotation}"`)

@@ -22,7 +22,7 @@ import logger, { paint } from "./logger"
 export { Node, NodeCloneOptions } from "./tree"
 
 export { default as Lexer, LexicalGrammar, LexicalGrammarMatch, DEFAULT_GRAMMAR } from "./lexer"
-export { default as Parser } from "./parser"
+export { default as Parser, SyntacticalContext } from "./parser"
 export { Environment } from "./interpreter"
 export { SymbolTable } from "./symbolTable"
 

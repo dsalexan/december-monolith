@@ -38,15 +38,16 @@ async function run() {
   // general.update([SET(`_.GCA`, GCA.general)], [], ImportEvent)
 
   for (const { type, trait } of GCA.allTraits) {
-    if (
-      ![
-        11290, // ST:Punch
-        11178, // ST:Bite
-        12899, // SK:Karate
-        11193, // ST:DX
-      ].includes(trait.id)
-    )
-      continue
+    // if (
+    //   ![
+    //     11290, // ST:Punch
+    //     11178, // ST:Bite
+    //     12899, // SK:Karate
+    //     11193, // ST:DX
+    //     13006, // Acute Taste and Smell
+    //   ].includes(trait.id)
+    // )
+    //   continue
 
     const object = character.makeObject(trait.id.toString())
     character.tagObject(object, `${type}s`)

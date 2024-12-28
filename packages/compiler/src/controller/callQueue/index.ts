@@ -214,9 +214,9 @@ export default class ObjectCallQueue extends ObjectManager {
 
     // 3. Enqueue execution context
     if (this.__DEBUG) {
-      logger.add(...paint.grey(`[`, paint.yellow.dim(`enqueue`), `]`)).add(` `)
-      logger.add(...explainExecutionContext(executionContext, { object: _object, queue, controller: this.controller }))
-      logger.info()
+      // logger.add(...paint.grey(`[`, paint.yellow.dim(`enqueue`), `]`)).add(` `)
+      // logger.add(...explainExecutionContext(executionContext, { object: _object, queue, controller: this.controller }))
+      // logger.info()
     }
 
     queue.enqueue(executionContext)
@@ -240,15 +240,28 @@ export default class ObjectCallQueue extends ObjectManager {
           logger.add(...paint.grey(`[`, paint.magenta.dim(`execute`), `]`)).add(` `)
           logger.add(...explainExecutionContext(executionContext, { queue, controller: this.controller }))
           logger.info()
+          // logger.timer(`t0`)
         }
 
         this.executeContext(executionContext)
+
+        if (this.__DEBUG) {
+          // logger.profiler(`t0`).done(duration =>
+          //   logger
+          //     .add(...paint.dim.grey(`[`, paint.grey.dim(`execute`), `]`))
+          //     .add(` `)
+          //     .add(paint.italic.grey(`${duration} ms`))
+          //     .info(),
+          // )
+        }
       }
     }
   }
 
   /** Execute specific context */
   protected executeContext(executionContext: ExecutionContext): boolean {
+    // logger.timer(`execute-context`)
+
     // 1. Get stuff from storage and registries
     const object = this.controller.store.getByReference(executionContext.object, true)!
     const mutationFrame = this.controller.frameRegistry.get(object.id, executionContext.name)
@@ -276,9 +289,16 @@ export default class ObjectCallQueue extends ObjectManager {
       integrityEntries = mutationFrameReturn.integrityEntries
     } else mutations = [mutationFrameReturn]
 
+    // logger.profiler(`execute-context`).done((duration, profiler) => logger.add(`${profiler} took ${duration} ms`).debug())
+    // logger.timer(`update`)
+
     // 4. Update stuff
-    return object.update(mutations, integrityEntries, {
+    const _return = object.update(mutations, integrityEntries, {
       previousEvent: executionContext.eventDispatcher,
     })
+
+    // logger.profiler(`update`).done((duration, profiler) => logger.add(`${profiler} took ${duration} ms`).debug())
+
+    return _return
   }
 }

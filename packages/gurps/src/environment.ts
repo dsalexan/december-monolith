@@ -34,7 +34,9 @@ export const basethdice: Contextualized = (i: Interpreter, node: Node, environme
   if (!damageTable) return null
 
   const level = runtimeLevel.asNumber()
+  if (level === 0 && ObjectValue.isObjectValue(runtimeLevel) && runtimeLevel.isEmptyObject()) return null // basically ignore function for emptyObject
   assert(level > 0, `Level should be a positive number`)
+
   const damage = damageTable[level]
   if (!damage) return null
 

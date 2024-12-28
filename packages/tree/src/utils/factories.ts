@@ -1,5 +1,6 @@
 import { ArtificialToken, getTokenKind } from "../token"
 import { Token } from "../token/core"
+import { TokenKindName } from "../token/kind"
 import { Identifier, Node, NodeType, NumericLiteral, StringLiteral } from "../tree"
 
 // export function getClass(type: NodeType): Node {
@@ -8,6 +9,10 @@ import { Identifier, Node, NodeType, NumericLiteral, StringLiteral } from "../tr
 
 //   throw new Error(`Not implemented type "${type}"`)
 // }
+
+export function makeToken(value: string, tokenKind: TokenKindName = `string`): ArtificialToken {
+  return new ArtificialToken(getTokenKind(tokenKind), value)
+}
 
 export function makeConstantLiteral(value: number): NumericLiteral
 export function makeConstantLiteral(value: string): StringLiteral

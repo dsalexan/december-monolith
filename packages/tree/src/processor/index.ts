@@ -22,6 +22,7 @@ export interface BaseProcessorRunOptions {
   logger?: typeof _logger
   debug?: boolean
   environmentUpdateCallback?: (environment: Environment, symbolTable: SymbolTable) => void
+  syntacticalContext: SyntacticalContext
   //
   resolutionRun?: number
 }
@@ -61,14 +62,14 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
   }
 
   /** Parses string expression into an Abstract Syntax Tree */
-  public parse(expression: string, syntacticalContext: SyntacticalContext, options: BaseProcessorRunOptions): Node {
+  public parse(expression: string, options: BaseProcessorRunOptions): Node {
     const DEBUG = options.debug ?? false // COMMENT
     const logger = options.logger ?? _logger // COMMENT
 
     const tokens = this.lexer.process(this.lexicalGrammar, expression, {})
     if (DEBUG) this.lexer.print() // COMMENT
 
-    const AST = this.parser.process(this.syntacticalGrammar, tokens, syntacticalContext, {})
+    const AST = this.parser.process(this.syntacticalGrammar, tokens, { ...options })
     if (DEBUG) this.parser.print() // COMMENT
 
     return AST
@@ -94,8 +95,10 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
       latestPruning = pruning
       latestTree = latestPruning.evaluation.node
 
-      // 2. If it is ready, break resolution loop
-      if (latestPruning.isReady) break
+      // 2. If it is ready, break
+      // if (latestPruning.isReady) {
+      //   if (latestPruning.content === `((2d6 - 1) + 0) + 0`) debugger
+      // }
 
       // 3. If nothing really changed from last iteration, break resolution loop
       if (latestPruning.originalContent === latestPruning.content) break
@@ -107,7 +110,37 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
 
     assert(latestPruning !== null, `Pruning output should not be null`)
 
-    // B. Wait for Environment update
+    // // B. If pruning was successful, simplify tree (why not? performance maybe)
+    // if (latestPruning.isReady) {
+    //   let latestContent = latestTree.getContent()
+
+    //   if (latestPruning.content === '((2d6 - 1) + 0) + 0') debugger
+
+    //   while (i < STACK_OVERFLOW_PROTECTION) {
+    //     const simplification = this.rewriter.process(latestTree, this.graphRewriteSystem, {})
+    //     const simplifiedContent = simplification.getContent()
+
+    //     // If nothing changed, break
+    //     if (simplifiedContent === latestContent) break
+
+    //     latestTree = simplification
+    //     latestContent = simplifiedContent
+
+    //     // If something was simplified, tries again
+    //     i++
+    //     assert(i < STACK_OVERFLOW_PROTECTION, `Stack overflow protection triggered`) // COMMENT
+    //   }
+
+    //   if (latestPruning.content !== latestContent) {
+    //     debugger
+
+    //     assert(Statement.isStatement(latestTree), `Expecting a Statement as resulting node`) // COMMENT
+    //     latestPruning.evaluation = new RuntimeEvaluation(latestPruning.evaluation.runtimeValue, latestTree as Statement)
+    //     latestPruning.content = latestContent
+    //   }
+    // }
+    // // C. Wait for Environment update
+    // else {
     if (options.environmentUpdateCallback) {
       const previosVersion = environment.getVersion()
 
@@ -119,9 +152,10 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
       // 2. If environment was updated, try to resolve again
       assert(RESOLUTION_RUN + 1 < STACK_OVERFLOW_PROTECTION, `Stack overflow protection triggered`) // COMMENT
       if (previosVersion !== currentVersion) return this.resolve(latestTree, environment, symbolTable, { ...options, resolutionRun: RESOLUTION_RUN + 1 })
+      // }
     }
 
-    // 3. If nothing changed, end resolution
+    // D. If nothing changed (be that the environment or the evaluated tree), end resolution
     return latestPruning!
   }
 
@@ -152,10 +186,12 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
 
     // 2. Evaluate simplified AST
     //      (we ALWAYS evaluate post-simplification, it is super fast)
-    const evaluatedOutput = this.interpreter.process(`${numberToLetters(options.resolutionRun ?? 0).toLowerCase()}I${options.pruningRun}`, tree, environment, symbolTable, this.nodeEvaluator, this.parser, { ...options })
+    const evaluatedOutput = this.interpreter.process(`${numberToLetters(options.resolutionRun ?? 0).toLowerCase()}I${options.pruningRun}`, tree, environment, symbolTable, this.nodeEvaluator, this.parser, {
+      ...options,
+    })
     if (DEBUG) this.interpreter.print() // COMMENT
     const evaluatedContent = evaluatedOutput.getContent()
-    const isReady = this.interpreter.isReady(evaluatedOutput)
+    const isReady = evaluatedOutput.runtimeValue !== null
 
     return {
       originalContent,

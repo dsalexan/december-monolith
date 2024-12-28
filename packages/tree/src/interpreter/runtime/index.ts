@@ -8,7 +8,7 @@ import { RuntimeEvaluation } from "./evaluation"
 import type Interpreter from ".."
 import type { Environment, VariableName } from ".."
 
-export const RUNTIME_VALUE_TYPES = [`undefined`, `boolean`, `number`, `string`, `function`, `variable`, `unit`, `quantity`, `object`] as const
+export const RUNTIME_VALUE_TYPES = [`undefined`, `boolean`, `number`, `string`, `function`, `variable`, `unit`, `quantity`, `object`, `expression`] as const
 export type RuntimeValueType = (typeof RUNTIME_VALUE_TYPES)[number]
 
 export { RuntimeEvaluation } from "./evaluation"
@@ -47,7 +47,15 @@ export class RuntimeValue<TValue> {
     return false
   }
 
+  public hasStringRepresentation(): boolean {
+    return false
+  }
+
   public asNumber(): number {
+    throw new Error(`Unsupported operation`)
+  }
+
+  public asString(): string {
     throw new Error(`Unsupported operation`)
   }
 }
@@ -177,6 +185,10 @@ export class ObjectValue<TObject extends AnyObject> extends RuntimeValue<TObject
     return this._numberValue !== null
   }
 
+  public override hasStringRepresentation(): boolean {
+    return this._stringValue !== null
+  }
+
   public override asNumber(): number {
     assert(this._numberValue !== null, `Object Value has no number value.`)
     return this._numberValue
@@ -198,6 +210,23 @@ export class VariableValue extends RuntimeValue<VariableName> {
 
   public static isVariableValue(value: any): value is VariableValue {
     return value.type === `variable`
+  }
+}
+
+export class ExpressionValue extends RuntimeValue<Expression> {
+  type: `expression` = `expression`
+
+  constructor(expression: Expression) {
+    super(expression)
+    assert(expression instanceof Expression, `Expression must be a valid expression.`)
+  }
+
+  public static isExpressionValue(value: any): value is ExpressionValue {
+    return value.type === `expression`
+  }
+
+  public getContent() {
+    return this.value.getContent()
   }
 }
 

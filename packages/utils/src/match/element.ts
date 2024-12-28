@@ -26,6 +26,10 @@ export class EqualsElementPattern<TElement = any> extends BasePattern {
   override _toString() {
     return `="${this.element}"`
   }
+
+  public static isEqualsElementPattern(value: any): value is EqualsElementPattern {
+    return value instanceof EqualsElementPattern
+  }
 }
 
 export interface RegexPatternMatchInfo extends PatternMatchInfo {

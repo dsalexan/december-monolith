@@ -1,10 +1,9 @@
-import { IntegrityEntryRemovedEvent, IntegrityEntryUpdatedEvent } from "./event/events/integrityEntry"
 import assert from "assert"
 import { AnyObject, MaybeUndefined, Nullable } from "tsdef"
-import { EventEmitter } from "@billjs/event-emitter"
-import { identity, isEqual, sortBy } from "lodash"
+import { identity, isEqual, isSymbol, sortBy } from "lodash"
 
 import { Reference } from "@december/utils/access"
+import { EqualsElementPattern } from "@december/utils/match/element"
 
 import churchill, { Block, paint, Paint } from "../../logger"
 
@@ -16,9 +15,12 @@ import { ObjectManager } from "../manager"
 import { Event, EventDispatcher, explainEvent, explainTargetEvent, matchEventToTargets, TargetEvent } from "./event"
 import { Listener, ListenerCallback, ListenerCallbackMetadata } from "./listener"
 import { IntegrityEntry } from "../integrityRegistry"
-
+import { IntegrityEntryRemovedEvent, IntegrityEntryUpdatedEvent } from "./event/events/integrityEntry"
 export { makeArtificialEventTrace } from "./event"
+
 export const logger = churchill.child(`compiler`, undefined, { separator: `` })
+
+export const MAX_LISTENERS_BY_INDEX = 50
 
 export interface ObjectStoreAddOptions {
   skipAliases?: boolean
@@ -33,15 +35,18 @@ export default class ObjectEventEmitter extends ObjectManager {
   protected listeners: {
     byID: Map<Listener[`id`], Listener>
     byEvent: Record<TargetEvent[`type`], Listener[`id`][]>
+    byPropertyUpdatedEvent: Record<string, Record<string, Listener[`id`][]>> // type -> object (aka reference.value) -> listener[]
     byIntegrityKey: Record<IntegrityEntry[`key`], Listener[`id`][]>
   } = {
     byID: new Map(),
     byEvent: {} as any,
+    byPropertyUpdatedEvent: {} as any,
     byIntegrityKey: {} as any,
   }
 
   constructor(controller: ObjectController) {
     super(controller)
+    // this.__DEBUG = false
   }
 
   override listen() {
@@ -125,9 +130,34 @@ export default class ObjectEventEmitter extends ObjectManager {
     this.listeners.byID.set(listener.id, listener)
 
     // 2. EVENT -> LISTENER IDs
-    this.listeners.byEvent[listener.targetEvent.type] ??= []
-    assert(this.listeners.byEvent[listener.targetEvent.type].includes(listener.id) === false, `Listener "${listener.id}" already exists for event "${listener.targetEvent.type}"`)
-    this.listeners.byEvent[listener.targetEvent.type].push(listener.id)
+    const eventType = listener.targetEvent.type
+
+    // A. BY_EVENT INDEX
+    if (eventType !== `property:updated`) {
+      this.listeners.byEvent[eventType] ??= []
+      assert(this.listeners.byEvent[eventType].includes(listener.id) === false, `Listener "${listener.id}" already exists for event "${eventType}"`)
+      this.listeners.byEvent[eventType].push(listener.id)
+      assert(this.listeners.byEvent[eventType].length < MAX_LISTENERS_BY_INDEX, `Too many listeners for event "${eventType}", create a new index`)
+    }
+    // B. BY_PROPERTY_UPDATED_EVENT INDEX
+    else {
+      const properties = listener.targetEvent.properties
+      for (const { referencePattern, propertyPattern } of properties) {
+        assert(!isSymbol(referencePattern), `Club cant handle`)
+
+        const typePattern = referencePattern.typePattern
+        assert(EqualsElementPattern.isEqualsElementPattern(typePattern), `Unimplemented`)
+        this.listeners.byPropertyUpdatedEvent[typePattern.element] ??= {}
+
+        const objectPattern = referencePattern.valuePattern
+        assert(EqualsElementPattern.isEqualsElementPattern(objectPattern), `Unimplemented`)
+        const list = (this.listeners.byPropertyUpdatedEvent[typePattern.element][objectPattern.element] ??= [])
+
+        assert(list.includes(listener.id) === false, `Listener "${listener.id}" already exists for propertyUpdatedEvent "${typePattern.element} -> ${objectPattern.element}"`)
+        list.push(listener.id)
+        assert(list.length < MAX_LISTENERS_BY_INDEX, `Too many listeners for propertyUpdatedEvent "${typePattern.element} -> ${objectPattern.element}", create a new index `)
+      }
+    }
 
     // 3. INTEGRITY ENTRY -> LISTENER IDs
     if (listener.integrityEntries) {
@@ -135,6 +165,7 @@ export default class ObjectEventEmitter extends ObjectManager {
         this.listeners.byIntegrityKey[entry.key] ??= []
         assert(this.listeners.byIntegrityKey[entry.key].includes(listener.id) === false, `Listener "${listener.id}" already exists for integirty key "${entry.key}"`)
         this.listeners.byIntegrityKey[entry.key].push(listener.id)
+        assert(this.listeners.byIntegrityKey[entry.key].length < MAX_LISTENERS_BY_INDEX, `Too many listeners for integrity key "${entry.key}", create a new index `)
       }
     }
 
@@ -160,6 +191,7 @@ export default class ObjectEventEmitter extends ObjectManager {
     this.listeners.byID.delete(listenerID)
 
     // 2. EVENT -> LISTENER IDs
+    debugger
     if (this.listeners.byEvent[listener.targetEvent.type]) this.listeners.byEvent[listener.targetEvent.type] = this.listeners.byEvent[listener.targetEvent.type].filter(id => id !== listenerID)
 
     // 3. INTEGRITY ENTRY -> LISTENER IDs
@@ -174,10 +206,20 @@ export default class ObjectEventEmitter extends ObjectManager {
 
   /** Call callback listening to a event. Not responsible for queueing. */
   emit(event: Event) {
-    const listenersOfType: Listener[] = this.listeners.byEvent[event.type]?.map((id: string) => this.get(id)!) ?? []
+    let listenersOfType: Listener[]
+
+    if (event.type !== `property:updated`) listenersOfType = this.listeners.byEvent[event.type]?.map((id: string) => this.get(id)!) ?? []
+    else {
+      const { type, value: object } = event.property.object
+      const property = event.property.property
+
+      listenersOfType = this.listeners.byPropertyUpdatedEvent[type]?.[object]?.map((id: string) => this.get(id)!) ?? []
+    }
+
     if (listenersOfType.length === 0) return []
 
     const listeners = matchEventToTargets(event, listenersOfType)
+
     for (const { targetable: listener, matches } of listeners) {
       const { id, targetEvent, callback } = listener
 

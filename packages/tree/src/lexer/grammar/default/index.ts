@@ -76,7 +76,7 @@ export const OPERATORS = [PIPE, AMPERSAND, _EQUALS, GREATER_OR_EQUAL, SMALLER_OR
 
 const KEYWORD_PRIORITY = 10 ** 20
 
-export const _IF = createEntry(KEYWORD_PRIORITY + 1, `if`, EQUALS(`@if`, true))
+export const _IF = createEntry(KEYWORD_PRIORITY + 1, `if`, REGEX(/^[\@\$]if$/i))
 export const _THEN = createEntry(KEYWORD_PRIORITY + 2, `then`, EQUALS(`then`, true))
 export const _ELSE = createEntry(KEYWORD_PRIORITY + 2, `else`, EQUALS(`else`, true))
 

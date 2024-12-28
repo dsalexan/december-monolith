@@ -1,7 +1,7 @@
 import { MaybeArray } from "tsdef"
 import { isArray } from "lodash"
 
-import { BinaryExpression, BooleanLiteral, Identifier, Node, NumericLiteral, StringLiteral } from "../tree"
+import { BinaryExpression, BooleanLiteral, Identifier, Node, NumericLiteral, PrefixExpression, StringLiteral } from "../tree"
 
 export function isLiteral(node: Node): node is NumericLiteral | StringLiteral | BooleanLiteral | Identifier {
   return isNumericLiteral(node) || isStringLiteral(node) || isBooleanLiteral(node) || isIdentifier(node) || node.tags.includes(`literal`)
@@ -41,6 +41,17 @@ export function isBinaryExpression(node: Node, operators?: MaybeArray<string>): 
   if (operators) {
     const operatorList = isArray(operators) ? operators : [operators]
     return operatorList.includes((node as BinaryExpression).operator.content)
+  }
+
+  return true
+}
+
+export function isPrefixExpression(node: Node, operators?: MaybeArray<string>): node is PrefixExpression {
+  if (node.type !== `PrefixExpression`) return false
+
+  if (operators) {
+    const operatorList = isArray(operators) ? operators : [operators]
+    return operatorList.includes((node as PrefixExpression).operator.content)
   }
 
   return true
