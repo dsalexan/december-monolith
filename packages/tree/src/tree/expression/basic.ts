@@ -8,6 +8,8 @@ import { Expression } from "./expression"
 
 import { Block, paint } from "../../logger"
 import { Token } from "../../token/core"
+import { SyntacticalContext } from "../../parser"
+import { cloneDeep } from "lodash"
 
 export class Literal<TValue> extends Expression {
   public getValue(): TValue {

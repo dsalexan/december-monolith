@@ -35,6 +35,8 @@ export const TOKEN_KIND_IDS = {
   if: [`keyword`],
   then: [`keyword`],
   else: [`keyword`],
+  expression_context: [`keyword`],
+  string_context: [`keyword`],
   //
   comma: [`separator`],
   semi_colon: [`separator`],

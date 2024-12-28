@@ -14,7 +14,7 @@ export function createEntry(priority: number, kind: TokenKind | TokenKindName, t
 
 // #region LITERALS
 
-const LITERAL_PRIORITY = 10 ** 11
+export const LITERAL_PRIORITY = 10 ** 11
 
 export const NUMBER = createEntry(LITERAL_PRIORITY + 2, `number`, REGEX(/^(([0-9]+)|([\.][0-9]+)|([0-9]+[\.][0-9]+))$/))
 const _stringPattern = `[0-9A-Za-z_$@:\\.\\?\\!]`
@@ -26,7 +26,7 @@ export const LITERAL = [NUMBER, STRING]
 
 // #region SEPARATORS
 
-const SEPARATOR_PRIORITY = 10 ** 3
+export const SEPARATOR_PRIORITY = 10 ** 3
 
 export const COMMA = createEntry(SEPARATOR_PRIORITY + 15, `comma`, EQUALS(`,`))
 export const SEMI_COLON = createEntry(SEPARATOR_PRIORITY + 14, `semi_colon`, EQUALS(`;`))
@@ -52,7 +52,7 @@ export const SEPARATORS = [...SEPARATORS_WITHOUT_PIPE, PIPE]
 
 // #region OPERATORS
 
-const OPERATOR_PRIORITY = 10 ** 6
+export const OPERATOR_PRIORITY = 10 ** 6
 
 export const AMPERSAND = createEntry(OPERATOR_PRIORITY + 2, `ampersand`, EQUALS(`&`))
 
@@ -74,11 +74,13 @@ export const OPERATORS = [PIPE, AMPERSAND, _EQUALS, GREATER_OR_EQUAL, SMALLER_OR
 
 // #region KEYWORDS
 
-const KEYWORD_PRIORITY = 10 ** 20
+export const KEYWORD_PRIORITY = 10 ** 20
 
 export const _IF = createEntry(KEYWORD_PRIORITY + 1, `if`, REGEX(/^[\@\$]if$/i))
 export const _THEN = createEntry(KEYWORD_PRIORITY + 2, `then`, EQUALS(`then`, true))
 export const _ELSE = createEntry(KEYWORD_PRIORITY + 2, `else`, EQUALS(`else`, true))
+
+// export const CONTEXT = createEntry(KEYWORD_PRIORITY + 3, `context`, REGEX(/^[\@\$]context$/i))
 
 export const KEYWORDS = [_IF, _THEN, _ELSE]
 

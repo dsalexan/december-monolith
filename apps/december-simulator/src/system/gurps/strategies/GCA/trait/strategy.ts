@@ -155,9 +155,11 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     const baseEnvironment = new Environment(`gurps:local`, Trait.makeGURPSTraitEnvironment(character, object.data))
     // baseEnvironment.assignValue(`thr`, new VariableValue(mode.damage.basedOn))
 
-    assert(mode.damage.basedOn, `Unimplem,asdasd`)
-    baseEnvironment.assignValue(`thr`, new ExpressionValue(new CallExpression(new Identifier(makeToken(`@basethdice`)), [new Identifier(makeToken(mode.damage.basedOn!))])))
-    baseEnvironment.assignValue(`sw`, new ExpressionValue(new CallExpression(new Identifier(makeToken(`@baseswdice`)), [new Identifier(makeToken(mode.damage.basedOn!))])))
+    //    (some traits have fixed damage; or, at least, based on other shit than thr/sw)
+    if (mode.damage.basedOn) {
+      baseEnvironment.assignValue(`thr`, new ExpressionValue(new CallExpression(new Identifier(makeToken(`@basethdice`)), [new Identifier(makeToken(mode.damage.basedOn!))])))
+      baseEnvironment.assignValue(`sw`, new ExpressionValue(new CallExpression(new Identifier(makeToken(`@baseswdice`)), [new Identifier(makeToken(mode.damage.basedOn!))])))
+    }
 
     const options = { ...GCAStrategyProcessorListenOptions, ...GCAStrategyProcessorOptionsGenerator(object) }
 
@@ -170,6 +172,8 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     ]
     for (const path of paths) {
       let expression = get(object.data, path.expression)
+
+      global.__PROCESSING_OBJECT = object
 
       outputs.push(
         Strategy.process(object, path.target, {

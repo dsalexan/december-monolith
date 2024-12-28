@@ -24,6 +24,7 @@ import Rewriter, { GraphRewritingSystem, DEFAULT_GRAPH_REWRITING_RULESET } from 
 import { SymbolTable } from "../symbolTable"
 
 import Processor from "../processor"
+import { createEntry, KEYWORD_PRIORITY } from "../lexer/grammar"
 
 let expression = `10 + 2 * 3`
 expression = `One::level`
@@ -49,8 +50,8 @@ expression = `$if(@itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN 1 ELSE 0)`
 expression = `2d6 - 1`
 expression = `(2d6 - 1) + 0`
 expression = `((2d6 - 1) + 0) + 0`
-
 //
+expression = `$solver(%level)d`
 // expression = `2 * 1`
 // expression = `0 + 1 + 2 * 1`
 // expression = `3 / 3`
@@ -75,6 +76,9 @@ unitManager.add(...BASE_UNITS)
 const lexicalGrammar = new LexicalGrammar()
 lexicalGrammar.add(...DEFAULT_LEXICAL_GRAMMAR)
 
+const SOLVER = createEntry(KEYWORD_PRIORITY + 10, `expression_context`, EQUALS(`$solver`, true))
+lexicalGrammar.add(SOLVER)
+
 const syntacticalGrammar = new SyntacticalGrammar(unitManager)
 syntacticalGrammar.add(...DEFAULT_SYNTACTICAL_GRAMMAR)
 syntacticalGrammar.add(...DICE_MODULAR_SYNTACTICAL_GRAMMAR)
@@ -83,6 +87,7 @@ syntacticalGrammar.add(createReTyperEntry(`t`, `Identifier`, EQUALS(`t`)))
 syntacticalGrammar.add(createReTyperEntry(`o`, `Identifier`, EQUALS(`o`)))
 syntacticalGrammar.add(createReTyperEntry(`self`, `Identifier`, EQUALS(`self`)))
 syntacticalGrammar.add(createReTyperEntry(`alias`, `Identifier`, REGEX(/^"?\w{2}:.+"?$/)))
+syntacticalGrammar.add(createReTyperEntry(`me_level`, `Identifier`, EQUALS(`%level`, true)))
 
 const graphRewritingSystem = new GraphRewritingSystem()
 graphRewritingSystem.add(...DEFAULT_GRAPH_REWRITING_RULESET)

@@ -9,6 +9,7 @@ import { makeDefaultProcessor } from "@december/tree/processor"
 import { ObjectValue, RuntimeValue } from "@december/tree/interpreter"
 import { createReTyperEntry } from "@december/tree/parser"
 import { Simbol } from "@december/tree/symbolTable"
+import { createEntry, KEYWORD_PRIORITY } from "@december/tree/lexer/grammar"
 
 import { Strategy, Mutation, SET, MutableObject } from "@december/compiler"
 
@@ -32,6 +33,9 @@ export const GCAStrategyProcessorParseOptions: Omit<StrategyProcessorParseOption
   unitManager,
   processorFactory: options => {
     const processor = makeDefaultProcessor(options)
+
+    const _LEVEL = createEntry(KEYWORD_PRIORITY + 1, `if`, EQUALS(`%level`, true))
+    processor.lexicalGrammar.add(_LEVEL)
 
     processor.syntacticalGrammar.add(...DICE_MODULAR_SYNTACTICAL_GRAMMAR)
     processor.graphRewriteSystem.add(...DICE_MODULAR_REWRITER_RULESET)

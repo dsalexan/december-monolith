@@ -15,6 +15,8 @@ export const NODE_TYPES = [
   `StringLiteral`,
   `Identifier`,
   `UnitLiteral`,
+  //
+  `SyntacticalContextExpression`,
 ] as const
 
 export type NodeType = (typeof NODE_TYPES)[number]
@@ -33,6 +35,8 @@ export const NODE_TYPE_PREFIX: Record<NodeType, string> = {
   StringLiteral: `s`,
   Identifier: `i`,
   UnitLiteral: `u`,
+  //
+  SyntacticalContextExpression: `ctx`,
 }
 
 export const NODE_TYPE_COLOR = {

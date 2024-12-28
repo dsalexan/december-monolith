@@ -5,7 +5,7 @@
  * Each token is analysed following some rules (grammar rules?) to decide how it's node should be inserted into the existing tree
  */
 
-import { AnyObject, MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
+import { AnyObject, MaybeArray, MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
 import { orderBy, sum } from "lodash"
 import assert, { match } from "assert"
 
@@ -76,12 +76,12 @@ export default class Parser<TGrammarDict extends AnyObject = any> {
   }
 
   /** Advance token */
-  public next(expectedKind?: TokenKindName): Token {
+  public next(...expectedKinds: TokenKindName[]): Token {
     const previous = this.tokens[this.cursor]
     this.cursor++
 
     // Check if token kind is as expected
-    if (expectedKind) assert(!previous || previous.kind.name === expectedKind, `Expected token kind ${expectedKind}, got ${previous?.kind?.name}`)
+    if (expectedKinds.length > 0) assert(!previous || expectedKinds.includes(previous.kind.name), `Expected token kind ${expectedKinds.join(` or `)}, got ${previous?.kind?.name}`)
 
     return previous
   }
@@ -97,6 +97,8 @@ export default class Parser<TGrammarDict extends AnyObject = any> {
     this.grammar = grammar
     this.tokens = tokens
     this.cursor = 0
+
+    global.__PARSER_TOKENS = tokens.map(token => token.content).join(` `)
 
     this.AST = this.parse()
 

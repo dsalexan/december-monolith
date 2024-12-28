@@ -47,6 +47,10 @@ export function areDiceKeepEquals(A: MaybeUndefined<DiceKeep>, B: MaybeUndefined
 }
 
 export function parseDiceNotation(notation: string): Nullable<DiceData> {
+  if (notation === `d`) {
+    return { faces: 6 }
+  }
+
   const match = notation.match(/^(d\d+)(k[hlc]\d+)?(k[hlc]\d+)?(k[hlc]\d+)?$/i)
   if (match) {
     const [_, d, k1, k2, k3] = match

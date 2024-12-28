@@ -38,8 +38,12 @@ const MULTIPLICATION = createBindParserEntry<DefaultParserProvider>(`led`, `aste
 // LITERALS/SYMBOLS
 const NUMBER = createBindParserEntry<DefaultParserProvider>(`nud`, `number`, DEFAULT_BINDING_POWERS.PRIMARY, `parsePrimaryExpression`)
 const STRING = createBindParserEntry<DefaultParserProvider>(`nud`, `string`, DEFAULT_BINDING_POWERS.PRIMARY, `parsePrimaryExpression`)
+const STRING_STARTS_WITH_PERCENTAGE = createBindParserEntry<DefaultParserProvider>(`nud`, `percentage`, DEFAULT_BINDING_POWERS.PRIMARY, `parsePrimaryExpression`)
 const CONCATENATE_WHITESPACE = createBindParserEntry<DefaultParserProvider>(`led`, `whitespace`, DEFAULT_BINDING_POWERS.PRIMARY, `parseConcatenatedExpression`)
 const CONCATENATE_STRING = createBindParserEntry<DefaultParserProvider>(`led`, `string`, DEFAULT_BINDING_POWERS.PRIMARY, `parseConcatenatedExpression`)
+//
+const EXPRESSION_CONTEXT_CHANGE = createBindParserEntry<DefaultParserProvider>(`nud`, `expression_context`, DEFAULT_BINDING_POWERS.PRIMARY, `parseContextChangeExpression`)
+const STRING_CONTEXT_CHANGE = createBindParserEntry<DefaultParserProvider>(`nud`, `string_context`, DEFAULT_BINDING_POWERS.PRIMARY, `parseContextChangeExpression`)
 // const IDENTIFIER = createBindParserEntry<DefaultParserProvider>(`nud`, `identifier`, DEFAULT_BINDING_POWERS.PRIMARY, 'parsePrimaryExpression')
 
 // UNARY/PREFIX
@@ -84,8 +88,12 @@ export const DEFAULT_GRAMMAR: SyntacticalGrammarEntry<DefaultParserProvider>[] =
   // LITERALS/SYMBOLS
   NUMBER,
   STRING,
+  STRING_STARTS_WITH_PERCENTAGE,
   CONCATENATE_WHITESPACE,
   CONCATENATE_STRING,
+  //
+  EXPRESSION_CONTEXT_CHANGE,
+  STRING_CONTEXT_CHANGE,
   // IDENTIFIER,
 
   // UNARY/PREFIX

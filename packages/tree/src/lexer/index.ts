@@ -55,6 +55,8 @@ export default class Lexer {
     this.cursor = 0
     this.tokens = []
 
+    global.__LEXER_EXPRESSION = this.expression
+
     const words = Lexer.split(this.expression)
     this.tokens = this.scan(words)
 

@@ -8,7 +8,7 @@ import { Match } from "@december/utils"
 import { getTokenKind, TokenKind, TokenKindName } from "../../token/kind"
 import { AnyObject, Nullable } from "tsdef"
 
-export { DEFAULT_GRAMMAR } from "./default"
+export { DEFAULT_GRAMMAR, KEYWORD_PRIORITY } from "./default"
 
 export interface LexicalTestOptions {}
 

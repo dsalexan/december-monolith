@@ -3,6 +3,10 @@ import { Expression } from "./expression"
 
 import { Token } from "../../token/core"
 import { Node } from "../node"
+import { SyntacticalContext } from "../../parser"
+import { cloneDeep } from "lodash"
+import { Nullable } from "tsdef"
+import assert from "assert"
 
 export class BinaryExpression extends Expression {
   type: NodeType = `BinaryExpression`
@@ -160,5 +164,31 @@ export class IfExpression extends Expression {
     const alternative = this.alternative?.getContent({ depth, separator, wrap })
 
     return `@if(${condition} then ${consequent} else ${alternative})`
+  }
+}
+
+/** Basically changes the syntactical context for parsing down. More of a parsing device. */
+export class SyntacticalContextExpression extends Expression {
+  type: NodeType = `SyntacticalContextExpression`
+  public context: Nullable<SyntacticalContext>
+
+  public get expression(): Expression {
+    return this.children[0]
+  }
+
+  constructor(context: Nullable<SyntacticalContext>, expression: Expression) {
+    super()
+    this.context = context ? cloneDeep(context) : null
+    this.addChild(expression, 0, `expression`)
+  }
+
+  public override constructClone(options): this {
+    assert(this.context, `No context, what`)
+    return new SyntacticalContextExpression(this.context, this.expression.clone(options)) as this
+  }
+
+  public override getDebug(): string {
+    assert(this.context, `No context, what`)
+    return `{${this.context.mode.toUpperCase()}} ${this.expression.getDebug()}`
   }
 }
