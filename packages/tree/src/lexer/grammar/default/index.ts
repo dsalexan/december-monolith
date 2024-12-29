@@ -80,9 +80,10 @@ export const _IF = createEntry(KEYWORD_PRIORITY + 1, `if`, REGEX(/^[\@\$]if$/i))
 export const _THEN = createEntry(KEYWORD_PRIORITY + 2, `then`, EQUALS(`then`, true))
 export const _ELSE = createEntry(KEYWORD_PRIORITY + 2, `else`, EQUALS(`else`, true))
 
-// export const CONTEXT = createEntry(KEYWORD_PRIORITY + 3, `context`, REGEX(/^[\@\$]context$/i))
+export const INJECTION_FUNCTION = createEntry(KEYWORD_PRIORITY + 3, `injection_function`, REGEX(/^\$[a-z\_A-Z]+$/i))
+export const INJECTION_PLACEHOLDER = createEntry(KEYWORD_PRIORITY + 3, `injection_placeholder`, REGEX(/^\$\d+$/i))
 
-export const KEYWORDS = [_IF, _THEN, _ELSE]
+export const KEYWORDS = [_IF, _THEN, _ELSE, INJECTION_FUNCTION, INJECTION_PLACEHOLDER]
 
 // #endregion
 

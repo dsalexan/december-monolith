@@ -9,6 +9,7 @@ import { DICE_MODULAR_SYNTACTICAL_GRAMMAR, DiceRollExpression } from "./parser"
 import { DICE_RULESET } from "./rewriter"
 import { DICE_MODULAR_EVALUATOR_PROVIDER, DiceInterpreterOptions } from "./interpreter"
 import { DiceKeep } from "./dice"
+import assert from "assert"
 
 /** Make a processor using default modules and dice modules */
 export function makeDefaultDiceProcessor(options: ProcessorOptions): Processor<DiceInterpreterOptions> {
@@ -39,11 +40,16 @@ export function rollDice(diceNotationOrAST: string | Node, processor?: Processor
   processor ??= DEFAULT_DICE_PROCESSOR
   const syntacticalContext: SyntacticalContext = { mode: `expression` }
 
-  let AST: Node
-  if (isString(diceNotationOrAST)) AST = processor.parse(diceNotationOrAST, { syntacticalContext })
-  else AST = diceNotationOrAST
+  const environment = new Environment(`root`)
 
-  const resolvedOutput = processor.resolve(AST, new Environment(`root`), processor.symbolTable, { syntacticalContext, rollDice: true })
+  let AST: Node
+  if (isString(diceNotationOrAST)) {
+    const parsedOutput = processor.parse(diceNotationOrAST, environment, processor.symbolTable, { syntacticalContext })
+    assert(parsedOutput.AST, `Failed to parse expression.`)
+    AST = parsedOutput.AST
+  } else AST = diceNotationOrAST
+
+  const resolvedOutput = processor.resolve(AST, environment, processor.symbolTable, { syntacticalContext, rollDice: true })
 
   const { originalContent, evaluation, content, isReady } = resolvedOutput
 

@@ -10,7 +10,9 @@ import { AnyObject, Nullable } from "tsdef"
 
 export { DEFAULT_GRAMMAR, KEYWORD_PRIORITY } from "./default"
 
-export interface LexicalTestOptions {}
+export interface LexicalTestOptions {
+  kinds?: TokenKindName[]
+}
 
 export type LexicalGrammarCustomTest = (word: string, options: LexicalTestOptions) => { isMatch: boolean }
 
@@ -30,15 +32,19 @@ export interface LexicalGrammarMatch extends Omit<LexicalGrammarEntry, `test`> {
 }
 
 export default class LexicalGrammar {
-  entries: LexicalGrammarEntry[]
+  entries: Map<TokenKindName, LexicalGrammarEntry>
 
   constructor() {
-    this.entries = []
+    this.entries = new Map()
   }
 
   /** Adds a pattern to the grammar */
   public add(...entries: LexicalGrammarEntry[]) {
-    this.entries.push(...entries)
+    for (const entry of entries) {
+      assert(!this.entries.has(entry.kind.name), `TokenKind "${entry.kind.name}" already exists in LexicalGrammar`)
+
+      this.entries.set(entry.kind.name, entry)
+    }
 
     return this
   }
@@ -47,8 +53,12 @@ export default class LexicalGrammar {
   public match(word: string, options: LexicalTestOptions): LexicalGrammarMatch[] {
     const matches: LexicalGrammarMatch[] = []
 
-    // 1. Test word against all entries
-    for (const entry of this.entries) {
+    // 1. Get relevant entries
+    const allEntries = [...this.entries.values()]
+    const entries = options.kinds ? allEntries.filter(entry => options.kinds!.includes(entry.kind.name)) : allEntries
+
+    // 2. Test word against all entries
+    for (const entry of entries) {
       const match = isFunction(entry.test) ? entry.test(word, options) : entry.test.match(word)
       if (match.isMatch)
         matches.push({
@@ -58,7 +68,7 @@ export default class LexicalGrammar {
         })
     }
 
-    // 2. sort by priority (lower is worse)
+    // 3. sort by priority (lower is worse)
     const sorted = orderBy(matches, match => match.priority, `desc`)
 
     return sorted

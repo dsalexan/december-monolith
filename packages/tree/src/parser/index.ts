@@ -24,6 +24,7 @@ import { Expression } from "../tree"
 import { BinaryExpression, CallExpression, MemberExpression } from "../tree"
 import { Identifier, NumericLiteral, StringLiteral } from "../tree"
 import { SyntacticalContext } from "./grammar/parserFunction"
+import { InjectionData } from "../lexer"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -88,14 +89,24 @@ export default class Parser<TGrammarDict extends AnyObject = any> {
 
   // #endregion
 
-  public process(grammar: SyntacticalGrammar<TGrammarDict>, tokens: Token[], options: WithOptionalKeys<ParserOptions, `logger`>) {
+  public process(grammar: SyntacticalGrammar<TGrammarDict>, tokens: Token[], injections: InjectionData[], options: WithOptionalKeys<ParserOptions, `logger`>) {
     this.options = {
       logger: options.logger ?? _logger,
       ...options,
     }
 
+    const injectedTokens = tokens.map((token, i) => {
+      if (token.kind.name !== `injection_placeholder`) return token
+      const index = Number(token.content.replace(/^\$/, ``))
+      const injection = injections[index]
+
+      assert(injection.result, `Injection placeholder was not computed`)
+
+      return injections[index].result!.token
+    })
+
     this.grammar = grammar
-    this.tokens = tokens
+    this.tokens = injectedTokens
     this.cursor = 0
 
     global.__PARSER_TOKENS = tokens.map(token => token.content).join(` `)

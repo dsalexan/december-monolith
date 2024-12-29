@@ -86,9 +86,6 @@ export const parseConcatenatedExpression: LEDParser = (p: Parser<DefaultExpressi
   assert(stringLiteral.type === `StringLiteral`, `Only string literals can have multiple tokens (found "${stringLiteral.type}")`)
 
   // // 2. Eat string and whitespace tokens
-  // while (p.hasTokens() && p.grammar.getBindingPower(p.peek(), `led`)! > minimumBindingPower) {
-  //   //
-  // }
   while (p.hasTokens() && STRING_TOKENS.includes(p.peek())) {
     const token = p.next()
     stringLiteral.tokens.push(token)
@@ -225,32 +222,32 @@ export const parseCallExpression: LEDParser = (p: Parser, left: Expression, mini
   return new CallExpression(left, args)
 }
 
-export const parseContextChangeExpression: NUDParser = (p: Parser, context: SyntacticalContext): Expression => {
-  const functionName = p.next(`expression_context`, `string_context`)
+// export const parseContextChangeExpression: NUDParser = (p: Parser, context: SyntacticalContext): Expression => {
+//   const functionName = p.next(`expression_context`, `string_context`)
 
-  const syntaxMode: SyntaxMode = functionName.kind.name === `expression_context` ? `expression` : `string`
-  const newContext: SyntacticalContext = { ...context, mode: syntaxMode }
+//   const syntaxMode: SyntaxMode = functionName.kind.name === `expression_context` ? `expression` : `string`
+//   const newContext: SyntacticalContext = { ...context, mode: syntaxMode }
 
-  // 1. What are we eating?
-  p.next(`open_parenthesis`)
-  const args: Expression[] = []
+//   // 1. What are we eating?
+//   p.next(`open_parenthesis`)
+//   const args: Expression[] = []
 
-  // 2. Look until we eat a )
-  while (p.hasTokens() && p.peek() !== `close_parenthesis`) {
-    // 3. Parse everything above ASSIGNMENT (anything below it is a COMMA)
-    const arg = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.ASSIGNMENT, newContext)
-    args.push(arg)
+//   // 2. Look until we eat a )
+//   while (p.hasTokens() && p.peek() !== `close_parenthesis`) {
+//     // 3. Parse everything above ASSIGNMENT (anything below it is a COMMA)
+//     const arg = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.ASSIGNMENT, newContext)
+//     args.push(arg)
 
-    // 4. Eat a comma (if there is one, should have unless e are at the close_paren)
-    if (p.peek() !== `close_parenthesis`) p.next(`comma`)
-  }
+//     // 4. Eat a comma (if there is one, should have unless e are at the close_paren)
+//     if (p.peek() !== `close_parenthesis`) p.next(`comma`)
+//   }
 
-  p.next(`close_parenthesis`)
+//   p.next(`close_parenthesis`)
 
-  assert(args.length === 1, `Invalid number of arguments for context change function "${functionName.content}"`)
+//   assert(args.length === 1, `Invalid number of arguments for context change function "${functionName.content}"`)
 
-  return new SyntacticalContextExpression(newContext, args[0])
-}
+//   return new SyntacticalContextExpression(newContext, args[0])
+// }
 
 // @if(<condition> then <consequent> else <alternative>)
 export const parseIfExpression: NUDParser = (p: Parser, context: SyntacticalContext): Expression => {
@@ -286,7 +283,6 @@ export const DEFAULT_EXPRESSION_PARSERS = {
   parseStringExpression,
   parseGroupingExpression,
   parseCallExpression,
-  parseContextChangeExpression,
   parseIfExpression,
 }
 export type DefaultExpressionParserProvider = typeof DEFAULT_EXPRESSION_PARSERS

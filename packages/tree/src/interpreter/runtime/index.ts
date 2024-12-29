@@ -7,6 +7,8 @@ import { Expression, ExpressionStatement, Node, Statement } from "../../tree"
 import { RuntimeEvaluation } from "./evaluation"
 import type Interpreter from ".."
 import type { Environment, VariableName } from ".."
+import { ArtificialToken, Token } from "../../token/core"
+import { getTokenKind } from "../../token"
 
 export const RUNTIME_VALUE_TYPES = [`undefined`, `boolean`, `number`, `string`, `function`, `variable`, `unit`, `quantity`, `object`, `expression`] as const
 export type RuntimeValueType = (typeof RUNTIME_VALUE_TYPES)[number]
@@ -37,6 +39,10 @@ export class RuntimeValue<TValue> {
 
   public toString() {
     return `<${this.type}> ${this.getContent()}`
+  }
+
+  public toToken(): Token {
+    throw new Error(`Unsupported operation for "${this.type}"`)
   }
 
   public isEquals(value: RuntimeValue<any>) {
@@ -112,6 +118,10 @@ export class NumericValue extends RuntimeValue<number> {
   public override asNumber(): number {
     return this.value
   }
+
+  public toToken(): Token {
+    return new ArtificialToken(getTokenKind(`number`), String(this.asNumber()))
+  }
 }
 
 export class StringValue extends RuntimeValue<string> {
@@ -124,6 +134,10 @@ export class StringValue extends RuntimeValue<string> {
 
   public static isStringValue(value: any): value is StringValue {
     return value.type === `string`
+  }
+
+  public toToken(): Token {
+    return new ArtificialToken(getTokenKind(`string`), this.value.toString())
   }
 }
 

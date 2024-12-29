@@ -1,17 +1,18 @@
 import assert from "assert"
 import { Nullable, WithOptionalKeys } from "tsdef"
-import { isString } from "lodash"
+import { cloneDeep, isString } from "lodash"
 
 import { numberToLetters } from "@december/utils"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
 import Interpreter, { Environment, InterpreterOptions, NodeEvaluator, RuntimeEvaluation, RuntimeValue } from "../interpreter"
-import Lexer, { LexicalGrammar } from "../lexer"
+import Lexer, { InjectionData, LexicalGrammar } from "../lexer"
 import Parser, { SyntacticalContext, SyntacticalGrammar } from "../parser"
 import Rewriter, { GraphRewritingSystem } from "../rewriter"
 import { Node, Statement } from "../tree"
 import { SymbolTable } from "../symbolTable"
+import { Token } from "../token/core"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -24,6 +25,7 @@ export interface BaseProcessorRunOptions {
   environmentUpdateCallback?: (environment: Environment, symbolTable: SymbolTable) => void
   syntacticalContext: SyntacticalContext
   //
+  injection?: string
   resolutionRun?: number
 }
 
@@ -61,18 +63,80 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
     this.nodeEvaluator = nodeEvaluator
   }
 
+  /** Process certain sections of expression and inject resulting stuff into placeholders */
+  public inject(tokens: Token[], injections: InjectionData[], environment: Environment, symbolTable: SymbolTable, options: BaseProcessorRunOptions & TInterpreterOptions): boolean {
+    if (injections.length === 0) return true
+
+    for (let i = 0; i < injections.length; i++) {
+      const injection = injections[i]
+
+      // 1. Parse partial expression
+      const { AST } = this.parse(injection.expression, environment, symbolTable, { ...options, injection: `${options.injection ?? `⌀`} > $${injection.index}` })
+      if (!AST) continue
+
+      // 2. Determine context by injection function
+      let syntacticalContext: SyntacticalContext = cloneDeep(options.syntacticalContext)
+      if (injection.name === `solver` || injection.name === `evaluate` || injection.name === `eval`) {
+        syntacticalContext = { ...syntacticalContext, mode: `expression` }
+      }
+      //
+      else throw new Error(`Unknown injection function "${injection.name}"`)
+
+      // 3. Resolve partial expression
+      const { originalContent, content, evaluation, isReady } = this.resolve(AST, environment, symbolTable, {
+        ...options,
+        syntacticalContext,
+      })
+      if (!isReady) continue
+
+      // 4. Replace injection placeholder with evaluated value's token version
+      for (let j = 0; j < tokens.length; j++) {
+        const token = tokens[j]
+        if (token.kind.name === `injection_placeholder` && token.content === `$${injection.index}`) {
+          const newToken = evaluation!.runtimeValue!.toToken()
+
+          injection.result = {
+            runtimeValue: evaluation!.runtimeValue!,
+            token: newToken,
+          }
+
+          break
+        }
+      }
+
+      assert(injection.result, `Injection placeholder was not computed`)
+    }
+
+    const areAllInjectionsResolved = injections.every(injection => injection.result !== undefined)
+
+    return areAllInjectionsResolved
+  }
+
   /** Parses string expression into an Abstract Syntax Tree */
-  public parse(expression: string, options: BaseProcessorRunOptions): Node {
+  public parse(expression: string, environment: Environment, symbolTable: SymbolTable, options: BaseProcessorRunOptions & TInterpreterOptions): ParsingOutput {
     const DEBUG = options.debug ?? false // COMMENT
     const logger = options.logger ?? _logger // COMMENT
 
-    const tokens = this.lexer.process(this.lexicalGrammar, expression, {})
+    const injection = options.injection ?? `⌀`
+
+    const { tokens, injections } = this.lexer.process(`${injection}`, this.lexicalGrammar, expression, {})
+    const originalTokens = [...tokens]
     if (DEBUG) this.lexer.print() // COMMENT
 
-    const AST = this.parser.process(this.syntacticalGrammar, tokens, { ...options })
-    if (DEBUG) this.parser.print() // COMMENT
+    const noPendingInjections = this.inject(tokens, this.lexer.injections, environment, symbolTable, { ...options })
 
-    return AST
+    let AST: Nullable<Node> = null
+    if (noPendingInjections) {
+      AST = this.parser.process(this.syntacticalGrammar, tokens, injections, { ...options })
+      if (DEBUG) this.parser.print() // COMMENT
+    }
+
+    return {
+      originalExpression: expression,
+      tokens,
+      injections,
+      AST,
+    }
   }
 
   /** Tries to resolve an Abstract Syntax Tree into some value (by "pruning" the tree as much as possible)*/
@@ -110,37 +174,6 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
 
     assert(latestPruning !== null, `Pruning output should not be null`)
 
-    // // B. If pruning was successful, simplify tree (why not? performance maybe)
-    // if (latestPruning.isReady) {
-    //   let latestContent = latestTree.getContent()
-
-    //   if (latestPruning.content === '((2d6 - 1) + 0) + 0') debugger
-
-    //   while (i < STACK_OVERFLOW_PROTECTION) {
-    //     const simplification = this.rewriter.process(latestTree, this.graphRewriteSystem, {})
-    //     const simplifiedContent = simplification.getContent()
-
-    //     // If nothing changed, break
-    //     if (simplifiedContent === latestContent) break
-
-    //     latestTree = simplification
-    //     latestContent = simplifiedContent
-
-    //     // If something was simplified, tries again
-    //     i++
-    //     assert(i < STACK_OVERFLOW_PROTECTION, `Stack overflow protection triggered`) // COMMENT
-    //   }
-
-    //   if (latestPruning.content !== latestContent) {
-    //     debugger
-
-    //     assert(Statement.isStatement(latestTree), `Expecting a Statement as resulting node`) // COMMENT
-    //     latestPruning.evaluation = new RuntimeEvaluation(latestPruning.evaluation.runtimeValue, latestTree as Statement)
-    //     latestPruning.content = latestContent
-    //   }
-    // }
-    // // C. Wait for Environment update
-    // else {
     if (options.environmentUpdateCallback) {
       const previosVersion = environment.getVersion()
 
@@ -210,3 +243,10 @@ export interface PruningOutput {
 }
 
 export interface ResolutionOutput extends PruningOutput {}
+
+export interface ParsingOutput {
+  originalExpression: string
+  tokens: Token[]
+  injections: InjectionData[]
+  AST: Nullable<Node>
+}

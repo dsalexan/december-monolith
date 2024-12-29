@@ -23,6 +23,7 @@ import LexicalGrammar, { LexicalGrammarMatch, LexicalGrammarEntry, LexicalGramma
 import { LexicalToken, Token } from "../token/core"
 import { getTokenKind, getTokenKindBlocks, getTokenKindColor, TokenKind } from "../token/kind"
 import { Lexeme } from "../token/lexeme"
+import type { RuntimeValue } from "../interpreter"
 
 export { default as LexicalGrammar, LexicalGrammarEntry, LexicalGrammarCustomTest, LexicalTestOptions, DEFAULT_GRAMMAR } from "./grammar"
 export type { LexicalGrammarMatch } from "./grammar"
@@ -33,34 +34,121 @@ export interface LexerOptions extends LexicalTestOptions {
   logger: typeof _logger
 }
 
+export interface InjectionData {
+  index: number
+  name: string
+  expression: string
+  content: string
+  result?: {
+    runtimeValue: RuntimeValue<any>
+    token: Token
+  }
+}
+
+export interface InjectedExpression {
+  injections: InjectionData[]
+  expression: string
+}
+
 export default class Lexer {
   public options: LexerOptions
   //
+  public id: string
   private grammar: LexicalGrammar
-  private expression: string
+  private originalExpression: string
+  private noInjectionsExpression: string
   //
   private cursor: number // current cursor position (index of character in expression)
   //
+  public injections: InjectionData[]
   public tokens: LexicalToken[]
 
-  public process(grammar: LexicalGrammar, expression: string, options: WithOptionalKeys<LexerOptions, `logger`>): LexicalToken[] {
+  public process(id: string, grammar: LexicalGrammar, originalExpression: string, options: WithOptionalKeys<LexerOptions, `logger`>): { tokens: Token[]; injections: InjectionData[] } {
     this.options = {
       logger: options.logger ?? _logger,
       ...options,
     }
 
+    this.id = id
     this.grammar = grammar
-    this.expression = expression
+    this.originalExpression = originalExpression
+    global.__LEXER_ORIGINAL_EXPRESSION = originalExpression
 
     this.cursor = 0
     this.tokens = []
 
-    global.__LEXER_EXPRESSION = this.expression
+    const { expression, injections } = this.removeInjections({ expression: originalExpression, injections: [] }, 0)
+    this.noInjectionsExpression = expression
+    global.__LEXER_NO_INJECTIONS_EXPRESSION = expression
 
-    const words = Lexer.split(this.expression)
-    this.tokens = this.scan(words)
+    this.injections = injections
 
-    return this.tokens
+    const words = Lexer.split(expression)
+    this.tokens = this.scan(words, expression)
+
+    return { tokens: [...this.tokens], injections: [...injections] }
+  }
+
+  /** Remove parts of string that need injection treatment */
+  public removeInjections(injectedExpression: InjectedExpression, cursor: number): InjectedExpression {
+    const { injections, expression } = injectedExpression
+
+    // 1. Find "$"
+    const start = expression.indexOf(`$`, cursor)
+    //        (no $ in expression)
+    if (start === -1) return injectedExpression
+
+    // 2. Consume function name
+    const parenthesis = expression.indexOf(`(`, start)
+    //        (not a valid function name, lacking parenthesis after $<word>)
+    if (parenthesis === -1) debugger
+
+    const functionName = `$` + expression.slice(start + 1, parenthesis)
+    const injectionMatches = this.grammar.match(functionName, { kinds: [`injection_function`] })
+    //        (not a valid function name as per lexical definition)
+    if (injectionMatches.length === 0) debugger
+
+    const innerStart = start + functionName.length + 1
+
+    // 3. Find corresponding close_parenthesis
+    let end: number = -1
+    let open_parenthesis: number[] = []
+    let close_parenthesis: number[] = []
+
+    let depth = 1
+    for (let i = innerStart; i < expression.length; i++) {
+      const char = expression[i]
+      if (char === `(`) {
+        depth++
+        open_parenthesis.push(i)
+      } else if (char === `)`) {
+        depth--
+        close_parenthesis.push(i)
+      }
+
+      if (depth === 0) {
+        end = i
+        break
+      }
+    }
+
+    //        (unbalanced parenthesis)
+    if (end === -1) debugger
+
+    // 4. Replace whole substring with injection marker
+    //
+    const newInjection: InjectionData = {
+      index: injections.length,
+      name: functionName.slice(1),
+      expression: expression.substring(innerStart, end), // w/o parenthesis wrapper
+      content: expression.slice(start, end + 1),
+    }
+
+    const newExpression = `${expression.slice(0, start)}$${newInjection.index}${expression.slice(end + 1)}`
+
+    const newCursor = end + 1 - (expression.length - newInjection.content.length)
+
+    return this.removeInjections({ expression: newExpression, injections: [...injections, newInjection] }, newCursor)
   }
 
   /** Split expression into words */
@@ -79,10 +167,10 @@ export default class Lexer {
     let word: Nullable<Word> = null
     for (let i = 0; i < expression.length; i++) {
       let char = expression[i]
+      let kind: Word[`kind`] = `word`
 
       // 1. Check if character is a whitespace first (since whitespaces break words)
-      const isWhitespace = /\s/.test(char)
-      let kind: Word[`kind`] = isWhitespace ? `whitespace` : `word`
+      if (/\s/.test(char)) kind = `whitespace`
 
       // 2. Check if two consecutive colons (::) are found
       if (char === `:` && expression[i + 1] === `:`) {
@@ -91,9 +179,9 @@ export default class Lexer {
         char = `${char}${expression[i]}` // update slice
       }
 
-      // 3. If char is of a different kind than buffered word, push buffer to list and reset it
-      //      (ignore this if buffer is empty)
       if (word !== null && word.kind !== kind) {
+        // 3. If char is of a different kind than buffered word, push buffer to list and reset it
+        //      (ignore this if buffer is empty)
         words.push(word)
         word = null
       }
@@ -115,7 +203,7 @@ export default class Lexer {
   }
 
   /** Scan (parse) words into lexemes (attribute a TokenKind to a sequence of characters) */
-  private scan(words: Word[]): LexicalToken[] {
+  private scan(words: Word[], expression: string): LexicalToken[] {
     /**
      * 1. Iterate over each character until we reach a valid sequence of characters that matches a lexeme
      *  1.A. There could be many lexemes matched from the same initial index. In these cases, match along the following rules:
@@ -137,7 +225,7 @@ export default class Lexer {
       // 1. Word kind was defined by spliting
       if (word.kind !== `word`) {
         lexemes.push({
-          lexeme: new Lexeme(word.kind, this.expression, this.cursor, word.content.length),
+          lexeme: new Lexeme(word.kind, expression, this.cursor, word.content.length),
           match: { priority: Infinity, kind: getTokenKind(word.kind), data: {} }, // artifical match
         })
 
@@ -152,7 +240,7 @@ export default class Lexer {
         const upTo = this.cursor + word.content.length // final index of word in expression
         // loop until we reach the end of the word
         do {
-          const lexeme: Nullable<LexemeAndMatch> = this._lookahead(upTo)
+          const lexeme: Nullable<LexemeAndMatch> = this._lookahead(upTo, expression)
 
           // no lexeme was found, bail out // TODO: Never tested
           if (lexeme === null) {
@@ -168,7 +256,7 @@ export default class Lexer {
 
     // 3. Test if lengths are maintained
     const length = sum(lexemes.map(lexeme => lexeme.lexeme.length))
-    assert(length === this.expression.length, `Expression length was not reached`)
+    assert(length === expression.length, `Expression length was not reached`)
 
     // 4. Assemble tokens
     const tokens: LexicalToken[] = []
@@ -184,7 +272,7 @@ export default class Lexer {
   }
 
   /** Returns the next lexeme in expression (looking up to a certain index) */
-  private _lookahead(upTo: number): Nullable<LexemeAndMatch> {
+  private _lookahead(upTo: number, expression: string): Nullable<LexemeAndMatch> {
     // https://cs.stackexchange.com/questions/155898/should-i-lookahead-in-the-lexer-or-parser
     // https://en.wikipedia.org/wiki/Maximal_munch
 
@@ -204,7 +292,7 @@ export default class Lexer {
 
     // consume each character of a word (starting by the cursor)
     do {
-      const char = this.expression[i]
+      const char = expression[i]
       sequence = `${sequence}${char}` // append char to buffered sequence of characters ("string")
 
       // Match sequence in grammar
@@ -228,7 +316,7 @@ export default class Lexer {
 
       i = this.cursor
       do {
-        const char = this.expression[i]
+        const char = expression[i]
         const matches = this.grammar.match(char, this.options)
         // no match, discard character-lexeme
         if (matches.length === 0) {
@@ -247,7 +335,7 @@ export default class Lexer {
     const lexeme = sorted[0]
 
     return {
-      lexeme: new Lexeme(lexeme.match.kind, this.expression, lexeme.start, lexeme.length),
+      lexeme: new Lexeme(lexeme.match.kind, expression, lexeme.start, lexeme.length),
       match: lexeme.match,
     }
   }
@@ -258,12 +346,25 @@ export default class Lexer {
     console.log(`\n`)
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
     _logger
-      .add(paint.grey(`TOKENIZED EXPRESSION`)) //
+      .add(paint.grey(`TOKENIZED EXPRESSION (${this.id})`)) //
       .info()
     _logger.add(paint.grey(`-----------------------------------------------------------------`)).info()
     console.log(``)
 
-    logger.add(paint.gray(this.expression)).info()
+    logger.add(paint.gray(this.originalExpression)).info()
+    logger.add(paint.gray.dim(this.noInjectionsExpression)).info()
+
+    // PRINT EACH INJECTION
+    for (const injection of this.injections) {
+      logger.add(paint.grey.dim(`  [$${injection.index}] `))
+      logger.add(paint.grey.dim(`$`))
+      logger.add(paint.grey.dim.bold(injection.name))
+      logger.add(paint.grey.dim(`(`))
+      logger.add(paint.grey(injection.expression))
+      logger.add(paint.grey.dim(`)`))
+      logger.info()
+    }
+
     console.log(` `)
 
     // PRINT EACH TOKEN INLINE
@@ -272,6 +373,7 @@ export default class Lexer {
       logger.add(color(token.content))
     }
     logger.info()
+    logger.add(` `).info()
 
     // PRINT EACH TOKEN AS A LIST
     for (const token of this.tokens) {

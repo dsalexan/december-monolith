@@ -8,6 +8,8 @@ import { Node, Statement } from "@december/tree/tree"
 import { SyntacticalContext } from "@december/tree/parser"
 import { Environment, InterpreterOptions, RuntimeEvaluation, RuntimeValue } from "@december/tree/interpreter"
 import Processor, { BaseProcessorRunOptions, makeDefaultProcessor, ProcessorFactoryFunction } from "@december/tree/processor"
+import { Token } from "@december/tree/token/core"
+import { InjectionData } from "@december/tree/lexer"
 
 import { PropertyReferencePattern } from "@december/utils/access"
 import { UnitManager } from "@december/utils/unit"
@@ -63,7 +65,7 @@ export class StrategyProcessor {
   // #region CORE
 
   /** Parse expression into an AST */
-  public static parse(expression: string, options: StrategyProcessorParseOptions): StrategyProcessState {
+  public static parse(expression: string, environment: Environment, options: StrategyProcessorParseOptions): StrategyProcessState {
     const symbolTable = new SymbolTable()
 
     // 1. Make processor instance dedicated to expression
@@ -71,16 +73,18 @@ export class StrategyProcessor {
     const processor = factory({ unitManager: options.unitManager, symbolTable })
 
     // 2. Parse expression into AST
-    const AST = processor.parse(expression, { ...options })
+    const { originalExpression, tokens, injections, AST } = processor.parse(expression, environment, symbolTable, { ...options })
 
-    return new StrategyProcessState(expression, symbolTable, processor, AST)
+    return new StrategyProcessState(expression, symbolTable, processor, tokens, injections, AST)
   }
 
   /** Tries to resolve AST (evaluate + simplify in loop) */
   public static resolve(state: StrategyProcessState, environment: Environment, options: StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
     const { symbolTable, processor, AST } = state
 
-    const latestTree = state.evaluation ? state.evaluation.node : AST
+    assert(state.isParsed(), `Cannot resolve un-parsed state.`)
+
+    const latestTree = state.evaluation ? state.evaluation.node : AST!
 
     // 1. Try to update environment based on AST
     //      (inside here we would check all missing symbols, from symbolTable, and ATTEMPT to inject them, resolve the variable, into the ENVIRONMENT)
@@ -99,7 +103,7 @@ export class StrategyProcessor {
 
   /** Process expression into evaluation */
   public static process(expression: string, environment: Environment, options: StrategyProcessorParseOptions & StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
-    const state = StrategyProcessor.parse(expression, options)
+    const state = StrategyProcessor.parse(expression, environment, options)
     return StrategyProcessor.resolve(state, environment, options)
   }
 
@@ -187,19 +191,28 @@ export class StrategyProcessState {
   public symbolTable: SymbolTable
   public processor: Processor
   //
-  public AST: Statement
+  public tokens: Token[]
+  public injections: InjectionData[]
+  public AST: Nullable<Node>
   public evaluation: Nullable<RuntimeEvaluation> = null
   //
   public integrityEntries: IntegrityEntry[] = []
   public listenedSymbols: Record<Simbol[`name`], Listener[]> = {}
 
-  constructor(expression: string, symbolTable: SymbolTable, processor: Processor, AST: Statement) {
+  constructor(expression: string, symbolTable: SymbolTable, processor: Processor, tokens: Token[], injections: InjectionData[], AST: Nullable<Node>) {
     this.expression = expression
 
     this.symbolTable = symbolTable
     this.processor = processor
 
+    this.tokens = tokens
+    this.injections = injections
     this.AST = AST
+  }
+
+  /** Checks if expression is, at least, fully parsed */
+  public isParsed(): boolean {
+    return this.AST !== null
   }
 
   /** Check if state was already resolved */

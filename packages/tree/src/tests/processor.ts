@@ -52,6 +52,7 @@ expression = `(2d6 - 1) + 0`
 expression = `((2d6 - 1) + 0) + 0`
 //
 expression = `$solver(%level)d`
+expression = `$solver($eval(%level))d + $solver(%level)`
 // expression = `2 * 1`
 // expression = `0 + 1 + 2 * 1`
 // expression = `3 / 3`
@@ -76,9 +77,6 @@ unitManager.add(...BASE_UNITS)
 const lexicalGrammar = new LexicalGrammar()
 lexicalGrammar.add(...DEFAULT_LEXICAL_GRAMMAR)
 
-const SOLVER = createEntry(KEYWORD_PRIORITY + 10, `expression_context`, EQUALS(`$solver`, true))
-lexicalGrammar.add(SOLVER)
-
 const syntacticalGrammar = new SyntacticalGrammar(unitManager)
 syntacticalGrammar.add(...DEFAULT_SYNTACTICAL_GRAMMAR)
 syntacticalGrammar.add(...DICE_MODULAR_SYNTACTICAL_GRAMMAR)
@@ -97,8 +95,6 @@ const nodeEvaluator = new NodeEvaluator()
 nodeEvaluator.addDictionaries(DEFAULT_EVALUATOR)
 nodeEvaluator.addDictionaries(DICE_MODULAR_EVALUATOR_PROVIDER, true)
 
-const symbolTable = new SymbolTable()
-
 const environment = new Environment(`root`)
 // environment.assignValue(`b`, new NumericValue(-10))
 environment.assignValue(`self`, new NumericValue(15))
@@ -106,13 +102,17 @@ environment.assignValue(`self`, new NumericValue(15))
 environment.assignValueToPattern(`alias`, REGEX(/^"?\w{2}:.+"?$/), new VariableValue(`alias::fallback`))
 // environment.assignValue(`alias::fallback`, new NumericValue(0))
 environment.assignValue(`@itemhasmod`, new FunctionValue(() => () => new BooleanValue(false), `@itemhasmod`))
+environment.assignValue(`%level`, new NumericValue(10))
 
 const processor = new Processor(lexicalGrammar, syntacticalGrammar, graphRewritingSystem, nodeEvaluator)
 
 printExpressionHeader(expression)
 
 const syntacticalContext: SyntacticalContext = { mode: `expression` }
-const AST = processor.parse(expression, { debug: true, syntacticalContext })
+const symbolTable = new SymbolTable()
+
+const { originalExpression, tokens, injections, AST } = processor.parse(expression, environment, symbolTable, { debug: true, syntacticalContext })
+assert(AST, `Failed to parse expression.`)
 const { originalContent, content, evaluation, isReady } = processor.resolve(AST, environment, symbolTable, {
   debug: true,
   syntacticalContext,
