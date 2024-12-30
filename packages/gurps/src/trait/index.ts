@@ -1,9 +1,11 @@
 import { isEmpty } from "lodash"
 import IGURPSTraitMode from "./mode"
 import { TraitType, toTag } from "./type"
+import { TraitCost } from "./cost"
 
 export * as Mode from "./mode"
 export * as Type from "./type"
+export * as Cost from "./cost"
 
 export type { default as IGURPSTraitMode, IGURPSTraitModeStrength } from "./mode"
 export { makeGURPSTraitEnvironment } from "./environment"
@@ -14,9 +16,16 @@ export default interface IGURPSTrait {
   type: TraitType
   active: boolean
   //
-  points: number
-  level: number
+  level: {
+    base: number
+    system: number
+    total: number
+  }
   score?: number
+  //
+  points: number
+  cost: TraitCost
+  //
   //
   modes: IGURPSTraitMode[]
 }

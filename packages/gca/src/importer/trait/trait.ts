@@ -1,6 +1,6 @@
 import { AnyObject, MaybeUndefined } from "tsdef"
 import assert from "assert"
-import { has, isArray, isNumber, isObjectLike } from "lodash"
+import { has, isArray, isNil, isNumber, isObjectLike, isString } from "lodash"
 
 import { conditionalSet, typing } from "@december/utils"
 import { getAliases, isNameExtensionValid, Type } from "@december/gurps/trait"
@@ -18,6 +18,11 @@ import { Primitive } from "type-fest"
 function parseInt(value: MaybeUndefined<string>): MaybeUndefined<number> {
   if (value === undefined) return value
   return Number.parseInt(value)
+}
+
+function parseFloat(value: MaybeUndefined<string>): MaybeUndefined<number> {
+  if (value === undefined) return value
+  return Number.parseFloat(value)
 }
 
 export default function importGCATrait(superType: `trait` | `attribute`, raw: AnyObject, logger: Builder = churchill): GCATrait {
@@ -44,6 +49,30 @@ export default function importGCATrait(superType: `trait` | `attribute`, raw: An
   const _extendedTags = raw.extended?.[0]?.extendedtag ?? []
   const extendedTags = Object.fromEntries(_extendedTags.map((tag: any) => [tag.tagname, tag.tagvalue])) as Record<string, string[]>
 
+  const calcs: AnyObject = raw.calcs?.[0]
+  assert(!isNil(calcs) && isObjectLike(calcs), `Trait calcs is not an object`)
+
+  const levelnames = calcs.levelnames?.[0].split(`, `)
+  assert(isArray(levelnames) || levelnames === undefined, `Trait levelnames is not an array`)
+
+  let traitCost: GCATrait[`traitCost`] = undefined
+  let equipmentCost: GCATrait[`equipmentCost`] = undefined
+
+  if (section === `equipment`) {
+    const basecost = parseFloat(calcs.basecost?.[0])
+    const baseweight = parseFloat(calcs.baseweight?.[0])
+
+    assert((basecost !== undefined && baseweight !== undefined) || (basecost === undefined && baseweight === undefined), `weird`)
+
+    if (basecost !== undefined) equipmentCost = { basecost, baseweight: baseweight! }
+  } else {
+    traitCost = {
+      cost: calcs.cost?.[0],
+      levelnames,
+      upto: calcs.upto?.[0],
+    }
+  }
+
   // 2. Build trait
   const trait: GCATrait = {
     _raw: raw,
@@ -54,12 +83,30 @@ export default function importGCATrait(superType: `trait` | `attribute`, raw: An
     active: has(extendedTags, `inactive`) ? extendedTags[`inactive`][0] !== `yes` : true,
     attribute: superType === `attribute`,
     //
-    points: parseInt(raw.points?.[0]),
     level: parseInt(raw.level?.[0]),
     score: parseInt(raw.score?.[0]),
+    syslevels: parseInt(calcs.syslevels?.[0])!,
+    baselevel: parseInt(calcs.baselevel?.[0])!,
+    //
+    points: parseInt(raw.points?.[0]),
+    premodspoints: parseInt(calcs.premodspoints?.[0]),
+    traitCost,
+    equipmentCost,
+    //
   }
 
-  // if ([13006, 12953].includes(id)) {
+  if (section !== `equipment`) {
+    assert(isNumber(trait.syslevels), `Trait syslevels is not a number`)
+    assert(isNumber(trait.syslevels), `Trait baselevel is not a number`)
+  }
+
+  // if (
+  //   [
+  //     11365, //
+  //     // 13006,
+  //     // 12953,
+  //   ].includes(id)
+  // ) {
   //   console.log(`\n${`=`.repeat(250)}\n`)
   //   logger.addRow(`debug`, ...dump(raw))
   //   debugger

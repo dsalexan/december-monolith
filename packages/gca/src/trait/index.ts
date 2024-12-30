@@ -13,9 +13,25 @@ export interface GCATrait {
   attribute: boolean
   active: boolean
   //
-  points?: number
-  level?: number
+  syslevels: number
+  baselevel: number
   score?: number
+  level?: number
+  //
+  points?: number
+  premodspoints?: number
+  // basic cost
+  traitCost?: {
+    cost?: string
+    levelnames?: string[]
+    upto?: string
+  }
+  // equipment cost
+  equipmentCost?: {
+    basecost: number
+    baseweight: number
+  }
+  //
   //
   modifiers?: GCATraitModifier[]
   modes?: GCATraitMode[]

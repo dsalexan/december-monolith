@@ -153,7 +153,7 @@ export default class ObjectEventEmitter extends ObjectManager {
         assert(EqualsElementPattern.isEqualsElementPattern(objectPattern), `Unimplemented`)
         const list = (this.listeners.byPropertyUpdatedEvent[typePattern.element][objectPattern.element] ??= [])
 
-        assert(list.includes(listener.id) === false, `Listener "${listener.id}" already exists for propertyUpdatedEvent "${typePattern.element} -> ${objectPattern.element}"`)
+        // assert(list.includes(listener.id) === false, `Listener "${listener.id}" already exists for propertyUpdatedEvent "${typePattern.element} -> ${objectPattern.element}"`)
         list.push(listener.id)
         assert(list.length < MAX_LISTENERS_BY_INDEX, `Too many listeners for propertyUpdatedEvent "${typePattern.element} -> ${objectPattern.element}", create a new index `)
       }

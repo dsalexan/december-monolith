@@ -1,9 +1,9 @@
 import { Nullable } from "./../../../../../../../../packages/utils/src/typing/index"
 import assert from "assert"
-import { AnyObject, NonNil } from "tsdef"
+import { AnyObject, NonNil, WithOptionalKeys } from "tsdef"
 import { get, isNil, isNumber, isString, set } from "lodash"
 
-import { Strategy, Mutation, SET, MutableObject } from "@december/compiler"
+import { Strategy, Mutation, SET, MutableObject, OVERRIDE } from "@december/compiler"
 
 import { Environment } from "@december/tree"
 import { CallExpression, ExpressionStatement, Identifier } from "@december/tree/tree"
@@ -16,7 +16,7 @@ import { REFERENCE_ADDED } from "@december/compiler/controller/eventEmitter/even
 import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, REFERENCE, Reference, SELF_PROPERTY } from "@december/utils/access"
 
 import { IGURPSCharacter, IGURPSTrait, Trait } from "@december/gurps"
-import { isNameExtensionValid, Type, IGURPSTraitMode, IGURPSTraitModeStrength, isAlias, getAliases } from "@december/gurps/trait"
+import { isNameExtensionValid, Type, IGURPSTraitMode, IGURPSTraitModeStrength, isAlias, getAliases, Cost } from "@december/gurps/trait"
 import { DamageTable } from "@december/gurps/character"
 
 import { GCACharacter, GCATrait } from "@december/gca"
@@ -39,26 +39,48 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     const integrityEntries: IntegrityEntry[] = []
 
     const _trait = object.data._.GCA as GCATrait
-    const trait: Omit<IGURPSTrait, `modes`> = {
+    const trait: WithOptionalKeys<IGURPSTrait, `modes` | `cost`> = {
       name: _trait.name,
       type: Type.fromGCASection(_trait.section),
       active: _trait.active,
       //
       points: NaN,
-      level: NaN,
+      level: { system: NaN, base: NaN, total: NaN },
     }
 
     // NAMEEXT
     if (isNameExtensionValid(_trait.nameext)) trait.nameExtension = _trait.nameext
 
-    // POINTS, LEVEL, SCORE
-    // TODO: Investigate how to calculate this things
-    if (!isNil(_trait.points)) trait.points = parseInt(_trait.points.toString())
-    if (!isNil(_trait.level)) trait.level = parseInt(_trait.level.toString())
-    if (!isNil(_trait.score)) trait.score = parseInt(_trait.score.toString())
+    // LEVEL
+    // if (!isNil(_trait.level)) trait.level = parseInt(_trait.level.toString())
+    trait.level.system = _trait.syslevels
+    trait.level.base = _trait.baselevel
+    trait.level.total = computeLevel(trait.level.system, trait.level.base)
 
-    assert(isNumber(trait.points), `Points should be a number`)
-    assert(isNumber(trait.level), `Level should be a number`)
+    const expectedLevel = parseInt(_trait.level!.toString())
+    assert(trait.level.total === expectedLevel, `Level should be equal to the sum of system and base levels`)
+
+    // POINTS
+    // if (!isNil(_trait.points)) trait.points = parseInt(_trait.points.toString())
+    if (_trait.section !== `equipment`) {
+      assert(!isNil(_trait.traitCost), `Trait cost should be defined for non-equipment traits`)
+
+      const costProgression = _trait.traitCost.cost
+      assert(isString(costProgression), `Cost progression should be a string`)
+
+      trait.cost = Cost.convertCost(costProgression, _trait.traitCost.upto)
+      trait.points = Cost.calculateCost(trait.level, trait.cost)
+
+      let expectedPoints = parseInt(_trait.points!.toString())
+      if (!expectedPoints && _trait.premodspoints) expectedPoints = parseInt(_trait.premodspoints!.toString())
+      if (expectedPoints) assert(trait.points === expectedPoints, `Points should be equal to the points defined in the trait`)
+    }
+    //
+    else throw new Error(`Not implemented`)
+
+    // SCORE
+    // TODO: Investigate how to calculate this things
+    if (!isNil(_trait.score)) trait.score = parseInt(_trait.score.toString())
     assert(isNumber(trait.score) || trait.score === undefined, `Score should be a number`)
 
     // MODES
@@ -228,6 +250,21 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
   },
 )
 
+IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue([SELF_PROPERTY(/level.(system|base)/)], `compute:level`, object => [OVERRIDE(`level`, computeLevel(object.getProperty(`level.system`), object.getProperty(`level.base`)))])
+IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue([SELF_PROPERTY(`level.total`), SELF_PROPERTY(`cost`)], `compute:points`, object => [OVERRIDE(`points`, Cost.calculateCost(object.getProperty(`level`), object.getProperty(`cost`)))])
+
+// #region CORE
+export function computeLevel(systemLevel: number, baseLevel: number): number {
+  const level = systemLevel + baseLevel
+
+  assert(!isNaN(level), `Level should be a number`)
+
+  return level
+}
+
+// #endregion
+
+// #region DEBUG
 function explainProcessOutput(object: MutableObject, path: string, state: StrategyProcessState): Block[][] {
   // if (state.isReady) return []
 
@@ -284,3 +321,5 @@ function explainProcessOutput(object: MutableObject, path: string, state: Strate
 
   return rows
 }
+
+// #endregion

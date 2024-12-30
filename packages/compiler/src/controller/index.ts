@@ -82,10 +82,11 @@ export default class ObjectController extends EventEmitter {
     }
 
     // 2. Add listeners to event emitter
-    for (const listenerGenerator of strategy.listenerGenerators) {
-      const genericListener = listenerGenerator(object)
-      const listener: Listener = { ...genericListener, id: getListenerID(object.id, genericListener) }
-
+    const listeners = strategy.listenerGenerators.map(generator => {
+      const genericListener = generator(object)
+      return { ...genericListener, id: getListenerID(object.id, genericListener) }
+    })
+    for (const listener of listeners) {
       object.controller.eventEmitter.addListener(listener)
     }
   }
