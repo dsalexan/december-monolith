@@ -198,6 +198,13 @@ export default class Builder {
     return this
   }
 
+  addRow(level: LogLevel, ...rows: Block[][]): this {
+    for (const row of rows) {
+      this.add(...row).log(level)
+    }
+    return this
+  }
+
   space(length: number, character = ` `): this {
     this.add(character.repeat(length))
 

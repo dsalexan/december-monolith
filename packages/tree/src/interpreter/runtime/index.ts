@@ -6,65 +6,16 @@ import { isQuantity, isUnit, IUnit, Quantity } from "@december/utils/unit"
 import { Expression, ExpressionStatement, Node, Statement } from "../../tree"
 import { RuntimeEvaluation } from "./evaluation"
 import type Interpreter from ".."
-import type { Environment, VariableName } from ".."
+import { ObjectValue, type Environment, type VariableName } from ".."
 import { ArtificialToken, Token } from "../../token/core"
 import { getTokenKind } from "../../token"
+import { get, has } from "lodash"
+import { RuntimeValue } from "./base"
 
-export const RUNTIME_VALUE_TYPES = [`undefined`, `boolean`, `number`, `string`, `function`, `variable`, `unit`, `quantity`, `object`, `expression`] as const
-export type RuntimeValueType = (typeof RUNTIME_VALUE_TYPES)[number]
-
+export { RuntimeValue } from "./base"
 export { RuntimeEvaluation } from "./evaluation"
 export type { ResolvedRuntimeEvaluation } from "./evaluation"
-
-export class RuntimeValue<TValue> {
-  __runtimeValue: true = true as const
-  type: RuntimeValueType
-  value: TValue
-
-  constructor(value: TValue) {
-    this.value = value
-  }
-
-  public static isRuntimeValue(value: any): value is RuntimeValue<any> {
-    return value?.__runtimeValue === true
-  }
-
-  public getEvaluation(node: Node) {
-    return new RuntimeEvaluation(this, node)
-  }
-
-  public getContent() {
-    return String(this.value)
-  }
-
-  public toString() {
-    return `<${this.type}> ${this.getContent()}`
-  }
-
-  public toToken(): Token {
-    throw new Error(`Unsupported operation for "${this.type}"`)
-  }
-
-  public isEquals(value: RuntimeValue<any>) {
-    return this.type === value.type && this.value === value.value
-  }
-
-  public hasNumericRepresentation(): boolean {
-    return false
-  }
-
-  public hasStringRepresentation(): boolean {
-    return false
-  }
-
-  public asNumber(): number {
-    throw new Error(`Unsupported operation`)
-  }
-
-  public asString(): string {
-    throw new Error(`Unsupported operation`)
-  }
-}
+export { ObjectValue } from "./object"
 
 // #region IMPLEMENTATIONS
 
@@ -171,49 +122,6 @@ export class FunctionValue<TFunction extends RuntimeFunction = RuntimeFunction> 
 export type RuntimeFunction = (...args: any[]) => Nullable<Node | RuntimeValue<any> | RuntimeEvaluation>
 export type Contextualized<TFunction extends RuntimeFunction = RuntimeFunction> = (i: Interpreter, node: Node, environment: Environment) => TFunction
 
-export class ObjectValue<TObject extends AnyObject> extends RuntimeValue<TObject> {
-  type: `object` = `object`
-  _numberValue: Nullable<number> = null
-  _stringValue: Nullable<string> = null
-
-  constructor(value: TObject, { numberValue, stringValue }: { numberValue?: number; stringValue?: string } = {}) {
-    super(value)
-    assert(typeof value === `object`)
-
-    assert(numberValue === undefined || typeof numberValue === `number`, `Number Value must be a number.`)
-    assert(stringValue === undefined || typeof stringValue === `string`, `String Value must be a string.`)
-
-    this._numberValue = numberValue ?? null
-    this._stringValue = stringValue ?? null
-  }
-
-  public static isObjectValue<TObject extends AnyObject>(value: any): value is ObjectValue<TObject> {
-    return value.type === `object`
-  }
-
-  public isEmptyObject(): boolean {
-    return Object.keys(this.value).length === 0
-  }
-
-  public override hasNumericRepresentation(): boolean {
-    return this._numberValue !== null
-  }
-
-  public override hasStringRepresentation(): boolean {
-    return this._stringValue !== null
-  }
-
-  public override asNumber(): number {
-    assert(this._numberValue !== null, `Object Value has no number value.`)
-    return this._numberValue
-  }
-
-  public asString(): string {
-    assert(this._stringValue !== null, `Object Value has no string value.`)
-    return this._stringValue
-  }
-}
-
 export class VariableValue extends RuntimeValue<VariableName> {
   type: `variable` = `variable`
 
@@ -224,6 +132,27 @@ export class VariableValue extends RuntimeValue<VariableName> {
 
   public static isVariableValue(value: any): value is VariableValue {
     return value.type === `variable`
+  }
+}
+
+export class PropertyValue extends RuntimeValue<{ objectVariableName; propertyName }> {
+  type: `property` = `property`
+  public objectVariableName: VariableName
+  public propertyName: string
+
+  constructor(objectVariableName: VariableName, propertyName: string) {
+    super({ objectVariableName, propertyName })
+
+    assert(typeof objectVariableName === `string`, `Object Variable Name must be a string.`)
+    assert(typeof propertyName === `string`, `Property Name must be a string.`)
+  }
+
+  public static isPropertyValue(value: any): value is PropertyValue {
+    return value.type === `property`
+  }
+
+  public override toToken(): Token {
+    return new ArtificialToken(getTokenKind(`string`), `${this.objectVariableName}::${this.propertyName}`)
   }
 }
 
@@ -280,8 +209,9 @@ export class QuantityValue extends RuntimeValue<Quantity> {
 
 // #endregion
 
-export function makeRuntimeValue(value: unknown): NumericValue {
+export function makeRuntimeValue<TDict extends AnyObject = AnyObject>(value: unknown): NumericValue | ObjectValue<TDict> {
   if (typeof value === `number`) return new NumericValue(value)
+  if (typeof value === `object`) return new ObjectValue(value as TDict)
 
   throw new Error(`Unsupported value type.`)
 }

@@ -72,23 +72,22 @@ export class CallExpression extends Expression {
 export class MemberExpression extends Expression {
   type: NodeType = `MemberExpression`
 
-  constructor(object: Expression, property: Token) {
+  constructor(object: Expression, property: Expression) {
     super()
-    this.tokens = [property]
 
     this.addChild(object, 0, `object`)
+    this.addChild(property, 1, `property`)
   }
 
   public override constructClone(options): this {
     return new MemberExpression(this.object.clone(options), this.property.clone(options)) as this
   }
-
-  public get property(): Token {
-    return this.tokens[0]
-  }
-
   public get object(): Expression {
     return this.children[0]
+  }
+
+  public get property(): Expression {
+    return this.children[1]
   }
 
   public getObjectVariableName(): string {
@@ -96,7 +95,7 @@ export class MemberExpression extends Expression {
   }
 
   public getPropertyName(): string {
-    return this.property.content
+    return this.property.getContent()
   }
 
   public override getContent(): string {

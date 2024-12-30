@@ -1,16 +1,19 @@
 import { AnyObject, MaybeUndefined } from "tsdef"
 import assert from "assert"
-import { has, isNumber } from "lodash"
+import { has, isArray, isNumber, isObjectLike } from "lodash"
 
-import { conditionalSet } from "@december/utils"
+import { conditionalSet, typing } from "@december/utils"
 import { getAliases, isNameExtensionValid, Type } from "@december/gurps/trait"
+import { dump } from "@december/utils"
 
-import churchill, { Builder, paint } from "../../logger"
+import churchill, { Builder, paint, Block } from "../../logger"
 
 import { GCATrait } from "../../trait"
 import { TRAIT_SECTIONS, TraitSection } from "../../trait/section"
 import importGCATraitModifier from "./modifier"
 import importGCATraitMode from "./mode"
+import { isPrimitive } from "../../../../utils/src/typing"
+import { Primitive } from "type-fest"
 
 function parseInt(value: MaybeUndefined<string>): MaybeUndefined<number> {
   if (value === undefined) return value
@@ -43,6 +46,7 @@ export default function importGCATrait(superType: `trait` | `attribute`, raw: An
 
   // 2. Build trait
   const trait: GCATrait = {
+    _raw: raw,
     id,
     name,
     nameext,
@@ -54,6 +58,12 @@ export default function importGCATrait(superType: `trait` | `attribute`, raw: An
     level: parseInt(raw.level?.[0]),
     score: parseInt(raw.score?.[0]),
   }
+
+  // if ([13006, 12953].includes(id)) {
+  //   console.log(`\n${`=`.repeat(250)}\n`)
+  //   logger.addRow(`debug`, ...dump(raw))
+  //   debugger
+  // }
 
   // 3. Parse deep objects
   const _modifiers = raw.modifiers?.[0].modifier?.filter(i => i.name[0] !== ``)

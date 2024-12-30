@@ -5,8 +5,8 @@ import type Interpreter from "../.."
 
 import { ArtificialToken, getTokenKind } from "../../../token"
 
-import { BinaryExpression, BooleanLiteral, Node, NumericLiteral, StringLiteral, UnitLiteral } from "../../../tree"
-import { BooleanValue, ExpressionValue, NumericValue, ObjectValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../../runtime"
+import { BinaryExpression, BooleanLiteral, Identifier, MemberExpression, Node, NumericLiteral, StringLiteral, UnitLiteral } from "../../../tree"
+import { BooleanValue, ExpressionValue, NumericValue, ObjectValue, PropertyValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../../runtime"
 import { NodeConversionFunction } from ".."
 
 export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i: Interpreter<DefaultNodeConversionProvider>, value: RuntimeValue<any>): Node => {
@@ -32,6 +32,19 @@ export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i
     throw new Error(`Cannot parse runtime value to expression string: ${value.type}`)
   }
   if (ExpressionValue.isExpressionValue(value)) return value.value
+  if (PropertyValue.isPropertyValue(value)) {
+    const OBJECT = new Identifier(new ArtificialToken(getTokenKind(`string`), value.value.objectVariableName))
+
+    // check any re-typing rules from grammar (usually for identifiers)
+    const propertyToken = new ArtificialToken(getTokenKind(`string`), value.value.propertyName)
+
+    let PROPERTY: Node = new StringLiteral(propertyToken)
+
+    const transformedNode = i.parser.grammar.shouldTransformNode(PROPERTY)
+    if (transformedNode) PROPERTY = transformedNode
+
+    return new MemberExpression(OBJECT, PROPERTY)
+  }
 
   throw new Error(`Cannot parse runtime value to expression string: ${value.type}`)
 }

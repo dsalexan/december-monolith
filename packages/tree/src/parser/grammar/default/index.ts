@@ -8,7 +8,7 @@ export { DEFAULT_BINDING_POWERS } from "./bindingPowers"
 export { DEFAULT_PARSERS } from "./parsers"
 
 import { BindingPower } from "../bindingPower"
-import { BindingPowerEntry, ReTyperEntry, BindParserEntry, RegisterParserEntry, createBindParserEntry, createRegisterParserEntry, createRegisterParserEntriesFromIndex, SyntacticalGrammarEntry } from "../entries"
+import { BindingPowerEntry, TransformNodeEntry, BindParserEntry, RegisterParserEntry, createBindParserEntry, createRegisterParserEntry, createRegisterParserEntriesFromIndex, SyntacticalGrammarEntry } from "../entries"
 import { LEDParser, NUDParser, ParserFunction, StatementParser, SyntacticalDenotation } from "../parserFunction"
 
 import { TokenKindName } from "../../../token/kind"

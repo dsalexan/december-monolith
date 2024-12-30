@@ -22,8 +22,11 @@ export default function importGCATraitMode(index: number, attackmode: AnyObject,
   const skillused = attackmode.skillused?.[0] as string
   const minimode_damage = attackmode.minimode_damage?.[0] as string
   const minimode_damtype = attackmode.minimode_damtype?.[0] as string
+  const minst = attackmode.minst?.[0] as string
 
   logger.add(...paint.grey(paint.dim(`[modes/`), `${index}`, paint.dim(`] `)), paint.green(`${name}`)).debug() // COMMENT
+
+  // if (name === `Barbed-head`) debugger
 
   // 2. Build object
   const mode: GCATraitMode = {
@@ -41,6 +44,7 @@ export default function importGCATraitMode(index: number, attackmode: AnyObject,
     skillused,
     minimode_damage,
     minimode_damtype,
+    minst,
   }
 
   return mode

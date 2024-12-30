@@ -1,11 +1,13 @@
 import { isArray, isEmpty, isNil, mergeWith, range, set } from "lodash"
 import { isPrimitive } from "./typing"
+import { dump } from "./dump"
 
 export * as compare from "./compare"
 export * as storage from "./storage"
 
 export { default as Range } from "./range"
 export { Interval, Point, RANGE_COMPARISON } from "./range"
+export { dump } from "./dump"
 
 export * as Match from "./match"
 

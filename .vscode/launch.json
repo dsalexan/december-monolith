@@ -267,5 +267,17 @@
       // "cwd": "${fileDirname}",
       "internalConsoleOptions": "neverOpen",
     },
+
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "dump",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "command": "ts-node -r tsconfig-paths/register -- ${workspaceFolder}\\packages\\utils\\src\\dump\\test.ts",
+      // "cwd": "${fileDirname}",
+      "internalConsoleOptions": "neverOpen",
+    },
   ]
 }

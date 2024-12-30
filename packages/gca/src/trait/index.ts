@@ -1,9 +1,11 @@
+import { AnyObject } from "tsdef"
 import { TraitSection } from "./section"
 
 export { TRAIT_SECTIONS } from "./section"
 export type { TraitSection } from "./section"
 
 export interface GCATrait {
+  _raw: AnyObject
   id: number
   name: string
   nameext?: string
@@ -41,4 +43,5 @@ export interface GCATraitMode {
   skillused: string
   minimode_damage?: string
   minimode_damtype?: string
+  minst?: string
 }

@@ -1,24 +1,25 @@
 import { getName } from "./../../../src2/nrs_OLD/rule_old/index"
 import { parseExpression } from "./default/parsers/expression"
 import assert from "assert"
-import { isNil, isString, last, uniq } from "lodash"
-import { AnyObject, MaybeUndefined, Nullable } from "tsdef"
+import { isFunction, isNil, isString, last, uniq } from "lodash"
+import { AnyObject, MaybeNull, MaybeUndefined, Nullable } from "tsdef"
 
 import { Match } from "@december/utils"
 import { IUnit, UnitManager } from "@december/utils/unit"
 
 import { TokenKindName } from "../../token/kind"
-import { Expression, Node, NodeType, Statement } from "../../tree"
+import { Expression, Identifier, Node, NodeType, Statement, StringLiteral } from "../../tree"
 
 import { BindingPower } from "./bindingPower"
 import { LEDParser, NUDParser, StatementParser, EntryParser, SyntacticalDenotation } from "./parserFunction"
-import { isBindingPowerEntry, isBindParserEntry, isRegisterParserEntry, isReTyperEntry, ReTyperEntry, SyntacticalGrammarEntry } from "./entries"
+import { isBindingPowerEntry, isBindParserEntry, isRegisterParserEntry, isTransformNodeEntry, createTransformNodeEntry, SyntacticalGrammarEntry, TransformNodeEntry } from "./entries"
 import { FunctionProvider, GetFunction, GetKey } from "./../../utils"
+import { Token } from "../../token/core"
 
 export type { BindingPower } from "./bindingPower"
 
 export type SyntacticalLookupKey = SyntacticalDenotation
-export { createReTyperEntry, createBindParserEntry, createRegisterParserEntry, createBindingPowerEntry } from "./entries"
+export { createTransformNodeEntry, createBindParserEntry, createRegisterParserEntry, createBindingPowerEntry, isTransformNodeEntry } from "./entries"
 export { DEFAULT_GRAMMAR } from "./default"
 
 export type BaseParserProvider = Record<string, (...args: any[]) => Node>
@@ -36,7 +37,7 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
     led: Partial<Record<TokenKindName, string[]>>
   }
 
-  protected reTypers: Map<string, ReTyperEntry> = new Map()
+  protected transformType: Record<NodeType, Map<string, TransformNodeEntry>> = {} as any // from -> name -> entry
   protected unitManager: UnitManager
 
   constructor(unitManager: UnitManager) {
@@ -44,7 +45,7 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
 
     this.bindingPowers = { statement: {}, nud: {}, led: {} }
     this.parsers = { statement: {}, nud: {}, led: {} }
-    this.reTypers = new Map()
+    this.transformType = {} as any
     this.unitManager = unitManager
   }
 
@@ -97,13 +98,37 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
   }
 
   /** Return if string should be re-typed as another thing */
-  public shouldReType(variableName: string): MaybeUndefined<{ match: Match.BasePatternMatch; type: NodeType }> {
-    for (const [key, { pattern, type }] of this.reTypers) {
-      const match = pattern.match(variableName)
-      if (match.isMatch) return { match, type }
+  public shouldTransformNode(node: Node): MaybeNull<Node> {
+    const transformType = this.transformType[node.type]
+    if (!transformType) return null
+
+    const content = node.getContent()
+    for (const [key, { pattern, to }] of transformType) {
+      const match = pattern.match(content)
+      if (match.isMatch) {
+        if (isFunction(to)) return to(node)
+        else if (Node.isNode(to)) to
+        else if (isString(to)) {
+          let newNode: Node
+          let tokens: Token[] = []
+
+          // 1. Get relevant info from original node
+          if (node instanceof StringLiteral) tokens = [...node.tokens]
+          //
+          else throw new Error(`Invalid target node to transform "${node.type}"`)
+
+          // 2. Create new node
+          if (to === `Identifier`) newNode = new Identifier(...tokens)
+          //
+          else throw new Error(`Invalid transform final type "${to}"`)
+
+          // 3. Return new node
+          return newNode
+        }
+      }
     }
 
-    return undefined
+    return null
   }
 
   /** Return unit definition by symbol */
@@ -137,10 +162,11 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
   }
 
   /** Register identifier by variable name */
-  public addReTyper(key: string, type: NodeType, pattern: Match.Pattern) {
-    assert(!this.reTypers.has(key), `ReTyper entry "${key}" already registered`)
+  public addTransformType(key: string, from: NodeType, pattern: Match.Pattern, to: TransformNodeEntry[`to`]) {
+    assert(!this.transformType[from]?.has(key), `TransformType entry "${key}" already registered`)
 
-    this.reTypers.set(key, { key, pattern, type })
+    this.transformType[from] ??= new Map()
+    this.transformType[from].set(key, { key, from, pattern, to })
   }
 
   /** Generic mass entry register */
@@ -149,7 +175,7 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
       if (isRegisterParserEntry(entry)) this.registerParser(entry.name, entry.fn, entry.override)
       else if (isBindParserEntry(entry)) this.bindParser(entry.denotation, entry.kind, entry.bindingPower, entry.parser)
       else if (isBindingPowerEntry(entry)) this.addBindingPower(entry.denotation, entry.kind, entry.bindingPower)
-      else if (isReTyperEntry(entry)) this.addReTyper(entry.key, entry.type, entry.pattern)
+      else if (isTransformNodeEntry(entry)) this.addTransformType(entry.key, entry.from, entry.pattern, entry.to)
       //
       else throw new Error(`Invalid syntactical grammar entry`)
     }

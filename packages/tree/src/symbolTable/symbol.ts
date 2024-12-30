@@ -3,7 +3,7 @@ import { Node } from "../tree"
 import { Block, Paint, paint } from "../logger"
 import { NODE_TYPE_COLOR } from "../tree/type"
 import type { Environment, VariableName } from "../interpreter"
-import { ObjectValue, VARIABLE_NOT_FOUND } from "../interpreter"
+import { ObjectValue, PropertyValue, VARIABLE_NOT_FOUND } from "../interpreter"
 import { groupBy, isSymbol } from "lodash"
 
 export class LinkedNode {
@@ -64,6 +64,7 @@ export class Simbol {
         if (content === `[object Object]`) {
           if (`name` in value.value) content = value.value.name
           if (ObjectValue.isObjectValue(value) && value.isEmptyObject()) content = `{}`
+          if (PropertyValue.isPropertyValue(value)) content = `${value.value.objectVariableName}::${value.value.propertyName}`
         }
 
         const blocks: Block[] = [color.dim(`<${value.type}> `), color(content)]

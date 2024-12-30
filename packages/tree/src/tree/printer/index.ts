@@ -30,12 +30,11 @@ export function printTree(node: Node) {
   })
 
   // 3. Print other data
-  if ([`StringLiteral`, `NumericLiteral`, `ExpressionStatement`, `IfExpression`, `CallExpression`, `Identifier`, `UnitLiteral`, `DiceRollExpression`].includes(node.type)) {
+  if ([`StringLiteral`, `NumericLiteral`, `ExpressionStatement`, `IfExpression`, `CallExpression`, `Identifier`, `UnitLiteral`, `DiceRollExpression`, `MemberExpression`].includes(node.type)) {
     // pass
   } else if ([`BinaryExpression`, `MemberExpression`, `PrefixExpression`].includes(node.type)) {
     let token: Token = null as any
     if (node.type === `BinaryExpression` || node.type === `PrefixExpression`) token = (node as BinaryExpression | PrefixExpression).operator
-    else if (node.type === `MemberExpression`) token = (node as MemberExpression).property
 
     printInlineData({
       color: {

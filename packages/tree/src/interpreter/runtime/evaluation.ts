@@ -2,7 +2,7 @@ import { Nullable } from "tsdef"
 
 import { Node, Statement } from "../../tree"
 
-import { RuntimeValue } from "."
+import { RuntimeValue } from "./base"
 import type Interpreter from ".."
 
 /** A RUNTIME_EVALUTION is the OUTPUT of an evaluation

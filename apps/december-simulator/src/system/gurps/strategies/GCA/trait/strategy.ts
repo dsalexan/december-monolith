@@ -7,7 +7,7 @@ import { Strategy, Mutation, SET, MutableObject } from "@december/compiler"
 
 import { Environment } from "@december/tree"
 import { CallExpression, ExpressionStatement, Identifier } from "@december/tree/tree"
-import { ExpressionValue, VariableValue } from "@december/tree/interpreter"
+import { ExpressionValue, NumericValue, VariableValue } from "@december/tree/interpreter"
 import { makeToken } from "@december/tree/utils/factories"
 
 import { IntegrityEntry } from "@december/compiler/controller/integrityRegistry"
@@ -16,7 +16,7 @@ import { REFERENCE_ADDED } from "@december/compiler/controller/eventEmitter/even
 import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, REFERENCE, Reference, SELF_PROPERTY } from "@december/utils/access"
 
 import { IGURPSCharacter, IGURPSTrait, Trait } from "@december/gurps"
-import { isNameExtensionValid, Type, IGURPSTraitMode, isAlias, getAliases } from "@december/gurps/trait"
+import { isNameExtensionValid, Type, IGURPSTraitMode, IGURPSTraitModeStrength, isAlias, getAliases } from "@december/gurps/trait"
 import { DamageTable } from "@december/gurps/character"
 
 import { GCACharacter, GCATrait } from "@december/gca"
@@ -107,14 +107,35 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
         //  (basedOn attribute is necessary to calculate base thr or sw)
         //  (basedOn === null most likely means that the damage is fixed, so we dont need to watch any external updates)
         if (damageBasedOn) {
-          Strategy.addProxyListener(REFERENCE_ADDED(REFERENCE(`alias`, damageBasedOn)), `compute:mode`, {
+          Strategy.addProxyListener(REFERENCE_ADDED(REFERENCE(`alias`, damageBasedOn)), `compute:mode:damage`, {
             arguments: { modeIndex: i }, //
             integrityEntries: [BASED_ON_INTEGRITY_ENTRY],
           })(object)
         }
       }
 
-      // 4. Push mutation
+      // 4. Specific shit for minimum strength
+      // if (object.id === `15038`) debugger
+      if (_mode.minst) {
+        const match = /^(\d+)([†‡RBM]+)?$/i.exec(_mode.minst)
+        assert(match, `There should have been a match here`)
+
+        const [_, numericValue, markers] = match
+        const ST: IGURPSTraitModeStrength = { minimum: parseInt(numericValue) }
+        assert(!isNaN(ST.minimum), `MinimumST should be a number`)
+
+        if (markers) {
+          if (markers.toUpperCase().includes(`†`)) ST.twoHanded = true
+          if (markers.toUpperCase().includes(`‡`)) ST.twoHandedAndUnready = true
+          if (markers.toUpperCase().includes(`R`)) debugger
+          if (markers.toUpperCase().includes(`B`)) debugger
+          if (markers.toUpperCase().includes(`M`)) ST.mounted = true
+        }
+
+        mode.strength = ST
+      }
+
+      // 5. Push mutation
       mutations.push(SET(`modes.[${i}]`, mode))
     }
 
@@ -132,11 +153,11 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
 IMPORT_TRAIT_FROM_GCA_STRATEGY.registerReProcessingFunction(`compute:re-processing`, { mode: `expression` }, GCAStrategyProcessorResolveOptionsGenerator, GCAStrategyProcessorListenOptions)
 
 // C. SPECIFIC COMPUTES
-// C.1. modes
+// C.1. damaging modes
 IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
   // [SELF_PROPERTY(/modes\[(\d+)\].damage.form/), SELF_PROPERTY(/modes\[(\d+)\].damage.type/), SELF_PROPERTY(/modes\[(\d+)\].damage.value/)],
   [SELF_PROPERTY(/modes\.\[(\d+)\].damage.basedOn/)],
-  `compute:mode`,
+  `compute:mode:damage`,
   (object, { arguments: { modeIndex, ...args } }) => {
     // TODO: If this was fired becaused basedOn changed, create a new proxy listener for alias reference
 
@@ -146,14 +167,13 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     // 1. Get mode (by merger data and metadata)
     const mode: IGURPSTraitMode = get(object._getData(object.data.modes, `modes`), modeIndex)
     assert(mode.damage, `Unimplemented for non-damaging modes`)
-    const path = `modes.[${modeIndex}].damage.form`
 
     // 2. Prepare stuff to process
     const character = object.controller.store.getByID(`general`)
     assert(character, `Character not found`)
 
     const baseEnvironment = new Environment(`gurps:local`, Trait.makeGURPSTraitEnvironment(character, object.data))
-    // baseEnvironment.assignValue(`thr`, new VariableValue(mode.damage.basedOn))
+    baseEnvironment.assignValue(`modeIndex`, new NumericValue(modeIndex))
 
     //    (some traits have fixed damage; or, at least, based on other shit than thr/sw)
     if (mode.damage.basedOn) {
@@ -164,9 +184,9 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     const options = { ...GCAStrategyProcessorListenOptions, ...GCAStrategyProcessorOptionsGenerator(object) }
 
     // 3. Process expression
-    const outputs: ReturnType<(typeof Strategy)[`process`]>[] = []
+    const outputs: (ReturnType<(typeof Strategy)[`process`]> & { path: string })[] = []
     const paths: { expression: string; target: string }[] = [
-      { expression: `_.GCA.modes.[${modeIndex}].dmg`, target: `modes.[${modeIndex}].damage.form` },
+      // { expression: `_.GCA.modes.[${modeIndex}].dmg`, target: `modes.[${modeIndex}].damage.form` },
       { expression: `_.GCA.modes.[${modeIndex}].damtype`, target: `modes.[${modeIndex}].damage.type` },
       { expression: `_.GCA.modes.[${modeIndex}].damage`, target: `modes.[${modeIndex}].damage.value` },
     ]
@@ -175,22 +195,23 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
 
       global.__PROCESSING_OBJECT = object
 
-      outputs.push(
-        Strategy.process(object, path.target, {
+      outputs.push({
+        ...Strategy.process(object, path.target, {
           ...options,
           //
           expression,
           environment: baseEnvironment,
           //
-          syntacticalContext: { mode: `expression` },
+          syntacticalContext: { mode: `expression` }, // TODO: Probably derive this from "type" of tag in GCA reference
           reProcessingFunction: `compute:re-processing`,
         }),
-      )
+        path: path.target,
+      })
     }
 
     // [DEBUG]
     // ===========================================================================================================================
-    for (const { state } of outputs) {
+    for (const { path, state } of outputs) {
       const rows = explainProcessOutput(object, path, state)
       for (const row of rows) logger.add(...row).debug()
     }
@@ -232,9 +253,12 @@ function explainProcessOutput(object: MutableObject, path: string, state: Strate
   else rows.push([...prefix(), paint.yellow.dim(`Not Ready`)])
 
   rows.push([...prefix(), paint.grey.dim(`${path}`)])
+  rows.push([...prefix(), paint.grey.dim(`${state.expression}`)])
 
-  if (!state.isReady()) {
-    const tree = state.evaluation?.node ?? state.AST
+  if (!state.isParsed()) {
+    rows.push([...prefix(), paint.grey.dim.italic(`output    `), paint.red.bold(` NOT PARSED (complilation error)`)])
+  } else if (!state.isReady()) {
+    const tree = state.evaluation?.node ?? state.AST!
     rows.push([...prefix(), paint.grey.dim.italic(`output    `), paint.grey.dim(` ${tree.getContent()}`)])
   } else {
     const runtimeValue = state.getValue()

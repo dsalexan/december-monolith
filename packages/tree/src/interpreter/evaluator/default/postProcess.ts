@@ -16,7 +16,7 @@ import { SyntacticalContext } from "../../../parser"
 export const postProcess: PostProcessFunction = (i: Interpreter, evaluation: RuntimeEvaluation<RuntimeValue<any>, Expression>, syntacticalContext: SyntacticalContext): Nullable<RuntimeValue<any>> => {
   let runtimeValue: Nullable<RuntimeValue<any>> = null
 
-  assert([`expression`].includes(syntacticalContext.mode), `Unimplemented syntactical context`)
+  assert([`expression`, `if`].includes(syntacticalContext.mode), `Unimplemented syntactical context`)
 
   // A. If RuntimeValue exists
   if (evaluation.runtimeValue) {

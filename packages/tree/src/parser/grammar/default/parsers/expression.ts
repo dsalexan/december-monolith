@@ -121,8 +121,17 @@ export const parsePrimaryExpression: NUDParser = (p: Parser<DefaultExpressionPar
 
 export const parseMemberExpression: LEDParser = (p: Parser, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
   p.next(`double_colon`)
+
   const token = p.next(`string`)
-  return new MemberExpression(left, token)
+  const property = p.grammar.call(`parseStringExpression`)(p, new StringLiteral(token), context)
+
+  const memberExpression = new MemberExpression(left, property)
+
+  // 1. First check any transforming rules from grammar (usually for identifiers)
+  const transformedNode = p.grammar.shouldTransformNode(memberExpression)
+  if (transformedNode) return transformedNode
+
+  return memberExpression
 }
 
 export const parseQuotedStringExpression: NUDParser = (p: Parser<DefaultExpressionParserProvider>, context: SyntacticalContext): Expression => {
@@ -147,16 +156,11 @@ export const parseQuotedStringExpression: NUDParser = (p: Parser<DefaultExpressi
 export const parseStringExpression = (p: Parser, stringLiteral: StringLiteral, context: SyntacticalContext): Expression => {
   // if stringLiteral is a identifier (create lookup identifier), re-create node as Identifier
 
+  // 1. First check any transforming rules from grammar (usually for identifiers)
+  const transformedNode = p.grammar.shouldTransformNode(stringLiteral)
+  if (transformedNode) return transformedNode
+
   const content = stringLiteral.getContent()
-
-  // 1. First check any re-typing rules from grammar (usually for identifiers)
-  const reTypeTest = p.grammar.shouldReType(content)
-  if (reTypeTest?.match?.isMatch) {
-    const { type } = reTypeTest
-    if (type === `Identifier`) return new Identifier(...stringLiteral.tokens)
-
-    throw new Error(`Unimplemented re-type type "${type}"`)
-  }
 
   // 2. Then check if it is a unit
   const unit = p.grammar.getUnit(content)
@@ -251,22 +255,25 @@ export const parseCallExpression: LEDParser = (p: Parser, left: Expression, mini
 
 // @if(<condition> then <consequent> else <alternative>)
 export const parseIfExpression: NUDParser = (p: Parser, context: SyntacticalContext): Expression => {
-  p.next(`if`)
-  p.next(`open_parenthesis`)
-  const condition = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.COMMA, context)
+  if (context.mode !== `if`) {
+    p.next(`if`)
+    p.next(`open_parenthesis`)
+  }
+
+  const condition = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.COMMA, { ...context, mode: `expression` })
 
   p.next(`then`)
-  const consequent = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.COMMA, context)
+  const consequent = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.COMMA, { ...context, mode: `expression` })
 
   let alternative: MaybeUndefined<Expression> = undefined
   if (p.peek() === `whitespace`) debugger // ERROR: Untested
   if (p.peek() === `else`) {
     p.next(`else`)
-    alternative = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.DEFAULT, context)
+    alternative = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.DEFAULT, { ...context, mode: `expression` })
   }
 
   if (p.peek() === `whitespace`) debugger // ERROR: Untested
-  p.next(`close_parenthesis`)
+  if (context.mode !== `if`) p.next(`close_parenthesis`)
 
   return new IfExpression(condition, consequent, alternative)
 }

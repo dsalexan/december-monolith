@@ -70,17 +70,16 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
     for (let i = 0; i < injections.length; i++) {
       const injection = injections[i]
 
-      // 1. Parse partial expression
-      const { AST } = this.parse(injection.expression, environment, symbolTable, { ...options, injection: `${options.injection ?? `⌀`} > $${injection.index}` })
-      if (!AST) continue
-
-      // 2. Determine context by injection function
+      // 1. Determine context by injection function
       let syntacticalContext: SyntacticalContext = cloneDeep(options.syntacticalContext)
-      if (injection.name === `solver` || injection.name === `evaluate` || injection.name === `eval`) {
-        syntacticalContext = { ...syntacticalContext, mode: `expression` }
-      }
+      if (injection.name === `solver` || injection.name === `evaluate` || injection.name === `eval`) syntacticalContext = { ...syntacticalContext, mode: `expression` }
+      else if (injection.name === `if`) syntacticalContext = { ...syntacticalContext, mode: `if` }
       //
       else throw new Error(`Unknown injection function "${injection.name}"`)
+
+      // 2. Parse partial expression
+      const { AST } = this.parse(injection.expression, environment, symbolTable, { ...options, syntacticalContext, injection: `${options.injection ?? `⌀`} > $${injection.index}` })
+      if (!AST) continue
 
       // 3. Resolve partial expression
       const { originalContent, content, evaluation, isReady } = this.resolve(AST, environment, symbolTable, {
@@ -120,10 +119,9 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
     const injection = options.injection ?? `⌀`
 
     const { tokens, injections } = this.lexer.process(`${injection}`, this.lexicalGrammar, expression, {})
-    const originalTokens = [...tokens]
     if (DEBUG) this.lexer.print() // COMMENT
 
-    const noPendingInjections = this.inject(tokens, this.lexer.injections, environment, symbolTable, { ...options })
+    const noPendingInjections = this.inject(tokens, injections, environment, symbolTable, { ...options })
 
     let AST: Nullable<Node> = null
     if (noPendingInjections) {

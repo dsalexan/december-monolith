@@ -7,9 +7,11 @@ import { EQUALS, FUNCTION, REGEX } from "@december/utils/match/element"
 import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR, DICE_MODULAR_REWRITER_RULESET } from "@december/system/dice"
 import { makeDefaultProcessor } from "@december/tree/processor"
 import { ObjectValue, RuntimeValue } from "@december/tree/interpreter"
-import { createReTyperEntry } from "@december/tree/parser"
+import { createTransformNodeEntry } from "@december/tree/parser"
 import { Simbol } from "@december/tree/symbolTable"
 import { createEntry, KEYWORD_PRIORITY } from "@december/tree/lexer/grammar"
+import { makeConstantLiteral, makeToken } from "@december/tree/utils/factories"
+import { Identifier, MemberExpression } from "@december/tree/tree"
 
 import { Strategy, Mutation, SET, MutableObject } from "@december/compiler"
 
@@ -34,17 +36,24 @@ export const GCAStrategyProcessorParseOptions: Omit<StrategyProcessorParseOption
   processorFactory: options => {
     const processor = makeDefaultProcessor(options)
 
-    const _LEVEL = createEntry(KEYWORD_PRIORITY + 1, `if`, EQUALS(`%level`, true))
-    processor.lexicalGrammar.add(_LEVEL)
+    processor.syntacticalGrammar.add(createTransformNodeEntry(`me_level`, `StringLiteral`, EQUALS(`%level`, true), `Identifier`))
+    processor.syntacticalGrammar.add(
+      createTransformNodeEntry(`me_weaponst`, `MemberExpression`, EQUALS(`me->weaponst`, true), (memberExpression: MemberExpression) => {
+        const me_modes = new MemberExpression(memberExpression.object, makeConstantLiteral(`modes`))
+        const modes_current = new MemberExpression(me_modes, new Identifier(makeToken(`modeIndex`)))
+        const mode_strength = new MemberExpression(modes_current, makeConstantLiteral(`strength`))
+        return new MemberExpression(mode_strength, makeConstantLiteral(`minimum`))
+      }),
+    )
 
     processor.syntacticalGrammar.add(...DICE_MODULAR_SYNTACTICAL_GRAMMAR)
     processor.graphRewriteSystem.add(...DICE_MODULAR_REWRITER_RULESET)
     processor.nodeEvaluator.addDictionaries(DICE_MODULAR_EVALUATOR_PROVIDER, true)
 
-    processor.syntacticalGrammar.add(createReTyperEntry(`me`, `Identifier`, EQUALS(`me`)))
-    processor.syntacticalGrammar.add(createReTyperEntry(`thr`, `Identifier`, EQUALS(`thr`)))
-    processor.syntacticalGrammar.add(createReTyperEntry(`sw`, `Identifier`, EQUALS(`sw`)))
-    processor.syntacticalGrammar.add(createReTyperEntry(`alias`, `Identifier`, FUNCTION(isAlias)))
+    processor.syntacticalGrammar.add(createTransformNodeEntry(`me`, `StringLiteral`, EQUALS(`me`), `Identifier`))
+    processor.syntacticalGrammar.add(createTransformNodeEntry(`thr`, `StringLiteral`, EQUALS(`thr`), `Identifier`))
+    processor.syntacticalGrammar.add(createTransformNodeEntry(`sw`, `StringLiteral`, EQUALS(`sw`), `Identifier`))
+    processor.syntacticalGrammar.add(createTransformNodeEntry(`alias`, `StringLiteral`, FUNCTION(isAlias), `Identifier`))
 
     return processor
   },

@@ -28,7 +28,7 @@ import { InjectionData } from "../lexer"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
-export { BindingPower, SyntacticalGrammar, DEFAULT_GRAMMAR, createReTyperEntry } from "./grammar"
+export { BindingPower, SyntacticalGrammar, DEFAULT_GRAMMAR, createTransformNodeEntry } from "./grammar"
 export { SyntacticalContext, StatementParser, NUDParser, LEDParser } from "./grammar/parserFunction"
 export { createRegisterParserEntriesFromIndex, SyntacticalGrammarEntry } from "./grammar/entries"
 

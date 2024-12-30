@@ -9,7 +9,7 @@ import Environment from "../environment"
 import { RuntimeEvaluation, RuntimeValue } from "../runtime"
 import { SyntacticalContext } from "../../parser"
 
-export { RuntimeEvaluation, RuntimeValue, NumericValue, BooleanValue, StringValue, UnitValue, VariableValue, QuantityValue, UndefinedValue, FunctionValue, ObjectValue, ExpressionValue } from "../runtime"
+export { RuntimeEvaluation, RuntimeValue, NumericValue, BooleanValue, StringValue, UnitValue, VariableValue, QuantityValue, UndefinedValue, FunctionValue, ObjectValue, ExpressionValue, PropertyValue } from "../runtime"
 export type { Contextualized, RuntimeFunction, makeRuntimeValue } from "../runtime"
 
 export type EvaluationOutput<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>> = RuntimeEvaluation<TRuntimeValue> | MaybeUndefined<TRuntimeValue>

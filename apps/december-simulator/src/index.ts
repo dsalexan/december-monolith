@@ -3,6 +3,7 @@ seedrandom(`hello.`, { global: true })
 
 import path from "path"
 
+import { dump } from "@december/utils"
 import { GCACharacter, GCACharacterImporter } from "@december/gca"
 import { makeArtificialEventTrace, SET } from "@december/compiler"
 
@@ -65,8 +66,12 @@ async function run() {
   const punch = character.store.getByID(`11290`) // ST:Punch
   const bite = character.store.getByID(`11178`) // ST:Bite
   const karate = character.store.getByID(`12899`) // SK:Karate
+  const acuteTasteAndSmell = character.store.getByID(`13006`) // // AD:Acute Taste and Smell
 
   const stuff = punch?.getProperty(`modes.[${0}].damage.value`)
+
+  console.log(`\n${`=`.repeat(250)}\n`)
+  churchil.addRow(`debug`, ...dump(acuteTasteAndSmell!.data._.GCA._raw))
   debugger
 }
 

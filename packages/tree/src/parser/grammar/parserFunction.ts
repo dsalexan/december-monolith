@@ -5,7 +5,7 @@ import type Parser from ".."
 import { BindingPower } from "./bindingPower"
 import { Merge } from "type-fest"
 
-export type SyntaxMode = `expression` | `string`
+export type SyntaxMode = `expression` | string
 export type SyntacticalContext = { mode: SyntaxMode }
 
 export type SyntacticalDenotation = `statement` | `nud` | `led`

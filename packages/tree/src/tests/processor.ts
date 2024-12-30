@@ -1,8 +1,10 @@
 import { SyntacticalContext } from "./../parser/grammar/parserFunction"
+import { has, get } from "lodash"
 import { Nullable } from "tsdef"
 import assert from "assert"
 
 import { EQUALS, REGEX } from "@december/utils/match/element"
+import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR, DICE_MODULAR_REWRITER_RULESET } from "@december/system/dice"
 
 import { UnitManager, BASE_UNITS, DICE } from "./unit"
 
@@ -15,16 +17,17 @@ import {
   Parser,
 } from ".."
 
-import { createReTyperEntry, SyntacticalGrammar } from "../parser/grammar"
+import { createTransformNodeEntry, SyntacticalGrammar } from "../parser/grammar"
 import { DEFAULT_GRAMMAR as DEFAULT_SYNTACTICAL_GRAMMAR } from "../parser/grammar/default"
 
-import Interpreter, { NumericValue, DEFAULT_EVALUATOR, Environment, NodeEvaluator, RuntimeValue, VariableValue, FunctionValue, BooleanValue } from "../interpreter"
-import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR, DICE_MODULAR_REWRITER_RULESET } from "@december/system/dice"
+import Interpreter, { NumericValue, DEFAULT_EVALUATOR, Environment, NodeEvaluator, RuntimeValue, VariableValue, FunctionValue, BooleanValue, ObjectValue } from "../interpreter"
 import Rewriter, { GraphRewritingSystem, DEFAULT_GRAPH_REWRITING_RULESET } from "../rewriter"
 import { SymbolTable } from "../symbolTable"
 
 import Processor from "../processor"
 import { createEntry, KEYWORD_PRIORITY } from "../lexer/grammar"
+import { Identifier, MemberExpression, StringLiteral } from "../tree"
+import { makeConstantLiteral, makeToken } from "../utils/factories"
 
 let expression = `10 + 2 * 3`
 expression = `One::level`
@@ -53,6 +56,9 @@ expression = `((2d6 - 1) + 0) + 0`
 //
 expression = `$solver(%level)d`
 expression = `$solver($eval(%level))d + $solver(%level)`
+expression = `$if("AD:Claws (Sharp Claws)::level" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN "cut" ELSE $if("AD:Claws (Talons)::level" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN "cut/imp" ELSE $if("AD:Claws (Long Talons)::level" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN "cut/imp" ELSE "cr")))`
+expression = `me::strength::minimum`
+expression = `me::weaponst`
 // expression = `2 * 1`
 // expression = `0 + 1 + 2 * 1`
 // expression = `3 / 3`
@@ -80,12 +86,20 @@ lexicalGrammar.add(...DEFAULT_LEXICAL_GRAMMAR)
 const syntacticalGrammar = new SyntacticalGrammar(unitManager)
 syntacticalGrammar.add(...DEFAULT_SYNTACTICAL_GRAMMAR)
 syntacticalGrammar.add(...DICE_MODULAR_SYNTACTICAL_GRAMMAR)
-syntacticalGrammar.add(createReTyperEntry(`b`, `Identifier`, EQUALS(`b`)))
-syntacticalGrammar.add(createReTyperEntry(`t`, `Identifier`, EQUALS(`t`)))
-syntacticalGrammar.add(createReTyperEntry(`o`, `Identifier`, EQUALS(`o`)))
-syntacticalGrammar.add(createReTyperEntry(`self`, `Identifier`, EQUALS(`self`)))
-syntacticalGrammar.add(createReTyperEntry(`alias`, `Identifier`, REGEX(/^"?\w{2}:.+"?$/)))
-syntacticalGrammar.add(createReTyperEntry(`me_level`, `Identifier`, EQUALS(`%level`, true)))
+syntacticalGrammar.add(createTransformNodeEntry(`b`, `StringLiteral`, EQUALS(`b`), `Identifier`))
+syntacticalGrammar.add(createTransformNodeEntry(`t`, `StringLiteral`, EQUALS(`t`), `Identifier`))
+syntacticalGrammar.add(createTransformNodeEntry(`o`, `StringLiteral`, EQUALS(`o`), `Identifier`))
+syntacticalGrammar.add(createTransformNodeEntry(`me`, `StringLiteral`, EQUALS(`me`), `Identifier`))
+syntacticalGrammar.add(createTransformNodeEntry(`alias`, `StringLiteral`, REGEX(/^"?\w{2}:.+"?$/), `Identifier`))
+syntacticalGrammar.add(createTransformNodeEntry(`me_level`, `StringLiteral`, EQUALS(`%level`, true), `Identifier`))
+syntacticalGrammar.add(
+  createTransformNodeEntry(`me_weaponst`, `MemberExpression`, EQUALS(`me->weaponst`, true), (memberExpression: MemberExpression) => {
+    const me_modes = new MemberExpression(memberExpression.object, makeConstantLiteral(`modes`))
+    const modes_current = new MemberExpression(me_modes, new Identifier(makeToken(`modeIndex`)))
+    const mode_strength = new MemberExpression(modes_current, makeConstantLiteral(`strength`))
+    return new MemberExpression(mode_strength, makeConstantLiteral(`minimum`))
+  }),
+)
 
 const graphRewritingSystem = new GraphRewritingSystem()
 graphRewritingSystem.add(...DEFAULT_GRAPH_REWRITING_RULESET)
@@ -96,12 +110,16 @@ nodeEvaluator.addDictionaries(DEFAULT_EVALUATOR)
 nodeEvaluator.addDictionaries(DICE_MODULAR_EVALUATOR_PROVIDER, true)
 
 const environment = new Environment(`root`)
+
+const ME = { level: 15, modes: [{ strength: { minimum: 9 } }] }
+environment.assignValue(`me`, new ObjectValue(ME, { numberValue: ME.level }))
+environment.assignValue(`modeIndex`, new NumericValue(0))
+
 // environment.assignValue(`b`, new NumericValue(-10))
-environment.assignValue(`self`, new NumericValue(15))
 // environment.assignValueToPattern(`alias`, REGEX(/^"?\w{2}:.+"?$/), new NumericValue(0))
 environment.assignValueToPattern(`alias`, REGEX(/^"?\w{2}:.+"?$/), new VariableValue(`alias::fallback`))
-// environment.assignValue(`alias::fallback`, new NumericValue(0))
-environment.assignValue(`@itemhasmod`, new FunctionValue(() => () => new BooleanValue(false), `@itemhasmod`))
+environment.assignValue(`alias::fallback`, new ObjectValue({}, { numberValue: 0 }))
+environment.assignValue(`@itemhasmod`, new FunctionValue(() => () => new BooleanValue(true), `@itemhasmod`))
 environment.assignValue(`%level`, new NumericValue(10))
 
 const processor = new Processor(lexicalGrammar, syntacticalGrammar, graphRewritingSystem, nodeEvaluator)

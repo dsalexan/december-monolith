@@ -5,7 +5,7 @@ import { TraitType, toTag } from "./type"
 export * as Mode from "./mode"
 export * as Type from "./type"
 
-export type { default as IGURPSTraitMode } from "./mode"
+export type { default as IGURPSTraitMode, IGURPSTraitModeStrength } from "./mode"
 export { makeGURPSTraitEnvironment } from "./environment"
 
 export default interface IGURPSTrait {

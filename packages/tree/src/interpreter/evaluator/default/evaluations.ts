@@ -192,15 +192,29 @@ export const evaluateMemberExpression: EvaluationFunction = (i: Interpreter<Defa
   const object = i.evaluator.evaluate(i, memberExpression.object, environment)
 
   // 1. If object could not be evaluated bail out
-  if (!RuntimeEvaluation.isResolved(object)) new RuntimeEvaluation(memberExpression)
+  if (!RuntimeEvaluation.isResolved(object)) return new RuntimeEvaluation(memberExpression)
+  assert(ObjectValue.isObjectValue(object.runtimeValue), `Object must be an ObjectValue`)
 
-  const propertyName = memberExpression.getPropertyName()
-  assert(ObjectValue.isObjectValue(object.runtimeValue), `Object must be an object duuh`)
+  const property = i.evaluator.evaluate(i, memberExpression.property, environment)
 
-  const propertyValue = get(object.runtimeValue.value, propertyName)
+  // 1. If object could not be evaluated bail out
+  if (!RuntimeEvaluation.isResolved(property)) return new RuntimeEvaluation(memberExpression)
 
-  // 2. If property could not be found, bail out
-  assert(!isNil(propertyValue), `Property "${propertyName}" not found in object.`)
+  // 2. Get property name from expression
+  let propertyName: string | number = ``
+  if (StringValue.isStringValue(property.runtimeValue)) propertyName = property.runtimeValue.value
+  else if (NumericValue.isNumericValue(property.runtimeValue)) {
+    if (object.runtimeValue.isArray()) propertyName = property.runtimeValue.asNumber()
+    else throw new Error(`Unimplemented for non-array objects + numeric path`)
+  }
+  //
+  else throw new Error(`Unimplemented for non-string or non-number property names`)
+
+  // 3. If property could not be found, bail out
+  assert(object.runtimeValue.hasProperty(propertyName), `Property "${propertyName}" not found in object.`)
+
+  // 4. Get property value from object
+  const propertyValue = object.runtimeValue.getProperty(propertyName)
 
   const runtimePropertyValue = makeRuntimeValue(propertyValue)
   return runtimePropertyValue.getEvaluation(memberExpression)
