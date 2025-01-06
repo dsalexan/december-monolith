@@ -75,15 +75,15 @@ export class NumericValue extends RuntimeValue<number> {
   }
 }
 
-export class StringValue extends RuntimeValue<string> {
+export class StringValue<TString extends string = string> extends RuntimeValue<TString> {
   type: `string` = `string`
 
-  constructor(value: string) {
+  constructor(value: TString) {
     super(value)
     assert(typeof value === `string`)
   }
 
-  public static isStringValue(value: any): value is StringValue {
+  public static isStringValue<TString extends string = string>(value: any): value is StringValue<TString> {
     return value.type === `string`
   }
 

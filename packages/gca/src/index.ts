@@ -1,7 +1,8 @@
 export { GCACharacterImporter } from "./importer"
 export { default as GCACharacter } from "./character"
 
-export type { GCATrait, GCATraitMode } from "./trait"
+export type { GCAModifier, GCAAttribute, GCATrait, GCAGeneralTrait, GCAEquipment, GCASkillOrSpell, GCAMode, GCADamageMode } from "./trait"
+export { isApplicable, isDamageMode, isGeneralTrait } from "./trait"
 
 function isPropertyInvoker(value: string) {
   const split = value.split(`::`)

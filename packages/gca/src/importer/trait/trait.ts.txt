@@ -1,0 +1,128 @@
+import { AnyObject, MaybeUndefined } from "tsdef"
+import assert from "assert"
+import { has, isArray, isNil, isNumber, isObjectLike, isString } from "lodash"
+
+import { conditionalSet, typing } from "@december/utils"
+import { getAliases, isNameExtensionValid, Type } from "@december/gurps/trait"
+import { dump } from "@december/utils"
+
+import churchill, { Builder, paint, Block } from "../../logger"
+
+import { GCATrait } from "../../trait"
+import { TRAIT_SECTIONS, TraitSection } from "../../trait/section"
+import importGCATraitModifier from "./modifier"
+import importGCATraitMode from "./mode"
+import { isPrimitive } from "../../../../utils/src/typing"
+import { Primitive } from "type-fest"
+
+function parseInt(value: MaybeUndefined<string>): MaybeUndefined<number> {
+  if (value === undefined) return value
+  return Number.parseInt(value)
+}
+
+function parseFloat(value: MaybeUndefined<string>): MaybeUndefined<number> {
+  if (value === undefined) return value
+  return Number.parseFloat(value)
+}
+
+global.__CALCS_KEYS = []
+
+export default function importGCATrait(superType: `trait` | `attribute`, raw: AnyObject, logger: Builder = churchill): GCATrait {
+  // 1. Get complex or assertable values
+  const id = parseInt(raw.$.idkey)
+  assert(isNumber(id), `Trait ID is not a number`)
+
+  const section: TraitSection = raw.$.type.toLowerCase() as TraitSection
+  assert(TRAIT_SECTIONS.includes(section), `Trait section "${section}" is not valid`)
+
+  const name = raw.name[0].trim() as string
+
+  const _nameext: MaybeUndefined<string> = raw.nameext?.[0]
+  const nameext = isNameExtensionValid(_nameext) ? _nameext : undefined
+
+  logger.add(...paint.grey(paint.dim(`[${superType}s/`), id, paint.dim(`] `)), paint.white(name)) // COMMENT
+  if (nameext) logger.add(paint.dim(` (${nameext})`)) // COMMENT
+
+  const _aliases = getAliases(Type.fromGCASection(section), name, nameext) // COMMENT
+  if (_aliases.length > 0) logger.add(paint.gray.dim(` [${_aliases.join(`, `)}]`)) // COMMENT
+
+  logger.debug() // COMMENT
+
+  const _extendedTags = raw.extended?.[0]?.extendedtag ?? []
+  const extendedTags = Object.fromEntries(_extendedTags.map((tag: any) => [tag.tagname, tag.tagvalue])) as Record<string, string[]>
+
+  const calcs: AnyObject = raw.calcs?.[0]
+  assert(!isNil(calcs) && isObjectLike(calcs), `Trait calcs is not an object`)
+  if (!isNil(calcs)) for (const key of Object.keys(calcs)) if (!global.__CALCS_KEYS.includes(key)) global.__CALCS_KEYS.push(key)
+
+  const levelnames = calcs.levelnames?.[0].split(`, `)
+  assert(isArray(levelnames) || levelnames === undefined, `Trait levelnames is not an array`)
+
+  let traitCost: GCATrait[`traitCost`] = undefined
+  let equipmentCost: GCATrait[`equipmentCost`] = undefined
+
+  if (section === `equipment`) {
+    const basecost = parseFloat(calcs.basecost?.[0])
+    const baseweight = parseFloat(calcs.baseweight?.[0])
+
+    assert((basecost !== undefined && baseweight !== undefined) || (basecost === undefined && baseweight === undefined), `weird`)
+
+    if (basecost !== undefined) equipmentCost = { basecost, baseweight: baseweight! }
+  } else {
+    traitCost = {
+      cost: calcs.cost?.[0],
+      levelnames,
+      upto: calcs.upto?.[0],
+    }
+  }
+
+  // 2. Build trait
+  const trait: GCATrait = {
+    _raw: raw,
+    id,
+    name,
+    nameext,
+    section,
+    active: has(extendedTags, `inactive`) ? extendedTags[`inactive`][0] !== `yes` : true,
+    attribute: superType === `attribute`,
+    //
+    level: parseInt(raw.level?.[0]),
+    score: parseInt(raw.score?.[0]),
+    syslevels: parseInt(calcs.syslevels?.[0])!,
+    baselevel: parseInt(calcs.baselevel?.[0])!,
+    //
+    points: parseInt(raw.points?.[0]),
+    premodspoints: parseInt(calcs.premodspoints?.[0]),
+    traitCost,
+    equipmentCost,
+    //
+  }
+
+  if (section !== `equipment`) {
+    assert(isNumber(trait.syslevels), `Trait syslevels is not a number`)
+    assert(isNumber(trait.syslevels), `Trait baselevel is not a number`)
+  }
+
+  // if (
+  //   [
+  //     11365, //
+  //     // 13006,
+  //     // 12953,
+  //   ].includes(id)
+  // ) {
+  //   console.log(`\n${`=`.repeat(250)}\n`)
+  //   logger.addRow(`debug`, ...dump(raw))
+  //   debugger
+  // }
+
+  // 3. Parse deep objects
+  const _modifiers = raw.modifiers?.[0].modifier?.filter(i => i.name[0] !== ``)
+  const _modes = raw.attackmodes?.[0].attackmode?.filter(i => i.name[0] !== ``)
+
+  logger.tab() // COMMENT
+  if (_modifiers) trait.modifiers = _modifiers.map((m, i) => importGCATraitModifier(i, m, logger))
+  if (_modes) trait.modes = _modes.map((m, i) => importGCATraitMode(i, m, logger))
+  logger.untab() // COMMENT
+
+  return trait
+}

@@ -74,8 +74,7 @@ export function guessType(value: unknown): MaybeUndefined<VariableType> {
 
   if (value === `true` || value === `false`) return `boolean`
 
-  const _number = parseFloat(value)
-  if (!isNaN(_number)) return `number`
+  if (isNumeric(value)) return `number`
 
   return `string`
 }
@@ -99,4 +98,13 @@ export function getDeepProperties(object: AnyObject, path = ``, skipDeep: (path:
   }
 
   return paths
+}
+
+export function isNumeric(str: string): boolean {
+  if (typeof str != `string`) return false // we only process strings!
+
+  return (
+    !isNaN(str as any) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+    !isNaN(parseFloat(str))
+  ) // ...and ensure strings of whitespace fail
 }

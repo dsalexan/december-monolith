@@ -15,7 +15,9 @@ export const TRAIT_TYPES = [
   `template`,
   //
   `modifier`,
-]
+  //
+  `technique`,
+] as const
 
 export type TraitType = (typeof TRAIT_TYPES)[number]
 

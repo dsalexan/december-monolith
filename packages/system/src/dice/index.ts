@@ -11,8 +11,8 @@ export { DICE_MODULAR_PARSER_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR } from "
 export type { DiceModularParserProvider } from "./parser"
 
 // INTERPRETER MODULE
-export type { DiceInterpreterOptions, DiceModularEvaluatorProvider } from "./interpreter"
-export { DiceRollValue, DICE_MODULAR_EVALUATOR_PROVIDER } from "./interpreter"
+export type { NumericOrDiceValue, DiceInterpreterOptions, DiceModularEvaluatorProvider } from "./interpreter"
+export { DiceRollValue, DiceNotationValue, DICE_MODULAR_EVALUATOR_PROVIDER } from "./interpreter"
 
 // REWRITER MODULE
 export { DICE_RULESET as DICE_MODULAR_REWRITER_RULESET } from "./rewriter"

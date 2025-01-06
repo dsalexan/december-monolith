@@ -16,7 +16,7 @@ import { REFERENCE_ADDED } from "@december/compiler/controller/eventEmitter/even
 import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, REFERENCE, Reference, SELF_PROPERTY } from "@december/utils/access"
 
 import { IGURPSCharacter, IGURPSTrait, Trait } from "@december/gurps"
-import { isNameExtensionValid, Type, IGURPSTraitMode, IGURPSTraitModeStrength, isAlias, getAliases, Cost } from "@december/gurps/trait"
+import { isNameExtensionValid, Type, IGURPSTraitMode, IGURPSTraitModeStrength, isAlias, getAliases } from "@december/gurps/trait"
 import { DamageTable } from "@december/gurps/character"
 
 import { GCACharacter, GCATrait } from "@december/gca"
@@ -38,14 +38,15 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     const mutations: Mutation[] = []
     const integrityEntries: IntegrityEntry[] = []
 
-    const _trait = object.data._.GCA as GCATrait
-    const trait: WithOptionalKeys<IGURPSTrait, `modes` | `cost`> = {
+    debugger
+    const _trait = object.data._.GCA as GCATrait as any
+    const trait: WithOptionalKeys<IGURPSTrait, `modes`> = {
       name: _trait.name,
       type: Type.fromGCASection(_trait.section),
       active: _trait.active,
       //
       points: NaN,
-      level: { system: NaN, base: NaN, total: NaN },
+      // level: { system: NaN, base: NaN, total: NaN },
     }
 
     // NAMEEXT
@@ -53,12 +54,12 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
 
     // LEVEL
     // if (!isNil(_trait.level)) trait.level = parseInt(_trait.level.toString())
-    trait.level.system = _trait.syslevels
-    trait.level.base = _trait.baselevel
-    trait.level.total = computeLevel(trait.level.system, trait.level.base)
+    // trait.level.system = _trait.syslevels
+    // trait.level.base = _trait.baselevel
+    // trait.level.total = computeLevel(trait.level.system, trait.level.base)
 
-    const expectedLevel = parseInt(_trait.level!.toString())
-    assert(trait.level.total === expectedLevel, `Level should be equal to the sum of system and base levels`)
+    // const expectedLevel = parseInt(_trait.level!.toString())
+    // assert(trait.level.total === expectedLevel, `Level should be equal to the sum of system and base levels`)
 
     // POINTS
     // if (!isNil(_trait.points)) trait.points = parseInt(_trait.points.toString())
@@ -68,8 +69,8 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
       const costProgression = _trait.traitCost.cost
       assert(isString(costProgression), `Cost progression should be a string`)
 
-      trait.cost = Cost.convertCost(costProgression, _trait.traitCost.upto)
-      trait.points = Cost.calculateCost(trait.level, trait.cost)
+      // trait.cost = Cost.convertCost(costProgression, _trait.traitCost.upto)
+      // trait.points = Cost.calculateCost(trait.level, trait.cost)
 
       let expectedPoints = parseInt(_trait.points!.toString())
       if (!expectedPoints && _trait.premodspoints) expectedPoints = parseInt(_trait.premodspoints!.toString())
@@ -250,8 +251,8 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
   },
 )
 
-IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue([SELF_PROPERTY(/level.(system|base)/)], `compute:level`, object => [OVERRIDE(`level`, computeLevel(object.getProperty(`level.system`), object.getProperty(`level.base`)))])
-IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue([SELF_PROPERTY(`level.total`), SELF_PROPERTY(`cost`)], `compute:points`, object => [OVERRIDE(`points`, Cost.calculateCost(object.getProperty(`level`), object.getProperty(`cost`)))])
+// IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue([SELF_PROPERTY(/level.(system|base)/)], `compute:level`, object => [OVERRIDE(`level`, computeLevel(object.getProperty(`level.system`), object.getProperty(`level.base`)))])
+// IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue([SELF_PROPERTY(`level.total`), SELF_PROPERTY(`cost`)], `compute:points`, object => [OVERRIDE(`points`, Cost.calculateCost(object.getProperty(`level`), object.getProperty(`cost`)))])
 
 // #region CORE
 export function computeLevel(systemLevel: number, baseLevel: number): number {

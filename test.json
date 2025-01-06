@@ -17,7 +17,7 @@
               "Program code is copyright © 1995-2023 by Armin D. Sykes. All data files, graphics, and other GURPS-specific content is copyright © 2005 and other years by Steve Jackson Games Incorporated. GURPS and the all-seeing pyramid are registered trademarks of Steve Jackson Games Incorporated. All rights reserved."
             ],
             "datecreated": [
-              "30 September 2024"
+              "06 January 2025"
             ]
           }
         ],
@@ -499,6 +499,7 @@
               "Simple Text Export"
             ],
             "altexportsheet": [
+              "Export To Foundry VTT",
               "Export To Foundry VTT",
               "Export To Foundry VTT",
               "Export To Foundry VTT",
@@ -2248,18 +2249,24 @@
                       "0"
                     ],
                     "points": [
-                      "0"
+                      "2"
                     ],
                     "score": [
-                      "18"
+                      "19"
                     ],
                     "level": [
-                      "0"
+                      "1"
                     ],
                     "calcs": [
                       {
                         "syslevels": [
                           "6"
+                        ],
+                        "basepoints": [
+                          "2"
+                        ],
+                        "premodspoints": [
+                          "2"
                         ],
                         "basevalue": [
                           "ST:Basic Air Move"
@@ -2283,7 +2290,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "12"
+                          "13"
                         ]
                       }
                     ],
@@ -7348,7 +7355,7 @@
                       "Lifting ST"
                     ],
                     "bonuslist": [
-                      "+2 from 'Lifting ST 2', +6 from 'Lifting ST 6'"
+                      "+6 from 'Lifting ST 6', +2 from 'Lifting ST 2'"
                     ],
                     "needscheck": [
                       "-1"
@@ -11624,11 +11631,11 @@
                             "charskillusedkey": [
                               "k12899"
                             ],
-                            "minimode_damtype": [
-                              "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
-                            ],
                             "minimode_damage": [
                               "thr-1 + @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Feet Only) = 0 then @basethdice(ST:Punch) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 then @basethdice(ST:Punch) else 0)) + @max(@if(\"SK:Brawling::level\" > ST:DX+1 then @basethdice(ST:Punch) ELSE 0),@if(\"SK:Boxing::level\" = ST:DX+1 then @basethdice(ST:Punch) ELSE @if(\"SK:Boxing::level\" > ST:DX+1 then 2 * @basethdice(ST:Punch) ELSE 0)),@if(\"SK:Karate::level\" = ST:DX then @basethdice(ST:Punch) ELSE @if(\"SK:Karate::level\" > ST:DX then 2 * @basethdice(ST:Punch) ELSE 0)))"
+                            ],
+                            "minimode_damtype": [
+                              "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
                             ],
                             "itemnotes": [
                               "{Brawling (p. B182) increases all unarmed damage; Claws (p. B42) and Karate (p. B203) improve damage with punches and kicks (Claws don't affect damage with brass knuckles or boots); and Boxing (p. B182) improves punching damage.}"
@@ -11720,7 +11727,7 @@
                       "Reaction"
                     ],
                     "conditionallist": [
-                      "+2 from 'Overconfidence (12 or less, *1)' when young or naive individuals, -2 from 'Overconfidence (12 or less, *1)' when experienced NPCs, +2 from 'Sense of Duty (Adventuring companions)' when in dangerous situations if Sense of Duty is known, +2 from 'Sense of Duty (Large Group; Air Nations)' when in dangerous situations if Sense of Duty is known, +2 from 'Talent 2 (Breathing Techniques)' when masters of the air notice his style, +2 from 'Talent 2 (Elemental, Air)' when someone observers him using his elemental control, -1 from 'Ham-Fisted 1' when being tidy or well-groomed matters"
+                      "-1 from 'Ham-Fisted 1' when being tidy or well-groomed matters, +2 from 'Overconfidence (12 or less, *1)' when young or naive individuals, -2 from 'Overconfidence (12 or less, *1)' when experienced NPCs, +2 from 'Sense of Duty (Adventuring companions)' when in dangerous situations if Sense of Duty is known, +2 from 'Sense of Duty (Large Group; Air Nations)' when in dangerous situations if Sense of Duty is known, +2 from 'Talent 2 (Elemental, Air)' when someone observers him using his elemental control, +2 from 'Talent 2 (Breathing Techniques)' when masters of the air notice his style"
                     ],
                     "needscheck": [
                       "-1"
@@ -12500,7 +12507,7 @@
                       "ST"
                     ],
                     "conditionallist": [
-                      "+2 from 'Lifting ST 2', +6 from 'Lifting ST 6', +6 from 'Striking ST 6'"
+                      "+6 from 'Lifting ST 6', +2 from 'Lifting ST 2', +6 from 'Striking ST 6'"
                     ],
                     "needscheck": [
                       "-1"
@@ -18743,11 +18750,11 @@
                             "charskillusedkey": [
                               "k12896"
                             ],
-                            "minimode_damage": [
-                              "$solver(%level)d"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "$solver(%level)d"
                             ]
                           }
                         ]
@@ -19176,11 +19183,11 @@
                             "charskillusedkey": [
                               "k12896"
                             ],
-                            "minimode_damage": [
-                              "$solver(%level)d"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "$solver(%level)d"
                             ]
                           }
                         ]
@@ -19540,11 +19547,11 @@
                             "charskillusedkey": [
                               "k12896"
                             ],
-                            "minimode_damage": [
-                              "$solver(%level)d"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "$solver(%level)d"
                             ]
                           }
                         ]
@@ -25110,9 +25117,6 @@
                         "description": [
                           "In GCA a \"Parent\" item can have other traits assigned to it as \"Children.\" This is essentially an organizational structure, allowing you to file multiple traits together under the parent item if you wish. To make an item a \"child\" right click on it and select \"Make Child of...\" The child items will be hidden by default; you may show the child items by right clicking on the parent and selecting \"Show Components.\" Once displayed the children will be shown in a \"tree\" format under the parent. Any item may be assigned as a parent by right clicking on it and selecting \"Make Parent\"; this entry is here for convenience, as it is automatically designated a Parent."
                         ],
-                        "collapse": [
-                          "yes"
-                        ],
                         "isparent": [
                           "yes"
                         ]
@@ -29963,11 +29967,11 @@
                             "charskillusedkey": [
                               "k12943"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "$solver(%level)d"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           }
                         ]
@@ -33200,7 +33204,7 @@
                       "k12900"
                     ],
                     "bonuslist": [
-                      "+2 from 'Talent 2 (Breathing Techniques)', +2 from 'Talent 2 (Elemental, Air)'"
+                      "+2 from 'Talent 2 (Elemental, Air)', +2 from 'Talent 2 (Breathing Techniques)'"
                     ],
                     "needscheck": [
                       "-1"
@@ -33506,7 +33510,7 @@
                       "k12902"
                     ],
                     "bonuslist": [
-                      "+2 from 'Talent 2 (Breathing Techniques)', +2 from 'Talent 2 (Elemental, Air)'"
+                      "+2 from 'Talent 2 (Elemental, Air)', +2 from 'Talent 2 (Breathing Techniques)'"
                     ],
                     "needscheck": [
                       "-1"
@@ -35274,7 +35278,7 @@
                       "k12902"
                     ],
                     "bonuslist": [
-                      "+2 from 'Talent 2 (Breathing Techniques)', +2 from 'Talent 2 (Elemental, Air)'"
+                      "+2 from 'Talent 2 (Elemental, Air)', +2 from 'Talent 2 (Breathing Techniques)'"
                     ],
                     "needscheck": [
                       "-1"
@@ -37820,11 +37824,11 @@
                             "charskillusedkey": [
                               "k14826"
                             ],
-                            "minimode_damtype": [
-                              "imp"
-                            ],
                             "minimode_damage": [
                               "@thr(me::weaponst)+3"
+                            ],
+                            "minimode_damtype": [
+                              "imp"
                             ]
                           }
                         ]
@@ -39387,7 +39391,7 @@
                               "0"
                             ],
                             "chardamage": [
-                              "1d+2"
+                              "3d"
                             ],
                             "chardamtype": [
                               "cr"
@@ -39416,11 +39420,11 @@
                             "charskillusedkey": [
                               "k12892"
                             ],
-                            "minimode_damage": [
-                              "sw+2"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "sw+2"
                             ]
                           },
                           {
@@ -39458,7 +39462,7 @@
                               "0"
                             ],
                             "chardamage": [
-                              "1d"
+                              "2d+2"
                             ],
                             "chardamtype": [
                               "cr"
@@ -39487,11 +39491,11 @@
                             "charskillusedkey": [
                               "k12892"
                             ],
-                            "minimode_damage": [
-                              "thr+2"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "thr+2"
                             ]
                           },
                           {
@@ -39529,7 +39533,7 @@
                               "0"
                             ],
                             "chardamage": [
-                              "1d+2"
+                              "3d"
                             ],
                             "chardamtype": [
                               "cr"
@@ -39558,11 +39562,11 @@
                             "charskillusedkey": [
                               "k12893"
                             ],
-                            "minimode_damage": [
-                              "sw+2"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "sw+2"
                             ]
                           },
                           {
@@ -39600,7 +39604,7 @@
                               "0"
                             ],
                             "chardamage": [
-                              "1d-1"
+                              "2d+1"
                             ],
                             "chardamtype": [
                               "cr"
@@ -39629,11 +39633,11 @@
                             "charskillusedkey": [
                               "k12893"
                             ],
-                            "minimode_damage": [
-                              "thr+1"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "thr+1"
                             ]
                           }
                         ]

@@ -1,6 +1,6 @@
 import fs from "fs"
 import { omit, orderBy, range, values } from "lodash"
-import { AnyObject } from "tsdef"
+import { AnyObject, AnyObjectWithNumberKeys } from "tsdef"
 
 import { readXMLFile } from "@december/utils/file"
 import { ICharacterImporter, Dice } from "@december/system"
@@ -9,7 +9,7 @@ import churchill, { Builder, paint } from "../logger"
 
 import GCACharacter, { DamageTable, CharacterGeneralData } from "../character"
 import { importGCATrait } from "./trait"
-import { GCATrait } from "../trait"
+import { GCAAttribute, GCATrait } from "../trait"
 
 export default class GCACharacterImporter implements ICharacterImporter {
   character: GCACharacter
@@ -99,26 +99,45 @@ export default class GCACharacterImporter implements ICharacterImporter {
     const { gca5 } = raw
     const { character } = gca5
 
-    const _traits = values(omit(character[0].traits[0], `attributes`))
-      .map(traits => traits[0].trait)
-      .flat()
-      .filter(t => !!t)
-    const _attributes = character[0].traits[0].attributes[0].trait.filter(t => !!t)
+    const rawEntries: { traits: AnyObject[]; stats: AnyObject[] } = {
+      traits: values(omit(character[0].traits[0], `attributes`))
+        .map(traits => traits[0].trait)
+        .flat()
+        .filter(t => !!t),
+      stats: character[0].traits[0].attributes[0].trait.filter(t => !!t),
+    }
 
-    let traits: GCATrait[] = [],
-      stats: GCATrait[] = []
+    const entries: {
+      traits: GCATrait[]
+      stats: GCAAttribute[]
+    } = { traits: [], stats: [] }
 
-    const all = { trait: _traits, attribute: _attributes }
-    for (const [key, list] of Object.entries(all)) {
-      for (const raw of list) {
-        if (/^-+$/.test(raw.name[0])) continue
+    for (const [key, list] of Object.entries(rawEntries)) {
+      for (const entry of list) {
+        const name = entry.name[0]
+        if (/^-+$/.test(name)) continue
 
-        const trait = importGCATrait(key as any, raw, this.logger)
-
-        if (key === `attribute`) stats.push(trait)
-        else traits.push(trait)
+        if (key === `stats`) {
+          const attribute = importGCATrait(`attribute`, entry, this.logger) as GCAAttribute
+          entries.stats.push(attribute)
+        } else {
+          const trait = importGCATrait(`trait`, entry, this.logger)
+          entries.traits.push(trait)
+        }
       }
     }
+
+    // const all = { trait: _traits, attribute: _attributes }
+    // for (const [key, list] of Object.entries(all)) {
+    //   for (const raw of list) {
+    //     if (/^-+$/.test(raw.name[0])) continue
+
+    //     const trait = importGCATrait(key as any, raw, this.logger)
+
+    //     if (key === `attribute`) stats.push(trait)
+    //     else traits.push(trait)
+    //   }
+    // }
 
     const transformer = (traits: GCATrait[]) => {
       const sorted = orderBy(traits, t => t.id)
@@ -129,6 +148,6 @@ export default class GCACharacterImporter implements ICharacterImporter {
       return map
     }
 
-    return { traits: transformer(traits), stats: transformer(stats) }
+    return { traits: transformer(entries.traits), stats: transformer(entries.stats) }
   }
 }

@@ -97,7 +97,6 @@ export class DiceRollValue extends RuntimeValue<Nullable<number[]>> {
     return this.getNotation()
   }
 }
-
 export class DiceNotationValue extends RuntimeValue<Expression> {
   type = `diceNotation` as any
 
@@ -137,6 +136,8 @@ export class DiceNotationValue extends RuntimeValue<Expression> {
     return false
   }
 }
+
+export type NumericOrDiceValue = NumericValue | DiceRollValue | DiceNotationValue
 
 // #endregion
 
