@@ -112,6 +112,9 @@ export interface GCAEquipment extends GCABaseTrait, GCABaseNonAttribute {
   techLevel: MaybeUndefined<string> // TL()
   weightFormula: MaybeUndefined<string> // WeightFormula()
   where: MaybeUndefined<string> // Where()
+  //
+  childrencosts: MaybeUndefined<string> // calcs.childrencosts
+  childrenweights: MaybeUndefined<string> // calcs.childrenweights
 }
 
 export interface GCAAttribute extends GCABaseTrait, GCABaseNonSkillNonSpellNonEquipment, GCABaseTraitPointBased {
@@ -149,6 +152,10 @@ export interface GCAModifier extends GCABaseNonAttribute, GCABaseNonSkillNonSpel
   round: MaybeUndefined<number> // Round()
   shortName: MaybeUndefined<string> // ShortName()
   tier: MaybeUndefined<number> // Tier()
+  upTo: MaybeUndefined<string> // UpTo()
+  //
+  level: number // level — level of modifier
+  _value: string // value
 }
 
 // general traits are LEVEL-BASED

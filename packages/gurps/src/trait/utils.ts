@@ -1,6 +1,8 @@
 import { isEmpty } from "lodash"
 import { toTag, TraitType } from "./type"
 
+import { isNilOrEmpty } from "@december/utils"
+
 /** Returns if name extension is valid (either undefined OR non-empty) */
 export function isNameExtensionValid(nameExtension?: string) {
   return !!nameExtension && !isEmpty(nameExtension)
@@ -14,7 +16,12 @@ export function fullName(name: string, nameExtension?: string): string {
   return name
 }
 
-export function getAliases(type: TraitType, name: string, nameExtension?: string): string[] {
+export interface AliasOptions {
+  nameExtension: string
+  group: string
+}
+
+export function getAliases(type: TraitType, name: string, { nameExtension, group }: Partial<AliasOptions> = {}): string[] {
   const keys = [] as string[]
 
   // from name
@@ -23,6 +30,9 @@ export function getAliases(type: TraitType, name: string, nameExtension?: string
 
   // from fullname
   if (isNameExtensionValid(nameExtension)) keys.push(`${toTag(type)}:${fullName(name, nameExtension)}`)
+
+  // from group
+  if (!isNilOrEmpty(group)) debugger
 
   return keys
 }

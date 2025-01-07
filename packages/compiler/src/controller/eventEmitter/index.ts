@@ -116,15 +116,15 @@ export default class ObjectEventEmitter extends ObjectManager {
 
     assert(!this.has(listener.id), `Listener "${listener.id}" already exists`)
 
-    if (this.__DEBUG) {
-      logger.add(...paint.grey(`[`, paint.cyan.dim(`listen`), `] ${listener.targetEvent.type} `))
-      logger.add(...explainTargetEvent(listener.targetEvent))
-      logger.add(paint.cyan.bold.dim(listener.id))
+    // if (this.__DEBUG) {
+    //   logger.add(...paint.grey(`[`, paint.cyan.dim(`listen`), `] ${listener.targetEvent.type} `))
+    //   logger.add(...explainTargetEvent(listener.targetEvent))
+    //   logger.add(paint.cyan.bold.dim(listener.id))
 
-      if (listener.integrityEntries) logger.add(paint.grey.dim(` {${listener.integrityEntries.map(e => `${e.key}, ${e.value}`).join(`, `)}}`))
+    //   if (listener.integrityEntries) logger.add(paint.grey.dim(` {${listener.integrityEntries.map(e => `${e.key}, ${e.value}`).join(`, `)}}`))
 
-      logger.debug()
-    }
+    //   logger.debug()
+    // }
 
     // 1. ID -> LISTENER
     this.listeners.byID.set(listener.id, listener)

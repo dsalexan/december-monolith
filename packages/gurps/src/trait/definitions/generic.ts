@@ -7,197 +7,218 @@ import { TagName } from "@december/gca/trait"
 
 import { TraitType } from "../type"
 import { DamageType } from "../../mechanics/damage/type"
+import { LevelCost, MonetaryCost, ProgressionCost, StepCost, TraitCost } from "./cost"
+import { TraitTagParsedValue } from "../../../../../apps/gca/src/trait/tag/value"
+import { TraitReference } from "../../utils"
 
-/**
- * COMPARISON is the comparison you're making, and uses the same selection as Trait Selectors, which are these:
- *  IS            TAG and VALUE are not the same
- *  ISNOT         TAG and VALUE are the same
- *  INCLUDES      VALUE is not found inside TAG
- *  EXCLUDES      VALUE can be found inside TAG
- *  LISTINCLUDES  TAG is treated as a list, and VALUE is found as one of the list items
- *  LISTEXCLUDES  TAG is treated as a list, and VALUE is not found as one of the list items
- */
-export type TraitSelector = `Is` | `IsNot` | `Includes` | `Excludes` | `ListIncludes` | `ListExcludes`
-export type TraitSelectorSubcriteria = `OneOf` | `AnyOf` | `AllOf` | `NoneOf`
+// #region GENERICS
 
-//
-//
-//
-//
-//
-
-export interface SystemTrait {
-  display?: {
-    name?: StringValue // DisplayName(), DisplayNameFormula()
-    cost?: string // DisplayCost()
-    scoreOrLevel?: StringValue // DisplayScoreFormula()
-  }
-}
-
-export interface ParentTrait {
-  childProfile: `full-cost` | `alternative-attacks` // ChildProfile()
-}
-
-//
-//
-//
-//
-
-// "traits-and-modifiers"
-export interface TraitOrModifier {
-  type: TraitType
+// traits-and-modifiers
+export interface IGURPSTraitOrModifier<TType extends TraitType = TraitType> {
+  type: TType
   //
   name: string // Name()
   nameExtension?: string // NameExt()
+  description?: string // Description()
   //
-  description: string // Description()
-  group: string[] | string // Group()
-  //    A modifier can only belong to a single GROUP(), and if an otherwise identical modifier is found in two
-  //    different modifier groups, that is two completely different modifiers as far as GCA is concerned
-  mods: string[] // Mods()
-  notes: {
-    short: string[] // Notes()
-    large: string[] // UserNotes()
+  reference: Nullable<TraitReference[]> // Page()
+  //
+  group?: string // Group()
+  mods?: string[] // Mods()
+  //
+  // GCABase
+  // //
+  // conditional: MaybeUndefined<string> // Conditional()
+  // description: MaybeUndefined<string> // Description()
+  // displayNameFormula: MaybeUndefined<string> // DisplayNameFormula()
+  // displayScoreFormula: MaybeUndefined<string> // DisplayScoreFormula()
+  // //
+  // childKeyList: MaybeUndefined<string> // childkeylist
+  // _inactive: boolean // extended.extendedtag.inactive
+}
+
+// traits
+export interface IGURPSBaseTrait<TType extends Exclude<TraitType, `modifier`> = Exclude<TraitType, `modifier`>> extends IGURPSTraitOrModifier {
+  type: TType
+  cost: TraitCost // (check extensions)
+  //
+  notes?: {
+    short?: string[] // ItemNotes()
+    long?: string[] // UserNotes()
   }
   //
-  bonuses: Bonus[] // Conditional(), Gives()
+  modes: unknown[]
+  modifiers: unknown[]
   //
-  vars: string // Vars()
+  // GCABaseTrait
+  // //
+  // // parent-traits
+  // childProfile: MaybeUndefined<number> // ChildProfile()
+  // // system-traits
+  // displayCost: MaybeUndefined<number> // DisplayCost()
+  // displayName: MaybeUndefined<string> // DisplayName()
+  // //
+  // blockAt: MaybeUndefined<string> // BlockAt()
+  // countCapacity: MaybeUndefined<number> // CountCapacity()
+  // db: MaybeUndefined<number> // DB()
+  // dr: MaybeUndefined<string> // DR()
+  // drNotes: MaybeUndefined<string> // DRNotes()
+  // hide: MaybeUndefined<boolean> // Hide()
+  // hideMe: MaybeUndefined<string> // HideMe()
+  // needs: MaybeUndefined<string> // Needs()
+  // parryAt: MaybeUndefined<string> // ParryAt()
+  // skillUsed: MaybeUndefined<string> // SkillUsed()
+  // taboo: MaybeUndefined<string> // Taboo()
+  // tl: MaybeUndefined<string> // TL()
+  // units: MaybeUndefined<string> // Units()
+  // upTo: MaybeUndefined<string> // UpTo()
+  // uses: MaybeUndefined<number> // Uses()
+  // vars: MaybeUndefined<string> // Vars()
+  // weightCapacity: MaybeUndefined<number> // WeightCapacity()
+  // weightCapacityUnits: MaybeUndefined<string> // WeightCapacityUnits()
+  // //
+  // _sysLevels: MaybeUndefined<number> // calcs.syslevels; levels from bonuses, not FREE levels from system
 }
 
-export interface Trait extends TraitOrModifier {
-  hide: BooleanValue // Hide(), HideMe()
-  //
-  needs: unknown[] // Needs()
-  taboos: unknown[] // Taboo()
-  //
-  reference: string // Page()
-  group: string[] // Group()
-  capacity?: number // CountCapacity()
-  weightCapacity?: number // WeightCapacity()
-  weightCapacityUnit?: string // WeightCapacityUnits()
-  uses?: number // Uses()
-  //
-  block: NumericOrDiceValue // BlockAt()
-  parry: NumericOrDiceValue // ParryAt()
-  modes: Mode[]
-  //
-  DB: number // DB()
-  // DR: number // DR()
-  //    since it interacts with Location() differently for equipments, moving from here
-  // drNotes: string[] // DRNotes()
-  //
-  units: string // Units()
-}
+// #endregion
 
-export interface TraitNonEquipment extends Trait {
-  //
-  DR: {
-    value: number // DR()
-    notes: string[] // DRNotes()
+// #region SPECIFICS
+
+export interface IGURPSAttribute extends IGURPSBaseTrait<`attribute`> {
+  score: {
+    base: {
+      source: string // calcs.basescore OR BaseValue() — expression to derive baseScoreValue from
+      value: number // calcs.basescore — base for to calculate final score from
+    }
+    minimum?: {
+      expression: string // MinScore()
+      value: number
+    }
+    //
+    value: number // score — final score of attribute (semantics for "level")
   }
+  points: {
+    base: number // calcs.basepoints — initial input of points by player
+  }
+  cost: StepCost // Down(), DownFormula(), Up, Step()
+  //
+  symbol?: string // Symbol()
+  //
+  // GCAAttribute
+  // //
+  // display: MaybeUndefined<string> // Display()
+  // //
+  // _baseScore: MaybeUndefined<number> // calcs.basescore; !fetch value from baseValue instead of using this
+  // _score: MaybeUndefined<number> // calcs.score; !calculate from baseScore + sysLevels + modifiers maybe
 }
 
-// advantages
-// advantages, cultures, languages, perks, features, disadvantages, quirks, templates, MODIFIERS?????
-export interface TraitNonSkillNonSpellNonEquipment extends TraitNonEquipment {
+export interface IGURPSSkillOrSpellOrTechnique extends IGURPSBaseTrait<`skill` | `spell` | `technique`> {
+  level: {
+    // Default()
+    defaults: Nullable<
+      {
+        expression: string // expression to calculate both LEVEL and DISPLAY
+        //
+        trait: string // reference of trait responsible for default
+        level: number // default value
+      }[]
+    >
+    //
+    value: number // level — final level for invested points
+  }
+  points: {
+    base: number // calcs.basepoints — initial input of points by player
+  }
+  cost: ProgressionCost // Down(), DownFormula(), Up, Step()
+  // attribute: string // ONLY FOR SKILLS/SPELLS, not techniques
+  difficulty: `E` | `A` | `H` | `VH` // Type()
+  //
+  // GCASkillOrSpell
+  // //
+  // round: MaybeUndefined<number> // Round()
+  // //
+  // childPoints: MaybeUndefined<number> // calcs.childpoints
+}
+
+export const BODY_LOCATIONS = [`neck`, `full suit`] as const
+export type BodyLocation = (typeof BODY_LOCATIONS)[number]
+
+export interface IGURPSEquipment extends IGURPSBaseTrait<`equipment`> {
+  count: {
+    base: number // BaseQty() — initial quantity by default
+    maximum?: number // UpTo() {maximum item count allowed for equipment}
+    //
+    value: number // Count() — input by player
+  }
+  //
+  cost: MonetaryCost // BaseCostFormula(), BaseCost(), Formula(), CostFormula()
+  //
+  weight: {
+    unitaryExpression?: string | number // BaseWeightFormula()
+    unitary: number // BaseWeight() — initial weight by default or calculated by unitaryExpression
+    //
+    expression?: string // WeightFormula()
+    value: number // base weight * count or calcualted by expression
+  }
+  //
+  location: Record<
+    BodyLocation | `default`,
+    {
+      DR: {
+        value: number // DR()
+        notes: string[] // DRNotes()
+      }
+    }
+  > // Location()
+  whereItIsKept?: string // Where()
+  //
+  minimumTechLevel?: string // TechLevel() {first TL at which equipment becomes available}
+  techLevel?: string // TL()
+  //
+  // GCAEquipment
+  // //
+  // // system-equipment-traits
+  // displayWeight: MaybeUndefined<number> // DisplayWeight()
+  // //
+}
+
+export interface IGURPSModifier extends IGURPSTraitOrModifier<`modifier`> {
+  shortName?: string // ShortName()
+  //
   level: {
     names?: string[] // LevelNames()
-    maximum?: number // UpTo() or Cost()
-    capAfterBonuses?: boolean // UpTo(X LimitingTotal)
-    value: number // [IN POINTS]
+    value: number // level — initial input of levels by player
   }
-}
-
-// advantages, skills, spells
-export interface TraitNonAttributeNonEquipment extends TraitNonEquipment {
-  //
-  cost: {
-    progression: number[] // Cost()
-    formula?: string // Formula()
+  modifier: {
+    display: string // Cost()*, ForceFormula() — display for cost, usually same as Cost() (except when ForceFormla() exists)
     //
-    value: number // [IN POINTS]
+    progression?: string // Cost(), ForceFormula() — usually progression to determine modifier value
+    expression?: string // Formula(), ForceFormula() — expression to determine modifier value AFTER progression
+    //
+    type: `integer` | `percentage` | `multiplier` // type of modifier, a integer summ/subtraction OR a multiplier
+    value: number // value — final value of modifier
   }
+  //
+  // GCAModifier
+  // //
+  // round: MaybeUndefined<number> // Round()
+  // tier: MaybeUndefined<number> // Tier()
 }
 
-//
-//
-//
-//
-//
-
-export interface Mode {
-  name: string // Mode(), <attackmode><name /></attackmode>
-  //
-  // SkillUsed()
-  skills: {
-    list: string[]
-    worstOf?: boolean
+export interface IGURPSGeneralTrait<TType extends Exclude<TraitType, `attribute` | `skill` | `spell` | `equipment` | `modifier`> = Exclude<TraitType, `attribute` | `skill` | `spell` | `equipment` | `modifier`>>
+  extends IGURPSTraitOrModifier<TType> {
+  level: {
+    names?: string[] // LevelNames()
+    base: number // calcs.baselevel — initial input of levels by player
   }
+  points: {
+    value: number // points — final cost in points
+  }
+  cost: LevelCost // Cost(), Formula()
   //
-  notes: string // ItemNotes()
+  // GCABaseNonAttribute
 }
 
-export interface DamageMode extends Mode {
-  //
-  // Acc()
-  acc: {
-    value: number
-    suffix?: string
-  }
-  break: number // Break()
-  bulk: number // Bulk()
-  LC: string // LC()
-  ST: {
-    minimum: string // MinST()
-    basedOn: Nullable<string> // MinSTBasedOn()
-  }
-  parry: Nullable<number> // Parry() {null for Parry(NO)}
-  //
-  damage: {
-    basedOn: Nullable<string> // DamageBasedOn()
-    value: NumericOrDiceValue // Damage()
-    type: StringValue<DamageType> // DamType()
-    maximum?: NumericOrDiceValue // MaxDam()
-  }
-  range: {
-    half: number | Quantity // RangeHalfDam()
-    maximum: number | Quantity // RangeMax()
-  }
-  recoil?: number // Rcl()
-  reach?: {
-    value: number | [number, number] // Reach()
-    basedOn: Nullable<string> // ReachBasedOn()
-  }
-  rateOfFire?: number // ROF()
-  shots?: number // Shots()
-}
+// #endregion
 
-//
-//
-//
-//
-//
-
-export interface Bonus {
-  /**
-   * Bonuses granted by Conditional() dont affect final target value, but a message is shown somewhere
-   * Gives() changes the target value
-   */
-  singleBonus?: boolean // single bonus vs per-level basis
-  bonus: NumericValue // MATH_ENABLED()
-  targets: string[]
-  tag?: TagName
-  maximum?: NumericValue // upto, MATH_ENABLED()
-  description?: string
-  reason?: string // SPECIAL_CASE_SUBSTITUTION()
-  //
-  changeTarget?: boolean // if Conditional() then FALSE
-  byMode?: {
-    // This optional block allows you to specify that the bonus applies on a per-mode basis and may not be universally applicable to the target
-    tag: TagName // MODE_ENABLED tag
-    comparison: TraitSelector
-    subCriteria?: TraitSelectorSubcriteria
-    value: string // value that you're comparing TAG against
-  }
-}
+export type IGURPSTrait = IGURPSAttribute | IGURPSSkillOrSpellOrTechnique | IGURPSEquipment | IGURPSGeneralTrait

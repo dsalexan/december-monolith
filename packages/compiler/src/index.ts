@@ -8,10 +8,12 @@ import churchill, { Block, paint, Paint } from "./logger"
 export { default as ObjectController } from "./controller"
 export { default as ObjectStore } from "./controller/store"
 export { default as ObjectIntegrityRegistry } from "./controller/integrityRegistry"
+export type { IntegrityEntry } from "./controller/integrityRegistry"
 export { default as ObjectEventEmitter, makeArtificialEventTrace } from "./controller/eventEmitter"
 export { default as ObjectFrameRegistry } from "./controller/frameRegistry"
 export { default as ObjectCallQueue } from "./controller/callQueue"
-export { Strategy } from "./controller/strategy"
+export { Strategy, mergeMutationInput } from "./controller/strategy"
+export type { MutationInput } from "./controller/strategy"
 
 export { default as MutableObject } from "./object"
 

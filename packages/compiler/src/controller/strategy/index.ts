@@ -29,6 +29,7 @@ import { MutationFunctionMetadata, MutationFunctionOutput } from "../frameRegist
 import { MutationInput, StrategyProcessor, StrategyProcessorListenOptions, StrategyProcessorParseOptions, StrategyProcessorResolveOptions, StrategyProcessState } from "./processor"
 
 export type Generator<TReturn> = (object: MutableObject) => TReturn
+export type { MutationInput } from "./processor"
 
 export interface ProxyListenerOptions {
   arguments?: BareExecutionContext[`arguments`]
@@ -325,4 +326,11 @@ export function resolveTargetEvent(object: MutableObject, targetEvent: TargetEve
   }
 
   throw new Error(`Unimplemented event type "${targetEvent.type}"`)
+}
+
+export function mergeMutationInput(A: MutationInput, B: MutationInput): MutationInput {
+  return {
+    mutations: [...A.mutations, ...B.mutations],
+    integrityEntries: [...A.integrityEntries, ...B.integrityEntries],
+  }
 }

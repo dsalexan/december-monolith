@@ -1,6 +1,7 @@
-import { isArray, isEmpty, isNil, mergeWith, range, set } from "lodash"
+import { isArray, isEmpty, isNil, isObjectLike, mergeWith, range, set } from "lodash"
 import { isPrimitive } from "./typing"
 import { dump } from "./dump"
+import { AnyObject } from "tsdef"
 
 export * as compare from "./compare"
 export * as storage from "./storage"
@@ -308,4 +309,11 @@ export function numberToLetters(j: number) {
 export function baseAlphabet(j: number) {
   if (j < 10) return j
   else return numberToLetters(j - 10)
+}
+
+export function removeUndefinedKeys(object: AnyObject) {
+  for (const key in object) {
+    if (object[key] === undefined) delete object[key]
+    if (isObjectLike(object[key]) && !isArray(object[key])) removeUndefinedKeys(object[key])
+  }
 }

@@ -3117,11 +3117,11 @@
                             "charskillusedkey": [
                               "k11193"
                             ],
-                            "minimode_damage": [
-                              "thr-1 + @if(\"SK:Brawling::level\" > ST:DX+1 then @basethdice(ST:Bite) else 0) + -@if(\"DI:Weak Bite::level\" = 1 then 2 * @basethdice(ST:Bite) else 0)"
-                            ],
                             "minimode_damtype": [
                               "$if(\"AD:Teeth (Sharp Teeth)::level\" = 1 THEN \"cut\" ELSE $if(\"AD:Teeth (Sharp Beak)::level\" = 1 THEN \"pi+\" ELSE $if(\"AD:Teeth (Fangs)::level\" = 1 THEN \"imp\" ELSE $if(\"AD:Vampiric Bite::level\" = 1 THEN \"cut\" ELSE \"cr\"))))"
+                            ],
+                            "minimode_damage": [
+                              "thr-1 + @if(\"SK:Brawling::level\" > ST:DX+1 then @basethdice(ST:Bite) else 0) + -@if(\"DI:Weak Bite::level\" = 1 then 2 * @basethdice(ST:Bite) else 0)"
                             ],
                             "itemnotes": [
                               "{Brawling (p. B182) increases all unarmed damage; Claws (p. B42) and Karate (p. B203) improve damage with punches and kicks (Claws don't affect damage with brass knuckles or boots); and Boxing (p. B182) improves punching damage.}"
@@ -7087,11 +7087,11 @@
                             "charskillusedkey": [
                               "k12928"
                             ],
-                            "minimode_damage": [
-                              "thr+ @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Hands Only) = 0 then @basethdice(ST:Kick) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Hands Only) = 0 then @basethdice(ST:Kick) else @if(\"AD:Claws (Hooves)::level\" = 1 then @basethdice(ST:Kick) else 0))) + @if(\"DI:Horizontal::level\" = 1 then @if(\"AD:Claws (Blunt Claws)::level\" = 1 then 0 else @if(\"AD:Claws (Sharp Claws)::level\" = 1 then 0 else @if(\"AD:Claws (Talons)::level\" = 1 then 0 else @if(\"AD:Claws (Long Talons)::level\" = 1 then 0 else -@basethdice(ST:Kick))))) else 0) + @max(@if(\"SK:Brawling::level\" > ST:DX+1 then @basethdice(ST:Punch) ELSE 0),@if(\"SK:Karate::level\" = ST:DX then @basethdice(ST:Punch) ELSE @if(\"SK:Karate::level\" > ST:DX then 2 * @basethdice(ST:Punch) ELSE 0)))"
-                            ],
                             "minimode_damtype": [
                               "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Hands Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1 & @itemhasmod(AD:Claws (Talons), Hands Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Hands Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
+                            ],
+                            "minimode_damage": [
+                              "thr+ @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Hands Only) = 0 then @basethdice(ST:Kick) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Hands Only) = 0 then @basethdice(ST:Kick) else @if(\"AD:Claws (Hooves)::level\" = 1 then @basethdice(ST:Kick) else 0))) + @if(\"DI:Horizontal::level\" = 1 then @if(\"AD:Claws (Blunt Claws)::level\" = 1 then 0 else @if(\"AD:Claws (Sharp Claws)::level\" = 1 then 0 else @if(\"AD:Claws (Talons)::level\" = 1 then 0 else @if(\"AD:Claws (Long Talons)::level\" = 1 then 0 else -@basethdice(ST:Kick))))) else 0) + @max(@if(\"SK:Brawling::level\" > ST:DX+1 then @basethdice(ST:Punch) ELSE 0),@if(\"SK:Karate::level\" = ST:DX then @basethdice(ST:Punch) ELSE @if(\"SK:Karate::level\" > ST:DX then 2 * @basethdice(ST:Punch) ELSE 0)))"
                             ],
                             "itemnotes": [
                               "{Brawling (p. B182) increases all unarmed damage; Claws (p. B42) and Karate (p. B203) improve damage with punches and kicks (Claws don't affect damage with brass knuckles or boots); and Boxing (p. B182) improves punching damage.}"
@@ -7355,7 +7355,7 @@
                       "Lifting ST"
                     ],
                     "bonuslist": [
-                      "+6 from 'Lifting ST 6', +2 from 'Lifting ST 2'"
+                      "+2 from 'Lifting ST 2', +6 from 'Lifting ST 6'"
                     ],
                     "needscheck": [
                       "-1"
@@ -11631,11 +11631,11 @@
                             "charskillusedkey": [
                               "k12899"
                             ],
-                            "minimode_damage": [
-                              "thr-1 + @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Feet Only) = 0 then @basethdice(ST:Punch) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 then @basethdice(ST:Punch) else 0)) + @max(@if(\"SK:Brawling::level\" > ST:DX+1 then @basethdice(ST:Punch) ELSE 0),@if(\"SK:Boxing::level\" = ST:DX+1 then @basethdice(ST:Punch) ELSE @if(\"SK:Boxing::level\" > ST:DX+1 then 2 * @basethdice(ST:Punch) ELSE 0)),@if(\"SK:Karate::level\" = ST:DX then @basethdice(ST:Punch) ELSE @if(\"SK:Karate::level\" > ST:DX then 2 * @basethdice(ST:Punch) ELSE 0)))"
-                            ],
                             "minimode_damtype": [
                               "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
+                            ],
+                            "minimode_damage": [
+                              "thr-1 + @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Feet Only) = 0 then @basethdice(ST:Punch) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 then @basethdice(ST:Punch) else 0)) + @max(@if(\"SK:Brawling::level\" > ST:DX+1 then @basethdice(ST:Punch) ELSE 0),@if(\"SK:Boxing::level\" = ST:DX+1 then @basethdice(ST:Punch) ELSE @if(\"SK:Boxing::level\" > ST:DX+1 then 2 * @basethdice(ST:Punch) ELSE 0)),@if(\"SK:Karate::level\" = ST:DX then @basethdice(ST:Punch) ELSE @if(\"SK:Karate::level\" > ST:DX then 2 * @basethdice(ST:Punch) ELSE 0)))"
                             ],
                             "itemnotes": [
                               "{Brawling (p. B182) increases all unarmed damage; Claws (p. B42) and Karate (p. B203) improve damage with punches and kicks (Claws don't affect damage with brass knuckles or boots); and Boxing (p. B182) improves punching damage.}"
@@ -12507,7 +12507,7 @@
                       "ST"
                     ],
                     "conditionallist": [
-                      "+6 from 'Lifting ST 6', +2 from 'Lifting ST 2', +6 from 'Striking ST 6'"
+                      "+2 from 'Lifting ST 2', +6 from 'Striking ST 6', +6 from 'Lifting ST 6'"
                     ],
                     "needscheck": [
                       "-1"
@@ -18750,11 +18750,11 @@
                             "charskillusedkey": [
                               "k12896"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "$solver(%level)d"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           }
                         ]
@@ -19183,11 +19183,11 @@
                             "charskillusedkey": [
                               "k12896"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "$solver(%level)d"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           }
                         ]
@@ -19547,11 +19547,11 @@
                             "charskillusedkey": [
                               "k12896"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "$solver(%level)d"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           }
                         ]
@@ -27247,6 +27247,9 @@
                             "gives": [
                               "+0 to owner::baseweight"
                             ],
+                            "page": [
+                              "[url]{PK's HouseRules}https://www.mygurps.com/pmwiki.php?n=Main.GURPSModifiers"
+                            ],
                             "extended": [
                               {
                                 "$": {
@@ -27353,6 +27356,9 @@
                       {
                         "basedon": [
                           "Unencumbered Move"
+                        ],
+                        "page": [
+                          "[custom]"
                         ],
                         "usernotes": [
                           "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang2057{\\fonttbl{\\f0\\fnil\\fcharset0 Microsoft Sans Serif;}}\r\n\\viewkind4\\uc1\\pard\\lang1033\\f0\\fs17 Each level buys back -1 of encrumbrance penalty for Move\\par\r\n}"
@@ -28875,11 +28881,11 @@
                             "charskillusedkey": [
                               "k12896"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "$solver(%level)d"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           }
                         ]
@@ -29312,11 +29318,11 @@
                             "charskillusedkey": [
                               "k12896"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "$solver(%level)d"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           }
                         ]
@@ -34670,11 +34676,11 @@
                             "charskillusedkey": [
                               "k12899"
                             ],
-                            "minimode_damtype": [
-                              "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
-                            ],
                             "minimode_damage": [
                               "thr-1 + @if(me::level = ST:DX then @basethdice(ST:Punch) else @if(me::level > ST:DX then 2 * @basethdice(ST:Punch) else 0)) + @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Feet Only) = 0 then @basethdice(ST:Punch) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 then @basethdice(ST:Punch) else 0))"
+                            ],
+                            "minimode_damtype": [
+                              "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
                             ]
                           },
                           {
@@ -34732,11 +34738,11 @@
                             "charskillusedkey": [
                               "k12928"
                             ],
-                            "minimode_damtype": [
-                              "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Hands Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1 & @itemhasmod(AD:Claws (Talons), Hands Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Hands Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
-                            ],
                             "minimode_damage": [
                               "thr+ @if(me::level = ST:DX then @basethdice(ST:Kick) else @if(me::level > ST:DX then 2 * @basethdice(ST:Kick) else 0)) + @if(\"DI:Horizontal::level\" = 1 then @if(\"AD:Claws (Blunt Claws)::level\" = 1 then 0 else @if(\"AD:Claws (Sharp Claws)::level\" = 1 then 0 else @if(\"AD:Claws (Talons)::level\" = 1 then 0 else @if(\"AD:Claws (Long Talons)::level\" = 1 then 0 else -@basethdice(ST:Kick))))) else 0) + @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Hands Only) = 0 then @basethdice(ST:Kick) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Hands Only) = 0 then @basethdice(ST:Kick) else @if(\"AD:Claws (Hooves)::level\" = 1 then @basethdice(ST:Kick) else 0)))"
+                            ],
+                            "minimode_damtype": [
+                              "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Hands Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1 & @itemhasmod(AD:Claws (Talons), Hands Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Hands Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
                             ],
                             "itemnotes": [
                               "{If you miss with a kick, roll vs. DX to avoid falling.}"
@@ -36299,11 +36305,11 @@
                             "charreach": [
                               "C"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "thr+2 + @if(\"AD:Claws (Blunt Claws)::level\" = 1 then @basethdice(ST:Punch) else @if(\"AD:Claws (Long Talons)::level\" = 1 then @basethdice(ST:Punch) else 0)) + @if(\"SK:Karate::level\" = ST:DX then @basethdice(ST:Punch) else @if(\"SK:Karate::level\" > ST:DX then 2 * @basethdice(ST:Punch) else 0))"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           }
                         ]
@@ -37824,11 +37830,11 @@
                             "charskillusedkey": [
                               "k14826"
                             ],
-                            "minimode_damage": [
-                              "@thr(me::weaponst)+3"
-                            ],
                             "minimode_damtype": [
                               "imp"
+                            ],
+                            "minimode_damage": [
+                              "@thr(me::weaponst)+3"
                             ]
                           }
                         ]
@@ -39391,7 +39397,7 @@
                               "0"
                             ],
                             "chardamage": [
-                              "3d"
+                              "1d+2"
                             ],
                             "chardamtype": [
                               "cr"
@@ -39420,11 +39426,11 @@
                             "charskillusedkey": [
                               "k12892"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "sw+2"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           },
                           {
@@ -39462,7 +39468,7 @@
                               "0"
                             ],
                             "chardamage": [
-                              "2d+2"
+                              "1d"
                             ],
                             "chardamtype": [
                               "cr"
@@ -39491,11 +39497,11 @@
                             "charskillusedkey": [
                               "k12892"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "thr+2"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           },
                           {
@@ -39533,7 +39539,7 @@
                               "0"
                             ],
                             "chardamage": [
-                              "3d"
+                              "1d+2"
                             ],
                             "chardamtype": [
                               "cr"
@@ -39562,11 +39568,11 @@
                             "charskillusedkey": [
                               "k12893"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "sw+2"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           },
                           {
@@ -39604,7 +39610,7 @@
                               "0"
                             ],
                             "chardamage": [
-                              "2d+1"
+                              "1d-1"
                             ],
                             "chardamtype": [
                               "cr"
@@ -39633,11 +39639,11 @@
                             "charskillusedkey": [
                               "k12893"
                             ],
-                            "minimode_damtype": [
-                              "cr"
-                            ],
                             "minimode_damage": [
                               "thr+1"
+                            ],
+                            "minimode_damtype": [
+                              "cr"
                             ]
                           }
                         ]

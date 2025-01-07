@@ -3,7 +3,7 @@ import { AnyObject, DiffObjects, MaybeUndefined, Nilable, Nullable } from "tsdef
 import assert from "assert"
 import { has, isArray, isNil, isNumber, isObjectLike, isString } from "lodash"
 
-import { conditionalSet, isNilOrEmpty, typing } from "@december/utils"
+import { conditionalSet, isNilOrEmpty, removeUndefinedKeys, typing } from "@december/utils"
 import { getAliases, isNameExtensionValid, Type } from "@december/gurps/trait"
 import { dump } from "@december/utils"
 
@@ -28,7 +28,7 @@ import {
   isGeneralTrait,
 } from "../../trait"
 import { TRAIT_SECTIONS, TraitSection } from "../../trait/section"
-import { getProgressionIndex, getProgressionStep } from "../../utils/progression"
+import { getProgressionIndex, getProgressionStep, ProgressionStep } from "../../utils/progression"
 
 export function importGCATrait(superType: `trait` | `attribute`, raw: AnyObject, logger?: Builder): GCATrait {
   // 1. Always start with ID, NAME and SECTION (always must have values)
@@ -45,7 +45,7 @@ export function importGCATrait(superType: `trait` | `attribute`, raw: AnyObject,
     logger.add(...paint.grey(paint.dim(`[${superType}s/`), id, paint.dim(`] `)), paint.white(name)) // COMMENT
     if (nameExt) logger.add(paint.dim(` (${nameExt})`)) // COMMENT
 
-    const _aliases = getAliases(Type.fromGCASection(section), name, nameExt) // COMMENT
+    const _aliases = getAliases(Type.fromGCASection(section), name, { nameExtension: nameExt }) // COMMENT
     if (_aliases.length > 0) logger.add(paint.gray.dim(` [${_aliases.join(`, `)}]`)) // COMMENT
 
     logger.debug() // COMMENT
@@ -57,7 +57,7 @@ export function importGCATrait(superType: `trait` | `attribute`, raw: AnyObject,
     // logger.addRow(`debug`, ...dump(raw))
     // logger.addRow(`debug`, ...dump(ref))
     // logger.addRow(`debug`, ...dump(extended))
-    logger.addRow(`debug`, ...dump(calcs))
+    // logger.addRow(`debug`, ...dump(calcs))
   }
 
   // 3. Parse most keys
@@ -177,6 +177,9 @@ function _importGCATrait(raw: AnyObject, baseTrait: GCABaseTrait): GCATrait {
       techLevel: extract(raw, `TL`),
       weightFormula: extract(raw, `WeightFormula`),
       where: extract(raw, `Where`),
+      //
+      childrencosts: extract(raw, `ChildrenCosts`),
+      childrenweights: extract(raw, `ChildrenWeights`),
     }
 
     removeUndefinedKeys(equipment)
@@ -453,6 +456,15 @@ function importGCAModifier(index: number, raw: AnyObject, logger?: Builder): GCA
     logger.add(...paint.grey(paint.dim(`[modifiers/`), index, paint.dim(`/`), id, paint.dim(`] `)), paint.blue(`${name}`)) // COMMENT
     if (nameExt) logger.add(paint.blue.dim(` (${nameExt})`)) // COMMENT
     logger.debug() // COMMENT
+
+    const ref: AnyObject = raw.ref?.[0] ?? {}
+    const extended: AnyObject[] = raw.extended?.[0]?.extendedtag ?? []
+    const calcs: AnyObject = raw.calcs?.[0] ?? {}
+
+    // logger.addRow(`debug`, ...dump(raw))
+    // logger.addRow(`debug`, ...dump(ref))
+    // logger.addRow(`debug`, ...dump(extended))
+    // logger.addRow(`debug`, ...dump(calcs))
   }
 
   // 3. Parse object
@@ -467,9 +479,24 @@ function importGCAModifier(index: number, raw: AnyObject, logger?: Builder): GCA
     round: parseInt(extract(raw, `Round`)),
     shortName: extract(raw, `ShortName`),
     tier: parseInt(extract(raw, `Tier`)),
+    upTo: extract(raw, `UpTo`),
+    //
+    level: parseInt(extract(raw, `Level`), true),
+    _value: parseString(extract(raw, `Value`), true),
   }
 
   removeUndefinedKeys(modifier)
+
+  if (!isNil(modifier.baseLevel)) debugger
+  // if (modifier.level !== modifier.baseLevel) debugger
+
+  assert(!isNil(modifier.level), `Modifier level is required`)
+  if (!modifier.forceFormula && modifier.level > 0) {
+    const modifierValue = getProgressionStep<ProgressionStep>(modifier.cost!, modifier.level - 1, { returnObject: true, strictSign: true })
+
+    // VALUE = COST * LEVEL
+    if (modifierValue.step !== modifier._value) debugger
+  }
 
   return modifier
 }
@@ -604,12 +631,6 @@ function extract(raw: AnyObject, tagName: TagName | CalcsTagNames): MaybeUndefin
   return validValues[0]
 }
 
-function removeUndefinedKeys(object: AnyObject) {
-  for (const key in object) {
-    if (object[key] === undefined) delete object[key]
-  }
-}
-
 // #endregion
 
 export type CalcsTagNames =
@@ -626,3 +647,8 @@ export type CalcsTagNames =
   // ATTRIBUTES
   | `Score`
   | `BaseScore`
+  // EQUIPMENT
+  | `ChildrenCosts`
+  | `ChildrenWeights`
+  // MODIFIERS
+  | `Value`
