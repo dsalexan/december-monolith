@@ -17,6 +17,7 @@ import { CallQueue, CallQueueTag } from "./queue"
 import { BareExecutionContext, ExecutionContext, explainExecutionContext, getExecutionContextID } from "./executionContext"
 import { Mutation } from "../../mutation/mutation"
 import { MutationFunctionMetadata } from "../frameRegistry/mutationFrame"
+import { DependencyEntry } from "../dependencyGraph"
 
 export type { ExecutionContext, BareExecutionContext } from "./executionContext"
 
@@ -179,20 +180,21 @@ export default class ObjectCallQueue extends ObjectManager {
     const object: StrictObjectReference = this.controller.store.strictifyReference(_object)
 
     // 0. Mount arguments
-    let args: AnyObject = {}
+    let hashableArgs: AnyObject = {}
     if (bareExecutionContext.argumentProvider) {
       const providers = isArray(bareExecutionContext.argumentProvider) ? bareExecutionContext.argumentProvider : [bareExecutionContext.argumentProvider]
-      for (const provider of providers) args = { ...args, ...provider(bareExecutionContext) }
+      for (const provider of providers) hashableArgs = { ...hashableArgs, ...provider(bareExecutionContext) }
     }
-    if (bareExecutionContext.arguments) args = { ...args, ...bareExecutionContext.arguments }
+    if (bareExecutionContext.hashableArguments) hashableArgs = { ...hashableArgs, ...bareExecutionContext.hashableArguments }
 
     // 1. Build full Execution Context
     const executionContext: ExecutionContext = {
       ...bareExecutionContext,
-      arguments: args,
+      hashableArguments: hashableArgs,
       //
       id: getExecutionContextID(object, bareExecutionContext),
       index: queue.queue.size,
+      priority: Infinity,
       //
       object,
       //
@@ -229,11 +231,14 @@ export default class ObjectCallQueue extends ObjectManager {
     if (this.__DEBUG) logger.add(paint.grey(`[run] ${this.numberOfQueues} queues`)).info()
 
     for (const queue of this._queues.byIndex) {
+      if (queue.index === 2) this.controller.dependencyGraph.print()
+
       // 1. Update current cursors
       this.current = { queue: queue.index, executionContext: -1 }
 
       // 2. Run all execution contexts in queue
-      for (const executionContext of queue.queue.values()) {
+      const orderedByPriority = queue.orderByPriority(this.controller.dependencyGraph.getPriorityByObjectID())
+      for (const executionContext of orderedByPriority) {
         this.current.executionContext = executionContext.index
 
         if (this.__DEBUG) {
@@ -268,9 +273,11 @@ export default class ObjectCallQueue extends ObjectManager {
 
     assert(mutationFrame, `Mutation frame of function  "${executionContext.name}" not found for object "${object.id}"`)
 
+    global.__CALL_QUEUE_CONTEXT_OBJECT = object
+
     // 2. Execute frame
     const metadata: MutationFunctionMetadata = {
-      arguments: executionContext.arguments ?? {},
+      arguments: { ...(executionContext.otherArguments ?? {}), ...(executionContext.hashableArguments ?? {}) }, // all arguments inside execution context for easier access inside function declaration
       executionContext,
       //
       callQueue: this,
@@ -282,18 +289,20 @@ export default class ObjectCallQueue extends ObjectManager {
     // 3. Parse return
     let mutations: Mutation[] = []
     let integrityEntries: IntegrityEntry[] = []
+    let dependencies: DependencyEntry[] = []
 
     if (isArray(mutationFrameReturn)) mutations = mutationFrameReturn
     else if (`mutations` in mutationFrameReturn) {
       mutations = isArray(mutationFrameReturn.mutations) ? mutationFrameReturn.mutations : [mutationFrameReturn.mutations]
       integrityEntries = mutationFrameReturn.integrityEntries
+      dependencies = mutationFrameReturn.dependencies
     } else mutations = [mutationFrameReturn]
 
     // logger.profiler(`execute-context`).done((duration, profiler) => logger.add(`${profiler} took ${duration} ms`).debug())
     // logger.timer(`update`)
 
     // 4. Update stuff
-    const _return = object.update(mutations, integrityEntries, {
+    const _return = object.update(mutations, integrityEntries, dependencies, {
       previousEvent: executionContext.eventDispatcher,
     })
 

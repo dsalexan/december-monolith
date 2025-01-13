@@ -1,6 +1,7 @@
 import assert from "assert"
 
 import { isNumeric } from "@december/utils/typing"
+import { Range } from "@december/utils"
 
 export const BOOK_REFERENCES = {
   AA: `Alphabet Arcane`,
@@ -284,7 +285,7 @@ export interface PageReference {
   type: `page`
   abbreviation: string
   book: string
-  page: number
+  page: Range
 }
 
 export interface LinkReference {
@@ -316,19 +317,36 @@ export function parseSinglePageNotation(pageNotation: string): TraitReference {
     else return { type: `link`, url: hasText[2], text: hasText[1].slice(1, -1) }
   }
 
-  const _notation = pageNotation.split(/(\d+)$/)
-  assert(_notation.length === 3, `Invalid page notation`)
+  let abbreviation: string
+  let page: Range
 
-  let [abbreviation, _page] = _notation
-  assert(isNumeric(_page), `Page number must be a number`)
-  const page = parseInt(_page)
+  // 1. Parse page number
+  const rangeNotation = pageNotation.split(/(\d+)-(\d+)$/)
+  if (rangeNotation.length === 4) {
+    const [_, start, end] = rangeNotation
 
-  // 1. Adjust from GCA to GCS conventions
+    abbreviation = rangeNotation[0]
+
+    assert(isNumeric(start), `Start page number must be a number`)
+    assert(isNumeric(end), `End page number must be a number`)
+
+    page = Range.fromInterval(parseInt(start), parseInt(end))
+  } else {
+    const _notation = pageNotation.split(/(\d+)$/)
+    assert(_notation.length === 3, `Invalid page notation`)
+
+    abbreviation = _notation[0]
+
+    assert(isNumeric(_notation[1]), `Page number must be a number`)
+    page = Range.fromPoint(parseInt(_notation[1]))
+  }
+
+  // 2. Adjust from GCA to GCS conventions
   const lookUp = GCA_TO_GCS_REFERENCE[abbreviation]
   if (lookUp) abbreviation = lookUp
 
-  // 2. Adjust B -> BX for correct page
-  if (abbreviation === `B`) if (page >= 338) abbreviation = `BX`
+  // 3. Adjust B -> BX for correct page
+  if (abbreviation === `B`) if (page.column(`first`) >= 338) abbreviation = `BX`
 
   const book = BOOK_REFERENCES[abbreviation]
   assert(book, `Invalid book abbreviation: ${abbreviation}`)

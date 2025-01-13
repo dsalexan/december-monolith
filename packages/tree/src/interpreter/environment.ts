@@ -98,16 +98,29 @@ export default class Environment {
   }
 
   /** Assigns value to VariableName */
-  public assignValue(variableName: VariableName, value: RuntimeValue<any>, update: boolean = false) {
-    if (!update) assert(!this.values.byName.has(variableName), `Variable name "${variableName}" already exists in environment.`)
+  public assignValue(variableName: VariableName, value: RuntimeValue<any>, update: boolean = false): boolean {
+    if (!update) {
+      assert(!this.values.byName.has(variableName), `Variable name "${variableName}" already exists in environment.`)
+
+      // return false
+    }
 
     if (update && this.values.byName.has(variableName)) {
       const currentValue = this.values.byName.get(variableName)!
-      if (currentValue.isEquals(value)) return
+      if (currentValue.isEquals(value)) return false
     }
 
     this.values.byName.set(variableName, value)
     this._version++
+
+    return true
+  }
+
+  /** Assigns value to multiple variable names */
+  public assignValueToMultipleVariables(variableNames: VariableName[], value: RuntimeValue<any>, update: boolean = false) {
+    for (const variableName of variableNames) {
+      this.assignValue(variableName, value, update)
+    }
   }
 
   /** Assigns value to pattern */

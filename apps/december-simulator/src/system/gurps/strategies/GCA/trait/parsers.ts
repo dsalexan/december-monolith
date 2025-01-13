@@ -1,33 +1,54 @@
 import assert from "assert"
 import { isNil } from "lodash"
-import { MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
+import { Arguments, MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
 
 import { isNilOrEmpty, removeUndefinedKeys } from "@december/utils"
-import { NumericValue, StringValue } from "@december/tree/interpreter"
-import { mergeMutationInput, MutationInput, SET } from "@december/compiler"
+import { Environment, NumericValue, StringValue } from "@december/tree/interpreter"
+import { mergeMutationInput, MutableObject, MutationInput, SET, Strategy } from "@december/compiler"
 
 import { GCAAttribute, GCAEquipment, GCAGeneralTrait, GCAModifier, GCASkillOrSpell, GCATrait } from "@december/gca"
-import { isProgression } from "@december/gca/utils/progression"
+import { getProgressionType, isProgression } from "@december/gca/utils/progression"
 import { Utils } from "@december/gurps"
-import { getAliases, IGURPSAttribute, IGURPSBaseTrait, IGURPSEquipment, IGURPSGeneralTrait, IGURPSModifier, IGURPSSkillOrSpellOrTechnique, IGURPSTrait, IGURPSTraitOrModifier, Type } from "@december/gurps/trait"
-import { MergeDeep, OmitDeep } from "type-fest"
+import {
+  getAliases,
+  IGURPSAttribute,
+  IGURPSBaseTrait,
+  IGURPSEquipment,
+  IGURPSGeneralTrait,
+  IGURPSModifier,
+  IGURPSSkillOrSpellOrTechnique,
+  IGURPSTrait,
+  IGURPSTraitOrModifier,
+  isAlias,
+  makeGURPSTraitEnvironment,
+  Type,
+} from "@december/gurps/trait"
+import { Get, MergeDeep, OmitDeep } from "type-fest"
 import { isNumeric } from "../../../../../../../../packages/utils/src/typing"
+import { TraitType } from "../../../../../../../../packages/gurps/src/trait/type"
+import { GCAStrategyProcessorListenOptions, GCAStrategyProcessorOptionsGenerator, setupProcessing } from "./options"
 
-export function parseTraitOrModifier(gca: GCATrait | GCAModifier): MutationInput & { traitOrModifier: IGURPSTraitOrModifier } {
-  const output: MutationInput = { mutations: [], integrityEntries: [] }
+export function parseTraitOrModifier(object: MutableObject, gca: GCATrait | GCAModifier): MutationInput & { traitOrModifier: IGURPSTraitOrModifier } {
+  const output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
 
   // 1. Parse some objects
-  const isParent = !isNilOrEmpty(gca.childKeyList)
-  const isAttribute = gca.section === `attributes` // some attributes are not explicitly specified in the books
+  const children: string[] = !isNilOrEmpty(gca.childKeyList) ? split(gca.childKeyList).filter(id => id !== ``) : []
 
-  if (!isParent && !isAttribute) assert(!isNil(gca.page), `GCA trait must have a "page" property`)
+  const isParent = children.length > 0
+  const isAttribute = gca.section === `attributes` // some attributes are not explicitly specified in the books
+  const isModifier = gca.section === `modifiers` // some modifiers are not explicitly specified in the books
+  const ignore = [`_Free`, `_List`, `Smell Only`, `Alternate Form`].includes(gca.name)
+
+  if (!isParent && !isAttribute && !isModifier && !ignore) assert(!isNil(gca.page), `GCA trait must have a "page" property`)
   if (gca.group && gca.group.includes(`,`)) debugger // TODO: Handle multiple groups
 
   const mods = isNil(gca.mods) ? undefined : split(gca.mods)
 
   // 2. Build BASE (aka "traits-and-modifiers", really basic shit for traits {and modifiers, but we don't get modifiers directly here})
   const traitOrModifier: IGURPSTraitOrModifier = {
+    id: object.id,
     type: Type.fromGCASection(gca.section),
+    children,
     //
     name: gca.name,
     nameExtension: gca.nameExt,
@@ -50,8 +71,8 @@ export function parseTraitOrModifier(gca: GCATrait | GCAModifier): MutationInput
   return { ...output, traitOrModifier }
 }
 
-export function parseBaseTrait(gca: GCATrait, traitOrModifier: IGURPSTraitOrModifier<IGURPSBaseTrait[`type`]>): MutationInput & { baseTrait: IGURPSBaseTrait } {
-  let output: MutationInput = { mutations: [], integrityEntries: [] }
+export function parseBaseTrait(object: MutableObject, gca: GCATrait, traitOrModifier: IGURPSTraitOrModifier<IGURPSBaseTrait[`type`]>): MutationInput & { baseTrait: RuntimeIGURPSBaseTrait } {
+  let output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
 
   // 1. Parse some objects
   let notes: IGURPSBaseTrait[`notes`] = undefined
@@ -63,33 +84,35 @@ export function parseBaseTrait(gca: GCATrait, traitOrModifier: IGURPSTraitOrModi
   }
 
   // 2. Build BASE_TRAIT
-  const baseTrait: IGURPSBaseTrait = {
+  const baseTrait: RuntimeIGURPSBaseTrait = {
     ...traitOrModifier,
     cost: null as any,
+    //
+    childProfile: gca.childProfile === 1 ? `alternative-attacks` : gca.childProfile === 2 ? `apply-modifiers-to-children` : `regular`,
     //
     notes,
     //
     modes: [], // TODO: do this
     modifiers: [],
+    //
+    radius: 0,
   }
 
   removeUndefinedKeys(baseTrait)
 
-  // 3. Parse modifiers and modes
-  const step1 = gca.modifiers.map(gca => ({ gca, ...parseTraitOrModifier(gca) }))
-  const step2 = step1.map(({ gca, traitOrModifier }) => parseModifier(gca, traitOrModifier as IGURPSTraitOrModifier<`modifier`>))
-  for (const { modifier, ...output1 } of step2) {
-    baseTrait.modifiers.push(modifier)
-    output = mergeMutationInput(output, output1)
-  }
-
-  if (gca.modifiers.length > 1) debugger
+  // // 3. Parse modifiers and modes
+  // const step1 = gca.modifiers.map(gca => ({ gca, ...parseTraitOrModifier(gca) }))
+  // const step2 = step1.map(({ gca, traitOrModifier }) => parseModifier(object, gca, traitOrModifier as IGURPSTraitOrModifier<`modifier`>))
+  // for (const { modifier, ...output1 } of step2) {
+  //   baseTrait.modifiers.push(modifier)
+  //   output = mergeMutationInput(output, output1)
+  // }
 
   return { ...output, baseTrait }
 }
 
-export function parseModifier(gca: GCAModifier, traitOrModifier: IGURPSTraitOrModifier<`modifier`>): MutationInput & { modifier: RuntimeIGURPSModifier } {
-  const output: MutationInput = { mutations: [], integrityEntries: [] }
+export function parseModifier(object: MutableObject, gca: GCAModifier, traitOrModifier: IGURPSTraitOrModifier<`modifier`>): MutationInput & { modifier: RuntimeIGURPSModifier } {
+  const output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
 
   // 1. Parse some objects
   let levelNames: MaybeUndefined<string[]> = undefined
@@ -102,6 +125,9 @@ export function parseModifier(gca: GCAModifier, traitOrModifier: IGURPSTraitOrMo
 
   expression = gca.formula
   if (!gca.forceFormula) progression = gca.cost
+
+  let type: IGURPSModifier[`modifier`][`type`] = `integer`
+  if (gca.cost) type = getProgressionType(gca.cost, false)
 
   // 2. Build BASE_TRAIT
   const modifier: RuntimeIGURPSModifier = {
@@ -117,6 +143,9 @@ export function parseModifier(gca: GCAModifier, traitOrModifier: IGURPSTraitOrMo
       //
       progression,
       expression,
+      type,
+      round: gca.round === 1 ? `up` : gca.round === -1 ? `down` : `none`,
+      //
     },
   }
 
@@ -127,13 +156,13 @@ export function parseModifier(gca: GCAModifier, traitOrModifier: IGURPSTraitOrMo
 
 // #region SPECIFICS
 
-export function parseAttribute(gca: GCAAttribute, baseTrait: IGURPSBaseTrait<`attribute`>): MutationInput & { trait: RuntimeIGURPSAttribute } {
-  const output: MutationInput = { mutations: [], integrityEntries: [] }
+export function parseAttribute(object: MutableObject, gca: GCAAttribute, baseTrait: RuntimeIGURPSBaseTrait<`attribute`>): MutationInput & { trait: RuntimeIGURPSAttribute } {
+  let output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
 
   // 1. Parse some objects
   let base: RuntimeIGURPSAttribute[`score`][`base`]
-  if (!isNilOrEmpty(gca.baseValue)) base = { source: gca.baseValue }
-  else base = { source: `0` }
+  if (isNilOrEmpty(gca.baseValue)) base = { source: `0` }
+  else base = { source: gca.baseValue }
 
   const minimum: RuntimeIGURPSAttribute[`score`][`minimum`] = isNilOrEmpty(gca.minScore)
     ? undefined
@@ -163,8 +192,11 @@ export function parseAttribute(gca: GCAAttribute, baseTrait: IGURPSBaseTrait<`at
       base,
       minimum,
     },
+    level: {},
     points: {
       base: gca.basePoints,
+      //
+      value: gca.basePoints,
     },
     cost: {
       type: `step`,
@@ -173,6 +205,7 @@ export function parseAttribute(gca: GCAAttribute, baseTrait: IGURPSBaseTrait<`at
       increment,
       decrement,
       step,
+      round: gca.round === 1 ? `up` : gca.round === -1 ? `down` : `none`,
     },
     //
     symbol: gca.symbol,
@@ -180,11 +213,37 @@ export function parseAttribute(gca: GCAAttribute, baseTrait: IGURPSBaseTrait<`at
 
   removeUndefinedKeys(trait)
 
+  // 3. Determine what to process
+  const { options, environment } = setupProcessing(object)
+
+  const inputs: Arguments<(typeof Strategy)[`bulkProcess`]>[1] = [
+    { path: `score.base.initial`, expression: trait.score.base.source, environment, reProcessingFunction: `GCA:compute:score:initial` }, //
+  ]
+
+  if (`expression` in trait.cost.increment) {
+    debugger
+    inputs.push({ path: `cost.increment.value`, expression: trait.cost.increment.expression, environment, reProcessingFunction: `GCA:compute:score:increment` })
+  }
+
+  if (`expression` in trait.cost.decrement) {
+    debugger
+    inputs.push({ path: `cost.decrement.value`, expression: trait.cost.decrement.expression, environment, reProcessingFunction: `GCA:compute:score:decrement` })
+  }
+
+  // 4. Pre-process stuff (for dependency graphs)
+  const processingOutputs = Strategy.bulkProcess(object, inputs, {
+    ...options,
+    //
+    syntacticalContext: { mode: `expression` },
+  })
+
+  for (const processingOutput of processingOutputs) output = mergeMutationInput(output, processingOutput)
+
   return { ...output, trait: trait as RuntimeIGURPSAttribute }
 }
 
-export function parseSkillOrSpellOrTechnique(gca: GCASkillOrSpell, baseTrait: IGURPSBaseTrait<`skill` | `spell` | `technique`>): MutationInput & { trait: RuntimeIGURPSSkillOrSpellOrTechnique } {
-  const output: MutationInput = { mutations: [], integrityEntries: [] }
+export function parseSkillOrSpellOrTechnique(object: MutableObject, gca: GCASkillOrSpell, baseTrait: RuntimeIGURPSBaseTrait<`skill` | `spell` | `technique`>): MutationInput & { trait: RuntimeIGURPSSkillOrSpellOrTechnique } {
+  const output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
 
   // 1. Parse some objects
   assert(!isNilOrEmpty(gca.type), `GCA skill/spell/technique must have a "type" property`)
@@ -213,6 +272,8 @@ export function parseSkillOrSpellOrTechnique(gca: GCASkillOrSpell, baseTrait: IG
     },
     points: {
       base: gca.basePoints,
+      //
+      value: gca.basePoints,
     },
     cost: {
       type: `progression`,
@@ -221,6 +282,7 @@ export function parseSkillOrSpellOrTechnique(gca: GCASkillOrSpell, baseTrait: IG
       progression: cost,
       modifier: difficultyModifier,
       default: zeroCost,
+      round: gca.round === 1 ? `up` : gca.round === -1 ? `down` : `none`,
     },
     difficulty,
   }
@@ -230,8 +292,8 @@ export function parseSkillOrSpellOrTechnique(gca: GCASkillOrSpell, baseTrait: IG
   return { ...output, trait: trait as RuntimeIGURPSSkillOrSpellOrTechnique }
 }
 
-export function parseEquipment(gca: GCAEquipment, baseTrait: IGURPSBaseTrait<`equipment`>): MutationInput & { trait: RuntimeIGURPSEquipment } {
-  const output: MutationInput = { mutations: [], integrityEntries: [] }
+export function parseEquipment(object: MutableObject, gca: GCAEquipment, baseTrait: RuntimeIGURPSBaseTrait<`equipment`>): MutationInput & { trait: RuntimeIGURPSEquipment } {
+  const output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
 
   // 1. Parse some objects
   assert(!isNil(gca.count), `GCA equipment must have a "count" property`)
@@ -283,15 +345,15 @@ export function parseEquipment(gca: GCAEquipment, baseTrait: IGURPSBaseTrait<`eq
   return { ...output, trait: trait as RuntimeIGURPSEquipment }
 }
 
-export function parseGeneralTrait(gca: GCAGeneralTrait, baseTrait: IGURPSBaseTrait<IGURPSGeneralTrait[`type`]>): MutationInput & { trait: RuntimeIGURPSGeneralTrait } {
-  const output: MutationInput = { mutations: [], integrityEntries: [] }
+export function parseGeneralTrait(object: MutableObject, gca: GCAGeneralTrait, baseTrait: RuntimeIGURPSBaseTrait<IGURPSGeneralTrait[`type`]>): MutationInput & { trait: RuntimeIGURPSGeneralTrait } {
+  const output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
 
   // 1. Parse some objects
   let levelNames: MaybeUndefined<string[]> = undefined
   if (!isNilOrEmpty(gca.levelNames)) levelNames = split(gca.levelNames)
 
   assert(!isNil(gca.baseLevel), `Missing baselevl`)
-  assert(!isNilOrEmpty(gca.cost), `Missing cost`)
+  if (baseTrait.childProfile === `regular`) assert(!isNilOrEmpty(gca.cost), `Missing cost`)
 
   // 2. Build BASE_TRAIT
   const trait: RuntimeIGURPSGeneralTrait = {
@@ -306,7 +368,7 @@ export function parseGeneralTrait(gca: GCAGeneralTrait, baseTrait: IGURPSBaseTra
       type: `level`,
       display: null as any, // TODO: DO THIS
       //
-      expression: gca.cost,
+      expression: baseTrait.childProfile === `regular` ? gca.cost! : null,
     },
   }
 
@@ -319,16 +381,28 @@ export function parseGeneralTrait(gca: GCAGeneralTrait, baseTrait: IGURPSBaseTra
 
 // #region RUNTIME_INTERFACES
 
+export interface PartialRuntimeIGURPSBaseTrait {
+  modifiers: RuntimeIGURPSModifier[]
+}
+
+export type RuntimeIGURPSBaseTrait<TType extends Exclude<TraitType, `modifier`> = Exclude<TraitType, `modifier`>> = IGURPSBaseTrait<TType> & PartialRuntimeIGURPSBaseTrait
+
+//
+
 export interface PartialRuntimeIGURPSAttribute {
   score: {
     base: {
-      value?: NumericValue
+      initial?: NumericValue
+      value?: number
     }
     minimum?: {
       value?: NumericValue
     }
     //
-    value?: NumericValue
+    value?: number
+  }
+  level: {
+    value?: number // basically the same as "score.value"
   }
   //
   cost: {
@@ -337,7 +411,7 @@ export interface PartialRuntimeIGURPSAttribute {
   }
 }
 
-export type RuntimeIGURPSAttribute = MergeDeep<IGURPSAttribute, PartialRuntimeIGURPSAttribute>
+export type RuntimeIGURPSAttribute = MergeDeep<MergeDeep<IGURPSAttribute, PartialRuntimeIGURPSAttribute>, PartialRuntimeIGURPSBaseTrait>
 
 export interface PartialRuntimeIGURPSSkillOrSpellOrTechnique {
   level: {
@@ -349,11 +423,11 @@ export interface PartialRuntimeIGURPSSkillOrSpellOrTechnique {
         level?: NumericValue
       }[]
     >
-    value?: NumericValue
+    value?: number
   }
 }
 
-export type RuntimeIGURPSSkillOrSpellOrTechnique = MergeDeep<IGURPSSkillOrSpellOrTechnique, PartialRuntimeIGURPSSkillOrSpellOrTechnique>
+export type RuntimeIGURPSSkillOrSpellOrTechnique = MergeDeep<MergeDeep<IGURPSSkillOrSpellOrTechnique, PartialRuntimeIGURPSSkillOrSpellOrTechnique>, PartialRuntimeIGURPSBaseTrait>
 
 export interface PartialRuntimeIGURPSEquipment {
   cost: {
@@ -366,28 +440,56 @@ export interface PartialRuntimeIGURPSEquipment {
   }
 }
 
-export type RuntimeIGURPSEquipment = MergeDeep<IGURPSEquipment, PartialRuntimeIGURPSEquipment>
+export type RuntimeIGURPSEquipment = MergeDeep<MergeDeep<IGURPSEquipment, PartialRuntimeIGURPSEquipment>, PartialRuntimeIGURPSBaseTrait>
 
 export interface PartialRuntimeIGURPSGeneralTrait {
+  level: {
+    value?: number
+  }
   points: {
-    value?: NumericValue
+    value?: number
   }
 }
 
-export type RuntimeIGURPSGeneralTrait = MergeDeep<IGURPSGeneralTrait, PartialRuntimeIGURPSGeneralTrait>
+export type RuntimeIGURPSGeneralTrait = MergeDeep<MergeDeep<IGURPSGeneralTrait, PartialRuntimeIGURPSGeneralTrait>, PartialRuntimeIGURPSBaseTrait>
 
 export type RuntimeIGURPSTrait = RuntimeIGURPSAttribute | RuntimeIGURPSSkillOrSpellOrTechnique | RuntimeIGURPSEquipment | RuntimeIGURPSGeneralTrait
 
 //
 
 export interface PartialRuntimeIGURPSModifier {
+  // level: {
+  //   value?: NumericValue
+  // }
   modifier: {
-    type?: StringValue<`integer` | `percentage` | `multiplier`>
+    // type?: StringValue<`integer` | `percentage` | `multiplier`> // IMPLIED BY EXPECTED_TYPE
     value?: NumericValue
   }
 }
 
 export type RuntimeIGURPSModifier = MergeDeep<IGURPSModifier, PartialRuntimeIGURPSModifier>
+
+//
+
+export type type = Get<RuntimeIGURPSModifier, `type`>
+//            ^?
+
+export type points = Get<RuntimeIGURPSEquipment, `points.value`>
+//            ^?
+export type points1 = Get<Exclude<RuntimeIGURPSTrait, RuntimeIGURPSEquipment>, `points.value`>
+//            ^?
+
+export type level = Get<RuntimeIGURPSTrait | RuntimeIGURPSModifier, `level.value`>
+//            ^?
+export type level1 = Get<RuntimeIGURPSSkillOrSpellOrTechnique | RuntimeIGURPSGeneralTrait, `level.value`>
+//            ^?
+export type level2 = Get<RuntimeIGURPSModifier, `level.value`>
+//            ^?
+
+export type score = Get<RuntimeIGURPSTrait, `score.value`>
+//            ^?
+export type score1 = Get<RuntimeIGURPSAttribute, `score.value`>
+//            ^?
 
 // #endregion
 

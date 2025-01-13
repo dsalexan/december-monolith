@@ -48,6 +48,14 @@ export class BooleanValue extends RuntimeValue<boolean> {
   public static isBooleanValue(value: any): value is BooleanValue {
     return value.type === `boolean`
   }
+
+  public override hasBooleanRepresentation(): boolean {
+    return true
+  }
+
+  public override asBoolean(): boolean {
+    return this.value
+  }
 }
 
 export class NumericValue extends RuntimeValue<number> {
@@ -210,6 +218,13 @@ export class QuantityValue extends RuntimeValue<Quantity> {
 // #endregion
 
 export function makeRuntimeValue<TDict extends AnyObject = AnyObject>(value: unknown): NumericValue | ObjectValue<TDict> {
+  if (RuntimeValue.isRuntimeValue(value)) {
+    if (NumericValue.isNumericValue(value)) return value
+    if (ObjectValue.isObjectValue(value)) return value as ObjectValue<TDict>
+
+    throw new Error(`Unsupported value type.`)
+  }
+
   if (typeof value === `number`) return new NumericValue(value)
   if (typeof value === `object`) return new ObjectValue(value as TDict)
 

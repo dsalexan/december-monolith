@@ -8,8 +8,9 @@ export const DEFAULT_BINDING_POWERS = {
   RELATIONAL: 10 ** 9,
   ADDITIVE: 10 ** 10,
   MULTIPLICATIVE: 10 ** 11,
-  PREFIX: 10 ** 12,
-  CALL: 10 ** 13,
-  MEMBER: 10 ** 14,
-  PRIMARY: 10 ** 15,
+  EXPONENTIATIVE: 10 ** 12,
+  PREFIX: 10 ** 17,
+  CALL: 10 ** 18,
+  MEMBER: 10 ** 19,
+  PRIMARY: 10 ** 20,
 }

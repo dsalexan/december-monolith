@@ -3,10 +3,10 @@ import { Match } from "@december/utils"
 import { TokenKindName } from "../../token/kind"
 import { Node, NodeType } from "../../tree"
 import { BindingPower } from "./bindingPower"
-import { ParserFunction, SyntacticalDenotation } from "./parserFunction"
+import { ParserFunction, SyntacticalContext, SyntacticalDenotation } from "./parserFunction"
 import { Entries } from "type-fest"
 import { GetFunction, GetKey } from "../../utils"
-import { AnyObject } from "tsdef"
+import { AnyObject, MaybeArray, Nullable } from "tsdef"
 
 export interface BindingPowerEntry {
   denotation: SyntacticalDenotation
@@ -29,13 +29,20 @@ export interface BindParserEntry<TDict> {
 }
 
 export interface TransformNodeEntry {
-  key: string // just a ID key
+  key: string // just an ID key
   from: NodeType // the type to transform from (mostly for faster indexing)
   pattern: Match.Pattern // pattern to match NODE
   to: NodeType | Node | ((originalNode: Node) => Node) // type to transform to OR Node to transform to OR function-returning Node
 }
 
-export type SyntacticalGrammarEntry<TDict> = BindingPowerEntry | RegisterParserEntry<TDict> | BindParserEntry<TDict> | TransformNodeEntry
+export interface RecontextualizationEntry {
+  key: string // just an ID key
+  from: NodeType // the type to transform from (mostly for faster indexing)
+  pattern: Match.Pattern // pattern to match NODE
+  reContextualization: (originalNode: Node, context: SyntacticalContext) => Nullable<MaybeArray<SyntacticalContext>>
+}
+
+export type SyntacticalGrammarEntry<TDict> = BindingPowerEntry | RegisterParserEntry<TDict> | BindParserEntry<TDict> | TransformNodeEntry | RecontextualizationEntry
 
 export function isBindingPowerEntry(entry: SyntacticalGrammarEntry<any>): entry is BindingPowerEntry {
   return `bindingPower` in entry && !(`parser` in entry)
@@ -51,6 +58,10 @@ export function isRegisterParserEntry<TDict>(entry: SyntacticalGrammarEntry<any>
 
 export function isTransformNodeEntry(entry: SyntacticalGrammarEntry<any>): entry is TransformNodeEntry {
   return `pattern` in entry && `from` in entry && `to` in entry
+}
+
+export function isReContextualizationEntry(entry: SyntacticalGrammarEntry<any>): entry is RecontextualizationEntry {
+  return `reContextualization` in entry
 }
 
 export const createBindingPowerEntry = (denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower): BindingPowerEntry => ({ denotation, kind, bindingPower })
@@ -77,4 +88,8 @@ export function createRegisterParserEntriesFromIndex<TDict extends AnyObject>(fn
   }
 
   return entries
+}
+
+export function createRecontextualizationEntry(key: string, from: NodeType, pattern: Match.Pattern, reContextualization: RecontextualizationEntry[`reContextualization`]): RecontextualizationEntry {
+  return { key, from, pattern, reContextualization }
 }

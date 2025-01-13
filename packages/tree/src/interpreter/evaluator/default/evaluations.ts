@@ -58,7 +58,7 @@ export const evaluatePrefixExpression: EvaluationFunction = (i: Interpreter<Defa
 export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, binaryExpression: BinaryExpression, environment: Environment): RuntimeEvaluation => {
   const operator = binaryExpression.operator.content
 
-  const isAlgebraic = [`+`, `-`, `*`, `/`].includes(operator)
+  const isAlgebraic = [`+`, `-`, `*`, `/`, `^`].includes(operator)
   const isLogical = [`=`, `!=`, `>`, `<`, `>=`, `<=`].includes(operator)
   const isLogicalConnective = [`|`, `&`].includes(operator)
 
@@ -87,7 +87,7 @@ export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter<Defa
       if (StringValue.isStringValue(right.runtimeValue)) debugger
 
       // 1. Simple algebra with numbers
-      if (NumericValue.isNumericValue(right.runtimeValue)) return numericAlgebraicOperation(left.runtimeValue, right.runtimeValue, operator).getEvaluation(binaryExpression)
+      if (right.runtimeValue.hasNumericRepresentation()) return numericAlgebraicOperation(left.runtimeValue, right.runtimeValue, operator).getEvaluation(binaryExpression)
 
       // 2. Try number x unknown algebraic operation (injectable)
       if (output === undefined) output = i.evaluator.call(`evaluateNumericAndOtherAlgebraicOperation`, left.runtimeValue, right.runtimeValue, operator)
@@ -108,6 +108,24 @@ export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter<Defa
     return new RuntimeEvaluation(new BinaryExpression(leftNode, binaryExpression.operator, rightNode))
   }
 
+  // 5. If operation is not possible (probably due to type mismatch), bail out
+  if (isAlgebraic) {
+    //    5.A. number + non-numeric OBJECT
+    if (left.runtimeValue.hasNumericRepresentation() && !right.runtimeValue.hasNumericRepresentation() && right.runtimeValue.type === `object`) {
+      const objectNode = right.toNode(i)
+      return new RuntimeEvaluation(new BinaryExpression(left.toNode(i), binaryExpression.operator, objectNode))
+    } else if (right.runtimeValue.hasNumericRepresentation() && !left.runtimeValue.hasNumericRepresentation() && left.runtimeValue.type === `object`) {
+      const objectNode = left.toNode(i)
+      return new RuntimeEvaluation(new BinaryExpression(objectNode, binaryExpression.operator, left.toNode(i)))
+    }
+    //    5.B. non-numeric OBJECT + non-numeric OBJECT
+    else if (!left.runtimeValue.hasNumericRepresentation() && left.runtimeValue.type === `object` && !right.runtimeValue.hasNumericRepresentation() && right.runtimeValue.type === `object`) {
+      const leftNode = left.toNode(i)
+      const rightNode = right.toNode(i)
+      return new RuntimeEvaluation(new BinaryExpression(leftNode, binaryExpression.operator, rightNode))
+    }
+  }
+
   throw new Error(`BinaryExpression not implemented for types: "${left.runtimeValue.type}" and "${right.runtimeValue.type}"`)
 }
 
@@ -118,6 +136,8 @@ export const evaluateIdentifier: EvaluationFunction = (i: Interpreter<DefaultEva
 
 export const evaluateCallExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, callExpression: CallExpression, environment: Environment): RuntimeEvaluation => {
   const callee = callExpression.callee.getContent()
+
+  // if (global.__CALL_QUEUE_CONTEXT_OBJECT.id === `11270`) debugger
 
   // 0. Check if call is a valid function, if now we should transform it in a regular StringExpression
   //     for example, AD:Claws (Blunt) is not a function, but @basethdice(...) is (in GCA terms)
@@ -211,7 +231,9 @@ export const evaluateMemberExpression: EvaluationFunction = (i: Interpreter<Defa
   else throw new Error(`Unimplemented for non-string or non-number property names`)
 
   // 3. If property could not be found, bail out
-  assert(object.runtimeValue.hasProperty(propertyName), `Property "${propertyName}" not found in object.`)
+  const content = memberExpression.getContent()
+  if (![`level`, `base`].includes(propertyName as any) && !content.endsWith(`score->base->value`) && !content.endsWith(`score->value`)) assert(object.runtimeValue.hasProperty(propertyName), `Property "${propertyName}" not found in object.`)
+  if (!object.runtimeValue.hasProperty(propertyName)) return new RuntimeEvaluation(memberExpression)
 
   // 4. Get property value from object
   const propertyValue = object.runtimeValue.getProperty(propertyName)
@@ -228,9 +250,9 @@ export const evaluateIfExpression: EvaluationFunction = (i: Interpreter<DefaultE
 
     // TODO: Probably dont evaluate consequent/alternative here, for now its just for testing and debugging
     const consequent = i.evaluator.evaluate(i, ifExpression.consequent, environment)
-    const alternative = i.evaluator.evaluate(i, ifExpression.alternative, environment)
+    const alternative = ifExpression.alternative ? i.evaluator.evaluate(i, ifExpression.alternative, environment) : undefined
 
-    return new RuntimeEvaluation(new IfExpression(condition.toNode(i), consequent.toNode(i), alternative.toNode(i)))
+    return new RuntimeEvaluation(new IfExpression(condition.toNode(i), consequent.toNode(i), alternative ? alternative.toNode(i) : undefined))
   }
 
   let result: Nullable<boolean> = null
@@ -238,11 +260,19 @@ export const evaluateIfExpression: EvaluationFunction = (i: Interpreter<DefaultE
   if (BooleanValue.isBooleanValue(condition.runtimeValue)) result = condition.runtimeValue.value
   else if (NumericValue.isNumericValue(condition.runtimeValue)) result = condition.runtimeValue.value !== 0
   else if (StringValue.isStringValue(condition.runtimeValue)) debugger
+  else if (ObjectValue.isObjectValue(condition.runtimeValue)) {
+    if (condition.runtimeValue.hasBooleanRepresentation()) result = condition.runtimeValue.asBoolean()
+  }
 
-  assert(result !== null, `Result cannot be null.`)
+  assert(result !== null, `Result cannot be null (i.e. we could not determine the boolean outcome of condition).`)
 
   if (result) return i.evaluator.evaluate(i, ifExpression.consequent, environment)
-  else return i.evaluator.evaluate(i, ifExpression.alternative, environment)
+  else {
+    // assert(ifExpression.alternative, `Alternative expression must be present if condition is false`)
+    if (ifExpression.alternative === undefined) return new BooleanValue(false).getEvaluation(ifExpression)
+
+    return i.evaluator.evaluate(i, ifExpression.alternative, environment)
+  }
 }
 
 // "PRIMITIVES"
@@ -305,6 +335,7 @@ function numericAlgebraicOperation(left: RuntimeValue<any>, right: RuntimeValue<
   else if (operator === `-`) result = left.asNumber() - right.asNumber()
   else if (operator === `*`) result = left.asNumber() * right.asNumber()
   else if (operator === `/`) result = left.asNumber() / right.asNumber()
+  else if (operator === `^`) result = left.asNumber() ** right.asNumber()
   //
   else throw new Error(`Operator not implemented: ${operator}`)
 
@@ -333,11 +364,11 @@ function logicalBinaryOperation(left: RuntimeValue<any>, right: RuntimeValue<any
 function logicalConnectiveBinaryOperation(left: RuntimeValue<any>, right: RuntimeValue<any>, operator: string): BooleanValue {
   let result: Nullable<boolean> = null
 
-  assert(BooleanValue.isBooleanValue(left), `Left value must be a boolean value`)
-  assert(BooleanValue.isBooleanValue(right), `Right value must be a boolean value`)
+  assert(left.hasBooleanRepresentation(), `Left value must be a boolean value OR have a boolean representation`)
+  assert(right.hasBooleanRepresentation(), `Right value must be a boolean value OR have a boolean representation`)
 
-  if (operator === `|`) result = left.value || right.value
-  else if (operator === `&`) result = left.value && right.value
+  if (operator === `|`) result = left.asBoolean() || right.asBoolean()
+  else if (operator === `&`) result = left.asBoolean() && right.asBoolean()
   //
   else throw new Error(`Operator not implemented: ${operator}`)
 

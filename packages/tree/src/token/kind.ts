@@ -60,6 +60,7 @@ export const TOKEN_KIND_IDS = {
   smaller_or_equal: [`operator`],
   greater: [`operator`],
   smaller: [`operator`],
+  caret: [`operator`], // exponentiation
   asterisk: [`operator`], // multiplication
   slash: [`operator`], // division
   plus: [`operator`], // addition

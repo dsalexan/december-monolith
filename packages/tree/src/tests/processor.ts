@@ -17,7 +17,7 @@ import {
   Parser,
 } from ".."
 
-import { createTransformNodeEntry, SyntacticalGrammar } from "../parser/grammar"
+import { createTransformNodeEntry, SyntacticalGrammar, createRecontextualizationEntry } from "../parser/grammar"
 import { DEFAULT_GRAMMAR as DEFAULT_SYNTACTICAL_GRAMMAR } from "../parser/grammar/default"
 
 import Interpreter, { NumericValue, DEFAULT_EVALUATOR, Environment, NodeEvaluator, RuntimeValue, VariableValue, FunctionValue, BooleanValue, ObjectValue } from "../interpreter"
@@ -59,6 +59,10 @@ expression = `$solver($eval(%level))d + $solver(%level)`
 expression = `$if("AD:Claws (Sharp Claws)::level" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN "cut" ELSE $if("AD:Claws (Talons)::level" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN "cut/imp" ELSE $if("AD:Claws (Long Talons)::level" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN "cut/imp" ELSE "cr")))`
 expression = `me::strength::minimum`
 expression = `me::weaponst`
+expression = `ST:Basic Air Move`
+expression = `@int(2 * 10 ^ (ST:Lifting ST / 10))`
+expression = `@if(@hasmod(5% of Starting Wealth) THEN 0.05)`
+// expression = `@hasmod(5% 10)`
 // expression = `2 * 1`
 // expression = `0 + 1 + 2 * 1`
 // expression = `3 / 3`
@@ -100,6 +104,12 @@ syntacticalGrammar.add(
     return new MemberExpression(mode_strength, makeConstantLiteral(`minimum`))
   }),
 )
+syntacticalGrammar.add(
+  createRecontextualizationEntry(`hasmod`, `CallExpression`, EQUALS(`@hasmod`, true), (originalNode, context) => {
+    // first, and only, argument for @HasMod is a string
+    return { mode: `text` }
+  }),
+)
 
 const graphRewritingSystem = new GraphRewritingSystem()
 graphRewritingSystem.add(...DEFAULT_GRAPH_REWRITING_RULESET)
@@ -118,8 +128,22 @@ environment.assignValue(`modeIndex`, new NumericValue(0))
 // environment.assignValue(`b`, new NumericValue(-10))
 // environment.assignValueToPattern(`alias`, REGEX(/^"?\w{2}:.+"?$/), new NumericValue(0))
 environment.assignValueToPattern(`alias`, REGEX(/^"?\w{2}:.+"?$/), new VariableValue(`alias::fallback`))
-environment.assignValue(`alias::fallback`, new ObjectValue({}, { numberValue: 0 }))
+environment.assignValue(`alias::fallback`, new ObjectValue({}, { numberValue: 10 }))
 environment.assignValue(`@itemhasmod`, new FunctionValue(() => () => new BooleanValue(true), `@itemhasmod`))
+environment.assignValue(
+  `@int`,
+  new FunctionValue(
+    () => (value: RuntimeValue<any>) => {
+      if (NumericValue.isRuntimeValue(value)) {
+        const intValue = Math.floor(value.value)
+        return new NumericValue(intValue)
+      }
+
+      throw new Error(`Invalid value type for @int function.`)
+    },
+    `@int`,
+  ),
+)
 environment.assignValue(`%level`, new NumericValue(10))
 
 const processor = new Processor(lexicalGrammar, syntacticalGrammar, graphRewritingSystem, nodeEvaluator)
@@ -129,9 +153,10 @@ printExpressionHeader(expression)
 const syntacticalContext: SyntacticalContext = { mode: `expression` }
 const symbolTable = new SymbolTable()
 
-const { originalExpression, tokens, injections, AST } = processor.parse(expression, environment, symbolTable, { debug: true, syntacticalContext })
+const locallyAssignedSymbols: any[] = []
+const { originalExpression, tokens, injections, AST } = processor.parse(expression, environment, symbolTable, locallyAssignedSymbols, { debug: true, syntacticalContext })
 assert(AST, `Failed to parse expression.`)
-const { originalContent, content, evaluation, isReady } = processor.resolve(AST, environment, symbolTable, {
+const { originalContent, content, evaluation, isReady } = processor.resolve(AST, environment, symbolTable, locallyAssignedSymbols, {
   debug: true,
   syntacticalContext,
   isValidFunctionName: (functionName: string) => functionName.startsWith(`@`),
@@ -142,7 +167,7 @@ const { originalContent, content, evaluation, isReady } = processor.resolve(AST,
     for (const symbol of allSymbols) {
       let value: Nullable<RuntimeValue<any>> = null
 
-      if (symbol.name === `alias::fallback`) value = new NumericValue(0)
+      if (symbol.name === `alias::fallback`) value = new NumericValue(10)
 
       if (value === null) continue
       // TODO: Search somewhere for correspondent value

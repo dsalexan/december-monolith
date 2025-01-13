@@ -4,9 +4,11 @@ import { Expression } from "./expression"
 import { Token } from "../../token/core"
 import { Node } from "../node"
 import { SyntacticalContext } from "../../parser"
-import { cloneDeep } from "lodash"
-import { Nullable } from "tsdef"
+import { cloneDeep, isString } from "lodash"
+import { MaybeUndefined, Nullable } from "tsdef"
 import assert from "assert"
+import { Identifier, StringLiteral } from "./basic"
+import { makeConstantLiteral } from "../../utils/factories"
 
 export class BinaryExpression extends Expression {
   type: NodeType = `BinaryExpression`
@@ -101,6 +103,29 @@ export class MemberExpression extends Expression {
   public override getContent(): string {
     return `${this.getObjectVariableName()}->${this.getPropertyName()}`
   }
+
+  public static makeChain(object: Expression, ...accessChain: (string | Expression)[]): MemberExpression {
+    // 1. Start buffer with root object
+    let buffer: MemberExpression = object as any
+
+    // 2. Iterate over accessChain array, nesting member expressions to buffer
+    for (const access of accessChain) {
+      let accessor: StringLiteral | Identifier
+
+      if (Node.isNode(access)) {
+        if (access.type === `Identifier`) accessor = access as Identifier
+        else if (access.type === `StringLiteral`) accessor = access as StringLiteral
+        //
+        else throw new Error(`Invalid accessor type "${access.type}"`)
+      } else if (isString(access)) accessor = makeConstantLiteral(access)
+      //
+      else throw new Error(`Invalid accessor type "${access}" (${typeof access})`)
+
+      buffer = new MemberExpression(buffer, accessor)
+    }
+
+    return buffer
+  }
 }
 
 export class PrefixExpression extends Expression {
@@ -153,7 +178,7 @@ export class IfExpression extends Expression {
     return this.children[1]
   }
 
-  public get alternative(): Expression {
+  public get alternative(): MaybeUndefined<Expression> {
     return this.children[2]
   }
 

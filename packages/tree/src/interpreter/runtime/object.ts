@@ -9,16 +9,23 @@ export class ObjectValue<TObject extends AnyObject> extends RuntimeValue<TObject
 
   _numberValue: Nullable<number> = null
   _stringValue: Nullable<string> = null
+  _booleanValue: Nullable<boolean> = null
 
-  constructor(value: TObject, { numberValue, stringValue }: { numberValue?: number; stringValue?: string } = {}) {
+  _isEquals: Nullable<(other: unknown) => boolean> = null
+
+  constructor(value: TObject, { numberValue, stringValue, booleanValue, isEquals }: { numberValue?: number; stringValue?: string; booleanValue?: boolean; isEquals?: (other: unknown) => boolean } = {}) {
     super(value)
     assert(typeof value === `object`)
 
     assert(numberValue === undefined || typeof numberValue === `number`, `Number Value must be a number.`)
     assert(stringValue === undefined || typeof stringValue === `string`, `String Value must be a string.`)
+    assert(booleanValue === undefined || typeof booleanValue === `boolean`, `Boolean Value must be a boolean.`)
 
     this._numberValue = numberValue ?? null
     this._stringValue = stringValue ?? null
+    this._booleanValue = booleanValue ?? null
+
+    this._isEquals = isEquals ?? null
   }
 
   public static isObjectValue<TObject extends AnyObject>(value: any): value is ObjectValue<TObject> {
@@ -33,12 +40,22 @@ export class ObjectValue<TObject extends AnyObject> extends RuntimeValue<TObject
     return Array.isArray(this.value)
   }
 
+  public override isEquals(value: RuntimeValue<any>) {
+    if (!this.isSameType(value)) return false
+    if (this._isEquals) return this._isEquals(value.value)
+    return super.isEquals(value)
+  }
+
   public override hasNumericRepresentation(): boolean {
     return this._numberValue !== null
   }
 
   public override hasStringRepresentation(): boolean {
     return this._stringValue !== null
+  }
+
+  public override hasBooleanRepresentation(): boolean {
+    return this._booleanValue !== null
   }
 
   public override asNumber(): number {
@@ -49,6 +66,11 @@ export class ObjectValue<TObject extends AnyObject> extends RuntimeValue<TObject
   public asString(): string {
     assert(this._stringValue !== null, `Object Value has no string value.`)
     return this._stringValue
+  }
+
+  public override asBoolean(): boolean {
+    assert(this._booleanValue !== null, `Object Value has no boolean value.`)
+    return this._booleanValue
   }
 
   /** Checks if property exists in object */

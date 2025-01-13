@@ -204,12 +204,13 @@ function _importGCATrait(raw: AnyObject, baseTrait: GCABaseTrait): GCATrait {
       downFormula: extract(raw, `DownFormula`),
       maxScore: extract(raw, `MaxScore`),
       minScore: extract(raw, `MinScore`),
-      step: parseInt(extract(raw, `Step`)),
+      round: parseInt(extract(raw, `Round`)),
+      step: parseFloat(extract(raw, `Step`)),
       symbol: extract(raw, `Symbol`),
       up: extract(raw, `Up`),
       //
-      _baseScore: parseInt(extract(raw, `BaseScore`)),
-      _score: parseInt(extract(raw, `Score`)),
+      _baseScore: parseFloat(extract(raw, `BaseScore`)),
+      _score: parseFloat(extract(raw, `Score`)),
     }
 
     removeUndefinedKeys(attribute)
@@ -220,6 +221,9 @@ function _importGCATrait(raw: AnyObject, baseTrait: GCABaseTrait): GCATrait {
     //            = INITIAL_SCORE + BOUGHT_SCORE
 
     const ignore = [`Metric`].includes(attribute.name)
+
+    // if (attribute.id === 11176) debugger
+    // if (attribute.id === 11270) debugger
 
     // INITIAL_SCORE = $solve(BASE_VALUE)
     const isNumericBaseValue = isNumber(attribute.baseValue) || typing.guessType(attribute.baseValue) === `number`
@@ -570,6 +574,19 @@ function parseInt(value: Nilable<string | number>, strict: boolean = false): May
   }
 
   const number = !isString(value) ? value : Number.parseInt(value)
+  assert(!Number.isNaN(number), `Value "${value}" is not a number`)
+  return number
+}
+
+function parseFloat(value: Nilable<string | number>, strict?: false | boolean): MaybeUndefined<number>
+function parseFloat(value: Nilable<string | number>, strict: true): number
+function parseFloat(value: Nilable<string | number>, strict?: false | boolean): MaybeUndefined<number> {
+  if (value === undefined || value === null) {
+    if (strict) throw new Error(`Value is required`)
+    return undefined
+  }
+
+  const number = !isString(value) ? value : Number.parseFloat(value)
   assert(!Number.isNaN(number), `Value "${value}" is not a number`)
   return number
 }

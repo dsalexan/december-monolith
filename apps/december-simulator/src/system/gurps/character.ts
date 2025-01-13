@@ -9,13 +9,13 @@ import { IGURPSCharacter, IGURPSTrait } from "@december/gurps"
 
 export type GURPSCharacterTag = keyof GURPSCharacter[`tags`]
 
-export default class GURPSCharacter extends ObjectController implements IGURPSCharacter {
+export default class GURPSCharacter extends ObjectController {
   system: `GURPS` = `GURPS`
   //
   id: string
   name: string
   //
-  private tags: { general: ObjectID; traits: ObjectID[]; stats: ObjectID[] }
+  private tags: { data: ObjectID; traits: ObjectID[]; stats: ObjectID[] }
 
   // #region Objects
 
@@ -23,8 +23,24 @@ export default class GURPSCharacter extends ObjectController implements IGURPSCh
   get traits() { return this.tags.traits.map(id => this.store.getByID(id) as MutableObject<IGURPSTrait>) }
   // eslint-disable-next-line prettier/prettier
   get stats() { return this.tags.stats.map(id => this.store.getByID(id) as MutableObject<IGURPSTrait>) }
+
   // eslint-disable-next-line prettier/prettier
-  get general(): IGURPSCharacter[`general`] { return (this.store.getByID(this.tags.general)! as MutableObject<IGURPSCharacter[`general`]>).getData() }
+  public trait(idOrReference: string | Reference<`alias` | `id`>): MaybeNull<IGURPSTrait> { return this.getTrait(idOrReference) }
+  // eslint-disable-next-line prettier/prettier
+  public stat(idOrReference: string | Reference<`alias` | `id`>): MaybeNull<IGURPSTrait> { return this.getTrait(idOrReference) }
+
+  get data(): MutableObject<IGURPSCharacter, GURPSCharacter> {
+    return this.store.getByID(this.tags.data) as MutableObject<IGURPSCharacter, GURPSCharacter>
+  }
+
+  // #endregion
+
+  constructor(id: string, name: string) {
+    super()
+    this.id = id
+    this.name = name
+    this.tags = { traits: [], stats: [] } as any
+  }
 
   protected getTrait(idOrReference: string | Reference<`alias` | `id`>): MaybeNull<IGURPSTrait> {
     const reference = isString(idOrReference) ? new Reference(`id`, idOrReference) : idOrReference
@@ -36,24 +52,10 @@ export default class GURPSCharacter extends ObjectController implements IGURPSCh
     return object ? object.getData() : null
   }
 
-  // eslint-disable-next-line prettier/prettier
-  public trait(idOrReference: string | Reference<`alias` | `id`>): MaybeNull<IGURPSTrait> { return this.getTrait(idOrReference) }
-  // eslint-disable-next-line prettier/prettier
-  public stat(idOrReference: string | Reference<`alias` | `id`>): MaybeNull<IGURPSTrait> { return this.getTrait(idOrReference) }
-
-  // #endregion
-
-  constructor(id: string, name: string) {
-    super()
-    this.id = id
-    this.name = name
-    this.tags = { traits: [], stats: [] } as any
-  }
-
-  tagObject(object: MutableObject, tag: GURPSCharacterTag) {
-    if (tag === `general`) {
-      assert(this.tags.general === undefined, `general already tagged`)
-      this.tags.general = object.id
+  public tagObject(object: MutableObject, tag: GURPSCharacterTag) {
+    if (tag === `data`) {
+      assert(this.tags.data === undefined, `data already tagged`)
+      this.tags.data = object.id
     } else {
       assert(!this.tags[tag].includes(object.id), `Object already tagged`)
       this.tags[tag].push(object.id)

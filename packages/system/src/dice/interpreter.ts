@@ -1,5 +1,5 @@
 import assert from "assert"
-import { MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
+import { MaybeUndefined, Nilable, Nullable, WithOptionalKeys } from "tsdef"
 import { sum } from "lodash"
 
 import { BinaryExpression, Expression, ExpressionStatement, Node, NumericLiteral, StringLiteral } from "@december/tree/tree"
@@ -219,19 +219,23 @@ export const evaluateCustomOperation = (left: RuntimeValue<any>, right: RuntimeV
       return new DiceRollValue(newSize, diceRollValue.faces, { keep: diceRollValue.keep })
     }
 
-    throw new Error(`Operator not implemented: ${operator}`)
+    if (operator === `^`) {
+      // nothing to see here
+    }
+    //
+    else throw new Error(`Operator not implemented: ${operator}`)
   }
 
   return DEFAULT_EVALUATIONS.evaluateCustomOperation(left, right, operator, node)
 }
 
 // override @ convertToNode
-export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i: Interpreter, value: RuntimeValue<any>): Node => {
+export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i: Interpreter, value: RuntimeValue<any>, sourceNode: Nullable<Node>): Node => {
   if (DiceRollValue.isDiceRollValue(value)) {
     // 1. If DiceRoll was NOT ROLLED, update tree and return an expression
     if (!value.wasRolled()) {
       const numberOfDice = new NumericValue(value.size)
-      const leftNumericLiteral = i.evaluator.convertToNode<NumericLiteral>(i, numberOfDice)
+      const leftNumericLiteral = i.evaluator.convertToNode<NumericLiteral>(i, numberOfDice, null)
 
       assert(leftNumericLiteral.type === `NumericLiteral`, `Left NumericLiteral must be a NumericLiteral node`)
 
@@ -245,11 +249,11 @@ export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i
 
   if (DiceNotationValue.isDiceNotationValue(value)) return value.expression
 
-  return DEFAULT_NODE_CONVERSORS.convertToNode(i, value)
+  return DEFAULT_NODE_CONVERSORS.convertToNode(i, value, sourceNode)
 }
 
 // override @ postProcess
-export const postProcess: PostProcessFunction = (i: Interpreter<any, DiceInterpreterOptions>, evaluation: RuntimeEvaluation<RuntimeValue<any>, Expression>, syntacticalContext: SyntacticalContext): Nullable<RuntimeValue<any>> => {
+export const postProcess: PostProcessFunction = (i: Interpreter<any, DiceInterpreterOptions>, evaluation: RuntimeEvaluation<RuntimeValue<any>, Expression>, syntacticalContext: SyntacticalContext): Nilable<RuntimeValue<any>> => {
   const { node, runtimeValue } = evaluation
 
   if (i.options.rollDice) {

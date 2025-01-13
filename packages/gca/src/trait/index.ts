@@ -126,6 +126,7 @@ export interface GCAAttribute extends GCABaseTrait, GCABaseNonSkillNonSpellNonEq
   downFormula: MaybeUndefined<string> // DownFormula()
   maxScore: MaybeUndefined<string> // MaxScore()
   minScore: MaybeUndefined<string> // MinScore()
+  round: MaybeUndefined<number> // Round()
   step: MaybeUndefined<number> // Step()
   symbol: MaybeUndefined<string> // Symbol()
   up: MaybeUndefined<string> // Up()

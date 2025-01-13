@@ -3,14 +3,14 @@ import uuid from "@december/utils/uuid"
 import { ICharacter } from "@december/system"
 import { Node } from "@december/tree"
 import { GCATrait } from "../trait"
+import { AnyObject } from "tsdef"
 
 export default class GCACharacter implements ICharacter {
   declare system: `GCA`
+  _raw: AnyObject
   id: string
   //
-  name: string
-  //
-  general: CharacterGeneralData
+  data: CharacterGeneralData
   traits: Record<string, GCATrait>
   stats: Record<string, GCATrait>
 
@@ -39,9 +39,15 @@ export default class GCACharacter implements ICharacter {
 }
 
 export interface CharacterGeneralData {
+  name: string
+  //
   info: CharacterInformation
   transforms: CharacterTransforms
   damageTable: DamageTable
+  //
+  campaign: {
+    totalMoney: number
+  }
 }
 
 export interface CharacterInformation {

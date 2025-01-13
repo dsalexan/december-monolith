@@ -96,8 +96,8 @@ export class FunctionPattern<TFunction extends TestFunction> extends BasePattern
     this.fn = fn
   }
 
-  override _match<TValue = any>(value: TValue): FunctionMatchInfo {
-    const result = this.fn(value)
+  override _match<TValue = any>(value: TValue, ...args: unknown[]): FunctionMatchInfo {
+    const result = this.fn(value, ...args)
     return {
       isMatch: result,
     }

@@ -82,10 +82,12 @@ export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOpti
 
     // 2. Tries to post-process the resulting tree (or resulting runtimeValue) into an RuntimeValue (mostly used for external modules, also for ObjectValue with numeric representation in expressionMode)
     assert(Expression.isExpression(result.node), `Expecting a Expression as resulting node`)
-    const postProcessedRuntimeValue = this.evaluator.postProcess(this, result, this.options.syntacticalContext) ?? runtimeValue
+    const postProcessedRuntimeValue = this.evaluator.postProcess(this, result, this.options.syntacticalContext)
+
+    const finalRuntimeValue: Nullable<RuntimeValue<any>> = postProcessedRuntimeValue === undefined ? runtimeValue : postProcessedRuntimeValue
 
     // 3. If result is UNRESOLVED (lacks final RuntimeValue) still, pack node into Statement
-    if (postProcessedRuntimeValue === null) {
+    if (finalRuntimeValue === null) {
       let statement: Statement = result.node as Statement
       if (!Statement.isStatement(result.node)) statement = new ExpressionStatement(result.node as Expression)
 
@@ -93,12 +95,12 @@ export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOpti
     }
 
     // 4. RESOLVED evaluation, rebuild RuntimeEvaluation from RuntimeValue
-    assert(postProcessedRuntimeValue !== null && RuntimeValue.isRuntimeValue(postProcessedRuntimeValue), `Post-processed runtime value must be a RuntimeValue`) // COMMENT
+    assert(finalRuntimeValue !== null && RuntimeValue.isRuntimeValue(finalRuntimeValue), `Post-processed runtime value must be a RuntimeValue`) // COMMENT
 
-    const expression = this.evaluator.convertToNode(this, postProcessedRuntimeValue)
+    const expression = this.evaluator.convertToNode(this, finalRuntimeValue, null)
     assert(expression instanceof Expression, `Anything that yields a value is an expression dude`) // COMMENT
 
-    return new RuntimeEvaluation(postProcessedRuntimeValue as TRuntimeValue, new ExpressionStatement(expression))
+    return new RuntimeEvaluation(finalRuntimeValue as TRuntimeValue, new ExpressionStatement(expression))
   }
 
   /** Index a variable name in SymbolTable  */

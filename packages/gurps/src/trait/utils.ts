@@ -8,14 +8,19 @@ export function isNameExtensionValid(nameExtension?: string) {
   return !!nameExtension && !isEmpty(nameExtension)
 }
 
-export function fullName(name: string, nameExtension?: string): string {
-  const hasDistinctFullName = isNameExtensionValid(nameExtension)
+export function fullName(name: string, nameExtension?: string): string
+export function fullName(namedObject: { name: string; nameExtension?: string }): string
+export function fullName(nameOrObject: string | { name: string; nameExtension?: string }, nameExtension?: string): string {
+  if (typeof nameOrObject === `string`) {
+    const hasDistinctFullName = isNameExtensionValid(nameExtension)
 
-  if (hasDistinctFullName) return `${name} (${nameExtension})`
+    if (hasDistinctFullName) return `${nameOrObject} (${nameExtension})`
 
-  return name
+    return nameOrObject
+  }
+
+  return fullName(nameOrObject.name, nameOrObject.nameExtension)
 }
-
 export interface AliasOptions {
   nameExtension: string
   group: string
@@ -38,5 +43,5 @@ export function getAliases(type: TraitType, name: string, { nameExtension, group
 }
 
 export function isAlias(value: string) {
-  return /^"?\w{2}\:[\w" \(\)\,\;\s]+"?$/.test(value)
+  return /^"?\w{2}\:[\w" \(\)\,\;\s-—]+"?$/.test(value)
 }

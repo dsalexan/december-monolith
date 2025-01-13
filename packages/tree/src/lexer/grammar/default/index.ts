@@ -63,12 +63,13 @@ export const SMALLER_OR_EQUAL = createEntry(OPERATOR_PRIORITY + 12, `smaller_or_
 export const GREATER = createEntry(OPERATOR_PRIORITY + 11, `greater`, EQUALS(`>`))
 export const SMALLER = createEntry(OPERATOR_PRIORITY + 11, `smaller`, EQUALS(`<`))
 
+export const CARET = createEntry(OPERATOR_PRIORITY + 109, `caret`, EQUALS(`^`))
 export const ASTERISK = createEntry(OPERATOR_PRIORITY + 107, `asterisk`, EQUALS(`*`))
 export const SLASH = createEntry(OPERATOR_PRIORITY + 107, `slash`, EQUALS(`/`))
 export const PLUS = createEntry(OPERATOR_PRIORITY + 105, `plus`, EQUALS(`+`))
 export const DASH = createEntry(OPERATOR_PRIORITY + 105, `dash`, EQUALS(`-`))
 
-export const OPERATORS = [PIPE, AMPERSAND, _EQUALS, GREATER_OR_EQUAL, SMALLER_OR_EQUAL, GREATER, SMALLER, ASTERISK, SLASH, PLUS, DASH]
+export const OPERATORS = [PIPE, AMPERSAND, _EQUALS, GREATER_OR_EQUAL, SMALLER_OR_EQUAL, GREATER, SMALLER, CARET, ASTERISK, SLASH, PLUS, DASH]
 
 // #endregion
 

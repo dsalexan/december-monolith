@@ -1,15 +1,19 @@
+import { Nullable } from "tsdef"
+
 // BASE_POINTS = LEVEL_COST(BASE_LEVEL)
 export interface LevelCost {
   type: `level`
   display: string // Cost()*
   //
-  expression: string // Cost(), Formula(), ForceFormula()
+  expression: Nullable<string> // Cost(), Formula(), ForceFormula()
   //      sometimes Formula() doesnt exists, the cost is just the numerical/progression value in Cost()
   //      anyway, in importing we always get the "better" of Cost() or Formula() to determina the expression (which is the responsible for compiling the final cost value)
   //      in cases where Formula() exists, Cost() will end up as the "display" for cost
   //
   //      ForceFormula() forces Formula() instead of Cost()
   //      Without this (for modifiers), Cost() is used for PROGRESSIONS, and FORMULA() for everything else
+  //
+  //      This can be NULL when childProfile === 'alternative-attacks', since cost would just depend on children + modifiers + bonus
   //
   // points: number // points — final cost in points for trait, ALWAYS calculated from expression(level) {DONT SET IT HERE, SET AT "ROOT" OF TRAIT FOR ACCESSIBILITY}
 }
@@ -23,6 +27,7 @@ export interface ProgressionCost {
   progression: string // derived from Type() (i.e. Tech/H or DX/E)
   modifier: number // derived from Type(), based on DIFFICULTY
   default: number // derived from Type(), based on DIFFICULTY and only applicable when POINTS = 0 (since the final level is calculated from invested points)
+  round: `down` | `up` | `none` // Round()
   //
   // level: number // level — final level for invested points {DONT SET IT HERE, SET AT "ROOT" OF TRAIT FOR ACCESSIBILITY}
 }
@@ -48,6 +53,7 @@ export interface StepCost {
   //                 Down()                 DownFormula()
   decrement: { progression: string } | { expression: string; value: number }
   step: number // Step()
+  round: `down` | `up` | `none` // Round()
   //
   // score: number // score — final score for invested points + initial score {DONT SET IT HERE, SET AT "ROOT" OF TRAIT FOR ACCESSIBILITY}
 }

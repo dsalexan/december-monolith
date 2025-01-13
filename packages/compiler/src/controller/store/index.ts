@@ -103,8 +103,8 @@ export default class ObjectStore extends ObjectManagerEmitter {
   }
 
   /** Returns object by it's ID */
-  public getByID(id: ObjectID): MaybeUndefined<MutableObject> {
-    return this._storage.object.byID.get(id)
+  public getByID<TObject extends MutableObject = MutableObject>(id: ObjectID): MaybeUndefined<TObject> {
+    return this._storage.object.byID.get(id) as MaybeUndefined<TObject>
   }
 
   /** Returns object by it's reference (strict or not) */

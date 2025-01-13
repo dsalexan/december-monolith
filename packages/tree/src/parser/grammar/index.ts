@@ -2,7 +2,7 @@ import { getName } from "./../../../src2/nrs_OLD/rule_old/index"
 import { parseExpression } from "./default/parsers/expression"
 import assert from "assert"
 import { isFunction, isNil, isString, last, uniq } from "lodash"
-import { AnyObject, MaybeNull, MaybeUndefined, Nullable } from "tsdef"
+import { AnyObject, MaybeArray, MaybeNull, MaybeUndefined, Nullable } from "tsdef"
 
 import { Match } from "@december/utils"
 import { IUnit, UnitManager } from "@december/utils/unit"
@@ -11,15 +11,15 @@ import { TokenKindName } from "../../token/kind"
 import { Expression, Identifier, Node, NodeType, Statement, StringLiteral } from "../../tree"
 
 import { BindingPower } from "./bindingPower"
-import { LEDParser, NUDParser, StatementParser, EntryParser, SyntacticalDenotation } from "./parserFunction"
-import { isBindingPowerEntry, isBindParserEntry, isRegisterParserEntry, isTransformNodeEntry, createTransformNodeEntry, SyntacticalGrammarEntry, TransformNodeEntry } from "./entries"
+import { LEDParser, NUDParser, StatementParser, EntryParser, SyntacticalDenotation, SyntacticalContext } from "./parserFunction"
+import { isBindingPowerEntry, isBindParserEntry, isRegisterParserEntry, isTransformNodeEntry, createTransformNodeEntry, SyntacticalGrammarEntry, TransformNodeEntry, isReContextualizationEntry, RecontextualizationEntry } from "./entries"
 import { FunctionProvider, GetFunction, GetKey } from "./../../utils"
 import { Token } from "../../token/core"
 
 export type { BindingPower } from "./bindingPower"
 
 export type SyntacticalLookupKey = SyntacticalDenotation
-export { createTransformNodeEntry, createBindParserEntry, createRegisterParserEntry, createBindingPowerEntry, isTransformNodeEntry } from "./entries"
+export { createTransformNodeEntry, createRecontextualizationEntry, createBindParserEntry, createRegisterParserEntry, createBindingPowerEntry, isTransformNodeEntry } from "./entries"
 export { DEFAULT_GRAMMAR } from "./default"
 
 export type BaseParserProvider = Record<string, (...args: any[]) => Node>
@@ -38,6 +38,7 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
   }
 
   protected transformType: Record<NodeType, Map<string, TransformNodeEntry>> = {} as any // from -> name -> entry
+  protected reContextualizations: Record<NodeType, Map<string, RecontextualizationEntry>> = {} as any // from -> name -> entry
   protected unitManager: UnitManager
 
   constructor(unitManager: UnitManager) {
@@ -46,6 +47,7 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
     this.bindingPowers = { statement: {}, nud: {}, led: {} }
     this.parsers = { statement: {}, nud: {}, led: {} }
     this.transformType = {} as any
+    this.reContextualizations = {} as any
     this.unitManager = unitManager
   }
 
@@ -102,9 +104,9 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
     const transformType = this.transformType[node.type]
     if (!transformType) return null
 
-    const content = node.getContent()
-    for (const [key, { pattern, to }] of transformType) {
-      const match = pattern.match(content)
+    const content = node.getContent().trim() //  ignoreForceWrap: `first-only`
+    for (const [key, { pattern, to }] of transformType.entries()) {
+      const match = pattern.match(content, node)
       if (match.isMatch) {
         if (isFunction(to)) return to(node)
         else if (Node.isNode(to)) to
@@ -113,7 +115,18 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
           let tokens: Token[] = []
 
           // 1. Get relevant info from original node
-          if (node instanceof StringLiteral) tokens = [...node.tokens]
+          if (node instanceof StringLiteral) {
+            tokens = [...node.tokens]
+
+            // TRIM WHITESPACES
+            if (tokens[0] && tokens[0].content.startsWith(` `)) debugger
+
+            const last = tokens[tokens.length - 1]
+            if (last && last.content.endsWith(` `)) {
+              if (last.content.match(/^ +$/)) tokens.splice(-1, 1)
+              else debugger
+            }
+          }
           //
           else throw new Error(`Invalid target node to transform "${node.type}"`)
 
@@ -125,6 +138,23 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
           // 3. Return new node
           return newNode
         }
+      }
+    }
+
+    return null
+  }
+
+  public shouldRecontextualize(type: NodeType, node: Node, context: SyntacticalContext): MaybeNull<MaybeArray<SyntacticalContext>> {
+    const reContextualizations = this.reContextualizations[type]
+    if (!reContextualizations) return null
+
+    const content = node.getContent().trim() //  ignoreForceWrap: `first-only`
+    for (const [key, { pattern, reContextualization }] of reContextualizations.entries()) {
+      const match = pattern.match(content, node)
+      if (match.isMatch) {
+        const newContext = reContextualization(node, context)
+
+        return newContext
       }
     }
 
@@ -169,6 +199,13 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
     this.transformType[from].set(key, { key, from, pattern, to })
   }
 
+  public addReContextualizationEntry(key: string, from: NodeType, pattern: Match.Pattern, reContextualization: RecontextualizationEntry[`reContextualization`]) {
+    assert(!this.reContextualizations[from]?.has(key), `ReContextualization entry "${key}" already registered`)
+
+    this.reContextualizations[from] ??= new Map()
+    this.reContextualizations[from].set(key, { key, from, pattern, reContextualization })
+  }
+
   /** Generic mass entry register */
   public add<TDict>(...entries: SyntacticalGrammarEntry<TDict>[]) {
     for (const entry of entries) {
@@ -176,6 +213,7 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
       else if (isBindParserEntry(entry)) this.bindParser(entry.denotation, entry.kind, entry.bindingPower, entry.parser)
       else if (isBindingPowerEntry(entry)) this.addBindingPower(entry.denotation, entry.kind, entry.bindingPower)
       else if (isTransformNodeEntry(entry)) this.addTransformType(entry.key, entry.from, entry.pattern, entry.to)
+      else if (isReContextualizationEntry(entry)) this.addReContextualizationEntry(entry.key, entry.from, entry.pattern, entry.reContextualization)
       //
       else throw new Error(`Invalid syntactical grammar entry`)
     }

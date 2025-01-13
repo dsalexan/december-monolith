@@ -9,6 +9,7 @@ import MutableObject, { MUTABLE_OBJECT_RANDOM_ID, ObjectID, StrictObjectReferenc
 import { Generator, Strategy } from "./strategy"
 import { getMutationFrameID } from "./frameRegistry/mutationFrame"
 import { GenericListener, getListenerID, Listener } from "./eventEmitter/listener"
+import ObjectDependencyGraph from "./dependencyGraph"
 
 /**
  * An Object Controller is a centralized manager for all objects.
@@ -25,6 +26,7 @@ export default class ObjectController extends EventEmitter {
     //
     eventEmitter: ObjectEventEmitter // handles event emission
     callQueue: ObjectCallQueue // handles queueing of execution contexts
+    dependencyGraph: ObjectDependencyGraph
   }
   //
   // eslint-disable-next-line prettier/prettier
@@ -38,6 +40,8 @@ export default class ObjectController extends EventEmitter {
   get eventEmitter() { return this.managers.eventEmitter }
   // eslint-disable-next-line prettier/prettier
   get callQueue() { return this.managers.callQueue }
+  // eslint-disable-next-line prettier/prettier
+  get dependencyGraph() { return this.managers.dependencyGraph }
   //
 
   constructor() {
@@ -50,6 +54,7 @@ export default class ObjectController extends EventEmitter {
       //
       eventEmitter: new ObjectEventEmitter(this),
       callQueue: new ObjectCallQueue(this),
+      dependencyGraph: new ObjectDependencyGraph(this),
     }
 
     this.listen()

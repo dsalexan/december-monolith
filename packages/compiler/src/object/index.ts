@@ -1,7 +1,7 @@
 // import { MutationInstruction } from "./../mutation/instruction"
 
 import { EventEmitter } from "@billjs/event-emitter"
-import { cloneDeep, get, isArray, isEqual, isString, last, set, toPath } from "lodash"
+import { cloneDeep, get, intersection, isArray, isEqual, isObject, isString, last, mergeWith, set, toPath } from "lodash"
 import assert from "assert"
 import { AnyObject } from "tsdef"
 
@@ -11,12 +11,17 @@ import { getDeepProperties, isPrimitive } from "@december/utils/typing"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
-import { DeleteMutation, doesMutationHaveValue, Mutation, OVERRIDE, OverrideMutation, SET, SetMutation } from "../mutation/mutation"
+import { DeleteMutation, doesMutationHaveValue, MergeMutation, Mutation, OVERRIDE, OverrideMutation, SET, SetMutation } from "../mutation/mutation"
 
 import type ObjectController from "../controller"
 import { IntegrityEntry } from "../controller/integrityRegistry"
 import { ObjectPropertyReference } from "./property"
 import { EventTrace } from "../controller/eventEmitter/event"
+import { Get, Paths } from "type-fest"
+import { ToString } from "type-fest/source/internal"
+import { StrategyProcessState } from "../controller/strategy/processor"
+import { DependencyEntry } from "../controller/dependencyGraph"
+import { mergeWithDeep } from "../../../utils/src"
 
 export const logger = churchill.child(`mutableObject`, undefined, { separator: `` })
 
@@ -31,6 +36,8 @@ export type StrictObjectReference = Reference<`id`, ObjectID>
 
 export const STRICT_OBJECT_TYPES = [`id`] as const
 export const UNIQUE_OBJECT_TYPES = [...STRICT_OBJECT_TYPES, `self`] as const
+
+const UNSET_VALUE: unique symbol = Symbol.for(`mutableObject:unset`)
 
 export interface ObjectUpdateEventData {
   object: ObjectID
@@ -55,8 +62,8 @@ function getData(value: any, path: string = ``) {
   return other
 }
 
-export default class MutableObject<TData extends AnyObject = any> extends EventEmitter {
-  public controller: ObjectController
+export default class MutableObject<TData extends AnyObject = any, TController extends ObjectController = ObjectController> extends EventEmitter {
+  public controller: TController
   public id: ObjectID
   //
   public readonly data: TData = {} as any
@@ -67,11 +74,61 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
 
   public metadata: Record<string, any> = {}
 
-  public getData(path: string = ``): TData {
-    return this._getData(this.data, path) as TData
+  /** Get object's data, but treated for indirect references inside properties */
+  public getData(): TData {
+    return this._handleValue(this.data, ``) as TData
   }
 
-  public _getData<TData>(value: any, path: string = ``): TData {
+  /**
+   * Treat a whole object for indirect references (metadata properties, processing states and such)
+   *
+   * @param object Object to be treated
+   * @param path Just for backtracking shit in the future i guess, not really revelant now
+   */
+  public _handleValue(value: any, path: string, deep: boolean = true) {
+    // 1. Check if object should be handled differently
+
+    // 1.A. PropertyReference could be found in METADATA (so return whatever is inside metadata)
+    if (PropertyReference.isPropertyReference(value)) {
+      if (isString(value.property) && value.property.startsWith(`metadata.`)) {
+        const valueFromMetadata = get(this, value.property)
+        return this._handleValue(valueFromMetadata, path, false)
+      }
+    }
+
+    // 1.B. Object is a ProcessingState
+    if (value instanceof StrategyProcessState) {
+      // assert(value.isReady(), `Evaluation is not ready`)
+      if (!value.isReady) return undefined
+
+      const runtimeValue = value.evaluation!.runtimeValue
+
+      return runtimeValue
+    }
+
+    // 2. Return "regular"
+
+    // 2.A. If should not handle DEEP, just bail
+    if (!deep) return value
+
+    // 2.B. Handling primitives
+    if (value === undefined || value === null || isPrimitive(value)) return value
+
+    // 2.C Handling arrays
+    if (isArray(value)) {
+      return [...value].map((item, index) => this._handleValue(item, `${path}.[${index}]`))
+    }
+
+    // 2.D. Handling objects
+    let other: AnyObject = {}
+    for (const [key, local] of Object.entries(value)) {
+      other[key] = this._handleValue(local, `${path}.${key}`)
+    }
+
+    return other
+  }
+
+  public _getDa1ta<TData>(value: any, path: string = ``): TData {
     // if (path === `modes.[0].form`) debugger
 
     // REFERENCE
@@ -87,18 +144,18 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     if (isPrimitive(value)) return value as any
 
     // ARRAY
-    if (isArray(value)) return [...value].map((item, index) => this._getData(item, `${path}.[${index}]`)) as any
+    if (isArray(value)) return [...value].map((item, index) => this._getDa1ta(item, `${path}.[${index}]`)) as any
 
     // OBJECT
     let other: AnyObject = {}
-    for (const [key, local] of Object.entries(value)) other[key] = this._getData(local, `${path}.${key}`)
+    for (const [key, local] of Object.entries(value)) other[key] = this._getDa1ta(local, `${path}.${key}`)
 
     return other as any
   }
 
-  public getProperty<TKey extends keyof TData>(path: TKey): TData[TKey] {
-    const _path = toPath(path)
-    return this._getData(get(this.data, path), last(_path)!)
+  public getProperty<TKey extends ToString<Paths<TData>>>(path: TKey): Get<TData, TKey> {
+    const value = get(this.data, path)
+    return this._handleValue(value, path)
   }
 
   /** Return mutation instructios to set reference to metadata in specific path */
@@ -117,7 +174,7 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     return this.setReferenceToMetadata(targetPath)
   }
 
-  constructor(controller: ObjectController, id: ObjectID | typeof MUTABLE_OBJECT_RANDOM_ID = MUTABLE_OBJECT_RANDOM_ID) {
+  constructor(controller: TController, id: ObjectID | typeof MUTABLE_OBJECT_RANDOM_ID = MUTABLE_OBJECT_RANDOM_ID) {
     super()
 
     this.controller = controller
@@ -156,7 +213,7 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     throw new Error(`Invalid reference type "${type}"`)
   }
 
-  public update(mutations: Mutation[], integrityEntries: IntegrityEntry[], trace: EventTrace) {
+  public update(mutations: Mutation[], integrityEntries: IntegrityEntry[], dependencies: DependencyEntry[], trace: EventTrace) {
     const changedProperties: string[] = []
 
     // 1. Mutate object as per instruction
@@ -193,8 +250,11 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
       else throw new Error(`Invalid mutation instruction type "${instruction.type}"`)
     }
 
-    // 2. Register integrity entries
+    // 2.A. Register integrity entries
     for (const entry of integrityEntries) this.controller.integrityRegistry.add(entry, trace)
+
+    // 2.B. Register dependency entries
+    for (const entry of dependencies) this.controller.dependencyGraph.add(entry)
 
     // if nothing was changed, bail out
     if (changedProperties.length === 0) return false
@@ -240,10 +300,22 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     throw new Error(`Method "${mutation.type}" not implemented.`)
   }
 
-  protected SET(mutableData: TData, { type, property, value, ...mutation }: SetMutation | OverrideMutation): MutationInstruction {
+  protected SET(mutableData: TData, mutation: SetMutation | OverrideMutation): MutationInstruction {
+    const { type, property, value } = mutation
+
     const currentValue = get(mutableData, property)
 
-    if (type !== `OVERRIDE`) assert(currentValue === undefined, `Property "${property}" already exists in data`)
+    // 1. Check if command should have been a "OVERRIDE" or "MERGE" (latter for objects only)
+    if (type !== `OVERRIDE`) {
+      // property already exists, check for objects on both sides
+      if (currentValue !== undefined) {
+        const mergeMutation: MergeMutation = { type: `MERGE`, property, value: value as AnyObject }
+        const canMerge = this.canMerge(currentValue, value, mergeMutation, false)
+        if (canMerge) return this.MERGE(mutableData, mergeMutation, true)
+      }
+
+      assert(currentValue === undefined, `Property "${property}" already exists in data`)
+    }
 
     const shouldForce = type === `OVERRIDE` && (mutation as OverrideMutation).force
 
@@ -260,6 +332,43 @@ export default class MutableObject<TData extends AnyObject = any> extends EventE
     delete mutableData[property] // mutate mutableData
 
     return { type: `mutate`, oldValue: currentValue }
+  }
+
+  protected MERGE(mutableData: TData, mutation: MergeMutation, skipCheck: boolean = false): MutationInstruction {
+    const { value, property, override } = mutation
+
+    const currentValue = get(mutableData, property)
+
+    // 1. Check if it is eligible for merge
+    if (!skipCheck) this.canMerge(currentValue, value, mutation, true)
+
+    // 2. Merge objects
+    const newValue = mergeWith({}, currentValue)
+    mergeWithDeep(newValue, value)
+
+    // 3. Assign new value at path
+    set(mutableData, property, newValue)
+
+    return { type: `mutate`, oldValue: currentValue }
+  }
+
+  private canMerge(currentValue: any, value: any, { override }: MergeMutation, throwExceptions = true): boolean {
+    const isCurrentlyAObject = isObject(currentValue) && !isArray(currentValue)
+    const isValueAObject = isObject(value) && !isArray(value)
+
+    if (throwExceptions) assert(isCurrentlyAObject && isValueAObject, `We can only merge two objects`)
+    else if (!(isCurrentlyAObject && isValueAObject)) return false
+
+    if (!override) {
+      const currentLeafKeys = getLeafKeys(currentValue)
+      const valueLeafKeys = getLeafKeys(value)
+
+      const intersectionKeys = intersection(currentLeafKeys, valueLeafKeys)
+      if (throwExceptions) assert(intersectionKeys.length === 0, `Cannot merge objects with shared leaf keys w/o override flag`)
+      else if (!(intersectionKeys.length === 0)) return false
+    }
+
+    return true
   }
 }
 
@@ -284,4 +393,20 @@ function isMetadataReference(value: unknown): value is PropertyReference {
 
   debugger
   return false
+}
+
+function getLeafKeys(object: any, path: string = ``): string[] {
+  if (object === undefined || object === null) return [path]
+  if (isPrimitive(object)) return [path]
+
+  if (isArray(object)) {
+    return object.map((item, index) => getLeafKeys(item, `${path}.[${index}]`)).flat()
+  }
+
+  let keys: string[] = []
+  for (const [key, value] of Object.entries(object)) {
+    keys.push(...getLeafKeys(value, `${path}.${key}`))
+  }
+
+  return keys
 }

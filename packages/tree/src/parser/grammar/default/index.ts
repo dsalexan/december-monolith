@@ -8,7 +8,17 @@ export { DEFAULT_BINDING_POWERS } from "./bindingPowers"
 export { DEFAULT_PARSERS } from "./parsers"
 
 import { BindingPower } from "../bindingPower"
-import { BindingPowerEntry, TransformNodeEntry, BindParserEntry, RegisterParserEntry, createBindParserEntry, createRegisterParserEntry, createRegisterParserEntriesFromIndex, SyntacticalGrammarEntry } from "../entries"
+import {
+  BindingPowerEntry,
+  TransformNodeEntry,
+  BindParserEntry,
+  RegisterParserEntry,
+  createBindParserEntry,
+  createRegisterParserEntry,
+  createRegisterParserEntriesFromIndex,
+  SyntacticalGrammarEntry,
+  createBindingPowerEntry,
+} from "../entries"
 import { LEDParser, NUDParser, ParserFunction, StatementParser, SyntacticalDenotation } from "../parserFunction"
 
 import { TokenKindName } from "../../../token/kind"
@@ -34,6 +44,7 @@ const ADDITION = createBindParserEntry<DefaultParserProvider>(`led`, `plus`, DEF
 const SUBTRACTION = createBindParserEntry<DefaultParserProvider>(`led`, `dash`, DEFAULT_BINDING_POWERS.ADDITIVE, `parseBinaryExpression`)
 const DIVISION = createBindParserEntry<DefaultParserProvider>(`led`, `slash`, DEFAULT_BINDING_POWERS.MULTIPLICATIVE, `parseBinaryExpression`)
 const MULTIPLICATION = createBindParserEntry<DefaultParserProvider>(`led`, `asterisk`, DEFAULT_BINDING_POWERS.MULTIPLICATIVE, `parseBinaryExpression`)
+const EXPONENTIATION = createBindParserEntry<DefaultParserProvider>(`led`, `caret`, DEFAULT_BINDING_POWERS.EXPONENTIATIVE, `parseBinaryExpression`)
 
 // LITERALS/SYMBOLS
 const NUMBER = createBindParserEntry<DefaultParserProvider>(`nud`, `number`, DEFAULT_BINDING_POWERS.PRIMARY, `parsePrimaryExpression`)
@@ -41,6 +52,7 @@ const STRING = createBindParserEntry<DefaultParserProvider>(`nud`, `string`, DEF
 const STRING_STARTS_WITH_PERCENTAGE = createBindParserEntry<DefaultParserProvider>(`nud`, `percentage`, DEFAULT_BINDING_POWERS.PRIMARY, `parsePrimaryExpression`)
 const CONCATENATE_WHITESPACE = createBindParserEntry<DefaultParserProvider>(`led`, `whitespace`, DEFAULT_BINDING_POWERS.PRIMARY, `parseConcatenatedExpression`)
 const CONCATENATE_STRING = createBindParserEntry<DefaultParserProvider>(`led`, `string`, DEFAULT_BINDING_POWERS.PRIMARY, `parseConcatenatedExpression`)
+const CONCATENATE_LITERAL_PERCENTAGE = createBindParserEntry<DefaultParserProvider>(`led`, `percentage`, DEFAULT_BINDING_POWERS.PRIMARY, `parseConcatenatedExpression`)
 // const IDENTIFIER = createBindParserEntry<DefaultParserProvider>(`nud`, `identifier`, DEFAULT_BINDING_POWERS.PRIMARY, 'parsePrimaryExpression')
 
 // UNARY/PREFIX
@@ -57,6 +69,9 @@ const PARENTHESIS = createBindParserEntry<DefaultParserProvider>(`nud`, `open_pa
 const BRACES = createBindParserEntry<DefaultParserProvider>(`nud`, `open_braces`, DEFAULT_BINDING_POWERS.GROUPING, `parseGroupingExpression`)
 const BRACKETS = createBindParserEntry<DefaultParserProvider>(`nud`, `open_brackets`, DEFAULT_BINDING_POWERS.GROUPING, `parseGroupingExpression`)
 const QUOTES = createBindParserEntry<DefaultParserProvider>(`nud`, `quotes`, DEFAULT_BINDING_POWERS.GROUPING, `parseQuotedStringExpression`)
+const CLOSE_PARENTHESIS = createBindingPowerEntry(`nud`, `close_parenthesis`, DEFAULT_BINDING_POWERS.GROUPING)
+const CLOSE_BRACES = createBindingPowerEntry(`nud`, `close_braces`, DEFAULT_BINDING_POWERS.GROUPING)
+const CLOSE_BRACKETS = createBindingPowerEntry(`nud`, `close_brackets`, DEFAULT_BINDING_POWERS.GROUPING)
 
 // STATEMENTS
 const _IF = createBindParserEntry<DefaultParserProvider>(`nud`, `if`, DEFAULT_BINDING_POWERS.DEFAULT, `parseIfExpression`)
@@ -77,6 +92,7 @@ export const DEFAULT_GRAMMAR: SyntacticalGrammarEntry<DefaultParserProvider>[] =
   NOT_EQUALS,
 
   // ADDITIVE/MULTIPLICATIVE
+  EXPONENTIATION,
   ADDITION,
   SUBTRACTION,
   DIVISION,
@@ -88,6 +104,7 @@ export const DEFAULT_GRAMMAR: SyntacticalGrammarEntry<DefaultParserProvider>[] =
   STRING_STARTS_WITH_PERCENTAGE,
   CONCATENATE_WHITESPACE,
   CONCATENATE_STRING,
+  CONCATENATE_LITERAL_PERCENTAGE,
   // IDENTIFIER,
 
   // UNARY/PREFIX
@@ -103,6 +120,9 @@ export const DEFAULT_GRAMMAR: SyntacticalGrammarEntry<DefaultParserProvider>[] =
   BRACES,
   BRACKETS,
   QUOTES,
+  CLOSE_PARENTHESIS,
+  CLOSE_BRACES,
+  CLOSE_BRACKETS,
 
   // STATEMENTS
   _IF,

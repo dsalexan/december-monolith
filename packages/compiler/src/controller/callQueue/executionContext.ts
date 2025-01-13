@@ -21,7 +21,9 @@ export type ArgumentProvider = (bareExecutionContext: BareExecutionContext) => A
 
 export interface BareExecutionContext<TEvent extends Event = Event> {
   name: GenericMutationFrame[`name`] // name of the mutation function to run
-  arguments?: AnyObject
+  // arguments?: AnyObject
+  hashableArguments?: AnyObject
+  otherArguments?: AnyObject
   eventDispatcher: EventDispatcher<TEvent>
   argumentProvider?: MaybeArray<ArgumentProvider>
 }
@@ -29,6 +31,7 @@ export interface BareExecutionContext<TEvent extends Event = Event> {
 export interface ExecutionContext<TEvent extends Event = Event> extends BareExecutionContext<TEvent> {
   id: string
   index: number
+  priority: number
   //
   object: StrictObjectReference
   //
@@ -44,7 +47,7 @@ export interface ExplainExecutionContextOptions {
 /** Convert all arguments in an execution context to a hash */
 export function hashExecutionContextArguments(bareExecutionContext: BareExecutionContext): string[] {
   const _arguments: string[] = []
-  for (const [key, value] of Object.entries(bareExecutionContext.arguments ?? {})) {
+  for (const [key, value] of Object.entries(bareExecutionContext.hashableArguments ?? {})) {
     let hash: string
 
     if (isPrimitive(value)) hash = String(value)
@@ -90,21 +93,38 @@ export function explainExecutionContext(executionContext: ExecutionContext, { ob
   )
 
   // 2. Unshift queue stuff
-  if (queue) blocks.unshift(...paint.dim(queue.toString(), `, `), paint.identity(executionContext.index), ...paint.dim(`/${queue.queue.size}`, ` `))
+  if (queue) {
+    const prioColor = executionContext.priority === Infinity ? paint.dim : paint.identity
+    const indexColor = executionContext.priority !== Infinity ? paint.dim : paint.identity
+
+    blocks.unshift(
+      ...paint.dim(queue.toString(), `, `), //
+      prioColor(executionContext.priority === Infinity ? `∞` : executionContext.priority),
+      paint.grey.dim(`#`),
+      indexColor(executionContext.index),
+      ...paint.dim(`/${queue.queue.size}`, ` `),
+    )
+  }
 
   // 3. Push arguments
   const _arguments: Block[][] = []
-  const keys = Object.keys(executionContext.arguments ?? {})
+  const allArguments = { ...(executionContext.hashableArguments ?? {}), ...(executionContext.otherArguments ?? {}) }
+  const keys = Object.keys(allArguments)
   const values = hashExecutionContextArguments(executionContext)
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i]
     const value = values[i]
 
-    _arguments.push([
-      paint.identity(key), //
-      paint.dim.grey(`:`),
-      paint.dim(value.toString()) as any,
-    ])
+    // (other argument)
+    if (value === undefined) _arguments.push([paint.identity.italic(key)])
+    else {
+      // (hashable argument)
+      _arguments.push([
+        paint.blue(key), //
+        paint.dim.grey(`:`),
+        paint.dim(value.toString().replace(`${key}:`, ``)) as any,
+      ])
+    }
   }
 
   if (_arguments.length > 0) {

@@ -24,13 +24,13 @@ export default class GCACharacterImporter implements ICharacterImporter {
     const content = await readXMLFile(filepath)
 
     // 1. Set name
-    character.name = content.gca5.character[0].name[0]
+    character._raw = content
 
-    this.logger.add(...paint.grey(``, `[GCA/Importing] `, paint.white.bold(character.name), paint.dim(` (${character.id.substring(0, 5)})`), ` from "${filepath}"`)).debug() // COMMENT
+    this.logger.add(...paint.grey(``, `[GCA/Importing] `, paint.white.bold(content.gca5.character[0].name[0]), paint.dim(` (${character.id.substring(0, 5)})`), ` from "${filepath}"`)).debug() // COMMENT
     fs.writeFileSync(`./test.json`, JSON.stringify(content, null, 2), `utf-8`) // COMMENT
 
     // 2. Import stuff
-    character.general = this.characterGeneralData(content)
+    character.data = this.characterGeneralData(content)
 
     this.logger.tab() // COMMENT
     const { traits, stats } = this.traitsAndStats(content)
@@ -44,7 +44,7 @@ export default class GCACharacterImporter implements ICharacterImporter {
     const { gca5 } = raw
     const { character } = gca5
 
-    const { name, player, bodytype, vitals, currenttransform } = character[0]
+    const { name, player, bodytype, vitals, currenttransform, campaign } = character[0]
     const { traits: _traits, transforms, basicdamages } = character[0]
 
     // 1. Build Damage Table
@@ -67,6 +67,7 @@ export default class GCACharacterImporter implements ICharacterImporter {
     }
 
     return {
+      name: name[0],
       info: {
         player: player[0],
         body: bodytype[0],
@@ -92,6 +93,10 @@ export default class GCACharacterImporter implements ICharacterImporter {
       },
       //
       damageTable,
+      //
+      campaign: {
+        totalMoney: parseInt(campaign[0].totalmoney[0]),
+      },
     }
   }
 
@@ -143,7 +148,10 @@ export default class GCACharacterImporter implements ICharacterImporter {
       const sorted = orderBy(traits, t => t.id)
 
       const map: Record<string, GCATrait> = {}
-      for (const trait of sorted) map[trait.name] = trait
+      for (const trait of sorted) {
+        if (map[trait.id]) throw new Error(`Trait ID "${trait.id}" already exists`)
+        map[trait.id] = trait
+      }
 
       return map
     }

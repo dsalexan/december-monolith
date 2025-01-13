@@ -1,17 +1,20 @@
 import assert from "assert"
 import { uniq } from "lodash"
 import { isNumeric } from "../../../utils/src/typing"
+import { Nullable } from "tsdef"
 
 export interface GetProgressionIndexOptions {
   round?: `floor` | `ceil`
   below?: number
+  reverse?: boolean
 }
 
-export function getProgressionIndex(progressionString: string, inputStep: number, { round, below }: GetProgressionIndexOptions = {}) {
-  const steps = progressionString.split(`/`).map(s => parseInt(s))
+export function getProgressionIndex(progressionString: string, _inputStep: number, { round, below, reverse }: GetProgressionIndexOptions = {}) {
+  const inputStep = reverse ? -_inputStep : _inputStep
+  const steps = progressionString.split(`/`).map(s => (reverse ? -parseInt(s) : parseInt(s)))
 
   // 1. What to do here?
-  if (steps.length === 1) debugger
+  // if (steps.length === 1) debugger
 
   // 2. Check if inputStep is within steps
   // what to do if inputStep is less than the first step?
@@ -29,10 +32,12 @@ export function getProgressionIndex(progressionString: string, inputStep: number
   // 3. Just return natural progression
   const last = steps[steps.length - 1]
 
-  const multiplier = last - steps[steps.length - 2]
+  const multiplier = last - (steps[steps.length - 2] ?? 0)
   const overflow = inputStep - last
 
-  return Math[round ?? `floor`](overflow / multiplier) + steps.length - 1
+  const index = Math[round ?? `floor`](overflow / multiplier) + steps.length - 1
+
+  return reverse ? -index : index
 }
 
 // 1/2/4/8
@@ -43,6 +48,7 @@ export function getProgressionIndex(progressionString: string, inputStep: number
 export interface GetProgressionStepOptions {
   returnObject?: boolean
   strictSign?: boolean
+  dontOverstep?: boolean
 }
 
 export interface ProgressionStep {
@@ -51,7 +57,11 @@ export interface ProgressionStep {
   value: number
 }
 
-export function getProgressionStep<TValue extends number | ProgressionStep = number | ProgressionStep>(progressionString: string, index: number, { returnObject, strictSign }: GetProgressionStepOptions = {}): TValue {
+export function getProgressionStep<TValue extends Nullable<number | ProgressionStep> = Nullable<number | ProgressionStep>>(
+  progressionString: string,
+  index: number,
+  { returnObject, strictSign, dontOverstep }: GetProgressionStepOptions = {},
+): TValue {
   assert(index >= 0, `Index must be greater than or equal to 0`)
 
   // 1. Split steps
@@ -59,9 +69,7 @@ export function getProgressionStep<TValue extends number | ProgressionStep = num
 
   // 2. Determine output type
   const steps: ProgressionStep[] = stepValues.map(step => {
-    let type: `integer` | `percentage` | `multiplier` = `integer`
-    if (step.endsWith(`%`)) type = `percentage`
-    if (step.startsWith(`*`)) type = `multiplier`
+    const type = getProgressionType(step)
 
     let value: number
     if (type === `integer`) value = parseInt(step)
@@ -85,6 +93,8 @@ export function getProgressionStep<TValue extends number | ProgressionStep = num
   if (index < steps.length) output = steps[index]
   // 4. If it is beyond the steps, calculate through natural progression
   else {
+    if (dontOverstep) return null as TValue
+
     const last = steps[steps.length - 1].value
     const multiplier = last - steps[steps.length - 2].value
 
@@ -114,4 +124,13 @@ export function getProgressionStep<TValue extends number | ProgressionStep = num
 export function isProgression(string: string): boolean {
   const pattern = /^([*+-]?\d+%?)(\/([+*-]?\d+%?))*$/i
   return pattern.test(string)
+}
+
+export function getProgressionType(string: string, strict: boolean = true): ProgressionStep[`type`] {
+  if (string.endsWith(`%`)) return `percentage`
+  if (string.startsWith(`*`)) return `multiplier`
+
+  // if (strict) assert(isNumeric(string), `Invalid progression step type: ${string}`)
+
+  return `integer`
 }

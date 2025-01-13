@@ -10,12 +10,15 @@ import { DamageType } from "../../mechanics/damage/type"
 import { LevelCost, MonetaryCost, ProgressionCost, StepCost, TraitCost } from "./cost"
 import { TraitTagParsedValue } from "../../../../../apps/gca/src/trait/tag/value"
 import { TraitReference } from "../../utils"
+import { Get, MergeDeep } from "type-fest"
 
 // #region GENERICS
 
 // traits-and-modifiers
 export interface IGURPSTraitOrModifier<TType extends TraitType = TraitType> {
+  id: string
   type: TType
+  children: string[] // childkeylist — list of children traits by id
   //
   name: string // Name()
   nameExtension?: string // NameExt()
@@ -33,7 +36,6 @@ export interface IGURPSTraitOrModifier<TType extends TraitType = TraitType> {
   // displayNameFormula: MaybeUndefined<string> // DisplayNameFormula()
   // displayScoreFormula: MaybeUndefined<string> // DisplayScoreFormula()
   // //
-  // childKeyList: MaybeUndefined<string> // childkeylist
   // _inactive: boolean // extended.extendedtag.inactive
 }
 
@@ -42,18 +44,26 @@ export interface IGURPSBaseTrait<TType extends Exclude<TraitType, `modifier`> = 
   type: TType
   cost: TraitCost // (check extensions)
   //
+  // parent-traits
+  childProfile: `regular` | `alternative-attacks` | `apply-modifiers-to-children` // ChildProfile()
+  /**
+   * If this tag is missing or has a value of 0, the normal behavior applies (the full costs of the child traits are included in the total cost of
+   * the parent trait.) If this tag has a value of 1, the child traits are treated as Alternative Attacks (p. B61), and their costs are adjusted
+   * appropriately before being included in the total cost of the parent trait.
+   */
+  //
   notes?: {
     short?: string[] // ItemNotes()
     long?: string[] // UserNotes()
   }
   //
   modes: unknown[]
-  modifiers: unknown[]
+  modifiers: IGURPSModifier[]
+  //
+  radius: number // owner::radius
   //
   // GCABaseTrait
   // //
-  // // parent-traits
-  // childProfile: MaybeUndefined<number> // ChildProfile()
   // // system-traits
   // displayCost: MaybeUndefined<number> // DisplayCost()
   // displayName: MaybeUndefined<string> // DisplayName()
@@ -80,15 +90,28 @@ export interface IGURPSBaseTrait<TType extends Exclude<TraitType, `modifier`> = 
   // _sysLevels: MaybeUndefined<number> // calcs.syslevels; levels from bonuses, not FREE levels from system
 }
 
+export interface IGURPSPointsBasedTrait {
+  points: {
+    value: number // points — final cost in points
+  }
+}
+
+export interface IGURPSLevelBasedTraitOrModifier {
+  level: {
+    value: number // level — final level for invested points
+  }
+}
+
 // #endregion
 
 // #region SPECIFICS
 
-export interface IGURPSAttribute extends IGURPSBaseTrait<`attribute`> {
+export interface IGURPSAttribute extends IGURPSBaseTrait<`attribute`>, IGURPSPointsBasedTrait, IGURPSLevelBasedTraitOrModifier {
   score: {
     base: {
-      source: string // calcs.basescore OR BaseValue() — expression to derive baseScoreValue from
-      value: number // calcs.basescore — base for to calculate final score from
+      source: string // calcs.basescore OR BaseValue() — expression to derive initial score from
+      initial: number // value from calcs.basescore OR BaseValue()
+      value: number // calcs.basescore — base for to calculate final score from; same as BASE_SCORE = INITIAL_SCORE + BOUGHT_SCORE
     }
     minimum?: {
       expression: string // MinScore()
@@ -97,9 +120,12 @@ export interface IGURPSAttribute extends IGURPSBaseTrait<`attribute`> {
     //
     value: number // score — final score of attribute (semantics for "level")
   }
-  points: {
-    base: number // calcs.basepoints — initial input of points by player
-  }
+  points: MergeDeep<
+    IGURPSPointsBasedTrait[`points`],
+    {
+      base: number // calcs.basepoints — initial input of points by player
+    }
+  >
   cost: StepCost // Down(), DownFormula(), Up, Step()
   //
   symbol?: string // Symbol()
@@ -112,23 +138,27 @@ export interface IGURPSAttribute extends IGURPSBaseTrait<`attribute`> {
   // _score: MaybeUndefined<number> // calcs.score; !calculate from baseScore + sysLevels + modifiers maybe
 }
 
-export interface IGURPSSkillOrSpellOrTechnique extends IGURPSBaseTrait<`skill` | `spell` | `technique`> {
-  level: {
-    // Default()
-    defaults: Nullable<
-      {
-        expression: string // expression to calculate both LEVEL and DISPLAY
-        //
-        trait: string // reference of trait responsible for default
-        level: number // default value
-      }[]
-    >
-    //
-    value: number // level — final level for invested points
-  }
-  points: {
-    base: number // calcs.basepoints — initial input of points by player
-  }
+export interface IGURPSSkillOrSpellOrTechnique extends IGURPSBaseTrait<`skill` | `spell` | `technique`>, IGURPSPointsBasedTrait, IGURPSLevelBasedTraitOrModifier {
+  level: MergeDeep<
+    IGURPSLevelBasedTraitOrModifier[`level`],
+    {
+      // Default()
+      defaults: Nullable<
+        {
+          expression: string // expression to calculate both LEVEL and DISPLAY
+          //
+          trait: string // reference of trait responsible for default
+          level: number // default value
+        }[]
+      >
+    }
+  >
+  points: MergeDeep<
+    IGURPSPointsBasedTrait[`points`],
+    {
+      base: number // calcs.basepoints — initial input of points by player
+    }
+  >
   cost: ProgressionCost // Down(), DownFormula(), Up, Step()
   // attribute: string // ONLY FOR SKILLS/SPELLS, not techniques
   difficulty: `E` | `A` | `H` | `VH` // Type()
@@ -182,20 +212,23 @@ export interface IGURPSEquipment extends IGURPSBaseTrait<`equipment`> {
   // //
 }
 
-export interface IGURPSModifier extends IGURPSTraitOrModifier<`modifier`> {
+export interface IGURPSModifier extends IGURPSTraitOrModifier<`modifier`>, IGURPSLevelBasedTraitOrModifier {
   shortName?: string // ShortName()
   //
-  level: {
-    names?: string[] // LevelNames()
-    value: number // level — initial input of levels by player
-  }
+  level: MergeDeep<
+    IGURPSLevelBasedTraitOrModifier[`level`],
+    {
+      names?: string[] // LevelNames()
+    }
+  >
   modifier: {
     display: string // Cost()*, ForceFormula() — display for cost, usually same as Cost() (except when ForceFormla() exists)
     //
     progression?: string // Cost(), ForceFormula() — usually progression to determine modifier value
     expression?: string // Formula(), ForceFormula() — expression to determine modifier value AFTER progression
+    type: `integer` | `percentage` | `multiplier` // type of modifier, a integer sum/subtraction OR a multiplier (implied from Cost())
+    round: `up` | `down` | `none` // Round()
     //
-    type: `integer` | `percentage` | `multiplier` // type of modifier, a integer summ/subtraction OR a multiplier
     value: number // value — final value of modifier
   }
   //
@@ -206,14 +239,16 @@ export interface IGURPSModifier extends IGURPSTraitOrModifier<`modifier`> {
 }
 
 export interface IGURPSGeneralTrait<TType extends Exclude<TraitType, `attribute` | `skill` | `spell` | `equipment` | `modifier`> = Exclude<TraitType, `attribute` | `skill` | `spell` | `equipment` | `modifier`>>
-  extends IGURPSTraitOrModifier<TType> {
-  level: {
-    names?: string[] // LevelNames()
-    base: number // calcs.baselevel — initial input of levels by player
-  }
-  points: {
-    value: number // points — final cost in points
-  }
+  extends IGURPSBaseTrait<TType>,
+    IGURPSPointsBasedTrait,
+    IGURPSLevelBasedTraitOrModifier {
+  level: MergeDeep<
+    IGURPSLevelBasedTraitOrModifier[`level`],
+    {
+      names?: string[] // LevelNames()
+      base: number // calcs.baselevel — initial input of levels by player
+    }
+  >
   cost: LevelCost // Cost(), Formula()
   //
   // GCABaseNonAttribute
@@ -222,3 +257,21 @@ export interface IGURPSGeneralTrait<TType extends Exclude<TraitType, `attribute`
 // #endregion
 
 export type IGURPSTrait = IGURPSAttribute | IGURPSSkillOrSpellOrTechnique | IGURPSEquipment | IGURPSGeneralTrait
+
+export type points = Get<IGURPSEquipment, `points.value`>
+//            ^?
+export type points1 = Get<Exclude<IGURPSTrait, IGURPSEquipment>, `points.value`>
+//            ^?
+
+export type level = Get<IGURPSTrait | IGURPSModifier, `level.value`>
+//            ^?
+export type level1 = Get<Exclude<IGURPSTrait, IGURPSAttribute | IGURPSEquipment> | IGURPSModifier, `level.value`>
+//            ^?
+
+export type score = Get<IGURPSTrait, `score.value`>
+//            ^?
+export type score1 = Get<IGURPSAttribute, `score.value`>
+//            ^?
+
+export type modifiers = Get<IGURPSBaseTrait, `modifiers`>
+//            ^?

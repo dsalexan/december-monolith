@@ -32,7 +32,7 @@ export class Simbol {
   public linkNode(tree: string, node: Node) {
     const linkedNode = new LinkedNode(tree, node)
 
-    assert(this.linkedNodes.has(linkedNode.key) === false, `Node already linked to symbol.`)
+    if (this.linkedNodes.has(linkedNode.key)) return
     this.linkedNodes.set(linkedNode.key, linkedNode)
   }
 

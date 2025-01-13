@@ -8,8 +8,9 @@ import { ArtificialToken, getTokenKind } from "../../../token"
 import { BinaryExpression, BooleanLiteral, Identifier, MemberExpression, Node, NumericLiteral, StringLiteral, UnitLiteral } from "../../../tree"
 import { BooleanValue, ExpressionValue, NumericValue, ObjectValue, PropertyValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../../runtime"
 import { NodeConversionFunction } from ".."
+import { Nullable } from "tsdef"
 
-export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i: Interpreter<DefaultNodeConversionProvider>, value: RuntimeValue<any>): Node => {
+export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i: Interpreter<DefaultNodeConversionProvider>, value: RuntimeValue<any>, sourceNode: Nullable<Node>): Node => {
   if (BooleanValue.isBooleanValue(value)) return new BooleanLiteral(value.value)
   if (NumericValue.isNumericValue(value)) return new NumericLiteral(new ArtificialToken(getTokenKind(`number`), String(value.value)))
   if (StringValue.isStringValue(value)) return new StringLiteral(new ArtificialToken(getTokenKind(`string`), value.value))
@@ -21,13 +22,14 @@ export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i
 
     const ASTERISK = new ArtificialToken(getTokenKind(`asterisk`), `*`)
 
-    const numericLeft = i.evaluator.convertToNode<NumericLiteral>(i, new NumericValue(numericValue))
-    const unitRight = i.evaluator.convertToNode<UnitLiteral>(i, new UnitValue(value.value.unit))
+    const numericLeft = i.evaluator.convertToNode<NumericLiteral>(i, new NumericValue(numericValue), null)
+    const unitRight = i.evaluator.convertToNode<UnitLiteral>(i, new UnitValue(value.value.unit), null)
 
     return new BinaryExpression(numericLeft, ASTERISK, unitRight)
   }
   if (ObjectValue.isObjectValue(value)) {
     if (value.hasNumericRepresentation()) return new NumericLiteral(new ArtificialToken(getTokenKind(`number`), String(value.asNumber())))
+    if (sourceNode) return sourceNode
 
     throw new Error(`Cannot parse runtime value to expression string: ${value.type}`)
   }

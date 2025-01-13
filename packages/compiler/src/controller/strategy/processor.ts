@@ -16,18 +16,20 @@ import { UnitManager } from "@december/utils/unit"
 
 import { IntegrityEntry } from "../integrityRegistry"
 import { createListener, GenericListener, Listener } from "../eventEmitter/listener"
-import MutableObject from "../../object"
+import MutableObject, { ObjectID } from "../../object"
 import { Mutation } from "../../mutation/mutation"
 import { GenericMutationFrame } from "../frameRegistry"
 import { BareExecutionContext } from "../callQueue"
 import { resolveTargetEvent } from "."
 import { PROPERTY_UPDATED } from "../eventEmitter/event"
+import { DependencyEntry } from "../dependencyGraph"
 
-export type ReProcessingFunction = { name: GenericMutationFrame[`name`]; arguments: NonNil<BareExecutionContext[`arguments`]> }
+export type ReProcessingFunction = { name: GenericMutationFrame[`name`]; hashableArguments: NonNil<BareExecutionContext[`hashableArguments`]>; otherArguments?: BareExecutionContext[`otherArguments`] }
 
 export interface MutationInput {
   mutations: Mutation[]
   integrityEntries: IntegrityEntry[]
+  dependencies: DependencyEntry[]
 }
 
 export interface StrategyProcessorParseOptions {
@@ -46,6 +48,7 @@ export interface StrategyProcessorResolveOptions {
 export interface StrategyProcessorListenOptions {
   isSymbolListenable: (symbol: Simbol) => boolean
   generatePropertyPatterns: (symbol: Simbol) => PropertyReferencePattern[]
+  getDependencyEntry: (id: ObjectID, symbol: Simbol) => Nullable<Omit<DependencyEntry, `integrityEntry`>[]>
   reProcessingFunction: ReProcessingFunction | string
 }
 
@@ -65,7 +68,7 @@ export class StrategyProcessor {
   // #region CORE
 
   /** Parse expression into an AST */
-  public static parse(expression: string, environment: Environment, options: StrategyProcessorParseOptions): StrategyProcessState {
+  public static parse(expression: string, environment: Environment, locallyAssignedSymbols: Simbol[`name`][], options: StrategyProcessorParseOptions): StrategyProcessState {
     const symbolTable = new SymbolTable()
 
     // 1. Make processor instance dedicated to expression
@@ -73,28 +76,30 @@ export class StrategyProcessor {
     const processor = factory({ unitManager: options.unitManager, symbolTable })
 
     // 2. Parse expression into AST
-    const { originalExpression, tokens, injections, AST } = processor.parse(expression, environment, symbolTable, { ...options })
+    const { originalExpression, tokens, injections, AST } = processor.parse(expression, environment, symbolTable, locallyAssignedSymbols, { ...options })
 
     return new StrategyProcessState(expression, symbolTable, processor, tokens, injections, AST)
   }
 
   /** Tries to resolve AST (evaluate + simplify in loop) */
-  public static resolve(state: StrategyProcessState, environment: Environment, options: StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
+  public static resolve(state: StrategyProcessState, environment: Environment, locallyAssignedSymbols: Simbol[`name`][], options: StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
     const { symbolTable, processor, AST } = state
 
     assert(state.isParsed(), `Cannot resolve un-parsed state.`)
 
-    const latestTree = state.evaluation ? state.evaluation.node : AST!
+    // if (state.evaluation) debugger
+    // const latestTree = state.evaluation ? state.evaluation.node : AST!
+    const latestTree = AST!
 
     // 1. Try to update environment based on AST
     //      (inside here we would check all missing symbols, from symbolTable, and ATTEMPT to inject them, resolve the variable, into the ENVIRONMENT)
-    options.environmentUpdateCallback(environment, symbolTable)
+    options.environmentUpdateCallback(environment, symbolTable, locallyAssignedSymbols)
 
     // 2. Reset symbol linking
     symbolTable.resetLinks()
 
     // 3. Run resolution loop
-    const { originalContent, content, evaluation, isReady } = processor.resolve(latestTree, environment, symbolTable, {
+    const { originalContent, content, evaluation, isReady } = processor.resolve(latestTree, environment, symbolTable, locallyAssignedSymbols, {
       ...options,
     })
 
@@ -102,9 +107,9 @@ export class StrategyProcessor {
   }
 
   /** Process expression into evaluation */
-  public static process(expression: string, environment: Environment, options: StrategyProcessorParseOptions & StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
-    const state = StrategyProcessor.parse(expression, environment, options)
-    return StrategyProcessor.resolve(state, environment, options)
+  public static process(expression: string, environment: Environment, locallyAssignedSymbols: Simbol[`name`][], options: StrategyProcessorParseOptions & StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
+    const state = StrategyProcessor.parse(expression, environment, locallyAssignedSymbols, options)
+    return StrategyProcessor.resolve(state, environment, locallyAssignedSymbols, options)
   }
 
   // #endregion
@@ -122,7 +127,7 @@ export class StrategyProcessor {
     // 3. Store state into object's metadata
     const mutations: Mutation[] = object.storeMetadata(state, path, integrityEntries)
 
-    return { mutations, integrityEntries }
+    return { mutations, integrityEntries, dependencies: [] }
   }
 
   /** Listen for all "listenable" symbols indexed in table */
@@ -146,7 +151,8 @@ export class StrategyProcessor {
 
       // 4.2. Parse re-processing function name and arguments
       const name = isString(options.reProcessingFunction) ? options.reProcessingFunction : options.reProcessingFunction.name
-      const args = isString(options.reProcessingFunction) ? {} : options.reProcessingFunction.arguments
+      const hashableArgs = isString(options.reProcessingFunction) ? {} : options.reProcessingFunction.hashableArguments ?? {}
+      const otherArgs = isString(options.reProcessingFunction) ? {} : options.reProcessingFunction.otherArguments ?? {}
 
       // 4.3. Crete generic listener
       const genericListener: GenericListener = {
@@ -157,7 +163,8 @@ export class StrategyProcessor {
           eventEmitter.controller.callQueue.enqueue(object.reference(), {
             eventDispatcher: event,
             name,
-            arguments: { ...args, symbol, processingStatePath: path },
+            hashableArguments: { ...hashableArgs, processingStatePath: path },
+            otherArguments: { ...otherArgs, symbol },
           })
         },
         // if any integrity entry changes, kill this listener

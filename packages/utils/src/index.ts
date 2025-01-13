@@ -281,17 +281,17 @@ export function conditionalSet<TObject extends object = object>(object: TObject,
   return object
 }
 
-export function mergeWithDeep<TObject, TSource>(object: TObject, source: TSource, customizer: (currentValue: any, newValue: any) => unknown): TObject & TSource {
+// customizer: (currentValue: any, newValue: any) => unknown
+export function mergeWithDeep<TObject, TSource>(object: TObject, source: TSource): TObject & TSource {
   return mergeWith(object, source, (currentValue, newValue, key, object, source) => {
     // TODO: Implement universal merger in utils
     if (isPrimitive(newValue)) return newValue
     if (currentValue === undefined || currentValue.length === 0) return newValue
-    if (currentValue.length === newValue.length) return newValue
+    // if (currentValue.length === newValue.length) return newValue
     if (isArray(currentValue) && isArray(newValue)) return [...currentValue, ...newValue]
 
-    debugger
-
-    return customizer(currentValue, newValue)
+    return mergeWithDeep(currentValue, newValue)
+    // return customizer(currentValue, newValue)
   })
 }
 

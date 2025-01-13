@@ -1,7 +1,8 @@
 import assert from "assert"
 import { ExecutionContext } from "./executionContext"
-import { isString } from "lodash"
-import { Nullable } from "tsdef"
+import { isString, orderBy } from "lodash"
+import { MaybeUndefined, Nullable } from "tsdef"
+import { ObjectID } from "../../object"
 
 export type CallQueueTag = string
 
@@ -52,5 +53,25 @@ export class CallQueue {
     this.queue.delete(executionContextID)
 
     return executionContext
+  }
+
+  /** Order execution contexts by priority (lower priority is "better") */
+  orderByPriority(priorityByObjectID: MaybeUndefined<Record<ObjectID, number>>): ExecutionContext[] {
+    if (priorityByObjectID === undefined) return [...this.queue.values()]
+
+    let executionContexts: ExecutionContext[] = []
+
+    // 1. Fix priorities
+    for (const executionContext of this.queue.values()) {
+      const priority = priorityByObjectID[executionContext.object.value] ?? Infinity
+
+      executionContext.priority = priority
+      executionContexts.push(executionContext)
+    }
+
+    // 2. Order by priority AND index
+    executionContexts = orderBy(executionContexts, [`priority`, `index`], [`asc`, `asc`])
+
+    return executionContexts
   }
 }

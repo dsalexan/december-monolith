@@ -52,14 +52,14 @@ export class BasePattern<TMatchInfo extends PatternMatchInfo = PatternMatchInfo>
     return value
   }
 
-  _match(value: unknown): TMatchInfo {
+  _match(value: unknown, ...args: unknown[]): TMatchInfo {
     throw new Error(`Unimplemented _match`)
   }
 
-  match(value: unknown): BasePatternMatch {
+  match(value: unknown, ...args: unknown[]): BasePatternMatch {
     const preparedValue = this._prepare(value)
 
-    const matchInfo = this._match(preparedValue)
+    const matchInfo = this._match(preparedValue, ...args)
 
     return {
       ...matchInfo,

@@ -152,7 +152,13 @@ export class Node {
   // #region TOKENS AND CONTENT
   public tokens: Token[] = []
 
-  public getContent({ depth, separator, wrap, injectTokenBeforeFirstChild }: { depth?: number; separator?: string; wrap?: boolean; injectTokenBeforeFirstChild?: boolean } = {}): string {
+  public getContent({
+    depth,
+    separator,
+    wrap,
+    injectTokenBeforeFirstChild,
+    ignoreForceWrap,
+  }: { depth?: number; separator?: string; wrap?: boolean; injectTokenBeforeFirstChild?: boolean; ignoreForceWrap?: `first-only` | `always` } = {}): string {
     // if (this.type === `ExpressionStatement`) debugger
     // if (this.name === `s3.aac` || this.children.some(child => child.name === `s3.aac`)) debugger // COMMENT
 
@@ -168,7 +174,7 @@ export class Node {
     if (this.children.length === 0) content = [tokenContent]
     else {
       // 3. Ask for children contents
-      const childrenContent = this.children.map(child => child.getContent({ depth: depth! + 1, separator, wrap }))
+      const childrenContent = this.children.map(child => child.getContent({ depth: depth! + 1, separator, wrap, ignoreForceWrap }))
       content = [...childrenContent]
 
       // 4. By default inject content from tokens after first child
@@ -191,7 +197,10 @@ export class Node {
     }
 
     // 6. Override shouldWrap for some specific cases
-    if (!shouldWrap && this.forceWrap()) shouldWrap = true
+    if (!shouldWrap && this.forceWrap()) {
+      if (ignoreForceWrap === `always`) shouldWrap = true
+      else if (ignoreForceWrap === `first-only`) shouldWrap = depth === 0
+    }
 
     const [opener, closer] = shouldWrap ? this.getWrappers() : [``, ``]
     return `${opener}${content.join(separator ?? ` `)}${closer}`

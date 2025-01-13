@@ -1,8 +1,9 @@
 import assert from "assert"
-import { AnyObject, MaybeArray, MaybeUndefined, Nilable, Nullable } from "tsdef"
+import { AnyObject, MaybeArray, MaybeUndefined, Nilable, Nullable, WithOptionalKeys } from "tsdef"
 import { get, isNil, isString, property, set, uniq } from "lodash"
 
 import { Environment, SyntacticalContext } from "@december/tree"
+import { Simbol } from "@december/tree/symbolTable"
 
 import generateUUID from "@december/utils/uuid"
 import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, Reference, REFERENCE } from "@december/utils/access"
@@ -26,13 +27,17 @@ import type ObjectController from ".."
 import { ArgumentProvider } from "../callQueue/executionContext"
 // import { ProcessingPackage, ProcessingPath, ProcessingState, ProcessingSymbolTranslationTable } from "../../processor/base"
 import { MutationFunctionMetadata, MutationFunctionOutput } from "../frameRegistry/mutationFrame"
-import { MutationInput, StrategyProcessor, StrategyProcessorListenOptions, StrategyProcessorParseOptions, StrategyProcessorResolveOptions, StrategyProcessState } from "./processor"
+import { MutationInput, ReProcessingFunction, StrategyProcessor, StrategyProcessorListenOptions, StrategyProcessorParseOptions, StrategyProcessorResolveOptions, StrategyProcessState } from "./processor"
+import { DependencyEntry } from "../dependencyGraph"
+import { isNilOrEmpty } from "../../../../utils/src"
 
 export type Generator<TReturn> = (object: MutableObject) => TReturn
 export type { MutationInput } from "./processor"
 
 export interface ProxyListenerOptions {
-  arguments?: BareExecutionContext[`arguments`]
+  // arguments?: BareExecutionContext[`arguments`]
+  hashableArguments?: BareExecutionContext[`hashableArguments`]
+  otherArguments?: BareExecutionContext[`otherArguments`]
   integrityEntries?: IntegrityEntry[]
 }
 
@@ -99,7 +104,8 @@ export class Strategy {
     const callbackGenerator: Generator<GenericListener[`callback`]> = (object: MutableObject) => {
       return (event, metadata) => {
         const bareExecutionContext: BareExecutionContext = { eventDispatcher: event, name }
-        if (options.arguments) bareExecutionContext.arguments = options.arguments
+        if (options.hashableArguments) bareExecutionContext.hashableArguments = options.hashableArguments
+        if (options.otherArguments) bareExecutionContext.otherArguments = options.otherArguments
         if (options.argumentProvider) bareExecutionContext.argumentProvider = options.argumentProvider
 
         metadata.eventEmitter.controller.callQueue.enqueue(object.reference(), bareExecutionContext)
@@ -115,12 +121,15 @@ export class Strategy {
   public static addProxyListener(targetEvent: TargetEvent, name: GenericMutationFrame[`name`], options: ProxyListenerOptions = {}) {
     // 1. Build callback generator
     const callbackGenerator: Generator<GenericListener[`callback`]> = (origin: MutableObject) => {
-      return (event, { listener, eventEmitter }) =>
-        eventEmitter.controller.callQueue.enqueue(origin.reference(), {
+      return (event, { listener, eventEmitter }) => {
+        debugger
+        return eventEmitter.controller.callQueue.enqueue(origin.reference(), {
           eventDispatcher: event,
           name,
-          arguments: { ...(options.arguments ?? {}), originReference: origin.reference() },
+          hashableArguments: { ...(options.hashableArguments ?? {}) },
+          otherArguments: { ...(options.otherArguments ?? {}), originReference: origin.reference() },
         })
+      }
     }
 
     // 2. Build generic listener generator
@@ -158,13 +167,16 @@ export class Strategy {
     path: string,
     options: StrategyProcessorInputOptions & StrategyProcessorParseOptions & StrategyProcessorResolveOptions & StrategyProcessorListenOptions,
   ): MutationInput & { state: StrategyProcessState } {
-    const mutationInput: MutationInput = { mutations: [], integrityEntries: [] }
+    const mutationInput: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
     const listeners: Listener[] = []
 
     let skipMutation = false
 
     // 0. Check if expression was processed previously (i.e. if processing state exists in metadata)
     let state: StrategyProcessState = get(object.metadata, path)
+    let environment: Environment = options.environment!
+
+    const locallyAssignedSymbols: Simbol[`name`][] = []
 
     // 1. Process (parse + resolve) expression
     if (!state) {
@@ -173,7 +185,7 @@ export class Strategy {
       assert(options.expression, `Expression must be provided for new expressions`) // COMMENT
       assert(options.environment, `Environment must be provided for new expressions`) // COMMENT
       // 1.A. Process expression
-      state = StrategyProcessor.process(options.expression, options.environment, options)
+      state = StrategyProcessor.process(options.expression, options.environment, locallyAssignedSymbols, options)
 
       // 1.B. Store state in metadata
       skipMutation = true
@@ -185,9 +197,9 @@ export class Strategy {
     else {
       // if (state.expression === `thr`) debugger
 
-      const environment = options.environment ?? state.environment!
+      environment = options.environment ?? state.environment!
       assert(environment, `Where should I find the environment then genius`)
-      StrategyProcessor.resolve(state, environment, options)
+      StrategyProcessor.resolve(state, environment, locallyAssignedSymbols, options)
     }
 
     // 3. Listen for new symbols
@@ -204,7 +216,47 @@ export class Strategy {
       if (!skipMutation) mutationInput.mutations.push(...object.setReferenceToMetadata(path, true))
     }
 
+    // 5. Filter symbols for dependency tracking
+    const allSymbols = state.symbolTable.getAllSymbols(environment)
+    const dependencyEntries = allSymbols
+      .map(symbol => options.getDependencyEntry(object.id, symbol))
+      .filter(entry => !isNil(entry))
+      .flat() as DependencyEntry[]
+
+    assert(state.integrityEntries.length === 1, `Club cant handle`)
+    const integrityEntry = state.integrityEntries[0]
+    mutationInput.dependencies.push(...dependencyEntries.map(entry => ({ ...entry, integrityEntry })))
+
     return { state, ...mutationInput }
+  }
+
+  /** Process multiple expressions */
+  public static bulkProcess(
+    object: MutableObject,
+    inputs: { expression: string; path: string; environment: Environment; reProcessingFunction?: ReProcessingFunction | string }[],
+    options: WithOptionalKeys<StrategyProcessorInputOptions & StrategyProcessorParseOptions & StrategyProcessorResolveOptions & StrategyProcessorListenOptions, `reProcessingFunction`>,
+  ): (MutationInput & {
+    state: StrategyProcessState
+  })[] {
+    const outputs: (MutationInput & {
+      state: StrategyProcessState
+    })[] = []
+
+    for (const { expression, path, environment, reProcessingFunction } of inputs) {
+      const output = Strategy.process(object, path, {
+        ...options,
+        //
+        expression,
+        environment,
+        //
+        syntacticalContext: { mode: `expression` },
+        reProcessingFunction: reProcessingFunction ?? options.reProcessingFunction ?? `compute:re-processing`,
+      })
+
+      outputs.push(output)
+    }
+
+    return outputs
   }
 
   /** Generator of a generic re-processing strategy function (useful to just re-run resolution loop for already processed expressions) */
@@ -218,7 +270,8 @@ export class Strategy {
     this.registerMutationFunction(name, (object: MutableObject, mutationOptions: MutationFunctionMetadata) => {
       // 1. Target path in object's metadata (where processing state is stored) ALWAYS comes as an argument
       //      (check StrategyProcessor :: listenForSymbols for more)
-      const path = mutationOptions.arguments.processingStatePath as string
+      const path = mutationOptions.executionContext.hashableArguments?.processingStatePath as string
+      assert(isString(path) && !isNilOrEmpty(path), `Processing state path must be defined`)
       const state: StrategyProcessState = get(object.metadata, path)
 
       // 2. Resolve expression
@@ -226,14 +279,19 @@ export class Strategy {
       const environment = state.environment!
       assert(environment, `Where should I find the environment then genius`)
 
-      StrategyProcessor.resolve(state, environment, { ...options, syntacticalContext })
+      const locallyAssignedSymbols: Simbol[`name`][] = []
+      StrategyProcessor.resolve(state, environment, locallyAssignedSymbols, { ...options, syntacticalContext })
 
       // 3. Listen for new symbols
       //      (using this very function as reProcessing target)
       const listeners = StrategyProcessor.listenForSymbols(state, object, path, {
         ...options,
         ...listenOptions,
-        reProcessingFunction: { name, arguments: { ...mutationOptions.arguments, genericReProcessing: true } },
+        reProcessingFunction: {
+          name, //
+          hashableArguments: { ...(mutationOptions.executionContext.hashableArguments ?? {}) },
+          otherArguments: { ...(mutationOptions.executionContext.otherArguments ?? {}), genericReProcessing: true },
+        },
       })
       for (const listener of listeners) object.controller.eventEmitter.addListener(listener)
 
@@ -301,7 +359,8 @@ export class Strategy {
 
 export interface CommonOptions {
   integrityEntries?: GenericListener[`integrityEntries`]
-  arguments?: BareExecutionContext[`arguments`]
+  hashableArguments?: BareExecutionContext[`hashableArguments`]
+  otherArguments?: BareExecutionContext[`otherArguments`]
   argumentProvider?: MaybeArray<ArgumentProvider>
 }
 
@@ -332,5 +391,6 @@ export function mergeMutationInput(A: MutationInput, B: MutationInput): Mutation
   return {
     mutations: [...A.mutations, ...B.mutations],
     integrityEntries: [...A.integrityEntries, ...B.integrityEntries],
+    dependencies: [...(A.dependencies ?? []), ...(B.dependencies ?? [])],
   }
 }

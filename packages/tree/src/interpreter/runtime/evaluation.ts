@@ -56,7 +56,7 @@ export class RuntimeEvaluation<TRuntimeValue extends RuntimeValue<any> = Runtime
 
   public toNode<TNode extends Node = Node>(i: Interpreter): TNode {
     // 1. If value is resolved, just pack data into node (since it could be different than original node)
-    if (RuntimeEvaluation.isResolved(this)) return i.evaluator.convertToNode(i, this.runtimeValue)
+    if (RuntimeEvaluation.isResolved(this)) return i.evaluator.convertToNode(i, this.runtimeValue, this.node)
 
     // 2. If value was never resolved, just send original node back
     return this.node as any as TNode

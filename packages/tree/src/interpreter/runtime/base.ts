@@ -1,3 +1,4 @@
+import { has, isFunction } from "lodash"
 import { Token } from "../../token/core"
 import { Node } from "../../tree"
 import { RuntimeEvaluation } from "./evaluation"
@@ -34,8 +35,20 @@ export class RuntimeValue<TValue> {
     throw new Error(`Unsupported operation for "${this.type}"`)
   }
 
+  public isSameType(value: RuntimeValue<any>) {
+    return this.type === value.type
+  }
+
   public isEquals(value: RuntimeValue<any>) {
-    return this.type === value.type && this.value === value.value
+    if (!this.isSameType(value)) return false
+
+    const thisValue = this.value as any
+    if (`isEquals` in thisValue && isFunction(thisValue.isEquals)) {
+      debugger
+      return thisValue.isEquals(value.value)
+    }
+
+    return this.value === value.value
   }
 
   public hasNumericRepresentation(): boolean {
@@ -46,11 +59,19 @@ export class RuntimeValue<TValue> {
     return false
   }
 
+  public hasBooleanRepresentation(): boolean {
+    return false
+  }
+
   public asNumber(): number {
     throw new Error(`Unsupported operation`)
   }
 
   public asString(): string {
+    throw new Error(`Unsupported operation`)
+  }
+
+  public asBoolean(): boolean {
     throw new Error(`Unsupported operation`)
   }
 }

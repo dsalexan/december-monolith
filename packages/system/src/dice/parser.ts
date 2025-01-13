@@ -90,6 +90,7 @@ export class DiceRollExpression extends Expression {
 // #region    SYNTATICAL GRAMMAR
 
 // override @ parseImplicitMultiplication
+//    (here we override the function entirely to avoid calling parseExpression twice for the right side)
 export const parseImplicitMultiplication: LEDParser = (p: Parser, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
   assert(left.type === `NumericLiteral`, `Left must be a numeric literal expression`)
   const numericLiteral = left as NumericLiteral
@@ -101,7 +102,9 @@ export const parseImplicitMultiplication: LEDParser = (p: Parser, left: Expressi
   const diceData = parseDiceNotation(content)
   if (diceData) return new DiceRollExpression(numericLiteral, diceData.faces, diceData.keep)
 
-  // 2. Not a dice roll, just return a multiplication
+  // 2. Check if we should concatenate as a string, not a multiplication TODO:
+
+  // 3. Not a dice roll, just return a multiplication
   const operator = new ArtificialToken(getTokenKind(`asterisk`), `*`)
 
   return new BinaryExpression(numericLiteral, operator, right)

@@ -1,3 +1,4 @@
+import { MATH_FUNCTIONS_INDEX } from "./../../../../../../gca/src/trait/mathFunctions"
 /* eslint-disable no-inner-declarations */
 import { LEDParser } from "./../../parserFunction"
 import assert from "assert"
@@ -12,8 +13,10 @@ import { DEFAULT_BINDING_POWERS } from "../bindingPowers"
 import { BindingPower } from "../../bindingPower"
 import { EntryParser, NUDParser, SyntacticalContext, SyntaxMode } from "../../parserFunction"
 import { createRegisterParserEntry } from "../../entries"
-import { AnyObject, Arguments, MaybeUndefined } from "tsdef"
+import { AnyObject, Arguments, MaybeNull, MaybeUndefined } from "tsdef"
 import { SyntacticalContextExpression } from "../../../../tree/expression/complex"
+import { MATH_FUNCTIONS } from "../../../../../../../apps/gca/src/trait/parser/syntax/logic"
+import { isArray, isNil } from "lodash"
 
 /** Parse tokens into an expression (until we reach something below the minimum binding power) */
 export const parseExpression: EntryParser<Expression> = (p: Parser, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
@@ -36,7 +39,7 @@ export const parseExpression: EntryParser<Expression> = (p: Parser, minimumBindi
     // SPECIAL CASE FOR PARSING: whitespace x SyntaxMode
     if (tokenKind === `whitespace`) {
       const skipWhitespace = context.mode === `expression`
-      const canGlueStrings = left.type === `StringLiteral` && [`string`, `whitespace`].includes(p.peek(1))
+      const canGlueStrings = [`StringLiteral`, `Identifier`].includes(left.type) && [`string`, `whitespace`].includes(p.peek(1))
       if (skipWhitespace && !canGlueStrings) {
         p.next()
         continue
@@ -69,24 +72,31 @@ export const parseBinaryExpression: LEDParser = (p: Parser, left: Expression, mi
 }
 
 export const parseConcatenatedExpression: LEDParser = (p: Parser<DefaultExpressionParserProvider>, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
-  if (left.type === `NumericLiteral`) return p.grammar.call(`parseImplicitMultiplication`)(p, left, minimumBindingPower, context)
+  if (context.mode === `expression` && left.type === `NumericLiteral`) return p.grammar.call(`parseImplicitMultiplication`)(p, left, minimumBindingPower, context)
 
   // if (left.toString() === `Feet`) debugger
 
+  // 1. Decide how to eat tokens
   const STRING_TOKENS: TokenKindName[] = [`string`, `whitespace`]
+  const eatToken = (token: TokenKindName) => {
+    if (context.mode === `text`) {
+      const bindingPower = p.grammar.getBindingPower(token, `nud`)! ?? Infinity
+      return bindingPower > minimumBindingPower
+    }
 
-  let stringLiteral: StringLiteral = left as StringLiteral
-
-  let reParseStringExpression = false
-  if (left.type === `Identifier`) {
-    reParseStringExpression = true
-    stringLiteral = new StringLiteral(...left.tokens)
+    return STRING_TOKENS.includes(token)
   }
+
+  // 2. Transform left into string literal
+  let stringLiteral: StringLiteral = left as StringLiteral
+  //
+  if (left.type === `Identifier`) stringLiteral = new StringLiteral(...left.tokens)
+  else if (left.type === `NumericLiteral`) stringLiteral = new StringLiteral(left.tokens[0])
 
   assert(stringLiteral.type === `StringLiteral`, `Only string literals can have multiple tokens (found "${stringLiteral.type}")`)
 
-  // // 2. Eat string and whitespace tokens
-  while (p.hasTokens() && STRING_TOKENS.includes(p.peek())) {
+  // 3. Eat string and whitespace tokens
+  while (p.hasTokens() && eatToken(p.peek())) {
     const token = p.next()
     stringLiteral.tokens.push(token)
   }
@@ -95,9 +105,14 @@ export const parseConcatenatedExpression: LEDParser = (p: Parser<DefaultExpressi
 }
 
 export const parseImplicitMultiplication: LEDParser = (p: Parser, left: Expression, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
+  assert(left.type === `NumericLiteral`, `Left must be a numeric literal expression`)
   const numericLiteral = left as NumericLiteral
-  const operator = new ArtificialToken(getTokenKind(`asterisk`), `*`)
+
   const right = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.MULTIPLICATIVE, context)
+
+  // 1. Check if we should concatenate as a string, not a multiplication TODO:
+
+  const operator = new ArtificialToken(getTokenKind(`asterisk`), `*`)
 
   return new BinaryExpression(numericLiteral, operator, right)
 }
@@ -127,11 +142,21 @@ export const parseMemberExpression: LEDParser = (p: Parser, left: Expression, mi
 
   const memberExpression = new MemberExpression(left, property)
 
-  // 1. First check any transforming rules from grammar (usually for identifiers)
-  const transformedNode = p.grammar.shouldTransformNode(memberExpression)
-  if (transformedNode) return transformedNode
+  let returningNode: Node = memberExpression
 
-  return memberExpression
+  // 1. First check any transforming rules from grammar (usually for identifiers)
+  let i = 0
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const transformedNode: MaybeNull<Node> = p.grammar.shouldTransformNode(returningNode)
+    if (transformedNode) returningNode = transformedNode
+    else break
+
+    i++
+    assert(i < 10, `Stack Overflow protection`)
+  }
+
+  return returningNode
 }
 
 export const parseQuotedStringExpression: NUDParser = (p: Parser<DefaultExpressionParserProvider>, context: SyntacticalContext): Expression => {
@@ -205,16 +230,23 @@ export const parseCallExpression: LEDParser = (p: Parser, left: Expression, mini
     return p.grammar.call(`parseStringExpression`)(p, left as StringLiteral, context)
   }
 
-  // if (left.toString() === `@itemhasmod`) debugger
+  // 0. First check any recontextualization rules from grammar (usually for language-defined functions)
+  const newContexts = p.grammar.shouldRecontextualize(`CallExpression`, left, context)
 
   // 1. What are we eating?
   p.next(`open_parenthesis`)
   const args: Expression[] = []
 
+  if (isArray(newContexts)) debugger
+
   // 2. Look until we eat a )
   while (p.hasTokens() && p.peek() !== `close_parenthesis`) {
+    if (isArray(newContexts)) assert(args.length < newContexts.length, `Invalid number of arguments for function "${left.toString()}"`)
+    const localContext = isNil(newContexts) ? context : isArray(newContexts) ? newContexts[args.length] : newContexts
+    assert(localContext, `Invalid local context for function "${left.toString()}"`)
+
     // 3. Parse everything above ASSIGNMENT (anything below it is a COMMA)
-    const arg = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.ASSIGNMENT, context)
+    const arg = p.grammar.parseExpression(p, DEFAULT_BINDING_POWERS.ASSIGNMENT, localContext)
     args.push(arg)
 
     // 4. Eat a comma (if there is one, should have unless e are at the close_paren)

@@ -1,5 +1,5 @@
 import assert from "assert"
-import { AnyObject, Arguments, MaybeUndefined, Nullable } from "tsdef"
+import { AnyObject, Arguments, MaybeUndefined, Nilable, Nullable } from "tsdef"
 
 import type Interpreter from ".."
 
@@ -15,11 +15,11 @@ export type { Contextualized, RuntimeFunction, makeRuntimeValue } from "../runti
 export type EvaluationOutput<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>> = RuntimeEvaluation<TRuntimeValue> | MaybeUndefined<TRuntimeValue>
 
 export type EvaluationFunction = (i: Interpreter, node: Node, environment: Environment) => EvaluationOutput
-export type NodeConversionFunction<TNode extends Node = Node, TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>> = (i: Interpreter, value: TRuntimeValue) => TNode
+export type NodeConversionFunction<TNode extends Node = Node, TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>> = (i: Interpreter, value: TRuntimeValue, sourceNode: Nullable<Node>) => TNode
 
 export type NodeReadyCheckerFunction = (i: Interpreter, node: Node) => boolean
 export type EvaluatorReadyCheckerFunction = (i: Interpreter, evaluation: RuntimeEvaluation) => boolean
-export type PostProcessFunction = (i: Interpreter, evaluation: RuntimeEvaluation<RuntimeValue<any>, Expression>, syntacticalContext: SyntacticalContext) => Nullable<RuntimeValue<any>>
+export type PostProcessFunction = (i: Interpreter, evaluation: RuntimeEvaluation<RuntimeValue<any>, Expression>, syntacticalContext: SyntacticalContext) => Nilable<RuntimeValue<any>>
 
 export type BaseEvaluationsProvider = Record<string, (...args: any[]) => EvaluationOutput>
 export type BaseNodeConversionsProvider = Record<string, NodeConversionFunction<Node, RuntimeValue<any>>>
@@ -60,9 +60,9 @@ export class NodeEvaluator<TEvaluations extends BaseEvaluationsProvider, TConver
   // #endregion
 
   /** Exposes conversion method for RuntimeValue -> Node */
-  public convertToNode<TNode extends Node = Node, TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>>(i: Interpreter, value: TRuntimeValue): TNode {
+  public convertToNode<TNode extends Node = Node, TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>>(i: Interpreter, value: TRuntimeValue, sourceNode: Nullable<Node>): TNode {
     const convertToNode = this.conversionsProvider.getFunction(`convertToNode`)
-    return convertToNode(i, value) as TNode
+    return convertToNode(i, value, sourceNode) as TNode
   }
 
   /** Evaluates a generic node */
@@ -80,7 +80,7 @@ export class NodeEvaluator<TEvaluations extends BaseEvaluationsProvider, TConver
   }
 
   /** Post-process to derive some sort of "final" RuntimeValue */
-  public postProcess(i: Interpreter, runtimeEvaluation: RuntimeEvaluation<RuntimeValue<any>, Expression>, syntacticalContext: SyntacticalContext): Nullable<RuntimeValue<any>> {
+  public postProcess(i: Interpreter, runtimeEvaluation: RuntimeEvaluation<RuntimeValue<any>, Expression>, syntacticalContext: SyntacticalContext): Nilable<RuntimeValue<any>> {
     const postProcess = this.postProcessProvider.getFunction(`postProcess`) as PostProcessFunction
     return postProcess(i, runtimeEvaluation, syntacticalContext)
   }
