@@ -89,6 +89,8 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
   },
 )
 
+//
+//
 // B. CALCULATE MAIN VALUES (Scores, Levels, Points)
 
 // #region B.1. Score (Attributes)
@@ -481,4 +483,14 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
 
 // #endregion
 
-// C. ???
+//
+//
+// C. CALCULATE GIVING BONUSES
+
+// #region C.1. Score-Giving Bonuses
+
+// #endregion
+
+// #region C.2. Level-Giving Bonuses
+
+// #endregion
