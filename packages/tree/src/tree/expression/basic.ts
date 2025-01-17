@@ -78,7 +78,9 @@ export class StringLiteral extends Literal<string> {
   }
 
   public override constructClone(options): this {
-    return new StringLiteral(...this.tokens.map(token => token.clone(options))) as this
+    const clone = new StringLiteral(...this.tokens.map(token => token.clone(options))) as this
+    clone.quoted = this.quoted
+    return clone
   }
 
   public override getWrappers(): [string, string] {

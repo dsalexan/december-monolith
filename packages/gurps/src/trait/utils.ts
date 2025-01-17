@@ -39,9 +39,16 @@ export function getAliases(type: TraitType, name: string, { nameExtension, group
   // from group
   if (!isNilOrEmpty(group)) debugger
 
+  // SPECIAL CASES
+  if (type === `attribute`) {
+    if ([`ST`, `DX`, `IQ`, `HT`].includes(name)) keys.push(name)
+    else if (name === `Perception`) keys.push(`Per`)
+    else if (name === `Will`) keys.push(`Will`)
+  }
+
   return keys
 }
 
 export function isAlias(value: string) {
-  return /^"?\w{2}\:[\w" \(\)\,\;\s-—]+"?$/.test(value)
+  return /^("?\w{2}\:[\w" \(\)\,\; \-—]+"?|DX|ST|IQ|HT|Per|Will)$/.test(value)
 }

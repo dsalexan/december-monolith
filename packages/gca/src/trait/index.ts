@@ -67,6 +67,7 @@ export interface GCABaseTrait<TSection extends TraitSection = TraitSection> exte
   modifiers: GCAModifier[] // Modifiers()
   //
   _sysLevels: MaybeUndefined<number> // calcs.syslevels; levels from bonuses, not FREE levels from system
+  _level: MaybeUndefined<number> // calcs.level
 }
 
 export interface GCABaseNonAttribute extends GCABase {

@@ -157,7 +157,7 @@ export const evaluateCallExpression: EvaluationFunction = (i: Interpreter<Defaul
 
   // always index symbol, regardless of it being found or not
   //    (should we index CALL_EXPRESSION or CALL_EXPRESSION.CALLEE?)
-  i.indexVariableNameAsSymbol(callee, callExpression)
+  i.indexNodeAsSymbol(callExpression)
 
   const args = callExpression.arguments.map(argument => i.evaluator.evaluate(i, argument, environment))
 
@@ -209,6 +209,10 @@ export const evaluateCallExpression: EvaluationFunction = (i: Interpreter<Defaul
 }
 
 export const evaluateMemberExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, memberExpression: MemberExpression, environment: Environment): RuntimeEvaluation => {
+  // always index symbol, regardless of it being found or not
+  //    (actually indexing root object->property1->property2)
+  if (memberExpression.parent?.type !== `MemberExpression`) i.indexNodeAsSymbol(memberExpression)
+
   const object = i.evaluator.evaluate(i, memberExpression.object, environment)
 
   // 1. If object could not be evaluated bail out
@@ -378,7 +382,7 @@ function logicalConnectiveBinaryOperation(left: RuntimeValue<any>, right: Runtim
 }
 
 function getValueFromEnvironment(i: Interpreter, environment: Environment, variableName: string, node: Node): RuntimeEvaluation {
-  i.indexVariableNameAsSymbol(variableName, node) // always index symbol, regardless of it being found or not
+  i.indexNodeAsSymbol(node) // always index symbol, regardless of it being found or not
 
   const resolvedVariable = environment.resolve(variableName)
   const isPresent = !!resolvedVariable && !!resolvedVariable.environment

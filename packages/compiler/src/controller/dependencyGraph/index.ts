@@ -244,18 +244,26 @@ export default class ObjectDependencyGraph extends ObjectManagerEmitter {
 
     const order: ObjectID[] = []
     const visited = new Set<ObjectID>()
+    const circularDependencies: Record<ObjectID, ObjectID[]> = {}
 
     const self = this
-    function visit(objectID: ObjectID) {
-      if (visited.has(objectID)) return
+    function visit(objectID: ObjectID, sourceObjectID: ObjectID | null) {
+      if (visited.has(objectID)) {
+        if (sourceObjectID) {
+          circularDependencies[objectID] ??= []
+          if (!circularDependencies[objectID].includes(sourceObjectID)) circularDependencies[objectID].push(sourceObjectID)
+        }
+
+        return
+      }
 
       visited.add(objectID)
       const dependantObjects = dependantsByID.get(objectID) ?? []
-      for (const object of dependantObjects) visit(object)
+      for (const object of dependantObjects) visit(object, objectID)
       order.push(objectID)
     }
 
-    for (const [id] of dependantsByID) visit(id)
+    for (const [id] of dependantsByID) visit(id, null)
 
     const ascOrder = order.reverse()
 
@@ -263,6 +271,24 @@ export default class ObjectDependencyGraph extends ObjectManagerEmitter {
       logger.add(paint.blue(`#${index}`)).add(` `)
 
       logger.add(paint.identity(id)).add(` `)
+
+      const circles = circularDependencies[id] ?? []
+      if (circles.length > 0) {
+        logger.add(paint.yellow.bold.dim(`{`))
+        logger.add(paint.yellow.bold.dim(`CIRCULAR`)).add(` `)
+
+        for (const [i, id] of circles.entries()) {
+          const order = ascOrder.indexOf(id)
+
+          const color = order === index ? paint.yellow.bold : order < index ? paint.red : paint.green
+          logger.add(color.dim(id))
+          logger.add(paint.gray.dim(` (#${order})`))
+
+          if (i < circles.length) logger.add(paint.grey.dim(`, `))
+        }
+
+        logger.add(paint.yellow.bold.dim(`}`)).add(` `)
+      }
 
       const depends = dependsByID.get(id) ?? []
       if (depends.length > 0) {
@@ -302,6 +328,8 @@ export default class ObjectDependencyGraph extends ObjectManagerEmitter {
 
       logger.debug()
     }
+
+    // debugger
   }
 }
 

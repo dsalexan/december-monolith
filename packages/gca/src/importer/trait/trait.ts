@@ -1,7 +1,7 @@
 import { leftOperand } from "./../../../../tree/src2/nrs_OLD/rule/index"
 import { AnyObject, DiffObjects, MaybeUndefined, Nilable, Nullable } from "tsdef"
 import assert from "assert"
-import { has, isArray, isNil, isNumber, isObjectLike, isString } from "lodash"
+import { has, isArray, isEmpty, isNil, isNumber, isObjectLike, isString } from "lodash"
 
 import { conditionalSet, isNilOrEmpty, removeUndefinedKeys, typing } from "@december/utils"
 import { getAliases, isNameExtensionValid, Type } from "@december/gurps/trait"
@@ -145,6 +145,7 @@ function importGCABaseTrait(raw: AnyObject, base: GCABase<GCABaseTrait[`section`
     modifiers: [],
     //
     _sysLevels: parseInt(extract(raw, `SysLevels`)),
+    _level: parseInt(extract(raw, `Level`)),
   }
 
   removeUndefinedKeys(baseTrait)
@@ -263,6 +264,7 @@ function _importGCATrait(raw: AnyObject, baseTrait: GCABaseTrait): GCATrait {
       default: parseString(extract(raw, `Default`)),
       round: parseInt(extract(raw, `Round`)),
       type: parseString(extract(raw, `Type`), true),
+      //
     }
 
     const isTechnique = skillOrSpell.type?.toUpperCase().startsWith(`TECH`)
@@ -357,7 +359,8 @@ function _importGCATrait(raw: AnyObject, baseTrait: GCABaseTrait): GCATrait {
     const BOUGHT_LEVEL = isTechnique ? TECHNIQUE_BOUGHT_LEVEL : SKILL_BOUGHT_LEVEL
 
     // BASE_LEVEL = DEFAULT_LEVEL + BOUGHT_LEVEL(BASE_POINTS x COST)
-    const baseLevel = defLevel! + BOUGHT_LEVEL(skillOrSpell.basePoints!)
+    const boughtLevel = BOUGHT_LEVEL(skillOrSpell.basePoints!)
+    const baseLevel = defLevel! + boughtLevel
     // FINAL_LEVEL = BASE_LEVEL + EXTRA_LEVELS
     const finalLevel = baseLevel + (extraLevels ?? 0)
     assert(extraLevels === skillOrSpell._sysLevels, `What is the difference between "SYS_LEVELS" and "EXTRA_LEVELS"???`)
@@ -371,9 +374,9 @@ function _importGCATrait(raw: AnyObject, baseTrait: GCABaseTrait): GCATrait {
 
     // no need checking base level calculation without the default value in calc (happens sometimes for skills)
     if (defLevel !== 0) {
-      if (!isNil(skillOrSpell.baseLevel) && skillOrSpell.baseLevel !== baseLevel) debugger
+      // if (!isNil(skillOrSpell.baseLevel) && skillOrSpell.baseLevel !== baseLevel) debugger
       if (isNaN(finalLevel) && level !== 0) debugger
-      if (!isNaN(finalLevel) && finalLevel !== level) debugger
+      // if (!isNaN(finalLevel) && finalLevel !== level) debugger
     }
 
     // if (!skillOrSpell.type?.startsWith(`Tech`)) debugger
@@ -393,6 +396,7 @@ function _importGCATrait(raw: AnyObject, baseTrait: GCABaseTrait): GCATrait {
     ...nonAttribute,
     ...nonSkillNonSpellNonEquipment,
     ...pointBased,
+    //
   }
 
   removeUndefinedKeys(generalTrait)
@@ -609,9 +613,9 @@ function parseYesNo(value: Nilable<string>, strict: boolean = false): MaybeUndef
   const stringValue = parseString(value, strict)
 
   if (stringValue) {
-    assert(stringValue.toLowerCase() === `no` || stringValue.toLowerCase() === `yes`, `Value "${stringValue}" is not a valid Yes/No value`)
+    // assert(stringValue.toLowerCase() === `no` || stringValue.toLowerCase() === `yes`, `Value "${stringValue}" is not a valid Yes/No value`)
 
-    return stringValue.toLowerCase() === `no` ? false : true
+    return isEmpty(stringValue) || stringValue.toLowerCase() === `no` ? false : true
   }
 
   return undefined

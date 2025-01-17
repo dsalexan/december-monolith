@@ -1,5 +1,7 @@
 import { Nullable } from "tsdef"
 
+import { getProgressionIndex, getProgressionStep } from "@december/gca/utils/progression"
+
 // BASE_POINTS = LEVEL_COST(BASE_LEVEL)
 export interface LevelCost {
   type: `level`
@@ -71,3 +73,26 @@ export interface MonetaryCost {
 }
 
 export type TraitCost = LevelCost | ProgressionCost | StepCost | MonetaryCost
+
+export function calcProgressionStep(cost: ProgressionCost, points: number) {
+  if (points === 0) cost.default // -4 - difficultyModifier + +(difficulty === `VH`)
+
+  const progressionValue = getProgressionIndex(cost.progression, points)
+  const value = progressionValue + cost.modifier
+
+  if (cost.round === `up`) return Math.ceil(value)
+  else if (cost.round === `down`) return Math.floor(value)
+
+  return value
+}
+
+export function calcProgressionCost(cost: ProgressionCost, value: number) {
+  const index = value - cost.modifier
+  if (index < 0) return 0
+
+  const step = getProgressionStep<number>(cost.progression, index)
+
+  if (cost.modifier !== 0 && step > 0) debugger
+
+  return step
+}

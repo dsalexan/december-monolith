@@ -16,7 +16,7 @@ export default class Environment {
   public parent?: Environment
   //
   private values: {
-    byName: Map<VariableName, RuntimeValue<any>>
+    byVariableName: Map<VariableName, RuntimeValue<any>>
     byPattern: Map<string, VariableNameByPattern>
   }
 
@@ -25,7 +25,7 @@ export default class Environment {
     this.parent = parent
     //
     this.values = {
-      byName: new Map(),
+      byVariableName: new Map(),
       byPattern: new Map(),
     }
   }
@@ -37,7 +37,7 @@ export default class Environment {
   /** Checks values' maps for variable name (returning matching runtime value)  */
   public getValue<TRuntimeValue extends RuntimeValue<any> = RuntimeValue<any>>(variableName: string): Nullable<TRuntimeValue> {
     // 1. Check by name
-    const value = this.values.byName.get(variableName)
+    const value = this.values.byVariableName.get(variableName)
     if (value) return value as TRuntimeValue
 
     // 2. Check by pattern
@@ -100,17 +100,17 @@ export default class Environment {
   /** Assigns value to VariableName */
   public assignValue(variableName: VariableName, value: RuntimeValue<any>, update: boolean = false): boolean {
     if (!update) {
-      assert(!this.values.byName.has(variableName), `Variable name "${variableName}" already exists in environment.`)
+      assert(!this.values.byVariableName.has(variableName), `Variable name "${variableName}" already exists in environment.`)
 
       // return false
     }
 
-    if (update && this.values.byName.has(variableName)) {
-      const currentValue = this.values.byName.get(variableName)!
+    if (update && this.values.byVariableName.has(variableName)) {
+      const currentValue = this.values.byVariableName.get(variableName)!
       if (currentValue.isEquals(value)) return false
     }
 
-    this.values.byName.set(variableName, value)
+    this.values.byVariableName.set(variableName, value)
     this._version++
 
     return true
@@ -131,39 +131,52 @@ export default class Environment {
     this._version++
   }
 
-  /** Get all VARIABLE_VALUEs in environment chain and return as symbols */
-  public getVariableReassignmentAsSymbols(): Simbol[] {
-    const symbols: Map<Simbol[`name`], Simbol> = new Map()
+  /** Rasterize all indirect variables (a variable pointing to another variable) in environment tree as symbols */
+  public rasterizeIndirectVariablesAsSymbols(): Simbol[] {
+    const symbols: Map<Simbol[`key`], Simbol> = new Map()
 
-    this._getVariableReassignmentAsSymbols(symbols)
-    if (this.parent) this.parent._getVariableReassignmentAsSymbols(symbols)
+    this._rasterizeIndirectVariablesAsSymbols(symbols)
+    if (this.parent) this.parent._rasterizeIndirectVariablesAsSymbols(symbols)
 
     return [...symbols.values()]
   }
 
-  /** Get all VARIABLE_VALUEs in environment chain and populate symbol map */
-  protected _getVariableReassignmentAsSymbols(symbolMap: Map<Simbol[`name`], Simbol>) {
-    // 1. Index variable values byName
-    for (const value of this.values.byName.values()) {
-      if (!VariableValue.isVariableValue(value)) continue
+  /** Rasterize all indirect variables (a variable pointing to another variable) in environment as symbols */
+  protected _rasterizeIndirectVariablesAsSymbols(symbolMap: Map<Simbol[`key`], Simbol>): boolean {
+    let somethingWasIndexed = false
 
-      const variableName = value.value
+    // 1. Index indirect variables by VARIABLE NAME
+    for (const [key, runtimeValue] of this.values.byVariableName.entries()) {
+      if (!VariableValue.isVariableValue(runtimeValue)) continue // bail out if runtimeValue is not indirect
+
+      // (we only register then first occurence, we don't need to know which nodes are linked to it)
+      const variableName = runtimeValue.value
+      assert(variableName === key, `VariableName should match key`)
       if (symbolMap.has(variableName)) continue
 
-      const symbol = new Simbol(variableName)
-      symbolMap.set(symbol.name, symbol)
+      // (at least for now a VARIABLE_VALUE is always of type:name)
+      const symbol = new Simbol({ type: `name`, key: variableName, name: variableName })
+      symbolMap.set(symbol.key, symbol)
+
+      somethingWasIndexed = true
     }
 
-    // 2. Index variable values byPattern
-    for (const { value } of this.values.byPattern.values()) {
-      if (!VariableValue.isVariableValue(value)) continue
+    // 2. Index indirect variables by PATTERN
+    for (const { value: runtimeValue } of this.values.byPattern.values()) {
+      if (!VariableValue.isVariableValue(runtimeValue)) continue // bail out if runtimeValue is not indirect
 
-      const variableName = value.value
+      // (we only register then first occurence, we don't need to know which nodes are linked to it)
+      const variableName = runtimeValue.value
       if (symbolMap.has(variableName)) continue
 
-      const symbol = new Simbol(variableName)
-      symbolMap.set(symbol.name, symbol)
+      // (at least for now a VARIABLE_VALUE is always of type:name)
+      const symbol = new Simbol({ type: `name`, key: variableName, name: variableName })
+      symbolMap.set(symbol.key, symbol)
+
+      somethingWasIndexed = true
     }
+
+    return somethingWasIndexed
   }
 }
 

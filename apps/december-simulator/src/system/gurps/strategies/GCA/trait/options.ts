@@ -3,11 +3,11 @@ import assert from "assert"
 import { AnyObject, MaybeArray, Nullable } from "tsdef"
 import { get, isArray, isNil, isNumber, isString, set, uniq } from "lodash"
 
-import { EQUALS, FUNCTION, REGEX } from "@december/utils/match/element"
+import { ElementPattern, EQUALS, FUNCTION, REGEX } from "@december/utils/match/element"
 
 import { DICE_MODULAR_EVALUATOR_PROVIDER, DICE_MODULAR_SYNTACTICAL_GRAMMAR, DICE_MODULAR_REWRITER_RULESET } from "@december/system/dice"
 import { makeDefaultProcessor } from "@december/tree/processor"
-import { Environment, ObjectValue, RuntimeValue } from "@december/tree/interpreter"
+import { Environment, ObjectValue, RuntimeValue, VariableName } from "@december/tree/interpreter"
 import { createTransformNodeEntry } from "@december/tree/parser"
 import { Simbol } from "@december/tree/symbolTable"
 import { createEntry, KEYWORD_PRIORITY } from "@december/tree/lexer/grammar"
@@ -20,7 +20,7 @@ import { Strategy, Mutation, SET, MutableObject } from "@december/compiler"
 import { IntegrityEntry } from "@december/compiler/controller/integrityRegistry"
 import { REFERENCE_ADDED } from "@december/compiler/controller/eventEmitter/event"
 
-import { ANY_PROPERTY, PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, REFERENCE, Reference, SELF_PROPERTY } from "@december/utils/access"
+import { ANY_PROPERTY, PLACEHOLDER_SELF_REFERENCE, Property, PROPERTY, PropertyReference, REFERENCE, Reference, SELF_PROPERTY } from "@december/utils/access"
 
 import { IGURPSCharacter, IGURPSTrait, Trait } from "@december/gurps"
 import { isNameExtensionValid, Type, isAlias, getAliases, IGURPSAttribute, makeGURPSTraitEnvironment, IGURPSTraitOrModifier } from "@december/gurps/trait"
@@ -149,7 +149,7 @@ export const GCAStrategyProcessorParseOptions: (object: MutableObject) => Omit<S
 const REMOVE_VALUE: unique symbol = Symbol.for(`gca:remove_value`)
 type RemoveValue = typeof REMOVE_VALUE
 
-export function getEntryAsRuntime<TObject extends AnyObject = AnyObject>(character: GURPSCharacter, target: string): Nullable<ObjectValue<TObject>> {
+export function getVariableNameAsRuntimeValue<TObject extends AnyObject = AnyObject>(character: GURPSCharacter, target: string): Nullable<ObjectValue<TObject>> {
   if (isAlias(target)) {
     const alias = target
 
@@ -180,38 +180,48 @@ export function getEntryAsRuntime<TObject extends AnyObject = AnyObject>(charact
 
 export const GCAStrategyProcessorResolveOptionsGenerator: (object: MutableObject) => Omit<StrategyProcessorResolveOptions, `syntacticalContext`> = (object: MutableObject) => ({
   isValidFunctionName: (functionName: string) => functionName.startsWith(`@`),
-  environmentUpdateCallback: (environment, symbolTable, locallyAssignedSymbols: Simbol[`name`][]) => {
-    const symbols: Map<Simbol[`name`], Simbol> = new Map()
+  environmentUpdateCallback: (environment, symbolTable, locallyUpdatedVariables: VariableName[]) => {
+    // (a map with unique variables and their first occuring symbol — mostly for reference, we don't care about linked nodes here)
+    // (property symbols are mostly discarded too, we just care about their variableNames)
+    const uniqueVariables: Map<VariableName, Simbol> = new Map()
 
-    const variableReassignmentSymbols = environment.getVariableReassignmentAsSymbols() // a runtime VARIABLE_VALUE is basically proxy a value to another value, so we speed things up by trying to link the value here before it is event found in symbol table
-    for (const symbol of variableReassignmentSymbols) if (!symbols.has(symbol.name)) symbols.set(symbol.name, symbol)
+    // 1. Index all indirect variables (a variable pointing to another variable)
+    const rasterizedIndirectVariables = environment.rasterizeIndirectVariablesAsSymbols() // a runtime VARIABLE_VALUE is basically proxy a value to another value, so we speed things up by trying to link the value here before it is event found in symbol table
+    for (const symbol of rasterizedIndirectVariables) if (!uniqueVariables.has(symbol.variableName)) uniqueVariables.set(symbol.variableName, symbol)
 
-    const tableSymbols = symbolTable.getAllSymbols(environment) // we are ALWAYS looking to update any symbol present in table, making this reactive would be a pain
-    for (const symbol of tableSymbols) if (!symbols.has(symbol.name)) symbols.set(symbol.name, symbol)
+    // 2. Index all symbols invoked by the interpreter (i.e. SymbolTable) contextualized by the environment
+    // TODO: This is for updating ALL previously assigned symbols, the ideal should be to only update the ones that were changed
+    const tableSymbols = symbolTable.getAllVariables(environment) // we are ALWAYS looking to update any symbol present in table, making this reactive would be a pain
+    for (const symbol of tableSymbols) if (!uniqueVariables.has(symbol.variableName)) uniqueVariables.set(symbol.variableName, symbol)
 
-    const allSymbols: Simbol[] = [...symbols.values()]
-    const nonLocallyAssignedSymbols = allSymbols.filter(symbol => !locallyAssignedSymbols.includes(symbol.name))
+    // 3. Update only "new" variables (updated variables are registered inside locallyUpdatedVariables so we don't do it twice unecessarily)
+    const variablesAsSymbols: Simbol[] = [...uniqueVariables.values()]
+    const nonLocallyUpdatedVariablesAsSymbols = variablesAsSymbols.filter(symbol => !locallyUpdatedVariables.includes(symbol.variableName))
 
-    for (const symbol of nonLocallyAssignedSymbols) {
-      let value: Nullable<RuntimeValue<any> | RemoveValue> = getEntryAsRuntime(object.controller as GURPSCharacter, symbol.name)
+    for (const symbol of nonLocallyUpdatedVariablesAsSymbols) {
+      const variableName = symbol.variableName
 
-      // 1. Check if function was declared in environment
-      if (value === null && (symbol.name.startsWith(`@`) || symbol.name.startsWith(`$`))) {
-        const resolvedFunctionName = environment.resolve(symbol.name)
+      // 1. Fetch RUNTIME_VALUE corresponding to VARIABLE NAME
+      let runtimeValue: Nullable<RuntimeValue<any> | RemoveValue> = getVariableNameAsRuntimeValue(object.controller as GURPSCharacter, variableName)
+
+      // (DEBUG: throw error for GCA functions, mostly while developing)
+      const isGCAFunction = variableName.startsWith(`@`) || variableName.startsWith(`$`)
+      if (runtimeValue === null && isGCAFunction) {
+        const resolvedFunctionName = environment.resolve(variableName)
         const isPresent = !!resolvedFunctionName && !!resolvedFunctionName.environment
 
-        assert(isPresent, `Unimplemented function "${symbol.name}"`)
+        assert(isPresent, `Unimplemented function "${variableName}"`)
       }
 
-      // 2. Assign value into environment
-      if (value !== null) {
-        //  What to do if a value suddenly vanishes?
-        if ((value as any) === REMOVE_VALUE) {
-          const currentlyHasValue = !!environment.resolve(symbol.name)?.environment
+      // 2. Assign runtimeValue into environment
+      if (runtimeValue !== null) {
+        // TODO: What to do if a runtimeValue suddenly vanishes?
+        if ((runtimeValue as any) === REMOVE_VALUE) {
+          const currentlyHasValue = !!environment.resolve(variableName)?.environment
           debugger
         } else {
-          const assigned = environment.assignValue(symbol.name, value, true)
-          if (assigned) locallyAssignedSymbols.push(symbol.name)
+          const assigned = environment.assignValue(variableName, runtimeValue, true)
+          if (assigned) locallyUpdatedVariables.push(variableName)
         }
       }
     }
@@ -225,24 +235,38 @@ export const GCAStrategyProcessorOptionsGenerator: (object: MutableObject) => Om
 
 export const GCAStrategyProcessorListenOptions: Omit<StrategyProcessorListenOptions, `reProcessingFunction`> = {
   isSymbolListenable: symbol => {
-    if (isAlias(symbol.name)) return true
+    if (isAlias(symbol.variableName)) return true
 
-    if (symbol.name === `@basethdice`) return true
+    // (here because BaseTHDice is based on char->damageTable) (see below)
+    if (symbol.variableName === `@basethdice`) return true
 
     return false
   },
   generatePropertyPatterns: symbol => {
-    if (isAlias(symbol.name)) {
-      const alias = symbol.name
-      return [PROPERTY(REFERENCE(`alias`, alias), ANY_PROPERTY)]
+    if (isAlias(symbol.variableName)) {
+      const alias = symbol.variableName
+
+      // default property is "level" or "score", depending on the type
+      let property: ElementPattern<string> | Property
+
+      if (symbol.value.type !== `name`) property = symbol.value.properties.join(`.`)
+      else {
+        if (alias.startsWith(`ST:`) || [`ST`, `DX`, `IQ`, `HT`, `Will`, `Per`]) property = `score.value`
+        else property = `level.value`
+      }
+
+      assert(property!, `Property msut be defined`) //
+
+      return [PROPERTY(REFERENCE(`alias`, alias), property)]
     }
 
-    if (symbol.name === `@basethdice`) return [PROPERTY(REFERENCE(`id`, `general`), `damageTable`)]
+    if (symbol.variableName === `@basethdice`) return [PROPERTY(REFERENCE(`id`, `general`), `damageTable`)]
 
-    throw new Error(`Get property patterns from symbol "${symbol.name}" not implemented`)
+    throw new Error(`Get property patterns from symbol "${symbol.variableName}" not implemented`)
   },
   getDependencyEntry: (id: ObjectID, symbol) => {
-    if (isAlias(symbol.name)) return [{ id, objects: [new Reference(`alias`, symbol.name)] }]
+    // TODO: Dependency entries should go down to nested properties
+    if (isAlias(symbol.variableName)) return [{ id, objects: [new Reference(`alias`, symbol.variableName)] }]
 
     return null
   },

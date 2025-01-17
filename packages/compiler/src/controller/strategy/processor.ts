@@ -6,7 +6,7 @@ import { Simbol, SymbolTable } from "@december/tree/symbolTable"
 
 import { Node, Statement } from "@december/tree/tree"
 import { SyntacticalContext } from "@december/tree/parser"
-import { Environment, InterpreterOptions, RuntimeEvaluation, RuntimeValue } from "@december/tree/interpreter"
+import { Environment, InterpreterOptions, RuntimeEvaluation, RuntimeValue, VariableName } from "@december/tree/interpreter"
 import Processor, { BaseProcessorRunOptions, makeDefaultProcessor, ProcessorFactoryFunction } from "@december/tree/processor"
 import { Token } from "@december/tree/token/core"
 import { InjectionData } from "@december/tree/lexer"
@@ -68,7 +68,7 @@ export class StrategyProcessor {
   // #region CORE
 
   /** Parse expression into an AST */
-  public static parse(expression: string, environment: Environment, locallyAssignedSymbols: Simbol[`name`][], options: StrategyProcessorParseOptions): StrategyProcessState {
+  public static parse(expression: string, environment: Environment, locallyUpdatedVariables: VariableName[], options: StrategyProcessorParseOptions): StrategyProcessState {
     const symbolTable = new SymbolTable()
 
     // 1. Make processor instance dedicated to expression
@@ -76,13 +76,13 @@ export class StrategyProcessor {
     const processor = factory({ unitManager: options.unitManager, symbolTable })
 
     // 2. Parse expression into AST
-    const { originalExpression, tokens, injections, AST } = processor.parse(expression, environment, symbolTable, locallyAssignedSymbols, { ...options })
+    const { originalExpression, tokens, injections, AST } = processor.parse(expression, environment, symbolTable, locallyUpdatedVariables, { ...options })
 
     return new StrategyProcessState(expression, symbolTable, processor, tokens, injections, AST)
   }
 
   /** Tries to resolve AST (evaluate + simplify in loop) */
-  public static resolve(state: StrategyProcessState, environment: Environment, locallyAssignedSymbols: Simbol[`name`][], options: StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
+  public static resolve(state: StrategyProcessState, environment: Environment, locallyUpdatedVariables: VariableName[], options: StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
     const { symbolTable, processor, AST } = state
 
     assert(state.isParsed(), `Cannot resolve un-parsed state.`)
@@ -93,13 +93,13 @@ export class StrategyProcessor {
 
     // 1. Try to update environment based on AST
     //      (inside here we would check all missing symbols, from symbolTable, and ATTEMPT to inject them, resolve the variable, into the ENVIRONMENT)
-    options.environmentUpdateCallback(environment, symbolTable, locallyAssignedSymbols)
+    options.environmentUpdateCallback(environment, symbolTable, locallyUpdatedVariables)
 
     // 2. Reset symbol linking
     symbolTable.resetLinks()
 
     // 3. Run resolution loop
-    const { originalContent, content, evaluation, isReady } = processor.resolve(latestTree, environment, symbolTable, locallyAssignedSymbols, {
+    const { originalContent, content, evaluation, isReady } = processor.resolve(latestTree, environment, symbolTable, locallyUpdatedVariables, {
       ...options,
     })
 
@@ -107,9 +107,9 @@ export class StrategyProcessor {
   }
 
   /** Process expression into evaluation */
-  public static process(expression: string, environment: Environment, locallyAssignedSymbols: Simbol[`name`][], options: StrategyProcessorParseOptions & StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
-    const state = StrategyProcessor.parse(expression, environment, locallyAssignedSymbols, options)
-    return StrategyProcessor.resolve(state, environment, locallyAssignedSymbols, options)
+  public static process(expression: string, environment: Environment, locallyUpdatedVariables: VariableName[], options: StrategyProcessorParseOptions & StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
+    const state = StrategyProcessor.parse(expression, environment, locallyUpdatedVariables, options)
+    return StrategyProcessor.resolve(state, environment, locallyUpdatedVariables, options)
   }
 
   // #endregion
@@ -134,11 +134,11 @@ export class StrategyProcessor {
   public static listenForSymbols(state: StrategyProcessState, object: MutableObject, path: string, options: StrategyProcessorListenOptions): Listener[] {
     const { symbolTable, integrityEntries, listenedSymbols } = state
 
-    // 1. Get all symbols
+    // 1. Get all symbols invoked by interpreter and contextualized by environment
     const allSymbols = symbolTable.getAllSymbols(state.environment!)
 
     // 2. Ignore already listened to symbols
-    const notListenedSymbols = allSymbols.filter(symbol => !state.listenedSymbols[symbol.name]?.length)
+    const notListenedSymbols = allSymbols.filter(symbol => !state.listenedSymbols[symbol.key]?.length)
 
     // 3. Filter only "listenable" symbols
     const listenableSymbols = notListenedSymbols.filter(symbol => options.isSymbolListenable(symbol))
@@ -176,8 +176,8 @@ export class StrategyProcessor {
       listeners.push(listener)
 
       // 4.5. Update state index with listener
-      listenedSymbols[symbol.name] ??= []
-      listenedSymbols[symbol.name].push(listener)
+      listenedSymbols[symbol.key] ??= []
+      listenedSymbols[symbol.key].push(listener)
     }
 
     return listeners
@@ -204,7 +204,7 @@ export class StrategyProcessState {
   public evaluation: Nullable<RuntimeEvaluation> = null
   //
   public integrityEntries: IntegrityEntry[] = []
-  public listenedSymbols: Record<Simbol[`name`], Listener[]> = {}
+  public listenedSymbols: Record<Simbol[`key`], Listener[]> = {}
 
   constructor(expression: string, symbolTable: SymbolTable, processor: Processor, tokens: Token[], injections: InjectionData[], AST: Nullable<Node>) {
     this.expression = expression

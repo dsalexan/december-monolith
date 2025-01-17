@@ -148,9 +148,14 @@ export interface IGURPSSkillOrSpellOrTechnique extends IGURPSBaseTrait<`skill` |
           expression: string // expression to calculate both LEVEL and DISPLAY
           //
           trait: string // reference of trait responsible for default
-          level: number // default value
+          isKnown: boolean // if reference trait is EFFECTIVELLY KNOWN (any attribute or, specifically, known skill — skills with invested points)
+          value: number // default level value
+          points: number // free points gained by defaulting to this level
         }[]
       >
+      default: number // index of defaults corresponding to BEST DEFAULT LEVEL
+      base: { type: `default`; index: number } | { type: `attribute`; level: number }
+      bought: number // points * difficulty
     }
   >
   points: MergeDeep<
@@ -160,7 +165,7 @@ export interface IGURPSSkillOrSpellOrTechnique extends IGURPSBaseTrait<`skill` |
     }
   >
   cost: ProgressionCost // Down(), DownFormula(), Up, Step()
-  // attribute: string // ONLY FOR SKILLS/SPELLS, not techniques
+  attribute: string // Type(), ONLY FOR SKILLS/SPELLS, not techniques
   difficulty: `E` | `A` | `H` | `VH` // Type()
   //
   // GCASkillOrSpell

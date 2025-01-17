@@ -17,6 +17,7 @@ import { AnyObject, Arguments, MaybeNull, MaybeUndefined } from "tsdef"
 import { SyntacticalContextExpression } from "../../../../tree/expression/complex"
 import { MATH_FUNCTIONS } from "../../../../../../../apps/gca/src/trait/parser/syntax/logic"
 import { isArray, isNil } from "lodash"
+import { makeToken } from "../../../../utils/factories"
 
 /** Parse tokens into an expression (until we reach something below the minimum binding power) */
 export const parseExpression: EntryParser<Expression> = (p: Parser, minimumBindingPower: BindingPower, context: SyntacticalContext): Expression => {
@@ -175,7 +176,28 @@ export const parseQuotedStringExpression: NUDParser = (p: Parser<DefaultExpressi
 
   stringLiteral.quoted = true
 
-  return p.grammar.call(`parseStringExpression`)(p, stringLiteral, context)
+  const node = p.grammar.call(`parseStringExpression`)(p, stringLiteral, context)
+
+  // TODO: Remove this from here, just applicable to GCA LOGIC
+  // 3. For some fucking reason we allow member expressions inside quoted strings
+  if (node.type === `StringLiteral`) {
+    const content = node.getContent()
+    if (content.includes(`::`)) {
+      const [objectString, ...accessors] = content.split(`::`)
+      assert(accessors.length === 1, `Unimplemented`)
+
+      let buffer: MemberExpression = p.grammar.call(`parseStringExpression`)(p, new StringLiteral(makeToken(objectString)), context) as any
+      for (const accessor of accessors) {
+        const property = p.grammar.call(`parseStringExpression`)(p, new StringLiteral(makeToken(accessor)), context)
+        buffer = new MemberExpression(buffer, property)
+      }
+
+      buffer.quoted = true
+      return buffer
+    }
+  }
+
+  return node
 }
 
 export const parseStringExpression = (p: Parser, stringLiteral: StringLiteral, context: SyntacticalContext): Expression => {
@@ -190,6 +212,8 @@ export const parseStringExpression = (p: Parser, stringLiteral: StringLiteral, c
   // 2. Then check if it is a unit
   const unit = p.grammar.getUnit(content)
   if (unit) return new UnitLiteral(unit, ...stringLiteral.tokens)
+
+  // if (global.__CALL_QUEUE_CONTEXT_OBJECT.id === `12906`) debugger
 
   return stringLiteral
 }

@@ -284,6 +284,8 @@ export default class ObjectCallQueue extends ObjectManager {
       frameRegistry: this.controller.frameRegistry,
     }
 
+    if (object.id === `12943` && executionContext.index === 17) debugger
+
     const mutationFrameReturn = mutationFrame.fn(object, metadata)
 
     // 3. Parse return

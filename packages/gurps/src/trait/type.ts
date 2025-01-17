@@ -55,3 +55,20 @@ export function toTag(type: TraitType) {
 
   throw new Error(`Tag not implemented for type: ${type}`)
 }
+
+export function fromTag(tag: string): TraitType {
+  if (tag === `ST`) return `attribute`
+  if (tag === `LA`) return `language`
+  if (tag === `CU`) return `culture`
+  if (tag === `AD`) return `advantage`
+  if (tag === `PE`) return `perk`
+  if (tag === `FE`) return `feature`
+  if (tag === `DI`) return `disadvantage`
+  if (tag === `QU`) return `quirk`
+  if (tag === `SK`) return `skill`
+  if (tag === `SP`) return `spell`
+  if (tag === `TE`) return `template`
+  if (tag === `EQ`) return `equipment`
+
+  throw new Error(`Type not implemented for tag: ${tag}`)
+}

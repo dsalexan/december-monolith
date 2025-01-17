@@ -3,13 +3,13 @@ import assert from "assert"
 import churchill, { Block, padColumns, paint, Paint } from "../logger"
 
 import { Node } from "../tree"
-import { Simbol } from "./symbol"
+import { Simbol, SymbolValue } from "./symbol"
 import { VARIABLE_NOT_FOUND, type Environment, type VariableName } from "../interpreter"
 
 export const _logger = churchill.child(`tree`, undefined, { separator: `` })
 
 export class SymbolTable {
-  public readonly table: Map<VariableName, Simbol>
+  public readonly table: Map<Simbol[`key`], Simbol>
 
   constructor() {
     this.table = new Map()
@@ -21,92 +21,94 @@ export class SymbolTable {
   }
 
   /** Packages and indexed symbol (through data) */
-  public index(variableName: VariableName, treeName?: string, node?: Node): Simbol {
+  public index(value: SymbolValue, treeName?: string, node?: Node): Simbol {
+    const newSymbol = new Simbol(value)
+
     // 1. If symbol is already indexed, just link its node
-    if (this.has(variableName)) {
-      const symbol = this.get(variableName)
+    if (this.has(newSymbol.key)) {
+      const symbol = this.get(newSymbol.key)
       if (treeName) symbol.linkNode(treeName, node!)
 
       return symbol
     }
 
     // 2. If it is a new symbol, create, link and index it
-    const symbol = new Simbol(variableName)
-    if (treeName) symbol.linkNode(treeName, node!)
+    if (treeName) newSymbol.linkNode(treeName, node!)
 
-    this.add(symbol)
+    this.add(newSymbol)
 
-    return symbol
+    return newSymbol
   }
 
   /** Adds a symbol to the index */
   public add(symbol: Simbol) {
-    assert(this.table.has(symbol.name) === false, `Symbol already exists in table.`)
-    this.table.set(symbol.name, symbol)
+    assert(this.table.has(symbol.key) === false, `Symbol already exists in table.`)
+    this.table.set(symbol.key, symbol)
   }
 
-  /** Check if a variable name is already indexed in table (as a symbol) */
-  public has(name: VariableName): boolean {
-    return this.table.has(name)
+  /** Check if a symbol is already indexed in table */
+  public has(key: Simbol[`key`]): boolean {
+    return this.table.has(key)
   }
 
-  /** Return symbol by variable name */
-  public get(name: VariableName): Simbol {
-    const symbol = this.table.get(name)
-    assert(symbol, `Symbol "${name}" not found in table.`)
+  /** Return symbol by key */
+  public get(key: Simbol[`key`]): Simbol {
+    const symbol = this.table.get(key)
+    assert(symbol, `Symbol "${key}" not found in table.`)
 
     return symbol
   }
 
-  /** Return all symbols missing in a specific environment */
-  public getMissingSymbols(environment: Environment): Simbol[] {
-    const missing: Simbol[] = []
-
-    for (const symbol of this.table.values()) {
-      // 1. Resolve symbol name. It could result in a DIFFERENT symbol that is not originally in the table
-      const resolvedVariable = environment.resolve(symbol.name)
-
-      // 2. Variable couldn't even be resolved
-      if (!resolvedVariable) missing.push(symbol)
-      // 3. Variable was resolved into ANOTHER variable, which is missing anywhere
-      else if (resolvedVariable.environment === null) {
-        // (so we index a new symbol and pass it as missing)
-        debugger
-        assert(resolvedVariable.variableName !== symbol.name, `Symbol name must be different.`)
-
-        const newSymbol = this.index(resolvedVariable.variableName)
-        missing.push(newSymbol)
-      }
-      // (if variable was resolved AND found, it is not missing)
-    }
-
-    // debugger
-    return missing
-  }
-
   /** Return all symbols contextualized for a specific environment (i.e. resolving them in that env) */
   public getAllSymbols(environment: Environment): Simbol[] {
-    const symbols: Record<Simbol[`name`], Simbol> = {}
+    const symbols: Record<Simbol[`key`], Simbol> = {}
 
-    const tableSymbols = Array.from(this.table.values())
-    for (const symbol of tableSymbols) {
-      const resolvedVariable = environment.resolve(symbol.name)
-
-      // 2. Variable is either present in environment or missing altogether, doesn't matter
-      if (!symbols[symbol.name]) symbols[symbol.name] = symbol
-
-      // 1. Variable was resolved into ANOTHER variable
-      if (!!resolvedVariable && resolvedVariable.variableName !== symbol.name) {
-        // (so we index a new symbol and push it)
-        // (it being missing or not is irrelevant)
-        const newSymbol = this.index(resolvedVariable.variableName)
-        if (!symbols[newSymbol.name]) symbols[newSymbol.name] = newSymbol
+    const allSymbols = [...this.table.values()]
+    for (const symbol of allSymbols) {
+      const variants: Simbol[] = [symbol, ...this._contextualizeSymbol(symbol, environment)]
+      for (const variant of variants) {
+        // we index all variants, as long as the key (flatten path usually) is unique
+        if (!symbols[variant.key]) symbols[variant.key] = variant
       }
-
-      // 2. Variable is either present in environment or missing altogether
     }
 
     return Object.values(symbols)
+  }
+
+  /** Return all unique variables contextualized for a specific environment */
+  public getAllVariables(environment: Environment): Simbol[] {
+    const variables: Record<VariableName, Simbol> = {}
+
+    const symbols = [...this.table.values()]
+    for (const symbol of symbols) {
+      // (so we index a new symbol and push it)
+      // (it being missing or not is irrelevant)
+
+      const variants: Simbol[] = [symbol, ...this._contextualizeSymbol(symbol, environment)]
+      for (const variant of variants) {
+        // we index the first occurent of a variableName, since it is the only "variable" part really (thinking of the paths - properties - as fixed)
+        if (!variables[variant.variableName]) variables[variant.variableName] = variant
+      }
+    }
+
+    return Object.values(variables)
+  }
+
+  /** Contextualize symbol for a environment tree (usually by checking synonyms and resolving variable names) */
+  protected _contextualizeSymbol(symbol: Simbol, environment: Environment): Simbol[] {
+    const variantSymbols: Simbol[] = []
+
+    // 1. Resolve variable name
+    const resolvedVariable = environment.resolve(symbol.variableName)
+
+    // 2. Build variant symbol
+    if (!!resolvedVariable && resolvedVariable.variableName !== symbol.variableName) {
+      const clone = symbol.clone({ variableName: resolvedVariable.variableName })
+      const newSymbol = this.index(clone.value)
+      variantSymbols.push(newSymbol)
+    }
+
+    return variantSymbols
   }
 
   /** Prints table state */

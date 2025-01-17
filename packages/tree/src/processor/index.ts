@@ -6,7 +6,7 @@ import { numberToLetters } from "@december/utils"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
-import Interpreter, { Environment, InterpreterOptions, NodeEvaluator, RuntimeEvaluation, RuntimeValue } from "../interpreter"
+import Interpreter, { Environment, InterpreterOptions, NodeEvaluator, RuntimeEvaluation, RuntimeValue, VariableName } from "../interpreter"
 import Lexer, { InjectionData, LexicalGrammar } from "../lexer"
 import Parser, { SyntacticalContext, SyntacticalGrammar } from "../parser"
 import Rewriter, { GraphRewritingSystem } from "../rewriter"
@@ -22,7 +22,7 @@ export type { ProcessorOptions, ProcessorFactoryFunction } from "./default"
 export interface BaseProcessorRunOptions {
   logger?: typeof _logger
   debug?: boolean
-  environmentUpdateCallback?: (environment: Environment, symbolTable: SymbolTable, locallyAssignedSymbols: Simbol[`name`][]) => void
+  environmentUpdateCallback?: (environment: Environment, symbolTable: SymbolTable, locallyUpdatedVariables: VariableName[]) => void
   syntacticalContext: SyntacticalContext
   //
   injection?: string
@@ -64,7 +64,7 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
   }
 
   /** Process certain sections of expression and inject resulting stuff into placeholders */
-  public inject(tokens: Token[], injections: InjectionData[], environment: Environment, symbolTable: SymbolTable, locallyAssignedSymbols: Simbol[`name`][], options: BaseProcessorRunOptions & TInterpreterOptions): boolean {
+  public inject(tokens: Token[], injections: InjectionData[], environment: Environment, symbolTable: SymbolTable, locallyUpdatedVariables: VariableName[], options: BaseProcessorRunOptions & TInterpreterOptions): boolean {
     if (injections.length === 0) return true
 
     for (let i = 0; i < injections.length; i++) {
@@ -78,11 +78,11 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
       else throw new Error(`Unknown injection function "${injection.name}"`)
 
       // 2. Parse partial expression
-      const { AST } = this.parse(injection.expression, environment, symbolTable, locallyAssignedSymbols, { ...options, syntacticalContext, injection: `${options.injection ?? `⌀`} > $${injection.index}` })
+      const { AST } = this.parse(injection.expression, environment, symbolTable, locallyUpdatedVariables, { ...options, syntacticalContext, injection: `${options.injection ?? `⌀`} > $${injection.index}` })
       if (!AST) continue
 
       // 3. Resolve partial expression
-      const { originalContent, content, evaluation, isReady } = this.resolve(AST, environment, symbolTable, locallyAssignedSymbols, {
+      const { originalContent, content, evaluation, isReady } = this.resolve(AST, environment, symbolTable, locallyUpdatedVariables, {
         ...options,
         syntacticalContext,
       })
@@ -112,7 +112,7 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
   }
 
   /** Parses string expression into an Abstract Syntax Tree */
-  public parse(expression: string, environment: Environment, symbolTable: SymbolTable, locallyAssignedSymbols: Simbol[`name`][], options: BaseProcessorRunOptions & TInterpreterOptions): ParsingOutput {
+  public parse(expression: string, environment: Environment, symbolTable: SymbolTable, locallyUpdatedVariables: VariableName[], options: BaseProcessorRunOptions & TInterpreterOptions): ParsingOutput {
     const DEBUG = options.debug ?? false // COMMENT
     const logger = options.logger ?? _logger // COMMENT
 
@@ -121,7 +121,7 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
     const { tokens, injections } = this.lexer.process(`${injection}`, this.lexicalGrammar, expression, {})
     if (DEBUG) this.lexer.print() // COMMENT
 
-    const noPendingInjections = this.inject(tokens, injections, environment, symbolTable, locallyAssignedSymbols, { ...options })
+    const noPendingInjections = this.inject(tokens, injections, environment, symbolTable, locallyUpdatedVariables, { ...options })
 
     let AST: Nullable<Node> = null
     if (noPendingInjections) {
@@ -138,7 +138,7 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
   }
 
   /** Tries to resolve an Abstract Syntax Tree into some value (by "pruning" the tree as much as possible)*/
-  public resolve(AST: Node, environment: Environment, symbolTable: SymbolTable, locallyAssignedSymbols: Simbol[`name`][], options: BaseProcessorRunOptions & TInterpreterOptions): ResolutionOutput {
+  public resolve(AST: Node, environment: Environment, symbolTable: SymbolTable, locallyUpdatedVariables: VariableName[], options: BaseProcessorRunOptions & TInterpreterOptions): ResolutionOutput {
     const RESOLUTION_RUN = options.resolutionRun ?? 0
     const STACK_OVERFLOW_PROTECTION = 5
 
@@ -179,12 +179,12 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
 
       // 1. Wait for environment update
       //      (TODO: inside here we would check all missing symbols, from symbolTable, and ATTEMPT to inject them, resolve the variable, into the ENVIRONMENT)
-      options.environmentUpdateCallback(environment, symbolTable, locallyAssignedSymbols)
+      options.environmentUpdateCallback(environment, symbolTable, locallyUpdatedVariables)
 
       const currentVersion = environment.getVersion()
       // 2. If environment was updated, try to resolve again
       assert(RESOLUTION_RUN + 1 < STACK_OVERFLOW_PROTECTION, `Stack overflow protection triggered`) // COMMENT
-      if (previousVersion !== currentVersion) return this.resolve(latestTree, environment, symbolTable, locallyAssignedSymbols, { ...options, resolutionRun: RESOLUTION_RUN + 1 })
+      if (previousVersion !== currentVersion) return this.resolve(latestTree, environment, symbolTable, locallyUpdatedVariables, { ...options, resolutionRun: RESOLUTION_RUN + 1 })
       // }
     }
 

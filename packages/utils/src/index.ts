@@ -288,7 +288,25 @@ export function mergeWithDeep<TObject, TSource>(object: TObject, source: TSource
     if (isPrimitive(newValue)) return newValue
     if (currentValue === undefined || currentValue.length === 0) return newValue
     // if (currentValue.length === newValue.length) return newValue
-    if (isArray(currentValue) && isArray(newValue)) return [...currentValue, ...newValue]
+    if (isArray(currentValue) && isArray(newValue)) {
+      if (currentValue.length > 0 && newValue.length > 0) {
+        const currentIsObjectArray = currentValue.every(item => (isObjectLike(item) && !isArray(item)) || item === undefined)
+        const newIsObjectArray = newValue.every(item => (isObjectLike(item) && !isArray(item)) || item === undefined)
+
+        if (currentIsObjectArray && newIsObjectArray) {
+          const mergedObjectArray: any[] = []
+          const N = Math.max(currentValue.length, newValue.length)
+          for (let i = 0; i < N; i++) {
+            mergedObjectArray[i] = {
+              ...(currentValue[i] ?? {}),
+              ...(newValue[i] ?? {}),
+            }
+          }
+
+          return mergedObjectArray
+        } else debugger
+      } else debugger
+    }
 
     return mergeWithDeep(currentValue, newValue)
     // return customizer(currentValue, newValue)

@@ -5,6 +5,8 @@ import { NODE_TYPE_COLOR } from "../tree/type"
 import type { Environment, VariableName } from "../interpreter"
 import { ObjectValue, PropertyValue, VARIABLE_NOT_FOUND } from "../interpreter"
 import { groupBy, isSymbol } from "lodash"
+import { Nullable } from "tsdef"
+import { ResolvedVariable } from "../interpreter/environment"
 
 export class LinkedNode {
   public tree: string // "name" or designation of tree
@@ -20,13 +22,40 @@ export class LinkedNode {
   }
 }
 
-export class Simbol {
-  public name: VariableName
-  public linkedNodes: Map<LinkedNode[`key`], LinkedNode>
+export interface SymbolValue_Name {
+  type: `name`
+  key: string
+  name: VariableName
+}
 
-  constructor(name: VariableName) {
-    this.name = name
+export interface SymbolValue_Property {
+  type: `property`
+  key: string
+  object: VariableName
+  properties: VariableName[] // nested properties
+}
+
+export type SymbolValue = SymbolValue_Name | SymbolValue_Property
+
+export class Simbol {
+  public linkedNodes: Map<LinkedNode[`key`], LinkedNode>
+  public value: SymbolValue
+
+  constructor(value: SymbolValue) {
     this.linkedNodes = new Map()
+    //
+    this.value = value
+  }
+
+  public get key() {
+    return this.value.key
+  }
+
+  public get variableName(): VariableName {
+    if (this.value.type === `name`) return this.value.name
+    else if (this.value.type === `property`) return this.value.object
+    //
+    else throw new Error(`Invalid symbol value type: ${(this.value as any).type}`)
   }
 
   public linkNode(tree: string, node: Node) {
@@ -40,14 +69,19 @@ export class Simbol {
     const row: Block[][] = []
 
     // 1. Variable name
-    row.push([paint.white.bold(this.name)])
+    if (this.value.type === `name`) row.push([paint.white.bold(this.value.name)])
+    else if (this.value.type === `property`) row.push([paint.white.bold(this.value.object), ...this.value.properties.map(property => [paint.grey.dim(`->`), paint.white(property)]).flat()])
+    else throw new Error(`Invalid symbol value type: ${(this.value as any).type}`)
 
     // 2. Presence in Environment
     row.push([paint.identity(`  `)])
     if (environment) {
       // if (this.name === `@basethdice`) debugger
 
-      const resolvedVariable = environment.resolve(this.name)
+      let resolvedVariable: Nullable<ResolvedVariable> = null
+      if (this.value.type === `name`) resolvedVariable = environment.resolve(this.value.name)
+      else if (this.value.type === `property`) resolvedVariable = environment.resolve(this.value.object)
+      else throw new Error(`Invalid symbol value type: ${(this.value as any).type}`)
 
       // if (!resolvedVariable || !resolvedVariable.environment) debugger
 
@@ -102,5 +136,22 @@ export class Simbol {
     }
 
     return row
+  }
+
+  public clone(options: { variableName?: VariableName; properties?: VariableName[] } = {}) {
+    const variableName = options.variableName ?? this.variableName
+    const properties = options.properties ?? this.value.type === `property` ? (this.value as any).properties : []
+
+    let symbolValue: SymbolValue
+    if (this.value.type === `property` || (this.value.type === `name` && properties.length > 0)) symbolValue = { type: `property`, key: Simbol.getKey(variableName, ...properties), object: variableName, properties }
+    else if (this.value.type === `name`) symbolValue = { type: `name`, key: variableName, name: variableName }
+    //
+    else throw new Error(`Invalid symbol value type: ${(this.value as any).type}`)
+
+    return new Simbol(symbolValue)
+  }
+
+  public static getKey(variableName: VariableName, ...properties: VariableName[]) {
+    return [variableName, ...properties].join(`->`)
   }
 }

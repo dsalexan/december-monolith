@@ -17,7 +17,7 @@
               "Program code is copyright © 1995-2023 by Armin D. Sykes. All data files, graphics, and other GURPS-specific content is copyright © 2005 and other years by Steve Jackson Games Incorporated. GURPS and the all-seeing pyramid are registered trademarks of Steve Jackson Games Incorporated. All rights reserved."
             ],
             "datecreated": [
-              "06 January 2025"
+              "16 January 2025"
             ]
           }
         ],
@@ -27,7 +27,7 @@
               "5"
             ],
             "lastkey": [
-              "15063"
+              "15064"
             ]
           }
         ],
@@ -485,7 +485,7 @@
           "Full Gear"
         ],
         "currenttransform": [
-          "Incomplete Mars/Venus"
+          "Regular"
         ],
         "output": [
           {
@@ -499,6 +499,7 @@
               "Simple Text Export"
             ],
             "altexportsheet": [
+              "Export To Foundry VTT",
               "Export To Foundry VTT",
               "Export To Foundry VTT",
               "Export To Foundry VTT",
@@ -616,7 +617,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -666,7 +667,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -866,7 +867,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -916,7 +917,7 @@
                   "0"
                 ],
                 "dr": [
-                  "7/15adr"
+                  "3"
                 ],
                 "hp": [
                   "0"
@@ -966,7 +967,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1016,7 +1017,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1066,7 +1067,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1116,7 +1117,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1166,7 +1167,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1216,7 +1217,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1266,7 +1267,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1316,7 +1317,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1366,7 +1367,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1416,7 +1417,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1466,7 +1467,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1516,7 +1517,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1566,7 +1567,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1616,7 +1617,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1666,7 +1667,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1716,7 +1717,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1766,7 +1767,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -1816,7 +1817,7 @@
                   "0"
                 ],
                 "dr": [
-                  "5/13adr"
+                  "1"
                 ],
                 "hp": [
                   "0"
@@ -2239,9 +2240,6 @@
                     "name": [
                       "Air Move"
                     ],
-                    "bonuslist": [
-                      "+6 from 'Extra Basic Move 3 (Affects Air Move, +0%; Affects Move, +0%)'"
-                    ],
                     "needscheck": [
                       "-1"
                     ],
@@ -2252,7 +2250,7 @@
                       "2"
                     ],
                     "score": [
-                      "19"
+                      "13"
                     ],
                     "level": [
                       "1"
@@ -2260,7 +2258,7 @@
                     "calcs": [
                       {
                         "syslevels": [
-                          "6"
+                          "0"
                         ],
                         "basepoints": [
                           "2"
@@ -2547,7 +2545,7 @@
                       "0"
                     ],
                     "score": [
-                      "9"
+                      "6"
                     ],
                     "level": [
                       "0"
@@ -2573,7 +2571,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "9"
+                          "6"
                         ]
                       }
                     ],
@@ -2623,7 +2621,7 @@
                       "0"
                     ],
                     "score": [
-                      "126"
+                      "31"
                     ],
                     "level": [
                       "0"
@@ -2643,7 +2641,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "126"
+                          "31"
                         ]
                       }
                     ],
@@ -2693,9 +2691,6 @@
                     "name": [
                       "Basic Move"
                     ],
-                    "bonuslist": [
-                      "+3 from 'Extra Basic Move 3 (Affects Air Move, +0%; Affects Move, +0%)'"
-                    ],
                     "needscheck": [
                       "-1"
                     ],
@@ -2706,7 +2701,7 @@
                       "0"
                     ],
                     "score": [
-                      "9"
+                      "6"
                     ],
                     "level": [
                       "0"
@@ -2714,7 +2709,7 @@
                     "calcs": [
                       {
                         "syslevels": [
-                          "3"
+                          "0"
                         ],
                         "basevalue": [
                           "@if(\"DI:No Legs (Sessile)\" THEN 0 ELSE ST:Basic Speed)"
@@ -2978,7 +2973,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "1.8"
+                          "1.2"
                         ]
                       }
                     ],
@@ -3025,7 +3020,7 @@
                       "0"
                     ],
                     "score": [
-                      "16"
+                      "10"
                     ],
                     "level": [
                       "0"
@@ -3039,7 +3034,7 @@
                           "ST:Striking ST"
                         ],
                         "basescore": [
-                          "16"
+                          "10"
                         ]
                       }
                     ],
@@ -3091,7 +3086,7 @@
                               "ST:DX, SK:Brawling"
                             ],
                             "chardamage": [
-                              "2d-1"
+                              "1d-3"
                             ],
                             "chardamtype": [
                               "cr"
@@ -3109,7 +3104,7 @@
                               "No"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillused": [
                               "\"ST:DX\""
@@ -3289,7 +3284,7 @@
                       "0"
                     ],
                     "score": [
-                      "5"
+                      "3"
                     ],
                     "level": [
                       "0"
@@ -3309,7 +3304,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "5"
+                          "3"
                         ]
                       }
                     ],
@@ -3359,7 +3354,7 @@
                       "0"
                     ],
                     "score": [
-                      "1890"
+                      "465"
                     ],
                     "level": [
                       "0"
@@ -3379,7 +3374,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "1890"
+                          "465"
                         ]
                       }
                     ],
@@ -3635,7 +3630,7 @@
                       "0"
                     ],
                     "score": [
-                      "16"
+                      "10"
                     ],
                     "level": [
                       "0"
@@ -3649,7 +3644,7 @@
                           "ST:Striking ST"
                         ],
                         "basescore": [
-                          "16"
+                          "10"
                         ]
                       }
                     ],
@@ -5168,7 +5163,7 @@
                       "0"
                     ],
                     "score": [
-                      "0"
+                      "1"
                     ],
                     "level": [
                       "0"
@@ -5182,7 +5177,7 @@
                           "char::enclevel"
                         ],
                         "basescore": [
-                          "0"
+                          "1"
                         ]
                       }
                     ],
@@ -5239,7 +5234,7 @@
                               "-1 to (SK:Climbing, SK:Stealth)"
                             ],
                             "value": [
-                              "0"
+                              "-1"
                             ]
                           },
                           {
@@ -5265,7 +5260,7 @@
                               "-2 to SK:Swimming"
                             ],
                             "value": [
-                              "0"
+                              "-2"
                             ]
                           },
                           {
@@ -5288,7 +5283,7 @@
                               "-1 to (SK:Judo, SK:Karate, \"SK:Main-Gauche\", SK:Rapier, SK:Saber, SK:Smallsword) when \"striking or parrying\""
                             ],
                             "value": [
-                              "0"
+                              "-1"
                             ],
                             "notes": [
                               "striking or parrying"
@@ -6170,7 +6165,7 @@
                       "0"
                     ],
                     "score": [
-                      "9"
+                      "6"
                     ],
                     "level": [
                       "0"
@@ -6193,7 +6188,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "9"
+                          "6"
                         ]
                       }
                     ],
@@ -6312,7 +6307,7 @@
                       "0"
                     ],
                     "score": [
-                      "756"
+                      "186"
                     ],
                     "level": [
                       "0"
@@ -6335,7 +6330,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "756"
+                          "186"
                         ]
                       }
                     ],
@@ -6385,7 +6380,7 @@
                       "0"
                     ],
                     "score": [
-                      "3"
+                      "2"
                     ],
                     "level": [
                       "0"
@@ -6408,7 +6403,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "3.6"
+                          "2.4"
                         ]
                       }
                     ],
@@ -6455,7 +6450,7 @@
                       "0"
                     ],
                     "score": [
-                      "110"
+                      "65"
                     ],
                     "level": [
                       "0"
@@ -6475,7 +6470,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "110"
+                          "65"
                         ]
                       }
                     ],
@@ -6922,7 +6917,7 @@
                       "0"
                     ],
                     "score": [
-                      "9"
+                      "6"
                     ],
                     "level": [
                       "0"
@@ -6945,7 +6940,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "9"
+                          "6"
                         ]
                       }
                     ],
@@ -6995,7 +6990,7 @@
                       "0"
                     ],
                     "score": [
-                      "16"
+                      "10"
                     ],
                     "level": [
                       "0"
@@ -7009,7 +7004,7 @@
                           "ST:Striking ST"
                         ],
                         "basescore": [
-                          "16"
+                          "10"
                         ]
                       }
                     ],
@@ -7064,7 +7059,7 @@
                               "ST:DX-2, SK:Brawling-2, SK:Karate-2, SK:Kicking (Karate), SK:Kicking (Brawling)"
                             ],
                             "chardamage": [
-                              "3d"
+                              "1d"
                             ],
                             "chardamtype": [
                               "cr"
@@ -7082,7 +7077,7 @@
                               "No"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillusedkey": [
                               "k12928"
@@ -7355,7 +7350,7 @@
                       "Lifting ST"
                     ],
                     "bonuslist": [
-                      "+2 from 'Lifting ST 2', +6 from 'Lifting ST 6'"
+                      "+2 from 'Lifting ST 2'"
                     ],
                     "needscheck": [
                       "-1"
@@ -7367,7 +7362,7 @@
                       "0"
                     ],
                     "score": [
-                      "18"
+                      "12"
                     ],
                     "level": [
                       "0"
@@ -7375,7 +7370,7 @@
                     "calcs": [
                       {
                         "syslevels": [
-                          "8"
+                          "2"
                         ],
                         "basevalue": [
                           "ST:ST"
@@ -7449,7 +7444,7 @@
                       "0"
                     ],
                     "score": [
-                      "252"
+                      "62"
                     ],
                     "level": [
                       "0"
@@ -7472,7 +7467,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "252"
+                          "62"
                         ]
                       }
                     ],
@@ -7522,7 +7517,7 @@
                       "0"
                     ],
                     "score": [
-                      "7"
+                      "4"
                     ],
                     "level": [
                       "0"
@@ -7545,7 +7540,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "7.2"
+                          "4.8"
                         ]
                       }
                     ],
@@ -9520,7 +9515,7 @@
                       "0"
                     ],
                     "score": [
-                      "378"
+                      "93"
                     ],
                     "level": [
                       "0"
@@ -9543,7 +9538,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "378"
+                          "93"
                         ]
                       }
                     ],
@@ -9593,7 +9588,7 @@
                       "0"
                     ],
                     "score": [
-                      "5"
+                      "3"
                     ],
                     "level": [
                       "0"
@@ -9616,7 +9611,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "5.4"
+                          "3.6"
                         ]
                       }
                     ],
@@ -10538,7 +10533,7 @@
                       "0"
                     ],
                     "score": [
-                      "126"
+                      "31"
                     ],
                     "level": [
                       "0"
@@ -10561,7 +10556,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "126"
+                          "31"
                         ]
                       }
                     ],
@@ -10611,7 +10606,7 @@
                       "0"
                     ],
                     "score": [
-                      "9"
+                      "6"
                     ],
                     "level": [
                       "0"
@@ -10634,7 +10629,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "9"
+                          "6"
                         ]
                       }
                     ],
@@ -10745,7 +10740,7 @@
                       "0"
                     ],
                     "score": [
-                      "18"
+                      "12"
                     ],
                     "level": [
                       "0"
@@ -10768,7 +10763,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "18"
+                          "12"
                         ]
                       }
                     ],
@@ -10983,7 +10978,7 @@
                       "0"
                     ],
                     "score": [
-                      "16"
+                      "10"
                     ],
                     "level": [
                       "0"
@@ -11006,7 +11001,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "16"
+                          "10"
                         ]
                       }
                     ],
@@ -11049,7 +11044,7 @@
                       "0"
                     ],
                     "score": [
-                      "58"
+                      "26"
                     ],
                     "level": [
                       "0"
@@ -11072,7 +11067,7 @@
                           "1"
                         ],
                         "basescore": [
-                          "58"
+                          "26"
                         ]
                       }
                     ],
@@ -11539,7 +11534,7 @@
                       "0"
                     ],
                     "score": [
-                      "16"
+                      "10"
                     ],
                     "level": [
                       "0"
@@ -11553,7 +11548,7 @@
                           "ST:One Arm Striking ST"
                         ],
                         "basescore": [
-                          "16"
+                          "10"
                         ]
                       }
                     ],
@@ -11608,7 +11603,7 @@
                               "ST:DX, SK:Brawling, SK:Boxing, SK:Karate"
                             ],
                             "chardamage": [
-                              "2d+3"
+                              "1d-1"
                             ],
                             "chardamtype": [
                               "cr"
@@ -11620,22 +11615,22 @@
                               "\"SK:Karate\""
                             ],
                             "charskillscore": [
-                              "15"
+                              "14"
                             ],
                             "charparryscore": [
-                              "10"
+                              "9"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillusedkey": [
                               "k12899"
                             ],
-                            "minimode_damtype": [
-                              "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
-                            ],
                             "minimode_damage": [
                               "thr-1 + @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Feet Only) = 0 then @basethdice(ST:Punch) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 then @basethdice(ST:Punch) else 0)) + @max(@if(\"SK:Brawling::level\" > ST:DX+1 then @basethdice(ST:Punch) ELSE 0),@if(\"SK:Boxing::level\" = ST:DX+1 then @basethdice(ST:Punch) ELSE @if(\"SK:Boxing::level\" > ST:DX+1 then 2 * @basethdice(ST:Punch) ELSE 0)),@if(\"SK:Karate::level\" = ST:DX then @basethdice(ST:Punch) ELSE @if(\"SK:Karate::level\" > ST:DX then 2 * @basethdice(ST:Punch) ELSE 0)))"
+                            ],
+                            "minimode_damtype": [
+                              "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
                             ],
                             "itemnotes": [
                               "{Brawling (p. B182) increases all unarmed damage; Claws (p. B42) and Karate (p. B203) improve damage with punches and kicks (Claws don't affect damage with brass knuckles or boots); and Boxing (p. B182) improves punching damage.}"
@@ -11727,7 +11722,7 @@
                       "Reaction"
                     ],
                     "conditionallist": [
-                      "-1 from 'Ham-Fisted 1' when being tidy or well-groomed matters, +2 from 'Overconfidence (12 or less, *1)' when young or naive individuals, -2 from 'Overconfidence (12 or less, *1)' when experienced NPCs, +2 from 'Sense of Duty (Adventuring companions)' when in dangerous situations if Sense of Duty is known, +2 from 'Sense of Duty (Large Group; Air Nations)' when in dangerous situations if Sense of Duty is known, +2 from 'Talent 2 (Elemental, Air)' when someone observers him using his elemental control, +2 from 'Talent 2 (Breathing Techniques)' when masters of the air notice his style"
+                      "+2 from 'Overconfidence (12 or less, *1)' when young or naive individuals, -2 from 'Overconfidence (12 or less, *1)' when experienced NPCs, +2 from 'Sense of Duty (Adventuring companions)' when in dangerous situations if Sense of Duty is known, +2 from 'Sense of Duty (Large Group; Air Nations)' when in dangerous situations if Sense of Duty is known, +2 from 'Talent 2 (Breathing Techniques)' when masters of the air notice his style, +2 from 'Talent 2 (Elemental, Air)' when someone observers him using his elemental control"
                     ],
                     "needscheck": [
                       "-1"
@@ -11866,7 +11861,7 @@
                               "2d+1"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "minimode_damage": [
                               "2d+1"
@@ -12069,7 +12064,7 @@
                       "0"
                     ],
                     "score": [
-                      "6300"
+                      "1550"
                     ],
                     "level": [
                       "0"
@@ -12089,7 +12084,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "6300"
+                          "1550"
                         ]
                       }
                     ],
@@ -12139,7 +12134,7 @@
                       "0"
                     ],
                     "score": [
-                      "1512"
+                      "372"
                     ],
                     "level": [
                       "0"
@@ -12159,7 +12154,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "1512"
+                          "372"
                         ]
                       }
                     ],
@@ -12507,7 +12502,7 @@
                       "ST"
                     ],
                     "conditionallist": [
-                      "+2 from 'Lifting ST 2', +6 from 'Striking ST 6', +6 from 'Lifting ST 6'"
+                      "+2 from 'Lifting ST 2'"
                     ],
                     "needscheck": [
                       "-1"
@@ -12743,9 +12738,6 @@
                     "name": [
                       "Striking ST"
                     ],
-                    "bonuslist": [
-                      "+6 from 'Striking ST 6'"
-                    ],
                     "needscheck": [
                       "-1"
                     ],
@@ -12756,7 +12748,7 @@
                       "0"
                     ],
                     "score": [
-                      "16"
+                      "10"
                     ],
                     "level": [
                       "0"
@@ -12764,7 +12756,7 @@
                     "calcs": [
                       {
                         "syslevels": [
-                          "6"
+                          "0"
                         ],
                         "basevalue": [
                           "ST:ST"
@@ -13027,7 +13019,7 @@
                       "0"
                     ],
                     "score": [
-                      "29"
+                      "13"
                     ],
                     "level": [
                       "0"
@@ -13053,7 +13045,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "29.4545454545455"
+                          "13.0909090909091"
                         ]
                       }
                     ],
@@ -13106,7 +13098,7 @@
                       "0"
                     ],
                     "score": [
-                      "435"
+                      "195"
                     ],
                     "level": [
                       "0"
@@ -13129,7 +13121,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "435"
+                          "195"
                         ]
                       }
                     ],
@@ -13185,7 +13177,7 @@
                       "0"
                     ],
                     "score": [
-                      "18"
+                      "12"
                     ],
                     "level": [
                       "0"
@@ -13208,7 +13200,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "18"
+                          "12"
                         ]
                       }
                     ],
@@ -13366,7 +13358,7 @@
                       "0"
                     ],
                     "score": [
-                      "58"
+                      "26"
                     ],
                     "level": [
                       "0"
@@ -13389,7 +13381,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "58"
+                          "26"
                         ]
                       }
                     ],
@@ -13442,7 +13434,7 @@
                       "0"
                     ],
                     "score": [
-                      "1450"
+                      "650"
                     ],
                     "level": [
                       "0"
@@ -13465,7 +13457,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "1450"
+                          "650"
                         ]
                       }
                     ],
@@ -13521,7 +13513,7 @@
                       "0"
                     ],
                     "score": [
-                      "348"
+                      "156"
                     ],
                     "level": [
                       "0"
@@ -13544,7 +13536,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "348"
+                          "156"
                         ]
                       }
                     ],
@@ -13784,7 +13776,7 @@
                       "0"
                     ],
                     "score": [
-                      "16"
+                      "10"
                     ],
                     "level": [
                       "0"
@@ -13807,7 +13799,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "16"
+                          "10"
                         ]
                       }
                     ],
@@ -13965,7 +13957,7 @@
                       "0"
                     ],
                     "score": [
-                      "232"
+                      "104"
                     ],
                     "level": [
                       "0"
@@ -13988,7 +13980,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "232"
+                          "104"
                         ]
                       }
                     ],
@@ -16451,7 +16443,7 @@
                       "0"
                     ],
                     "score": [
-                      "18"
+                      "12"
                     ],
                     "level": [
                       "0"
@@ -16474,7 +16466,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "18"
+                          "12"
                         ]
                       }
                     ],
@@ -16689,7 +16681,7 @@
                       "0"
                     ],
                     "score": [
-                      "16"
+                      "10"
                     ],
                     "level": [
                       "0"
@@ -16712,7 +16704,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "16"
+                          "10"
                         ]
                       }
                     ],
@@ -16755,7 +16747,7 @@
                       "0"
                     ],
                     "score": [
-                      "232"
+                      "104"
                     ],
                     "level": [
                       "0"
@@ -16778,7 +16770,7 @@
                           "1"
                         ],
                         "basescore": [
-                          "232"
+                          "104"
                         ]
                       }
                     ],
@@ -17312,7 +17304,7 @@
                       "0"
                     ],
                     "score": [
-                      "1260"
+                      "310"
                     ],
                     "level": [
                       "0"
@@ -17335,7 +17327,7 @@
                           "0"
                         ],
                         "basescore": [
-                          "1260"
+                          "310"
                         ]
                       }
                     ],
@@ -17408,7 +17400,7 @@
                           "-1"
                         ],
                         "basescore": [
-                          "1.8"
+                          "1.2"
                         ]
                       }
                     ],
@@ -18742,7 +18734,7 @@
                               "10"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillused": [
                               "\"SK:Innate Attack (Beam)\""
@@ -19175,7 +19167,7 @@
                               "10"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillused": [
                               "\"SK:Innate Attack (Beam)\""
@@ -19539,7 +19531,7 @@
                               "10"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillused": [
                               "\"SK:Innate Attack (Beam)\""
@@ -19840,7 +19832,7 @@
                               ""
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -19860,7 +19852,7 @@
                               "Breathing"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -20896,7 +20888,7 @@
                               "No"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "chardamage": [
                               "0d"
@@ -20928,7 +20920,7 @@
                               "SK:Innate Attack (Beam), ST:DX-4, SK:Innate Attack (Beam)-2, SK:Innate Attack (Breath)-2, SK:Innate Attack (Gaze)-2, SK:Innate Attack (Projectile)-2"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "15"
@@ -21187,7 +21179,7 @@
                               "No"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "chardamage": [
                               "0d"
@@ -21219,7 +21211,7 @@
                               "SK:Innate Attack (Beam), ST:DX-4, SK:Innate Attack (Beam)-2, SK:Innate Attack (Breath)-2, SK:Innate Attack (Gaze)-2, SK:Innate Attack (Projectile)-2"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "15"
@@ -21478,7 +21470,7 @@
                               "No"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "chardamage": [
                               "0d"
@@ -21510,7 +21502,7 @@
                               "SK:Innate Attack (Beam), ST:DX-4, SK:Innate Attack (Beam)-2, SK:Innate Attack (Breath)-2, SK:Innate Attack (Gaze)-2, SK:Innate Attack (Projectile)-2"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "15"
@@ -21720,7 +21712,7 @@
                               "No"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "chardamage": [
                               "0d"
@@ -21752,7 +21744,7 @@
                               "SK:Innate Attack (Beam), ST:DX-4, SK:Innate Attack (Beam)-2, SK:Innate Attack (Breath)-2, SK:Innate Attack (Gaze)-2, SK:Innate Attack (Projectile)-2"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "15"
@@ -21954,7 +21946,7 @@
                               "No"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "chardamage": [
                               "0d"
@@ -21986,7 +21978,7 @@
                               "SK:Innate Attack (Beam), ST:DX-4, SK:Innate Attack (Beam)-2, SK:Innate Attack (Breath)-2, SK:Innate Attack (Gaze)-2, SK:Innate Attack (Projectile)-2"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "15"
@@ -22418,7 +22410,7 @@
                           "0"
                         ],
                         "chardr": [
-                          "4"
+                          "0"
                         ],
                         "location": [
                           "skin"
@@ -22458,6 +22450,23 @@
                         ]
                       }
                     ],
+                    "extended": [
+                      {
+                        "$": {
+                          "count": "1"
+                        },
+                        "extendedtag": [
+                          {
+                            "tagname": [
+                              "inactive"
+                            ],
+                            "tagvalue": [
+                              "Regular"
+                            ]
+                          }
+                        ]
+                      }
+                    ],
                     "modifiers": [
                       {
                         "$": {
@@ -22491,41 +22500,23 @@
                             ],
                             "page": [
                               "B47"
-                            ]
-                          }
-                        ]
-                      }
-                    ],
-                    "bonuses": [
-                      {
-                        "$": {
-                          "count": "1"
-                        },
-                        "bonus": [
-                          {
-                            "targetname": [
-                              "me"
                             ],
-                            "targettag": [
-                              "dr"
-                            ],
-                            "targettype": [
-                              "Me"
-                            ],
-                            "affects": [
-                              "other"
-                            ],
-                            "bonuspart": [
-                              "+1"
-                            ],
-                            "bonustype": [
-                              "1"
-                            ],
-                            "fullbonustext": [
-                              "+1 to me::dr"
-                            ],
-                            "value": [
-                              "4"
+                            "extended": [
+                              {
+                                "$": {
+                                  "count": "1"
+                                },
+                                "extendedtag": [
+                                  {
+                                    "tagname": [
+                                      "inactive"
+                                    ],
+                                    "tagvalue": [
+                                      "yes"
+                                    ]
+                                  }
+                                ]
+                              }
                             ]
                           }
                         ]
@@ -22580,7 +22571,7 @@
                           "0adr"
                         ],
                         "chardr": [
-                          "8adr"
+                          "0adr"
                         ],
                         "location": [
                           "skin"
@@ -22620,6 +22611,23 @@
                         ]
                       }
                     ],
+                    "extended": [
+                      {
+                        "$": {
+                          "count": "1"
+                        },
+                        "extendedtag": [
+                          {
+                            "tagname": [
+                              "inactive"
+                            ],
+                            "tagvalue": [
+                              "Regular"
+                            ]
+                          }
+                        ]
+                      }
+                    ],
                     "modifiers": [
                       {
                         "$": {
@@ -22653,41 +22661,23 @@
                             ],
                             "page": [
                               "B47"
-                            ]
-                          }
-                        ]
-                      }
-                    ],
-                    "bonuses": [
-                      {
-                        "$": {
-                          "count": "1"
-                        },
-                        "bonus": [
-                          {
-                            "targetname": [
-                              "me"
                             ],
-                            "targettag": [
-                              "dr"
-                            ],
-                            "targettype": [
-                              "Me"
-                            ],
-                            "affects": [
-                              "other"
-                            ],
-                            "bonuspart": [
-                              "+1"
-                            ],
-                            "bonustype": [
-                              "1"
-                            ],
-                            "fullbonustext": [
-                              "+1 to me::dr"
-                            ],
-                            "value": [
-                              "8"
+                            "extended": [
+                              {
+                                "$": {
+                                  "count": "1"
+                                },
+                                "extendedtag": [
+                                  {
+                                    "tagname": [
+                                      "inactive"
+                                    ],
+                                    "tagvalue": [
+                                      "yes"
+                                    ]
+                                  }
+                                ]
+                              }
                             ]
                           }
                         ]
@@ -23237,7 +23227,7 @@
                               ""
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -23257,7 +23247,7 @@
                               "Meditation"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -23589,6 +23579,23 @@
                         ]
                       }
                     ],
+                    "extended": [
+                      {
+                        "$": {
+                          "count": "1"
+                        },
+                        "extendedtag": [
+                          {
+                            "tagname": [
+                              "inactive"
+                            ],
+                            "tagvalue": [
+                              "Regular"
+                            ]
+                          }
+                        ]
+                      }
+                    ],
                     "modifiers": [
                       {
                         "$": {
@@ -23629,12 +23636,20 @@
                             "extended": [
                               {
                                 "$": {
-                                  "count": "1"
+                                  "count": "2"
                                 },
                                 "extendedtag": [
                                   {
                                     "tagname": [
                                       "noresync"
+                                    ],
+                                    "tagvalue": [
+                                      "yes"
+                                    ]
+                                  },
+                                  {
+                                    "tagname": [
+                                      "inactive"
                                     ],
                                     "tagvalue": [
                                       "yes"
@@ -23723,6 +23738,23 @@
                         ]
                       }
                     ],
+                    "extended": [
+                      {
+                        "$": {
+                          "count": "1"
+                        },
+                        "extendedtag": [
+                          {
+                            "tagname": [
+                              "inactive"
+                            ],
+                            "tagvalue": [
+                              "Regular"
+                            ]
+                          }
+                        ]
+                      }
+                    ],
                     "modifiers": [
                       {
                         "$": {
@@ -23763,7 +23795,7 @@
                             "extended": [
                               {
                                 "$": {
-                                  "count": "1"
+                                  "count": "2"
                                 },
                                 "extendedtag": [
                                   {
@@ -23773,40 +23805,13 @@
                                     "tagvalue": [
                                       "This modifier causes the Extra Basic Move advantage to affect the displayed Air Move attribute score. If you don't wish this advantage to affect the displayed score remove this modifier."
                                     ]
-                                  }
-                                ]
-                              }
-                            ],
-                            "bonuses": [
-                              {
-                                "$": {
-                                  "count": "1"
-                                },
-                                "bonus": [
+                                  },
                                   {
-                                    "targetprefix": [
-                                      "ST"
+                                    "tagname": [
+                                      "inactive"
                                     ],
-                                    "targetname": [
-                                      "air move"
-                                    ],
-                                    "targettype": [
-                                      "Attributes"
-                                    ],
-                                    "affects": [
-                                      "level"
-                                    ],
-                                    "bonuspart": [
-                                      "+(Owner::Level * 2)"
-                                    ],
-                                    "bonustype": [
-                                      "1"
-                                    ],
-                                    "fullbonustext": [
-                                      "+(Owner::Level * 2) to ST:Air Move"
-                                    ],
-                                    "value": [
-                                      "6"
+                                    "tagvalue": [
+                                      "yes"
                                     ]
                                   }
                                 ]
@@ -23847,7 +23852,7 @@
                             "extended": [
                               {
                                 "$": {
-                                  "count": "1"
+                                  "count": "2"
                                 },
                                 "extendedtag": [
                                   {
@@ -23857,40 +23862,13 @@
                                     "tagvalue": [
                                       "This modifier causes the Extra Basic Move advantage to affect the displayed attribute score. If you don't wish this advantage to affect the displayed score remove this modifier."
                                     ]
-                                  }
-                                ]
-                              }
-                            ],
-                            "bonuses": [
-                              {
-                                "$": {
-                                  "count": "1"
-                                },
-                                "bonus": [
+                                  },
                                   {
-                                    "targetprefix": [
-                                      "ST"
+                                    "tagname": [
+                                      "inactive"
                                     ],
-                                    "targetname": [
-                                      "basic move"
-                                    ],
-                                    "targettype": [
-                                      "Attributes"
-                                    ],
-                                    "affects": [
-                                      "level"
-                                    ],
-                                    "bonuspart": [
-                                      "+Owner::Level"
-                                    ],
-                                    "bonustype": [
-                                      "1"
-                                    ],
-                                    "fullbonustext": [
-                                      "+Owner::Level to ST:Basic Move"
-                                    ],
-                                    "value": [
-                                      "3"
+                                    "tagvalue": [
+                                      "yes"
                                     ]
                                   }
                                 ]
@@ -24646,9 +24624,17 @@
                     "extended": [
                       {
                         "$": {
-                          "count": "1"
+                          "count": "2"
                         },
                         "extendedtag": [
+                          {
+                            "tagname": [
+                              "inactive"
+                            ],
+                            "tagvalue": [
+                              "Regular"
+                            ]
+                          },
                           {
                             "tagname": [
                               "childprofile"
@@ -24844,71 +24830,18 @@
                         ]
                       }
                     ],
-                    "bonuses": [
+                    "extended": [
                       {
                         "$": {
                           "count": "1"
                         },
-                        "bonus": [
+                        "extendedtag": [
                           {
-                            "targetprefix": [
-                              "ST"
+                            "tagname": [
+                              "inactive"
                             ],
-                            "targetname": [
-                              "lifting st"
-                            ],
-                            "targettype": [
-                              "Attributes"
-                            ],
-                            "affects": [
-                              "level"
-                            ],
-                            "bonuspart": [
-                              "+1"
-                            ],
-                            "bonustype": [
-                              "1"
-                            ],
-                            "fullbonustext": [
-                              "+1 to ST:Lifting ST"
-                            ],
-                            "value": [
-                              "6"
-                            ]
-                          }
-                        ]
-                      }
-                    ],
-                    "conditionals": [
-                      {
-                        "$": {
-                          "count": "1"
-                        },
-                        "bonus": [
-                          {
-                            "targetprefix": [
-                              "ST"
-                            ],
-                            "targetname": [
-                              "st"
-                            ],
-                            "targettype": [
-                              "Attributes"
-                            ],
-                            "affects": [
-                              "level"
-                            ],
-                            "bonuspart": [
-                              "+1"
-                            ],
-                            "bonustype": [
-                              "1"
-                            ],
-                            "fullbonustext": [
-                              "+1 to ST:ST"
-                            ],
-                            "value": [
-                              "6"
+                            "tagvalue": [
+                              "Regular"
                             ]
                           }
                         ]
@@ -26150,71 +26083,18 @@
                         ]
                       }
                     ],
-                    "bonuses": [
+                    "extended": [
                       {
                         "$": {
                           "count": "1"
                         },
-                        "bonus": [
+                        "extendedtag": [
                           {
-                            "targetprefix": [
-                              "ST"
+                            "tagname": [
+                              "inactive"
                             ],
-                            "targetname": [
-                              "striking st"
-                            ],
-                            "targettype": [
-                              "Attributes"
-                            ],
-                            "affects": [
-                              "level"
-                            ],
-                            "bonuspart": [
-                              "+1"
-                            ],
-                            "bonustype": [
-                              "1"
-                            ],
-                            "fullbonustext": [
-                              "+1 to ST:Striking ST"
-                            ],
-                            "value": [
-                              "6"
-                            ]
-                          }
-                        ]
-                      }
-                    ],
-                    "conditionals": [
-                      {
-                        "$": {
-                          "count": "1"
-                        },
-                        "bonus": [
-                          {
-                            "targetprefix": [
-                              "ST"
-                            ],
-                            "targetname": [
-                              "st"
-                            ],
-                            "targettype": [
-                              "Attributes"
-                            ],
-                            "affects": [
-                              "level"
-                            ],
-                            "bonuspart": [
-                              "+1"
-                            ],
-                            "bonustype": [
-                              "1"
-                            ],
-                            "fullbonustext": [
-                              "+1 to ST:ST"
-                            ],
-                            "value": [
-                              "6"
+                            "tagvalue": [
+                              "Regular"
                             ]
                           }
                         ]
@@ -26290,7 +26170,7 @@
                               ""
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -26310,7 +26190,7 @@
                               "Meditation"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -27710,7 +27590,7 @@
                               ""
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -27730,7 +27610,7 @@
                               "Meditation"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -28085,7 +27965,7 @@
                               ""
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -28105,7 +27985,7 @@
                               "Meditation"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -28515,7 +28395,7 @@
                               ""
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -28535,7 +28415,7 @@
                               "Meditation"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "0"
@@ -28873,7 +28753,7 @@
                               "10"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillused": [
                               "\"SK:Innate Attack (Beam)\""
@@ -28881,11 +28761,11 @@
                             "charskillusedkey": [
                               "k12896"
                             ],
-                            "minimode_damage": [
-                              "$solver(%level)d"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "$solver(%level)d"
                             ]
                           }
                         ]
@@ -29310,7 +29190,7 @@
                               "10"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillused": [
                               "\"SK:Innate Attack (Beam)\""
@@ -29318,11 +29198,11 @@
                             "charskillusedkey": [
                               "k12896"
                             ],
-                            "minimode_damage": [
-                              "$solver(%level)d"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "$solver(%level)d"
                             ]
                           }
                         ]
@@ -29684,9 +29564,17 @@
                     "extended": [
                       {
                         "$": {
-                          "count": "1"
+                          "count": "2"
                         },
                         "extendedtag": [
+                          {
+                            "tagname": [
+                              "inactive"
+                            ],
+                            "tagvalue": [
+                              "Regular"
+                            ]
+                          },
                           {
                             "tagname": [
                               "childprofile"
@@ -29735,7 +29623,7 @@
                             "extended": [
                               {
                                 "$": {
-                                  "count": "1"
+                                  "count": "2"
                                 },
                                 "extendedtag": [
                                   {
@@ -29745,40 +29633,13 @@
                                     "tagvalue": [
                                       ",,"
                                     ]
-                                  }
-                                ]
-                              }
-                            ],
-                            "bonuses": [
-                              {
-                                "$": {
-                                  "count": "1"
-                                },
-                                "bonus": [
+                                  },
                                   {
-                                    "targetname": [
-                                      "owner"
+                                    "tagname": [
+                                      "inactive"
                                     ],
-                                    "targettag": [
-                                      "baseweight"
-                                    ],
-                                    "targettype": [
-                                      "Owner"
-                                    ],
-                                    "affects": [
-                                      "other"
-                                    ],
-                                    "bonuspart": [
-                                      "+0"
-                                    ],
-                                    "bonustype": [
-                                      "1"
-                                    ],
-                                    "fullbonustext": [
-                                      "+0 to owner::baseweight"
-                                    ],
-                                    "value": [
-                                      "0"
+                                    "tagvalue": [
+                                      "yes"
                                     ]
                                   }
                                 ]
@@ -29818,6 +29679,23 @@
                             ],
                             "levelnames": [
                               "Greater than 12 hours, Up to 12 hours (or one night), Up to 1 hour, Up to 30 minutes, Up to 10 minutes, Up to 1 minute, Less than 30 seconds"
+                            ],
+                            "extended": [
+                              {
+                                "$": {
+                                  "count": "1"
+                                },
+                                "extendedtag": [
+                                  {
+                                    "tagname": [
+                                      "inactive"
+                                    ],
+                                    "tagvalue": [
+                                      "yes"
+                                    ]
+                                  }
+                                ]
+                              }
                             ]
                           }
                         ]
@@ -29965,7 +29843,7 @@
                               "10"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillused": [
                               "\"SK:Meditation (Elemental Control)\""
@@ -30865,6 +30743,23 @@
                         ]
                       }
                     ],
+                    "extended": [
+                      {
+                        "$": {
+                          "count": "1"
+                        },
+                        "extendedtag": [
+                          {
+                            "tagname": [
+                              "inactive"
+                            ],
+                            "tagvalue": [
+                              "Regular"
+                            ]
+                          }
+                        ]
+                      }
+                    ],
                     "modifiers": [
                       {
                         "$": {
@@ -30898,6 +30793,23 @@
                             ],
                             "page": [
                               "B161"
+                            ],
+                            "extended": [
+                              {
+                                "$": {
+                                  "count": "1"
+                                },
+                                "extendedtag": [
+                                  {
+                                    "tagname": [
+                                      "inactive"
+                                    ],
+                                    "tagvalue": [
+                                      "yes"
+                                    ]
+                                  }
+                                ]
+                              }
                             ]
                           },
                           {
@@ -30930,6 +30842,23 @@
                             ],
                             "page": [
                               "B130"
+                            ],
+                            "extended": [
+                              {
+                                "$": {
+                                  "count": "1"
+                                },
+                                "extendedtag": [
+                                  {
+                                    "tagname": [
+                                      "inactive"
+                                    ],
+                                    "tagvalue": [
+                                      "yes"
+                                    ]
+                                  }
+                                ]
+                              }
                             ]
                           },
                           {
@@ -30959,6 +30888,23 @@
                             ],
                             "page": [
                               "B108"
+                            ],
+                            "extended": [
+                              {
+                                "$": {
+                                  "count": "1"
+                                },
+                                "extendedtag": [
+                                  {
+                                    "tagname": [
+                                      "inactive"
+                                    ],
+                                    "tagvalue": [
+                                      "yes"
+                                    ]
+                                  }
+                                ]
+                              }
                             ]
                           }
                         ]
@@ -31198,9 +31144,17 @@
                     "extended": [
                       {
                         "$": {
-                          "count": "1"
+                          "count": "2"
                         },
                         "extendedtag": [
+                          {
+                            "tagname": [
+                              "inactive"
+                            ],
+                            "tagvalue": [
+                              "Regular"
+                            ]
+                          },
                           {
                             "tagname": [
                               "childprofile"
@@ -31249,7 +31203,7 @@
                             "extended": [
                               {
                                 "$": {
-                                  "count": "1"
+                                  "count": "2"
                                 },
                                 "extendedtag": [
                                   {
@@ -31259,40 +31213,13 @@
                                     "tagvalue": [
                                       ",,"
                                     ]
-                                  }
-                                ]
-                              }
-                            ],
-                            "bonuses": [
-                              {
-                                "$": {
-                                  "count": "1"
-                                },
-                                "bonus": [
+                                  },
                                   {
-                                    "targetname": [
-                                      "owner"
+                                    "tagname": [
+                                      "inactive"
                                     ],
-                                    "targettag": [
-                                      "baseweight"
-                                    ],
-                                    "targettype": [
-                                      "Owner"
-                                    ],
-                                    "affects": [
-                                      "other"
-                                    ],
-                                    "bonuspart": [
-                                      "+0"
-                                    ],
-                                    "bonustype": [
-                                      "1"
-                                    ],
-                                    "fullbonustext": [
-                                      "+0 to owner::baseweight"
-                                    ],
-                                    "value": [
-                                      "0"
+                                    "tagvalue": [
+                                      "yes"
                                     ]
                                   }
                                 ]
@@ -31454,100 +31381,18 @@
                         ]
                       }
                     ],
-                    "bonuses": [
-                      {
-                        "$": {
-                          "count": "2"
-                        },
-                        "bonus": [
-                          {
-                            "targetprefix": [
-                              "SK"
-                            ],
-                            "targetname": [
-                              "fast-draw"
-                            ],
-                            "targettype": [
-                              "Skills"
-                            ],
-                            "affects": [
-                              "level"
-                            ],
-                            "bonuspart": [
-                              "-3"
-                            ],
-                            "bonustype": [
-                              "1"
-                            ],
-                            "fullbonustext": [
-                              "-3 to SK:Fast-Draw"
-                            ],
-                            "value": [
-                              "-3"
-                            ]
-                          },
-                          {
-                            "targetprefix": [
-                              "GR"
-                            ],
-                            "targetname": [
-                              "high manual dexterity"
-                            ],
-                            "targettype": [
-                              "Unknown"
-                            ],
-                            "affects": [
-                              "level"
-                            ],
-                            "bonuspart": [
-                              "-3"
-                            ],
-                            "bonustype": [
-                              "1"
-                            ],
-                            "fullbonustext": [
-                              "-3 to GR:High Manual Dexterity"
-                            ],
-                            "value": [
-                              "-3"
-                            ]
-                          }
-                        ]
-                      }
-                    ],
-                    "conditionals": [
+                    "extended": [
                       {
                         "$": {
                           "count": "1"
                         },
-                        "bonus": [
+                        "extendedtag": [
                           {
-                            "targetprefix": [
-                              "ST"
+                            "tagname": [
+                              "inactive"
                             ],
-                            "targetname": [
-                              "reaction"
-                            ],
-                            "targettype": [
-                              "Attributes"
-                            ],
-                            "affects": [
-                              "level"
-                            ],
-                            "bonuspart": [
-                              "-1"
-                            ],
-                            "bonustype": [
-                              "1"
-                            ],
-                            "fullbonustext": [
-                              "-1 to ST:Reaction when \"being tidy or well-groomed matters\""
-                            ],
-                            "value": [
-                              "-1"
-                            ],
-                            "notes": [
-                              "being tidy or well-groomed matters"
+                            "tagvalue": [
+                              "Regular"
                             ]
                           }
                         ]
@@ -31623,6 +31468,23 @@
                         ]
                       }
                     ],
+                    "extended": [
+                      {
+                        "$": {
+                          "count": "1"
+                        },
+                        "extendedtag": [
+                          {
+                            "tagname": [
+                              "inactive"
+                            ],
+                            "tagvalue": [
+                              "Regular"
+                            ]
+                          }
+                        ]
+                      }
+                    ],
                     "modifiers": [
                       {
                         "$": {
@@ -31662,6 +31524,23 @@
                             ],
                             "mods": [
                               "Accessibility"
+                            ],
+                            "extended": [
+                              {
+                                "$": {
+                                  "count": "1"
+                                },
+                                "extendedtag": [
+                                  {
+                                    "tagname": [
+                                      "inactive"
+                                    ],
+                                    "tagvalue": [
+                                      "yes"
+                                    ]
+                                  }
+                                ]
+                              }
                             ]
                           }
                         ]
@@ -33103,9 +32982,6 @@
                     "parentkey": [
                       "k12900"
                     ],
-                    "bonuslist": [
-                      "-3 from 'Ham-Fisted 1'"
-                    ],
                     "needscheck": [
                       "-1"
                     ],
@@ -33122,13 +32998,13 @@
                       "IQ/H"
                     ],
                     "step": [
-                      "-5"
+                      "-2"
                     ],
                     "stepoff": [
                       "IQ"
                     ],
                     "level": [
-                      "7"
+                      "10"
                     ],
                     "calcs": [
                       {
@@ -33145,10 +33021,10 @@
                           "1"
                         ],
                         "syslevels": [
-                          "-3"
+                          "0"
                         ],
                         "extralevels": [
-                          "-3"
+                          "0"
                         ],
                         "baselevel": [
                           "10"
@@ -33210,7 +33086,7 @@
                       "k12900"
                     ],
                     "bonuslist": [
-                      "+2 from 'Talent 2 (Elemental, Air)', +2 from 'Talent 2 (Breathing Techniques)'"
+                      "+2 from 'Talent 2 (Breathing Techniques)', +2 from 'Talent 2 (Elemental, Air)'"
                     ],
                     "needscheck": [
                       "-1"
@@ -33319,7 +33195,7 @@
                       "Background Skills"
                     ],
                     "childkeylist": [
-                      "k12889, k12888, k14823, k14815, k14813, k12887, k14822"
+                      "k12889, k12888, k14823, k14815, k15064, k12887, k14822"
                     ],
                     "needscheck": [
                       "-1"
@@ -33331,7 +33207,7 @@
                       "_General, _New Skills"
                     ],
                     "points": [
-                      "9"
+                      "23"
                     ],
                     "type": [
                       "N/A"
@@ -33366,7 +33242,7 @@
                           "0"
                         ],
                         "childpoints": [
-                          "9"
+                          "23"
                         ],
                         "upto": [
                           "0 LimitingTotal"
@@ -33516,7 +33392,7 @@
                       "k12902"
                     ],
                     "bonuslist": [
-                      "+2 from 'Talent 2 (Elemental, Air)', +2 from 'Talent 2 (Breathing Techniques)'"
+                      "+2 from 'Talent 2 (Breathing Techniques)', +2 from 'Talent 2 (Elemental, Air)'"
                     ],
                     "needscheck": [
                       "-1"
@@ -34076,115 +33952,6 @@
                   {
                     "$": {
                       "type": "Skills",
-                      "idkey": "14813"
-                    },
-                    "name": [
-                      "First Aid"
-                    ],
-                    "parentkey": [
-                      "k12900"
-                    ],
-                    "needscheck": [
-                      "-1"
-                    ],
-                    "taboofailed": [
-                      "0"
-                    ],
-                    "cat": [
-                      "_General, Everyman, Medical"
-                    ],
-                    "tl": [
-                      "4+3"
-                    ],
-                    "points": [
-                      "1"
-                    ],
-                    "type": [
-                      "IQ/E"
-                    ],
-                    "step": [
-                      "+0"
-                    ],
-                    "stepoff": [
-                      "IQ"
-                    ],
-                    "level": [
-                      "12"
-                    ],
-                    "calcs": [
-                      {
-                        "sd": [
-                          "0"
-                        ],
-                        "deflevel": [
-                          "0"
-                        ],
-                        "pointmult": [
-                          "1"
-                        ],
-                        "levelmult": [
-                          "1"
-                        ],
-                        "syslevels": [
-                          "0"
-                        ],
-                        "extralevels": [
-                          "0"
-                        ],
-                        "baselevel": [
-                          "12"
-                        ],
-                        "basepoints": [
-                          "1"
-                        ],
-                        "multpoints": [
-                          "1"
-                        ],
-                        "apppoints": [
-                          "1"
-                        ],
-                        "premodspoints": [
-                          "1"
-                        ],
-                        "baseapppoints": [
-                          "1"
-                        ]
-                      }
-                    ],
-                    "armordata": [
-                      ""
-                    ],
-                    "ref": [
-                      {
-                        "page": [
-                          "B195"
-                        ],
-                        "usernotes": [
-                          "\\f0\\fs19 Physiology Modifiers apply (p. B181):\\par \\i Similar: \\i0\\f1 -2 to -4\\par \\i\\f0 Very different: \\i0\\f1 -5. \\par \\i\\f0 Utterly alien: -\\i0\\f1 6 or worse (GM\\rquote s option).\\par \\i\\f0 Machine: \\i0\\f1 No roll possible!\\par A successful roll against a suitable skill (usually Physiology (Race)) lets you avoid these penalties.\\par"
-                        ],
-                        "default": [
-                          "IQ - 4, SK:Esoteric Medicine, SK:Physician, SK:Veterinary - 4, SK:Medicine!"
-                        ]
-                      }
-                    ],
-                    "attackmodes": [
-                      {
-                        "$": {
-                          "count": "1"
-                        },
-                        "attackmode": [
-                          {
-                            "name": [
-                              ""
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "$": {
-                      "type": "Skills",
                       "idkey": "14815"
                     },
                     "name": [
@@ -34650,7 +34417,7 @@
                               "SK:Karate"
                             ],
                             "chardamage": [
-                              "2d+3"
+                              "1d-1"
                             ],
                             "chardamtype": [
                               "cr"
@@ -34665,22 +34432,22 @@
                               "\"SK:Karate\""
                             ],
                             "charskillscore": [
-                              "15"
+                              "14"
                             ],
                             "charparryscore": [
-                              "10"
+                              "9"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillusedkey": [
                               "k12899"
                             ],
-                            "minimode_damage": [
-                              "thr-1 + @if(me::level = ST:DX then @basethdice(ST:Punch) else @if(me::level > ST:DX then 2 * @basethdice(ST:Punch) else 0)) + @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Feet Only) = 0 then @basethdice(ST:Punch) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 then @basethdice(ST:Punch) else 0))"
-                            ],
                             "minimode_damtype": [
                               "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Feet Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1  & @itemhasmod(AD:Claws (Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1  & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
+                            ],
+                            "minimode_damage": [
+                              "thr-1 + @if(me::level = ST:DX then @basethdice(ST:Punch) else @if(me::level > ST:DX then 2 * @basethdice(ST:Punch) else 0)) + @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Feet Only) = 0 then @basethdice(ST:Punch) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Feet Only) = 0 then @basethdice(ST:Punch) else 0))"
                             ]
                           },
                           {
@@ -34712,7 +34479,7 @@
                               "SK:Karate-2, SK:Kicking (Karate)"
                             ],
                             "chardamage": [
-                              "3d"
+                              "1d"
                             ],
                             "chardamtype": [
                               "cr"
@@ -34727,22 +34494,22 @@
                               "\"SK:Kicking (Karate)\""
                             ],
                             "charskillscore": [
-                              "14"
+                              "13"
                             ],
                             "charparryscore": [
                               "No"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillusedkey": [
                               "k12928"
                             ],
-                            "minimode_damage": [
-                              "thr+ @if(me::level = ST:DX then @basethdice(ST:Kick) else @if(me::level > ST:DX then 2 * @basethdice(ST:Kick) else 0)) + @if(\"DI:Horizontal::level\" = 1 then @if(\"AD:Claws (Blunt Claws)::level\" = 1 then 0 else @if(\"AD:Claws (Sharp Claws)::level\" = 1 then 0 else @if(\"AD:Claws (Talons)::level\" = 1 then 0 else @if(\"AD:Claws (Long Talons)::level\" = 1 then 0 else -@basethdice(ST:Kick))))) else 0) + @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Hands Only) = 0 then @basethdice(ST:Kick) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Hands Only) = 0 then @basethdice(ST:Kick) else @if(\"AD:Claws (Hooves)::level\" = 1 then @basethdice(ST:Kick) else 0)))"
-                            ],
                             "minimode_damtype": [
                               "$if(\"AD:Claws (Sharp Claws)::level\" = 1 & @itemhasmod(AD:Claws (Sharp Claws), Hands Only) = 0 THEN \"cut\" ELSE $if(\"AD:Claws (Talons)::level\" = 1 & @itemhasmod(AD:Claws (Talons), Hands Only) = 0 THEN \"cut/imp\" ELSE $if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Hands Only) = 0 THEN \"cut/imp\" ELSE \"cr\")))"
+                            ],
+                            "minimode_damage": [
+                              "thr+ @if(me::level = ST:DX then @basethdice(ST:Kick) else @if(me::level > ST:DX then 2 * @basethdice(ST:Kick) else 0)) + @if(\"DI:Horizontal::level\" = 1 then @if(\"AD:Claws (Blunt Claws)::level\" = 1 then 0 else @if(\"AD:Claws (Sharp Claws)::level\" = 1 then 0 else @if(\"AD:Claws (Talons)::level\" = 1 then 0 else @if(\"AD:Claws (Long Talons)::level\" = 1 then 0 else -@basethdice(ST:Kick))))) else 0) + @if(\"AD:Claws (Blunt Claws)::level\" = 1 & @itemhasmod(AD:Claws (Blunt Claws), Hands Only) = 0 then @basethdice(ST:Kick) else @if(\"AD:Claws (Long Talons)::level\" = 1 & @itemhasmod(AD:Claws (Long Talons), Hands Only) = 0 then @basethdice(ST:Kick) else @if(\"AD:Claws (Hooves)::level\" = 1 then @basethdice(ST:Kick) else 0)))"
                             ],
                             "itemnotes": [
                               "{If you miss with a kick, roll vs. DX to avoid falling.}"
@@ -34850,7 +34617,7 @@
                               "=-ST:Encumbrance Penalty::score to me::skillscore"
                             ],
                             "value": [
-                              "0"
+                              "-1"
                             ]
                           },
                           {
@@ -35284,7 +35051,7 @@
                       "k12902"
                     ],
                     "bonuslist": [
-                      "+2 from 'Talent 2 (Elemental, Air)', +2 from 'Talent 2 (Breathing Techniques)'"
+                      "+2 from 'Talent 2 (Breathing Techniques)', +2 from 'Talent 2 (Elemental, Air)'"
                     ],
                     "needscheck": [
                       "-1"
@@ -35408,19 +35175,19 @@
                       "5"
                     ],
                     "points": [
-                      "2"
+                      "16"
                     ],
                     "type": [
                       "IQ/H"
                     ],
                     "step": [
-                      "+1"
+                      "+5"
                     ],
                     "stepoff": [
                       "IQ"
                     ],
                     "level": [
-                      "13"
+                      "17"
                     ],
                     "calcs": [
                       {
@@ -35443,22 +35210,22 @@
                           "2"
                         ],
                         "baselevel": [
-                          "11"
+                          "15"
                         ],
                         "basepoints": [
-                          "2"
+                          "16"
                         ],
                         "multpoints": [
-                          "2"
+                          "16"
                         ],
                         "apppoints": [
-                          "2"
+                          "16"
                         ],
                         "premodspoints": [
-                          "2"
+                          "16"
                         ],
                         "baseapppoints": [
-                          "2"
+                          "16"
                         ]
                       }
                     ],
@@ -36279,7 +36046,7 @@
                               "No"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillscore": [
                               "11"
@@ -36294,7 +36061,7 @@
                               "k12906"
                             ],
                             "chardamage": [
-                              "3d+2"
+                              "1d+2"
                             ],
                             "dmg": [
                               "thr"
@@ -36305,11 +36072,11 @@
                             "charreach": [
                               "C"
                             ],
-                            "minimode_damage": [
-                              "thr+2 + @if(\"AD:Claws (Blunt Claws)::level\" = 1 then @basethdice(ST:Punch) else @if(\"AD:Claws (Long Talons)::level\" = 1 then @basethdice(ST:Punch) else 0)) + @if(\"SK:Karate::level\" = ST:DX then @basethdice(ST:Punch) else @if(\"SK:Karate::level\" > ST:DX then 2 * @basethdice(ST:Punch) else 0))"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "thr+2 + @if(\"AD:Claws (Blunt Claws)::level\" = 1 then @basethdice(ST:Punch) else @if(\"AD:Claws (Long Talons)::level\" = 1 then @basethdice(ST:Punch) else 0)) + @if(\"SK:Karate::level\" = ST:DX then @basethdice(ST:Punch) else @if(\"SK:Karate::level\" > ST:DX then 2 * @basethdice(ST:Punch) else 0))"
                             ]
                           }
                         ]
@@ -36613,6 +36380,127 @@
                         ],
                         "default": [
                           "DX - 5, SK:Net - 4, SK:Shield - 4, SK:Cloak Art - 3, SK:Cloak Sport - 3"
+                        ]
+                      }
+                    ],
+                    "attackmodes": [
+                      {
+                        "$": {
+                          "count": "1"
+                        },
+                        "attackmode": [
+                          {
+                            "name": [
+                              ""
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "$": {
+                      "type": "Skills",
+                      "idkey": "15064"
+                    },
+                    "name": [
+                      "First Aid"
+                    ],
+                    "parentkey": [
+                      "k12900"
+                    ],
+                    "needscheck": [
+                      "-1"
+                    ],
+                    "taboofailed": [
+                      "0"
+                    ],
+                    "cat": [
+                      "_General, Everyman, Medical"
+                    ],
+                    "tl": [
+                      "4+3"
+                    ],
+                    "points": [
+                      "1"
+                    ],
+                    "type": [
+                      "IQ/E"
+                    ],
+                    "step": [
+                      "+3"
+                    ],
+                    "stepoff": [
+                      "IQ"
+                    ],
+                    "level": [
+                      "15"
+                    ],
+                    "calcs": [
+                      {
+                        "sd": [
+                          "0"
+                        ],
+                        "deflevel": [
+                          "15"
+                        ],
+                        "deffrom": [
+                          "Physician/TL5"
+                        ],
+                        "deffromid": [
+                          "12889"
+                        ],
+                        "pointmult": [
+                          "1"
+                        ],
+                        "levelmult": [
+                          "1"
+                        ],
+                        "syslevels": [
+                          "0"
+                        ],
+                        "extralevels": [
+                          "0"
+                        ],
+                        "baselevel": [
+                          "15"
+                        ],
+                        "basepoints": [
+                          "1"
+                        ],
+                        "multpoints": [
+                          "1"
+                        ],
+                        "apppoints": [
+                          "9"
+                        ],
+                        "premodspoints": [
+                          "1"
+                        ],
+                        "baseapppoints": [
+                          "1"
+                        ],
+                        "defpoints": [
+                          "8"
+                        ],
+                        "extrapoints": [
+                          "8"
+                        ]
+                      }
+                    ],
+                    "armordata": [
+                      ""
+                    ],
+                    "ref": [
+                      {
+                        "page": [
+                          "B195"
+                        ],
+                        "usernotes": [
+                          "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang1033{\\fonttbl{\\f0\\froman\\fprq2\\fcharset0 Microsoft Sans Serif;}}\r\n\\viewkind4\\uc1\\pard\\f0\\fs19 Physiology Modifiers apply (p. B181):\\par\r\n\\i Similar: \\i0 -2 to -4\\par\r\n\\i Very different: \\i0 -5. \\par\r\n\\i Utterly alien: -\\i0 6 or worse (GM\\rquote s option).\\par\r\n\\i Machine: \\i0 No roll possible!\\par\r\nA successful roll against a suitable skill (usually Physiology (Race)) lets you avoid these penalties.\\par\r\n}"
+                        ],
+                        "default": [
+                          "IQ - 4, SK:Esoteric Medicine, SK:Physician, SK:Veterinary - 4, SK:Medicine!"
                         ]
                       }
                     ],
@@ -37819,7 +37707,7 @@
                               "13"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "bulk": [
                               "-7"
@@ -39421,16 +39309,16 @@
                               "11"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillusedkey": [
                               "k12892"
                             ],
-                            "minimode_damage": [
-                              "sw+2"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "sw+2"
                             ]
                           },
                           {
@@ -39492,16 +39380,16 @@
                               "11"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillusedkey": [
                               "k12892"
                             ],
-                            "minimode_damage": [
-                              "thr+2"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "thr+2"
                             ]
                           },
                           {
@@ -39563,16 +39451,16 @@
                               "9"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillusedkey": [
                               "k12893"
                             ],
-                            "minimode_damage": [
-                              "sw+2"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "sw+2"
                             ]
                           },
                           {
@@ -39634,16 +39522,16 @@
                               "9"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "charskillusedkey": [
                               "k12893"
                             ],
-                            "minimode_damage": [
-                              "thr+1"
-                            ],
                             "minimode_damtype": [
                               "cr"
+                            ],
+                            "minimode_damage": [
+                              "thr+1"
                             ]
                           }
                         ]
@@ -40864,7 +40752,7 @@
                               "14"
                             ],
                             "chareffectivest": [
-                              "16"
+                              "10"
                             ],
                             "bulk": [
                               "-6"
@@ -41001,6 +40889,23 @@
                           {
                             "name": [
                               ""
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "extended": [
+                      {
+                        "$": {
+                          "count": "1"
+                        },
+                        "extendedtag": [
+                          {
+                            "tagname": [
+                              "inactive"
+                            ],
+                            "tagvalue": [
+                              "Regular"
                             ]
                           }
                         ]
@@ -44788,7 +44693,7 @@
                           "0"
                         ],
                         "dr": [
-                          "8/16adr/6cr"
+                          "4/2cr"
                         ],
                         "hp": [
                           "0"
@@ -44838,7 +44743,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -45038,7 +44943,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -45088,7 +44993,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr"
+                          "3"
                         ],
                         "hp": [
                           "0"
@@ -45138,7 +45043,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -45188,7 +45093,7 @@
                           "0"
                         ],
                         "dr": [
-                          "8/16adr/6cr"
+                          "4/2cr"
                         ],
                         "hp": [
                           "0"
@@ -45238,7 +45143,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -45288,7 +45193,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -45338,7 +45243,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -45388,7 +45293,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -45438,7 +45343,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr"
+                          "3"
                         ],
                         "hp": [
                           "0"
@@ -45488,7 +45393,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr"
+                          "3"
                         ],
                         "hp": [
                           "0"
@@ -45538,7 +45443,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr"
+                          "3"
                         ],
                         "hp": [
                           "0"
@@ -45588,7 +45493,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -45638,7 +45543,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -45688,7 +45593,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -45738,7 +45643,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr/6cut"
+                          "1/2cut"
                         ],
                         "hp": [
                           "0"
@@ -45788,7 +45693,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr/6cut"
+                          "1/2cut"
                         ],
                         "hp": [
                           "0"
@@ -45838,7 +45743,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr/6cut"
+                          "1/2cut"
                         ],
                         "hp": [
                           "0"
@@ -45888,7 +45793,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -45938,7 +45843,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -45988,7 +45893,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -46562,7 +46467,7 @@
                           "0"
                         ],
                         "dr": [
-                          "8/16adr/6cr"
+                          "4/2cr"
                         ],
                         "hp": [
                           "0"
@@ -46612,7 +46517,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -46812,7 +46717,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -46862,7 +46767,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr"
+                          "3"
                         ],
                         "hp": [
                           "0"
@@ -46912,7 +46817,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -46962,7 +46867,7 @@
                           "0"
                         ],
                         "dr": [
-                          "8/16adr/6cr"
+                          "4/2cr"
                         ],
                         "hp": [
                           "0"
@@ -47012,7 +46917,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -47062,7 +46967,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -47112,7 +47017,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -47162,7 +47067,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -47212,7 +47117,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr"
+                          "3"
                         ],
                         "hp": [
                           "0"
@@ -47262,7 +47167,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr"
+                          "3"
                         ],
                         "hp": [
                           "0"
@@ -47312,7 +47217,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr"
+                          "3"
                         ],
                         "hp": [
                           "0"
@@ -47362,7 +47267,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -47412,7 +47317,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -47462,7 +47367,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr/6imp"
+                          "3/2imp"
                         ],
                         "hp": [
                           "0"
@@ -47512,7 +47417,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr/6cut"
+                          "1/2cut"
                         ],
                         "hp": [
                           "0"
@@ -47562,7 +47467,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr/6cut"
+                          "1/2cut"
                         ],
                         "hp": [
                           "0"
@@ -47612,7 +47517,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr/6cut"
+                          "1/2cut"
                         ],
                         "hp": [
                           "0"
@@ -47662,7 +47567,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -47712,7 +47617,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -47762,7 +47667,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -48312,7 +48217,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -48362,7 +48267,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -48562,7 +48467,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -48612,7 +48517,7 @@
                           "0"
                         ],
                         "dr": [
-                          "7/15adr"
+                          "3"
                         ],
                         "hp": [
                           "0"
@@ -48662,7 +48567,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -48712,7 +48617,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -48762,7 +48667,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -48812,7 +48717,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -48862,7 +48767,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -48912,7 +48817,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -48962,7 +48867,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -49012,7 +48917,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -49062,7 +48967,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -49112,7 +49017,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -49162,7 +49067,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -49212,7 +49117,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -49262,7 +49167,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr/6cut"
+                          "1/2cut"
                         ],
                         "hp": [
                           "0"
@@ -49312,7 +49217,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr/6cut"
+                          "1/2cut"
                         ],
                         "hp": [
                           "0"
@@ -49362,7 +49267,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr/6cut"
+                          "1/2cut"
                         ],
                         "hp": [
                           "0"
@@ -49412,7 +49317,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -49462,7 +49367,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -49512,7 +49417,7 @@
                           "0"
                         ],
                         "dr": [
-                          "5/13adr"
+                          "1"
                         ],
                         "hp": [
                           "0"
@@ -49870,7 +49775,7 @@
                   "Incomplete Mars/Venus"
                 ],
                 "points": [
-                  "255"
+                  "257"
                 ],
                 "items": [
                   {
@@ -50127,7 +50032,7 @@
                   "Regular"
                 ],
                 "points": [
-                  "193"
+                  "195"
                 ],
                 "items": [
                   {

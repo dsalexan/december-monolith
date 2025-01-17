@@ -5,11 +5,14 @@ import { get, isNil, isString, property, set, uniq } from "lodash"
 import { Environment, SyntacticalContext } from "@december/tree"
 import { Simbol } from "@december/tree/symbolTable"
 
+import { isNilOrEmpty } from "@december/utils"
 import generateUUID from "@december/utils/uuid"
 import { PLACEHOLDER_SELF_REFERENCE, PROPERTY, PropertyReference, Reference, REFERENCE } from "@december/utils/access"
 import { PropertyReferencePatternMatchInfo } from "@december/utils/access/match"
 import { BasePattern, PatternMatchInfo } from "@december/utils/match/base"
 import { RegexPatternMatchInfo } from "@december/utils/match/element"
+
+import { VariableName } from "@december/tree/interpreter"
 
 import logger, { paint } from "../../logger"
 import MutableObject from "../../object"
@@ -29,7 +32,6 @@ import { ArgumentProvider } from "../callQueue/executionContext"
 import { MutationFunctionMetadata, MutationFunctionOutput } from "../frameRegistry/mutationFrame"
 import { MutationInput, ReProcessingFunction, StrategyProcessor, StrategyProcessorListenOptions, StrategyProcessorParseOptions, StrategyProcessorResolveOptions, StrategyProcessState } from "./processor"
 import { DependencyEntry } from "../dependencyGraph"
-import { isNilOrEmpty } from "../../../../utils/src"
 
 export type Generator<TReturn> = (object: MutableObject) => TReturn
 export type { MutationInput } from "./processor"
@@ -122,7 +124,7 @@ export class Strategy {
     // 1. Build callback generator
     const callbackGenerator: Generator<GenericListener[`callback`]> = (origin: MutableObject) => {
       return (event, { listener, eventEmitter }) => {
-        debugger
+        // debugger
         return eventEmitter.controller.callQueue.enqueue(origin.reference(), {
           eventDispatcher: event,
           name,
@@ -176,7 +178,7 @@ export class Strategy {
     let state: StrategyProcessState = get(object.metadata, path)
     let environment: Environment = options.environment!
 
-    const locallyAssignedSymbols: Simbol[`name`][] = []
+    const locallyUpdatedVariables: VariableName[] = []
 
     // 1. Process (parse + resolve) expression
     if (!state) {
@@ -185,7 +187,7 @@ export class Strategy {
       assert(options.expression, `Expression must be provided for new expressions`) // COMMENT
       assert(options.environment, `Environment must be provided for new expressions`) // COMMENT
       // 1.A. Process expression
-      state = StrategyProcessor.process(options.expression, options.environment, locallyAssignedSymbols, options)
+      state = StrategyProcessor.process(options.expression, options.environment, locallyUpdatedVariables, options)
 
       // 1.B. Store state in metadata
       skipMutation = true
@@ -199,7 +201,7 @@ export class Strategy {
 
       environment = options.environment ?? state.environment!
       assert(environment, `Where should I find the environment then genius`)
-      StrategyProcessor.resolve(state, environment, locallyAssignedSymbols, options)
+      StrategyProcessor.resolve(state, environment, locallyUpdatedVariables, options)
     }
 
     // 3. Listen for new symbols
@@ -279,8 +281,8 @@ export class Strategy {
       const environment = state.environment!
       assert(environment, `Where should I find the environment then genius`)
 
-      const locallyAssignedSymbols: Simbol[`name`][] = []
-      StrategyProcessor.resolve(state, environment, locallyAssignedSymbols, { ...options, syntacticalContext })
+      const locallyUpdatedVariables: VariableName[] = []
+      StrategyProcessor.resolve(state, environment, locallyUpdatedVariables, { ...options, syntacticalContext })
 
       // 3. Listen for new symbols
       //      (using this very function as reProcessing target)
@@ -340,13 +342,18 @@ export class Strategy {
             possibleIndexes[matchIndex] = index
           }
           //
+        } else if (match.propertyMatch.type === `equals`) {
+          // pass
         } else throw new Error(`Unimplemented for match of pattern "${match.propertyMatch.type}"`)
       }
 
       const validIndexes: number[] = uniq(possibleIndexes.filter(index => !isNil(index)) as number[])
-      assert(validIndexes.length === 1, `Only one valid index must be found`)
 
-      args[key] = validIndexes[0]
+      if (validIndexes.length > 0) {
+        assert(validIndexes.length === 1, `Only one valid index must be found`)
+
+        args[key] = validIndexes[0]
+      }
 
       return args
     }

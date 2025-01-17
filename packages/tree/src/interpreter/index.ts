@@ -4,12 +4,13 @@ import assert, { match } from "assert"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
-import { Expression, ExpressionStatement, Node, Statement } from "../tree"
+import { CallExpression, Expression, ExpressionStatement, MemberExpression, Node, Statement } from "../tree"
 import Environment, { VariableName } from "./environment"
 import { EvaluationFunction, NodeConversionFunction, NodeEvaluator, NumericValue, ObjectValue, RuntimeEvaluation, RuntimeValue, StringValue, PropertyValue } from "./evaluator"
 import { Simbol, SymbolTable } from "../symbolTable"
 import type Parser from "../parser"
 import { SyntacticalContext } from "../parser"
+import { SymbolValue } from "../symbolTable/symbol"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -103,11 +104,37 @@ export default class Interpreter<TEvaluationsDict extends AnyObject = any, TOpti
     return new RuntimeEvaluation(finalRuntimeValue as TRuntimeValue, new ExpressionStatement(expression))
   }
 
-  /** Index a variable name in SymbolTable  */
-  public indexVariableNameAsSymbol(variableName: VariableName, node: Node) {
+  /** Index a node in SymbolTable  */
+  public indexNodeAsSymbol(node: Node) {
     const treeName: string = this.id
 
-    this.symbolTable.index(variableName, treeName, node)
+    const content = node.getContent()
+
+    let symbolValue: SymbolValue
+    if (node.type === `Identifier`) symbolValue = { type: `name`, key: Simbol.getKey(content), name: content }
+    else if (node.type === `CallExpression`) {
+      const callee = (node as CallExpression).callee.getContent()
+
+      symbolValue = { type: `name`, key: Simbol.getKey(callee), name: callee }
+    } else if (node.type === `MemberExpression`) {
+      const object: VariableName = (node as MemberExpression).object.getContent()
+
+      const properties: VariableName[] = []
+
+      let buffer: MemberExpression = node as MemberExpression
+      while (buffer.type === `MemberExpression`) {
+        const content = buffer.property.getContent()
+        properties.push(content)
+
+        buffer = buffer.property as any
+      }
+
+      symbolValue = { type: `property`, key: Simbol.getKey(object, ...properties), object: object, properties }
+    }
+
+    assert(symbolValue!, `SymbolValue must be defined`)
+
+    this.symbolTable.index(symbolValue, treeName, node)
   }
 
   /** Checks if function name is a VALID function name (otherwise it will become part of a string) */

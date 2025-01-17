@@ -73,6 +73,7 @@ export class CallExpression extends Expression {
 
 export class MemberExpression extends Expression {
   type: NodeType = `MemberExpression`
+  public quoted: boolean = false
 
   constructor(object: Expression, property: Expression) {
     super()
@@ -82,7 +83,9 @@ export class MemberExpression extends Expression {
   }
 
   public override constructClone(options): this {
-    return new MemberExpression(this.object.clone(options), this.property.clone(options)) as this
+    const clone = new MemberExpression(this.object.clone(options), this.property.clone(options)) as this
+    clone.quoted = this.quoted
+    return clone
   }
   public get object(): Expression {
     return this.children[0]
@@ -90,6 +93,14 @@ export class MemberExpression extends Expression {
 
   public get property(): Expression {
     return this.children[1]
+  }
+
+  public override getWrappers(): [string, string] {
+    return [`"`, `"`]
+  }
+
+  public override forceWrap(): boolean {
+    return false
   }
 
   public getObjectVariableName(): string {
@@ -101,7 +112,8 @@ export class MemberExpression extends Expression {
   }
 
   public override getContent(): string {
-    return `${this.getObjectVariableName()}->${this.getPropertyName()}`
+    const [opener, closer] = this.forceWrap() ? this.getWrappers() : [``, ``]
+    return `${opener}${this.getObjectVariableName()}->${this.getPropertyName()}${closer}`
   }
 
   public static makeChain(object: Expression, ...accessChain: (string | Expression)[]): MemberExpression {

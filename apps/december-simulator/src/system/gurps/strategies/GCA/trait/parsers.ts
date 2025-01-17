@@ -24,9 +24,12 @@ import {
   Type,
 } from "@december/gurps/trait"
 import { Get, MergeDeep, OmitDeep } from "type-fest"
-import { isNumeric } from "../../../../../../../../packages/utils/src/typing"
-import { TraitType } from "../../../../../../../../packages/gurps/src/trait/type"
+import { isNumeric } from "@december/utils/typing"
+import { TraitType } from "@december/gurps/trait/type"
 import { GCAStrategyProcessorListenOptions, GCAStrategyProcessorOptionsGenerator, setupProcessing } from "./options"
+import { PROPERTY_UPDATED } from "@december/compiler/controller/eventEmitter/event"
+import { PROPERTY, REFERENCE } from "@december/utils/access"
+import { EQUALS } from "@december/utils/match/element"
 
 export function parseTraitOrModifier(object: MutableObject, gca: GCATrait | GCAModifier): MutationInput & { traitOrModifier: IGURPSTraitOrModifier } {
   const output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
@@ -243,15 +246,18 @@ export function parseAttribute(object: MutableObject, gca: GCAAttribute, baseTra
 }
 
 export function parseSkillOrSpellOrTechnique(object: MutableObject, gca: GCASkillOrSpell, baseTrait: RuntimeIGURPSBaseTrait<`skill` | `spell` | `technique`>): MutationInput & { trait: RuntimeIGURPSSkillOrSpellOrTechnique } {
-  const output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
+  let output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
 
   // 1. Parse some objects
   assert(!isNilOrEmpty(gca.type), `GCA skill/spell/technique must have a "type" property`)
-  const attribute = gca.type.split(`/`)[0]
+  let attribute = gca.type.split(`/`)[0]
   const difficulty = gca.type.split(`/`)[1]! as `E` | `A` | `H` | `VH`
 
   let type: IGURPSSkillOrSpellOrTechnique[`type`] = baseTrait.type
-  if (attribute.toLowerCase() === `tech`) type = `technique`
+  if (attribute.toLowerCase() === `tech`) {
+    type = `technique`
+    attribute = `unknown`
+  }
 
   const cost = type === `technique` ? (difficulty === `A` ? `1/2` : `2/3`) : `1/2/4/8`
   const difficultyModifier = type === `technique` ? 1 : { E: 0, A: -1, H: -2, VH: -3 }[difficulty]
@@ -284,10 +290,41 @@ export function parseSkillOrSpellOrTechnique(object: MutableObject, gca: GCASkil
       default: zeroCost,
       round: gca.round === 1 ? `up` : gca.round === -1 ? `down` : `none`,
     },
+    attribute,
     difficulty,
   }
 
   removeUndefinedKeys(trait)
+
+  // 3. Determine what to process
+  const { options, environment } = setupProcessing(object)
+
+  const inputs: Arguments<(typeof Strategy)[`bulkProcess`]>[1] = []
+
+  if (defaults)
+    for (const [i, defaultNotation] of defaults.entries()) {
+      assert(!isNilOrEmpty(defaultNotation.expression), `Default notation must be a string`)
+      inputs.push({
+        path: `level.defaults.${i}.value`,
+        expression: defaultNotation.expression,
+        environment,
+        reProcessingFunction: { name: `GCA:compute:level:defaults`, hashableArguments: { defaultsIndex: i } },
+      })
+    }
+
+  // 4. Pre-process stuff (for dependency graphs)
+  if (inputs.length > 0) {
+    const processingOutputs = Strategy.bulkProcess(object, inputs, {
+      ...options,
+      //
+      syntacticalContext: { mode: `expression` },
+    })
+
+    for (const processingOutput of processingOutputs) output = mergeMutationInput(output, processingOutput)
+  }
+
+  Strategy.addProxyListener(PROPERTY_UPDATED(PROPERTY(REFERENCE(`alias`, attribute), EQUALS(`level.value`))), `GCA:compute:level:defaults`)(object)
+  Strategy.addProxyListener(PROPERTY_UPDATED(PROPERTY(REFERENCE(`alias`, attribute), EQUALS(`level.value`))), `GCA:compute:level:value`)(object)
 
   return { ...output, trait: trait as RuntimeIGURPSSkillOrSpellOrTechnique }
 }
@@ -419,10 +456,15 @@ export interface PartialRuntimeIGURPSSkillOrSpellOrTechnique {
       {
         expression: string
         //
-        trait?: StringValue
-        level?: NumericValue
+        trait?: string
+        isKnown?: boolean
+        value?: NumericValue
+        points?: number
       }[]
     >
+    default?: number
+    bought?: number
+    base?: IGURPSSkillOrSpellOrTechnique[`level`][`base`]
     value?: number
   }
 }

@@ -1,17 +1,17 @@
 import assert from "assert"
-import { AnyObject, NonNil, NonUndefined, Nullable, WithOptionalKeys } from "tsdef"
-import { get, isNil, isNumber, isString, merge, set } from "lodash"
+import { AnyObject, MaybeUndefined, Nilable, NonNil, NonUndefined, Nullable, WithOptionalKeys } from "tsdef"
+import { get, isNil, isNumber, isString, merge, range, set } from "lodash"
 
 import { isNilOrEmpty } from "@december/utils"
-import { SELF_PROPERTY } from "@december/utils/access"
+import { PROPERTY, REFERENCE, Reference, SELF_PROPERTY } from "@december/utils/access"
 import { Mutation, Strategy, IntegrityEntry, SET, MutationInput, mergeMutationInput, MutableObject, OVERRIDE } from "@december/compiler"
 
 import { Environment } from "@december/tree"
-import { NumericValue, ObjectValue, StringValue } from "@december/tree/interpreter"
+import { BooleanValue, NumericValue, ObjectValue, RuntimeValue, StringValue } from "@december/tree/interpreter"
 
 import { GCAGeneralTrait, GCATrait } from "@december/gca"
 import { getProgressionIndex, getProgressionStep, ProgressionStep } from "@december/gca/utils/progression"
-import { makeGURPSTraitEnvironment, IGURPSBaseTrait, IGURPSGeneralTrait, IGURPSModifier, IGURPSTrait, IGURPSTraitOrModifier, IGURPSAttribute } from "@december/gurps/trait"
+import { makeGURPSTraitEnvironment, IGURPSBaseTrait, IGURPSGeneralTrait, IGURPSModifier, IGURPSTrait, IGURPSTraitOrModifier, IGURPSAttribute, isAlias, Type, IGURPSSkillOrSpellOrTechnique } from "@december/gurps/trait"
 
 import logger, { Block, paint } from "../../../../../logger"
 import {
@@ -29,6 +29,10 @@ import {
 } from "./parsers"
 import { GCAStrategyProcessorListenOptions, GCAStrategyProcessorOptionsGenerator, setupProcessing } from "./options"
 import GURPSCharacter from "../../../character"
+import { createTransformNodeEntry } from "@december/tree/parser"
+import { EQUALS } from "@december/utils/match/element"
+import { calcProgressionCost, calcProgressionStep } from "@december/gurps/trait/definitions/cost"
+import { PROPERTY_UPDATED, REFERENCE_ADDED } from "../../../../../../../../packages/compiler/src/controller/eventEmitter/event"
 
 export const IMPORT_TRAIT_FROM_GCA_STRATEGY = new Strategy()
 
@@ -85,9 +89,10 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
   },
 )
 
-// B. Calculate Levels/Points/Values/Scores/etc...
+// B. CALCULATE MAIN VALUES (Scores, Levels, Points)
 
-// B.1. Base Score (Attributes)
+// #region B.1. Score (Attributes)
+
 IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
   [SELF_PROPERTY(`score.base.source`)], //
   `GCA:compute:score:initial`,
@@ -102,8 +107,7 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     const { options, environment } = setupProcessing(object)
 
     // if (object.id === `11270`) debugger
-    // if (object.id === `11285`) debugger
-    // if (object.id === `11325`) debugger // ST:TK Basic Lift
+    // if (object.id === `11176`) debugger // ST:Basic Speed
 
     const processingOutput = Strategy.process(object, `score.base.initial`, {
       ...options,
@@ -129,6 +133,8 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
 
     // BASE_SCORE = INITIAL_SCORE + BOUGHT_SCORE
 
+    // if (object.id === `11361`) debugger // ST:Will
+
     // 1. Get attribute
     const attribute = object.getData()
     const basePoints = attribute.points.base
@@ -148,7 +154,7 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
       else debugger
     }
 
-    // if (object.id === `11176`) debugger
+    // if (object.id === `11176`) debugger // ST:Basic Speed
 
     // 2. Calculate bought score
     //      BOUGHT_SCORE = (BASE_POINTS / (UP, DOWN)) * STEP
@@ -186,8 +192,10 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     const roundedScore = attribute.cost.round === `up` ? Math.ceil(score) : attribute.cost.round === `down` ? Math.floor(score) : score
 
     // if (object.id === `11228`) debugger
-    // if (object.id === `11338`) debugger // ST:TK ST
-    // if (object.id === `11359`) debugger
+    // if (object.id === `11193`) debugger // ST:DX
+    // if (object.id === `11226`) debugger // ST:HT
+    // if (object.id === `11228`) debugger // ST:IQ
+    // if (object.id === `11361`) debugger // ST:Will
 
     output.mutations.push(OVERRIDE(`score.value`, roundedScore))
     output.mutations.push(OVERRIDE(`level.value`, roundedScore))
@@ -195,29 +203,206 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
   },
 )
 
-// B.2. Default Level (skills)
-// IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
-//   [SELF_PROPERTY(/level.defaults\.(\d+).expression/)], //
-//   `GCA:compute:default_level`,
-//   (object: MutableObject<RuntimeIGURPSSkillOrSpellOrTechnique>, { arguments: { defaultIndex, ...args } }) => {
-//     let output: MutationInput = { mutations: [], integrityEntries: [] }
+// #endregion
 
-//     assert(!isNil(defaultIndex), `Default index must be defined`)
+// #region B.2. Level (Skills, Spells and Techniques)
 
-//     // 1. Get default notation
-//     const defaultNotation = object.getProperty(`level.defaults`)?.[defaultIndex]
-//     assert(defaultNotation, `Default notation must be defined`)
+IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
+  [SELF_PROPERTY(/level.defaults\.(\d+).expression/), SELF_PROPERTY(`cost`), SELF_PROPERTY(`attribute`)], //
+  `GCA:compute:level:defaults`,
+  (object: MutableObject<RuntimeIGURPSSkillOrSpellOrTechnique, GURPSCharacter>, { arguments: { defaultsIndex, ...args } }) => {
+    // TODO: aggregate any enqueueing by DEFAULTS_INDEX into COST/ATTRIBUTE
 
-//     debugger
+    let output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
+    if (object.data.type !== `skill`) return output
 
-//     return output
-//   },
-//   {
-//     argumentProvider: Strategy.argumentProvider_PropertyUpdatedRegexIndexes(`defaultIndex`),
-//   },
-// )
+    const levelDefaults = object.data.level.defaults ?? []
+    if (levelDefaults.length === 0) return output
 
-// B.1. Modifiers
+    const targetDefaultIndexes = defaultsIndex !== undefined ? [defaultsIndex] : range(levelDefaults.length)
+
+    // if (object.id === `11270`) debugger
+    // if (object.id === `15064` && defaultsIndex === 2) debugger // SK:First Aid
+    // if (object.id === `12889`) debugger // SK:Physician
+    // if (object.id === `15064`) debugger // SK:First Aid
+
+    // 1. Get attribute score
+    const attributeAlias = object.getProperty(`attribute`)
+    const attributes = object.controller.store.getByReference(new Reference(`alias`, attributeAlias), false) as MutableObject<RuntimeIGURPSAttribute>[]
+    assert(attributes.length === 1, `Exactly one attribute must be found by alias`)
+
+    const [attribute] = attributes
+    const attributeLevel = attribute.getProperty(`level.value`)
+    if (attributeLevel === undefined) return output
+
+    let bestDefaultIndex: Nilable<number> = object.getProperty(`level.default`) ?? null
+    for (const defaultsIndex of targetDefaultIndexes) {
+      if (object.id === `15064` && defaultsIndex === 2) debugger // SK:First Aid
+
+      // 2. Get defaults expression
+      const cost = object.getProperty(`cost`)
+      const expression = object.getProperty(`level.defaults.${defaultsIndex}.expression`) as string
+      assert(!isNilOrEmpty(expression), `Default expression must be defined`)
+
+      // 3. Process source
+      const { options, environment } = setupProcessing(object)
+
+      const processingOutput = Strategy.process(object, `level.defaults.${defaultsIndex}.value`, {
+        ...options,
+        //
+        expression,
+        environment,
+        //
+        syntacticalContext: { mode: `expression` },
+        reProcessingFunction: { name: `GCA:compute:level:defaults`, hashableArguments: { defaultsIndex } },
+      })
+
+      // 4. Get relevant trait (attribute or skill)
+      const aliases: string[] = []
+      const variables = processingOutput.state.symbolTable.getAllVariables(processingOutput.state.environment!)
+      for (const symbol of variables) {
+        const variableName = symbol.variableName
+        if (isAlias(variableName)) aliases.push(variableName)
+      }
+
+      assert(aliases.length <= 1, `Exactly one alias must be defined`)
+
+      // 4. Check if trait is KNOWN (i.e. attribute or known skill)
+      const alias = aliases[0]
+      const traits = alias === undefined ? [] : (object.controller.store.getByReference(new Reference(`alias`, alias), false) as MutableObject<RuntimeIGURPSTrait>[])
+      assert(traits.length <= 1, `Exactly one trait must be found by alias`)
+
+      const trait = traits[0] as MaybeUndefined<MutableObject<RuntimeIGURPSTrait>>
+      const type = trait ? trait.getProperty(`type`) : `∄`
+
+      let isKnown: boolean
+      if (type === `∄`) isKnown = false
+      else if (type === `attribute`) isKnown = true
+      else if (type === `skill`) {
+        const basePoints = (trait as MutableObject<RuntimeIGURPSSkillOrSpellOrTechnique>).getProperty(`points.base`)
+        isKnown = basePoints > 0
+      }
+
+      assert(!isNil(isKnown!), `isKnown must be defined`)
+
+      // 5. Calculate "free" points gained by defaulting to this level
+      if (isKnown && processingOutput.state.isReady()) {
+        const level = processingOutput.state.getValue() as NumericValue
+        const levelDifference = level.value - attributeLevel
+
+        const freePoints = calcProgressionCost(cost, levelDifference)
+        output.mutations.push(OVERRIDE(`level.defaults.${defaultsIndex}.points`, Math.max(freePoints, 0)))
+
+        // (can only be a best default if there are free points gained by defaulting to this level)
+        if (freePoints > 0) {
+          //      (check if this is new best default)
+
+          // 5. If there is no CURRENT DEFAULT (aka BEST DEFAULT), set this as default (only if processing is ready)
+          if (isNil(bestDefaultIndex)) bestDefaultIndex = defaultsIndex
+          // 6. If there is a currently best default, check it against this to choose bestest overall
+          else {
+            const currentDefault = object.getProperty(`level.defaults.${bestDefaultIndex}`) as MaybeUndefined<NonNil<RuntimeIGURPSSkillOrSpellOrTechnique[`level`][`defaults`]>[0]>
+            assert(currentDefault, `Current default must be defined`)
+
+            const currentFreePoints = currentDefault.points
+            if (!isNil(currentFreePoints)) {
+              if (freePoints > currentFreePoints) bestDefaultIndex = defaultsIndex
+            }
+          }
+        }
+      }
+
+      // 5. Push mutations
+      output.mutations.push(OVERRIDE(`level.defaults.${defaultsIndex}.trait`, alias))
+      output.mutations.push(OVERRIDE(`level.defaults.${defaultsIndex}.isKnown`, isKnown))
+
+      output = mergeMutationInput(output, processingOutput)
+    }
+
+    if (!isNil(bestDefaultIndex)) output.mutations.push(OVERRIDE(`level.default`, bestDefaultIndex))
+
+    return output
+  },
+  { hashableArguments: { processingStatePath: `score.base.initial` }, argumentProvider: Strategy.argumentProvider_PropertyUpdatedRegexIndexes(`defaultsIndex`) },
+)
+
+IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
+  [SELF_PROPERTY(`level.default`)], //
+  `GCA:compute:level:value`,
+  (object: MutableObject<RuntimeIGURPSSkillOrSpellOrTechnique, GURPSCharacter>) => {
+    let output: MutationInput = { mutations: [], integrityEntries: [], dependencies: [] }
+    if (object.data.type !== `skill`) return output
+    if (object.data.children.length > 0) return output
+
+    // if (object.id === `12943`) debugger // SK:Meditation
+    if (object.id === `15064`) debugger // SK:First Aid
+
+    // LEVEL =  DEFAULT_LEVEL  + BOUGHT_LEVEL
+    //       = ATTRIBUTE_LEVEL + BOUGHT_LEVEL
+
+    // 1. Get attribute level
+    const attributeAlias = object.getProperty(`attribute`)
+    const attributes = object.controller.store.getByReference(new Reference(`alias`, attributeAlias), false) as MutableObject<RuntimeIGURPSAttribute>[]
+    assert(attributes.length === 1, `Exactly one attribute must be found by alias`)
+
+    const [attribute] = attributes
+    const attributeLevel = attribute.getProperty(`level.value`)
+    if (attributeLevel === undefined) return output
+
+    // 2. Calculate level through attribute
+    let baseLevel = attributeLevel
+    let freePoints: number = 0
+    let base: IGURPSSkillOrSpellOrTechnique[`level`][`base`] = { type: `attribute`, level: attributeLevel }
+
+    const defaultIndex = object.getProperty(`level.default`)
+    if (defaultIndex === undefined) {
+      // pass
+    }
+    // 3. Calculate level through default
+    else {
+      base = { type: `default`, index: defaultIndex! }
+
+      const defaults = object.getProperty(`level.defaults.${defaultIndex}`) as MaybeUndefined<NonNil<RuntimeIGURPSSkillOrSpellOrTechnique[`level`][`defaults`]>[0]>
+      assert(defaults, `Default must be defined`)
+
+      freePoints = defaults.points!
+      assert(freePoints !== undefined, `Free points must be defined`)
+    }
+
+    // 3. Effectively calculate level
+    const cost = object.getProperty(`cost`)
+
+    const basePoints = object.getProperty(`points.base`)
+    const points = basePoints + freePoints
+
+    const boughtLevel = calcProgressionStep(cost, points)
+    assert(isNumber(boughtLevel) && !isNaN(boughtLevel), `Bought level must be a number`)
+
+    const level = baseLevel + boughtLevel
+
+    assert(isNumber(level) && !isNaN(level), `Level value must be a number`)
+
+    // if (object.id === `11228`) debugger
+
+    output.mutations.push(OVERRIDE(`level.bought`, boughtLevel))
+    output.mutations.push(OVERRIDE(`level.base`, base))
+    output.mutations.push(OVERRIDE(`level.value`, level))
+    return output
+  },
+)
+
+// #endregion
+
+// #region B.3. Pre-Modifiers Points (Skills, Spells and Techniques)
+
+// #endregion
+
+// #region B.4. Pre-Modifiers Points (Advantages & Disadvantages)
+
+// #endregion
+
+// #region B.5. Modifiers & Points
+
 IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
   [
     SELF_PROPERTY(/modif1iers\.(\d+).level.value/), //
@@ -293,3 +478,7 @@ IMPORT_TRAIT_FROM_GCA_STRATEGY.onPropertyUpdatedEnqueue(
     argumentProvider: Strategy.argumentProvider_PropertyUpdatedRegexIndexes(`modifierIndex`),
   },
 )
+
+// #endregion
+
+// C. ???
