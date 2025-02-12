@@ -7,7 +7,8 @@ export interface LevelCost {
   type: `level`
   display: string // Cost()*
   //
-  expression: Nullable<string> // Cost(), Formula(), ForceFormula()
+  progression: Nullable<string> // Cost()
+  expression: Nullable<string> // Formula(), ForceFormula()
   //      sometimes Formula() doesnt exists, the cost is just the numerical/progression value in Cost()
   //      anyway, in importing we always get the "better" of Cost() or Formula() to determina the expression (which is the responsible for compiling the final cost value)
   //      in cases where Formula() exists, Cost() will end up as the "display" for cost

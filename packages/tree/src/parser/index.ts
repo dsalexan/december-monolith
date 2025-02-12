@@ -6,23 +6,17 @@
  */
 
 import { AnyObject, MaybeArray, MaybeUndefined, Nullable, WithOptionalKeys } from "tsdef"
-import { orderBy, sum } from "lodash"
+import { isArray, orderBy, sum } from "lodash"
 import assert, { match } from "assert"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
-import { LexicalToken, Token } from "../token/core"
-import { TokenKind, TokenKindName } from "../token/kind"
-import { Lexeme } from "../token/lexeme"
+import { TokenKind, LexicalToken, Token } from "../token"
 
 import { SyntacticalGrammar } from "./grammar"
 import { DEFAULT_BINDING_POWERS } from "./grammar/default"
 
-import { Node, NodeType } from "../tree"
-import { Statement, ExpressionStatement } from "../tree"
-import { Expression } from "../tree"
-import { BinaryExpression, CallExpression, MemberExpression } from "../tree"
-import { Identifier, NumericLiteral, StringLiteral } from "../tree"
+import { Node, NodeType, Statement, ExpressionStatement } from "../tree"
 import { SyntacticalContext } from "./grammar/parserFunction"
 import { InjectionData } from "../lexer"
 
@@ -37,13 +31,16 @@ export interface ParserOptions {
   syntacticalContext: SyntacticalContext
 }
 
-export default class Parser<TGrammarDict extends AnyObject = any> {
+export default class Parser<TGrammarDict extends AnyObject = any, TKind extends string = TokenKind> {
   public options: ParserOptions
   //
-  public grammar: SyntacticalGrammar<TGrammarDict>
-  private tokens: Token[]
+  public grammar: SyntacticalGrammar<TGrammarDict, TKind>
+  private tokens: Token<TKind>[]
   private cursor: number
   //
+  public trace: {
+    tokens: string[][]
+  }
   public AST: Node
 
   // #region CORE
@@ -54,49 +51,92 @@ export default class Parser<TGrammarDict extends AnyObject = any> {
   }
 
   /** Return current token */
-  public current(increment: number = 0): Token {
+  public current(increment: number = 0): Token<TKind> {
     return this.tokens[this.cursor + increment]
   }
 
   /** Peek current token kind */
-  public peek(increment: number = 0): TokenKindName {
+  public peek(increment: number = 0): TKind {
     if (this.cursor + increment >= this.tokens.length) return `end_of_file` as any
-    return this.current(increment).kind.name
+    return this.current(increment).kind
   }
 
   /** Peek tokenKind before current one */
-  public before(): MaybeUndefined<TokenKindName> {
-    return this.current(-1)?.kind?.name
+  public before(): MaybeUndefined<TKind> {
+    return this.current(-1)?.kind
   }
 
   /** Peek tokenKind before current one */
-  public beforeToken(): Token {
+  public beforeToken(): Token<TKind> {
     const token = this.current(-1)
     assert(token, `No token before current one`)
     return token
   }
 
   /** Advance token */
-  public next(...expectedKinds: TokenKindName[]): Token {
+  public next(expectedKinds: TKind[] | `any`, trace: MaybeArray<string>): Token<TKind> {
+    // 1. Get current token to return
     const previous = this.tokens[this.cursor]
+
+    // 2. Advance cursor
+    this.trace.tokens[this.cursor] ??= []
+    this.trace.tokens[this.cursor].push(...(isArray(trace) ? trace : [trace]))
     this.cursor++
 
-    // Check if token kind is as expected
-    if (expectedKinds.length > 0) assert(!previous || expectedKinds.includes(previous.kind.name), `Expected token kind ${expectedKinds.join(` or `)}, got ${previous?.kind?.name}`)
+    // 3. Check if token kind is as expected
+    if (expectedKinds !== `any`) {
+      assert(expectedKinds.length > 0, `Expected token kind array is empty`)
+      assert(!previous || expectedKinds.includes(previous.kind), `Expected token kind ${expectedKinds.join(` or `)}, got ${previous?.kind}`)
+    }
+
+    return previous
+  }
+
+  /** Move cursor to index */
+  public moveTo(characterIndex: number): Token<TKind> {
+    // 1. Get current token to return
+    const previous = this.tokens[this.cursor]
+
+    // 2. Update cursor (by character index)
+    let tokenIndex: Nullable<number> = null
+    for (let i = this.tokens.length - 1; i >= 0; i--) {
+      const token = this.tokens[i]
+
+      if (token.type === `lexical`) {
+        const start = token.lexeme.start
+        const end = start + token.lexeme.length - 1
+
+        if (start > characterIndex) continue
+        if (end < characterIndex) continue
+
+        // untested
+        if (start === characterIndex && end !== characterIndex) debugger
+        if (start !== characterIndex && end === characterIndex) debugger
+
+        if (start === characterIndex && end === characterIndex) {
+          tokenIndex = i
+          break
+        }
+      } else throw new Error(`Not implemented`)
+    }
+
+    assert(tokenIndex !== null, `Could not find token by character index`)
+
+    this.cursor = tokenIndex
 
     return previous
   }
 
   // #endregion
 
-  public process(grammar: SyntacticalGrammar<TGrammarDict>, tokens: Token[], injections: InjectionData[], options: WithOptionalKeys<ParserOptions, `logger`>) {
+  public process(grammar: SyntacticalGrammar<TGrammarDict, TKind>, tokens: Token<any>[], injections: InjectionData[], options: WithOptionalKeys<ParserOptions, `logger`>) {
     this.options = {
       logger: options.logger ?? _logger,
       ...options,
     }
 
     const injectedTokens = tokens.map((token, i) => {
-      if (token.kind.name !== `injection_placeholder`) return token
+      if (token.kind !== `injection_placeholder`) return token
       const index = Number(token.content.replace(/^\$/, ``))
       const injection = injections[index]
 
@@ -111,6 +151,7 @@ export default class Parser<TGrammarDict extends AnyObject = any> {
 
     global.__PARSER_TOKENS = tokens.map(token => token.content).join(` `)
 
+    this.trace = { tokens: [] }
     this.AST = this.parse()
 
     return this.AST

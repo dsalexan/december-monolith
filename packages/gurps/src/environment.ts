@@ -1,5 +1,5 @@
 import assert from "assert"
-import { isNil, max, maxBy, range, uniq } from "lodash"
+import { isNil, isNumber, max, maxBy, range, uniq } from "lodash"
 
 import { MutableObject, ObjectController } from "@december/compiler"
 import { Reference } from "@december/utils/access"
@@ -69,18 +69,23 @@ export const basethdice: Contextualized = (i: Interpreter, node: Node, environme
 export const hasmod: Contextualized = (i: Interpreter, node: Node, environment: Environment) => (modifier: StringValue) => {
   assert(StringValue.isStringValue(modifier), `Modifier should be a string`)
 
+  assert(modifier.type === `string`, `Modifier should be a string`)
+
   const trait = environment.get<ObjectValue<IGURPSTrait>>(`me`)?.value
   assert(trait, `Trait should be defined`)
+
   const modifiers = trait.modifiers ?? []
+  for (const traitModifier of modifiers) {
+    const formats = uniq([fullName(`parentheses`, traitModifier), fullName(`comma`, traitModifier)])
+    if (formats.some(format => format === modifier.value.trim())) {
+      const level = traitModifier.level?.value
+      assert(level === undefined || (isNumber(level) && !isNaN(level)), `Level should be a number`)
 
-  for (const modifier of modifiers) {
-    debugger
-
-    const format1 = `${`name`} (${`nameExtension`})`
-    const format2 = `${`name`}, ${`nameExtension`}`
+      if (level !== undefined) return new NumericValue(level)
+    }
   }
 
-  return new BooleanValue(false)
+  return new NumericValue(0)
 }
 
 export const indexedValue: Contextualized =
@@ -125,7 +130,8 @@ export const itemhasmod: Contextualized = (i: Interpreter, node: Node, environme
   const modifiers: IGURPSModifier[] = trait.getProperty(`modifiers`) ?? []
   const hasModifier = modifiers.some(modifier => {
     if (modifier.name === modName.value) return true
-    if (fullName(modifier) === modName.value) return true
+    if (fullName(`parentheses`, modifier) === modName.value) return true
+    if (fullName(`comma`, modifier) === modName.value) return true
 
     return false
   })

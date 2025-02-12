@@ -74,6 +74,13 @@ export default class ObjectIntegrityRegistry extends ObjectManagerEmitter {
 
   /** Adds entry to registry */
   add(entry: IntegrityEntry, trace: EventTrace): IntegrityEntry {
+    // 0. Check if entry already exists with same key and value
+    const existingEntry = this._registry.entries.byKey.get(entry.key)
+    if (existingEntry) {
+      // (entry already exists with same value, just bail)
+      if (existingEntry.value === entry.value) return entry
+    }
+
     assert(!this.has(entry), `Integrity entry with key "${entry.key}" already exists`)
 
     // 1. KEY -> ENTRY

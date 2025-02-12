@@ -7,9 +7,8 @@ import { Expression, ExpressionStatement, Node, Statement } from "../../tree"
 import { RuntimeEvaluation } from "./evaluation"
 import type Interpreter from ".."
 import { ObjectValue, type Environment, type VariableName } from ".."
-import { ArtificialToken, Token } from "../../token/core"
-import { getTokenKind } from "../../token"
-import { get, has } from "lodash"
+import { ArtificialToken, Token } from "../../token"
+
 import { RuntimeValue } from "./base"
 
 export { RuntimeValue } from "./base"
@@ -79,7 +78,7 @@ export class NumericValue extends RuntimeValue<number> {
   }
 
   public toToken(): Token {
-    return new ArtificialToken(getTokenKind(`number`), String(this.asNumber()))
+    return new ArtificialToken(`number`, String(this.asNumber()))
   }
 }
 
@@ -96,7 +95,16 @@ export class StringValue<TString extends string = string> extends RuntimeValue<T
   }
 
   public toToken(): Token {
-    return new ArtificialToken(getTokenKind(`string`), this.value.toString())
+    return new ArtificialToken(`string`, this.value.toString())
+  }
+}
+
+export class ArrayValue<TItem extends RuntimeValue<any> = RuntimeValue<any>> extends RuntimeValue<TItem[]> {
+  type: `array` = `array`
+
+  constructor(value: TItem[]) {
+    super(value)
+    assert(Array.isArray(value))
   }
 }
 
@@ -160,7 +168,7 @@ export class PropertyValue extends RuntimeValue<{ objectVariableName; propertyNa
   }
 
   public override toToken(): Token {
-    return new ArtificialToken(getTokenKind(`string`), `${this.objectVariableName}::${this.propertyName}`)
+    return new ArtificialToken(`string`, `${this.objectVariableName}::${this.propertyName}`)
   }
 }
 

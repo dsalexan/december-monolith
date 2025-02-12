@@ -2,24 +2,29 @@ import seedrandom from "seedrandom"
 seedrandom(`hello.`, { global: true })
 
 import path from "path"
-
-import { dump } from "@december/utils"
-import { GCAAttribute, GCACharacter, GCACharacterImporter } from "@december/gca"
-import { makeArtificialEventTrace, MutableObject, SET } from "@december/compiler"
-
-import churchil, { Block, Paint, paint } from "./logger"
-import { GURPSCharacter } from "./system/gurps"
-import { IMPORT_CHARACTER_FROM_GCA_STRATEGY } from "./system/gurps/strategies/GCA/character"
-import { IMPORT_TRAIT_FROM_GCA_STRATEGY } from "./system/gurps/strategies/GCA/trait"
-import { makeArtificilEventDispatcher } from "../../../packages/compiler/src/controller/eventEmitter/event"
-import { fullName, IGURPSGeneralTrait, IGURPSTrait } from "../../../packages/gurps/src/trait"
-import { RuntimeIGURPSAttribute, RuntimeIGURPSGeneralTrait, RuntimeIGURPSTrait } from "./system/gurps/strategies/GCA/trait/parsers"
-import { GCABase, GCABaseNonSkillNonSpellNonEquipment, GCABaseTrait, GCABaseTraitPointBased } from "../../../packages/gca/src/trait"
+import assert from "assert"
 import { DiffObjects } from "tsdef"
 import { get, isArray, isBoolean, isNumber, isObject, isString, range } from "lodash"
-import { isPrimitive } from "../../../packages/utils/src/typing"
-import { BooleanValue, NumericValue, RuntimeValue, StringValue } from "../../../packages/tree/src/interpreter"
-import assert from "assert"
+
+import { dump } from "@december/utils"
+
+import { BooleanValue, NumericValue, RuntimeValue, StringValue } from "@december/tree/interpreter"
+
+import { makeArtificialEventTrace, MutableObject, SET } from "@december/compiler"
+import { makeArtificilEventDispatcher } from "@december/compiler/controller/eventEmitter/event"
+
+import { fullName, IGURPSGeneralTrait, IGURPSTrait } from "@december/gurps/trait"
+
+import { GCAAttribute, GCACharacter, GCACharacterImporter } from "@december/gca"
+import { GCABase, GCABaseNonSkillNonSpellNonEquipment, GCABaseTrait, GCABaseTraitPointBased } from "@december/gca/trait"
+
+import churchil, { Block, Paint, paint } from "./logger"
+
+import { GURPSCharacter } from "./system/gurps"
+
+import { IMPORT_CHARACTER_FROM_GCA_STRATEGY } from "./system/gurps/strategies/GCA/character"
+import { IMPORT_TRAIT_FROM_GCA_STRATEGY } from "./system/gurps/strategies/GCA/trait"
+import { RuntimeIGURPSAttribute, RuntimeIGURPSGeneralTrait, RuntimeIGURPSTrait } from "./system/gurps/strategies/GCA/trait/runtime"
 
 const importer = new GCACharacterImporter(churchil)
 
@@ -147,21 +152,26 @@ async function run() {
   }
   //
 
+  // for (const { type, trait } of GCA.allTraits) console.log(type, trait.id, trait.name)
+
   for (const { type, trait } of GCA.allTraits) {
     // if (
     //   ![
     //     // 11290, // ST:Punch
     //     // 11178, // ST:Bite
-    //     // 12899, // SK:Karate
-    //     // 11193, // ST:DX
-    //     12971, // Acute Taste and Smell 1
+    //     12899, // SK:Karate
+    //     11193, // ST:DX
+    //     // 12971, // Acute Taste and Smell 1
     //     // 13006, // Acute Taste and Smell 8
     //   ].includes(trait.id)
     // )
     //   continue
 
+    // if (trait.id === 11193) debugger
+
+    if ([`technique`, `equipment`].includes(trait.section)) continue
     if (type !== `stat`) {
-      if (trait.section !== `skills`) continue
+      // if (trait.section !== `skills`) continue
     }
 
     const object = character.makeObject(trait.id.toString())
@@ -196,7 +206,7 @@ async function run() {
 
   for (const attribute of character.stats) explainTrait(attribute as any)
   for (const trait of character.traits) {
-    if (trait.data.type !== `skill`) continue
+    // if (trait.data.type !== `skill`) continue
     explainTrait(trait as any)
   }
 }
@@ -213,19 +223,28 @@ function explainTrait(trait: MutableObject<RuntimeIGURPSTrait>) {
   } else if (data.type === `skill`) {
     paths.push(
       { path: `level.bought` },
-      { path: `level.default` },
-      {
-        path: `level.defaults`, //
-        filter: (item: any, key: string) => item.isKnown && (RuntimeValue.isRuntimeValue(item.isKnown) ? item.isKnown.value : item.isKnown),
-      },
+      // { path: `level.default` },
+      // {
+      //   path: `level.defaults`, //
+      //   filter: (item: any, key: string) => item.isKnown && (RuntimeValue.isRuntimeValue(item.isKnown) ? item.isKnown.value : item.isKnown),
+      // },
       { path: `level.base` },
       { path: `level.value`, check: `_.GCA._level` },
+    )
+  } else {
+    paths.push(
+      //
+      { path: `level.base` },
+      { path: `level.bonuses` },
+      { path: `level.value` },
+      // { path: `cost.progression` },
+      // { path: `points.full` },
     )
   }
 
   // 2. Get lable for trait
   const alias = trait.getAliases()[0]
-  const label = alias ?? fullName(data)
+  const label = alias ?? fullName(`parentheses`, data)
 
   if (paths.length === 0) {
     churchil.add(paint.green(trait.id)).add(` `)

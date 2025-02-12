@@ -21,7 +21,10 @@ export const parseStatement: EntryParser<Statement> = (p: Parser<DefaultStatemen
 export const parseExpressionStatement: EntryParser<Statement> = (p: Parser<DefaultExpressionParserProvider>, minimumBindingPower: BindingPower, context: SyntacticalContext): ExpressionStatement => {
   let expression: Expression
 
-  if (context.mode === `expression`) expression = p.grammar.parseExpression(p, minimumBindingPower, context)
+  const itemSyntaxMode = context.mode.split(`-list`)
+
+  if (itemSyntaxMode.length === 2) expression = p.grammar.call(`parseExpressionList`)(p, minimumBindingPower, { ...context, mode: itemSyntaxMode[0] })
+  else if (context.mode === `expression`) expression = p.grammar.parseExpression(p, minimumBindingPower, context)
   else if (context.mode === `if`) expression = p.grammar.call(`parseIfExpression`)(p, context) as IfExpression
   //
   else throw new Error(`Invalid context mode "${context.mode}"`)

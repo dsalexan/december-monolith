@@ -135,39 +135,44 @@ export default class ObjectCallQueue extends ObjectManager {
     // 1. If there is no queue, do nothing
     if (this.numberOfQueues === 0) return false
 
-    const object: StrictObjectReference = this.controller.store.strictifyReference(_object)
-    const executionContextID: ExecutionContext[`id`] = getExecutionContextID(object, bareExecutionContext)
+    // const object: StrictObjectReference = this.controller.store.strictifyReference(_object)
+    const objects = this.controller.store.getByReference(_object, false)
+    for (const mutableObject of objects) {
+      const object = mutableObject.reference(`id`) as StrictObjectReference
 
-    for (const queue of this._queues.byIndex) {
-      // 2. If queue already ran, ignore it here
-      if (this.current && queue.index < this.current.queue) continue
+      const executionContextID: ExecutionContext[`id`] = getExecutionContextID(object, bareExecutionContext)
 
-      const executionContext = queue.get(executionContextID)
+      for (const queue of this._queues.byIndex) {
+        // 2. If queue already ran, ignore it here
+        if (this.current && queue.index < this.current.queue) continue
 
-      // 3. Check if there are any execution contexts in this queue
-      if (!executionContext) continue
+        const executionContext = queue.get(executionContextID)
 
-      // 4. Check if execution context already ran
-      if (this.current && executionContext.index < this.current.executionContext) {
+        // 3. Check if there are any execution contexts in this queue
+        if (!executionContext) continue
+
+        // 4. Check if execution context already ran
+        if (this.current && executionContext.index < this.current.executionContext) {
+          if (this.__DEBUG) {
+            logger.add(...paint.grey(`[`, paint.red.dim(`dequeue/`), paint.red.dim.bold(`skip`), `]`)).add(` `)
+            logger.add(...explainExecutionContext(executionContext, { queue, controller: this.controller }))
+            logger.add(paint.italic.grey(` (context was already executed)`))
+            logger.info()
+          }
+
+          continue
+        }
+
+        // 5. Dequeue execution context
         if (this.__DEBUG) {
-          logger.add(...paint.grey(`[`, paint.red.dim(`dequeue/`), paint.red.dim.bold(`skip`), `]`)).add(` `)
-          logger.add(...explainExecutionContext(executionContext, { queue, controller: this.controller }))
-          logger.add(paint.italic.grey(` (context was already executed)`))
+          logger.add(...paint.grey(`[`, paint.yellow.dim(`dequeue`), `]`)).add(` `)
+          logger.add(...paint.grey(queue.toString(), paint.white(executionContext.index), `/${queue.queue.size}`)).add(` `)
+          logger.add(...explainExecutionContext(executionContext, { controller: this.controller }))
           logger.info()
         }
 
-        continue
+        queue.dequeue(executionContextID)
       }
-
-      // 5. Dequeue execution context
-      if (this.__DEBUG) {
-        logger.add(...paint.grey(`[`, paint.yellow.dim(`dequeue`), `]`)).add(` `)
-        logger.add(...paint.grey(queue.toString(), paint.white(executionContext.index), `/${queue.queue.size}`)).add(` `)
-        logger.add(...explainExecutionContext(executionContext, { controller: this.controller }))
-        logger.info()
-      }
-
-      queue.dequeue(executionContextID)
     }
 
     return true
@@ -177,51 +182,63 @@ export default class ObjectCallQueue extends ObjectManager {
   public enqueue(object: ObjectReference, bareExecutionContext: BareExecutionContext): boolean
   public enqueue(_object: ObjectReference, bareExecutionContext: BareExecutionContext): boolean {
     const queue = this.getNextQueue()
-    const object: StrictObjectReference = this.controller.store.strictifyReference(_object)
+    // const object: StrictObjectReference = this.controller.store.strictifyReference(_object)
+    const objects = this.controller.store.getByReference(_object, false)
 
-    // 0. Mount arguments
-    let hashableArgs: AnyObject = {}
-    if (bareExecutionContext.argumentProvider) {
-      const providers = isArray(bareExecutionContext.argumentProvider) ? bareExecutionContext.argumentProvider : [bareExecutionContext.argumentProvider]
-      for (const provider of providers) hashableArgs = { ...hashableArgs, ...provider(bareExecutionContext) }
-    }
-    if (bareExecutionContext.hashableArguments) hashableArgs = { ...hashableArgs, ...bareExecutionContext.hashableArguments }
+    for (const mutableObject of objects) {
+      const object = mutableObject.reference(`id`) as StrictObjectReference
 
-    // 1. Build full Execution Context
-    const executionContext: ExecutionContext = {
-      ...bareExecutionContext,
-      hashableArguments: hashableArgs,
-      //
-      id: getExecutionContextID(object, bareExecutionContext),
-      index: queue.queue.size,
-      priority: Infinity,
-      //
-      object,
-      //
-      listenerID: `listenerID` as any,
-    }
+      // 0. Mount arguments
+      let hashableArgs: AnyObject = {}
+      let otherArgs: AnyObject = {}
+      if (bareExecutionContext.argumentProvider) {
+        const providers = isArray(bareExecutionContext.argumentProvider) ? bareExecutionContext.argumentProvider : [bareExecutionContext.argumentProvider]
+        for (const provider of providers) {
+          const providedArgs = provider(bareExecutionContext)
+          hashableArgs = { ...hashableArgs, ...(providedArgs.hashableArguments ?? {}) }
+          otherArgs = { ...otherArgs, ...(providedArgs.otherArguments ?? {}) }
+        }
+      }
+      if (bareExecutionContext.hashableArguments) hashableArgs = { ...hashableArgs, ...bareExecutionContext.hashableArguments }
+      if (bareExecutionContext.otherArguments) otherArgs = { ...otherArgs, ...bareExecutionContext.otherArguments }
 
-    // 2. Check if execution context was already enqueued in some future queue to SKIP IT
-    // if (executionContext.id === `id:12899::compute:mode`) debugger
-    const doSkip = this.shouldSkip(executionContext)
-    if (doSkip) {
-      if (this.__DEBUG) {
-        logger.add(...paint.grey(`[`, paint.grey.dim(`enqueue/`), paint.red.dim(`skip`), `]`)).add(` `)
-        logger.add(...paint.grey(...explainExecutionContext(executionContext, { object: _object, queue, controller: this.controller })))
-        logger.info()
+      // 1. Build full Execution Context
+      const executionContext: ExecutionContext = {
+        ...bareExecutionContext,
+        hashableArguments: hashableArgs,
+        otherArguments: otherArgs,
+        //
+        id: getExecutionContextID(object, bareExecutionContext),
+        index: queue.queue.size,
+        priority: Infinity,
+        //
+        object,
+        //
+        listenerID: `listenerID` as any,
       }
 
-      return false
-    }
+      // 2. Check if execution context was already enqueued in some future queue to SKIP IT
+      // if (executionContext.id === `id:12899::compute:mode`) debugger
+      const doSkip = this.shouldSkip(executionContext)
+      if (doSkip) {
+        // if (this.__DEBUG) {
+        //   logger.add(...paint.grey(`[`, paint.grey.dim(`enqueue/`), paint.red.dim(`skip`), `]`)).add(` `)
+        //   logger.add(...paint.grey(...explainExecutionContext(executionContext, { object: _object, queue, controller: this.controller })))
+        //   logger.info()
+        // }
 
-    // 3. Enqueue execution context
-    if (this.__DEBUG) {
-      // logger.add(...paint.grey(`[`, paint.yellow.dim(`enqueue`), `]`)).add(` `)
-      // logger.add(...explainExecutionContext(executionContext, { object: _object, queue, controller: this.controller }))
-      // logger.info()
-    }
+        return false
+      }
 
-    queue.enqueue(executionContext)
+      // 3. Enqueue execution context
+      // if (this.__DEBUG) {
+      //   logger.add(...paint.grey(`[`, paint.yellow.dim(`enqueue`), `]`)).add(` `)
+      //   logger.add(...explainExecutionContext(executionContext, { object: _object, queue, controller: this.controller }))
+      //   logger.info()
+      // }
+
+      queue.enqueue(executionContext)
+    }
 
     return true
   }

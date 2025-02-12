@@ -7,14 +7,14 @@ import { AnyObject, MaybeArray, MaybeNull, MaybeUndefined, Nullable } from "tsde
 import { Match } from "@december/utils"
 import { IUnit, UnitManager } from "@december/utils/unit"
 
-import { TokenKindName } from "../../token/kind"
 import { Expression, Identifier, Node, NodeType, Statement, StringLiteral } from "../../tree"
 
 import { BindingPower } from "./bindingPower"
 import { LEDParser, NUDParser, StatementParser, EntryParser, SyntacticalDenotation, SyntacticalContext } from "./parserFunction"
 import { isBindingPowerEntry, isBindParserEntry, isRegisterParserEntry, isTransformNodeEntry, createTransformNodeEntry, SyntacticalGrammarEntry, TransformNodeEntry, isReContextualizationEntry, RecontextualizationEntry } from "./entries"
 import { FunctionProvider, GetFunction, GetKey } from "./../../utils"
-import { Token } from "../../token/core"
+
+import { Token, TokenKind } from "../../token"
 
 export type { BindingPower } from "./bindingPower"
 
@@ -24,17 +24,17 @@ export { DEFAULT_GRAMMAR } from "./default"
 
 export type BaseParserProvider = Record<string, (...args: any[]) => Node>
 
-export class SyntacticalGrammar<TDict extends BaseParserProvider> extends FunctionProvider<TDict> {
+export class SyntacticalGrammar<TDict extends BaseParserProvider, TKind extends string = TokenKind> extends FunctionProvider<TDict> {
   protected bindingPowers: {
-    statement: Partial<Record<TokenKindName, BindingPower[]>>
-    nud: Partial<Record<TokenKindName, BindingPower[]>>
-    led: Partial<Record<TokenKindName, BindingPower[]>>
+    statement: Partial<Record<TKind, BindingPower[]>>
+    nud: Partial<Record<TKind, BindingPower[]>>
+    led: Partial<Record<TKind, BindingPower[]>>
   }
 
   protected parsers: {
-    statement: Partial<Record<TokenKindName, string[]>>
-    nud: Partial<Record<TokenKindName, string[]>>
-    led: Partial<Record<TokenKindName, string[]>>
+    statement: Partial<Record<TKind, string[]>>
+    nud: Partial<Record<TKind, string[]>>
+    led: Partial<Record<TKind, string[]>>
   }
 
   protected transformType: Record<NodeType, Map<string, TransformNodeEntry>> = {} as any // from -> name -> entry
@@ -60,7 +60,7 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
   }
 
   /** Return binding power for tokenKind (can specify denonation) */
-  public getBindingPower(kind: TokenKindName, denotation: SyntacticalDenotation): MaybeUndefined<BindingPower> {
+  public getBindingPower(kind: TKind, denotation: SyntacticalDenotation): MaybeUndefined<BindingPower> {
     const StatementBindingPowers = this.bindingPowers.statement[kind]
     const NUDBindingPowers = this.bindingPowers.nud[kind]
     const LEDBindingPowers = this.bindingPowers.led[kind]
@@ -79,10 +79,10 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
   }
 
   /** Return syntactical parser for specific denotation (stmt, nud, led) */
-  public getParser(denotation: `statement`, kind: TokenKindName, before: MaybeUndefined<TokenKindName>): MaybeUndefined<StatementParser>
-  public getParser(denotation: `nud`, kind: TokenKindName, before: MaybeUndefined<TokenKindName>): MaybeUndefined<NUDParser>
-  public getParser(denotation: `led`, kind: TokenKindName, before: MaybeUndefined<TokenKindName>): MaybeUndefined<LEDParser>
-  public getParser(denotation: SyntacticalDenotation, kind: TokenKindName, before: MaybeUndefined<TokenKindName>): MaybeUndefined<Function> {
+  public getParser(denotation: `statement`, kind: TKind, before: MaybeUndefined<TKind>): MaybeUndefined<StatementParser>
+  public getParser(denotation: `nud`, kind: TKind, before: MaybeUndefined<TKind>): MaybeUndefined<NUDParser>
+  public getParser(denotation: `led`, kind: TKind, before: MaybeUndefined<TKind>): MaybeUndefined<LEDParser>
+  public getParser(denotation: SyntacticalDenotation, kind: TKind, before: MaybeUndefined<TKind>): MaybeUndefined<Function> {
     let functionNames: string[] = uniq(this.parsers[denotation][kind] ?? [])
 
     assert(functionNames.length <= 1, `Multiple parsers for token kind "${kind}" and denotation "${denotation}"`)
@@ -167,7 +167,7 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
   }
 
   /** Register binding power for tokenKind and denotation */
-  public addBindingPower(denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower) {
+  public addBindingPower(denotation: SyntacticalDenotation, kind: TKind, bindingPower: BindingPower) {
     this.bindingPowers[denotation][kind] ??= []
     this.bindingPowers[denotation][kind]!.push(bindingPower)
   }
@@ -178,7 +178,7 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
   }
 
   /** Bind a denonation parser for a token kind */
-  public bindParser(denotation: SyntacticalDenotation, kind: TokenKindName, bindingPower: BindingPower, parser: GetKey<TDict>) {
+  public bindParser(denotation: SyntacticalDenotation, kind: TKind, bindingPower: BindingPower, parser: GetKey<TDict>) {
     this.addBindingPower(denotation, kind, bindingPower)
 
     assert(this.getFunction(parser), `Parser function "${String(parser)}" doesn't exists`)
@@ -207,7 +207,7 @@ export class SyntacticalGrammar<TDict extends BaseParserProvider> extends Functi
   }
 
   /** Generic mass entry register */
-  public add<TDict>(...entries: SyntacticalGrammarEntry<TDict>[]) {
+  public add<TDict>(...entries: SyntacticalGrammarEntry<TDict, any>[]) {
     for (const entry of entries) {
       if (isRegisterParserEntry(entry)) this.registerParser(entry.name, entry.fn, entry.override)
       else if (isBindParserEntry(entry)) this.bindParser(entry.denotation, entry.kind, entry.bindingPower, entry.parser)

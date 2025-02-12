@@ -1,4 +1,4 @@
-import { Nullable } from "tsdef"
+import { MaybeUndefined, Nullable } from "tsdef"
 
 import { BooleanValue, NumericValue, ObjectValue, RuntimeValue, StringValue } from "@december/tree/interpreter"
 import { NumericOrDiceValue, DiceRollValue, DiceNotationValue } from "@december/system/dice"
@@ -11,6 +11,7 @@ import { LevelCost, MonetaryCost, ProgressionCost, StepCost, TraitCost } from ".
 import { TraitTagParsedValue } from "../../../../../apps/gca/src/trait/tag/value"
 import { TraitReference } from "../../utils"
 import { Get, MergeDeep } from "type-fest"
+import { IGURPSBonus } from "../bonus/bonus"
 
 // #region GENERICS
 
@@ -42,7 +43,7 @@ export interface IGURPSTraitOrModifier<TType extends TraitType = TraitType> {
 // traits
 export interface IGURPSBaseTrait<TType extends Exclude<TraitType, `modifier`> = Exclude<TraitType, `modifier`>> extends IGURPSTraitOrModifier {
   type: TType
-  cost: TraitCost // (check extensions)
+  // cost: TraitCost // (check extensions)
   //
   // parent-traits
   childProfile: `regular` | `alternative-attacks` | `apply-modifiers-to-children` // ChildProfile()
@@ -57,9 +58,10 @@ export interface IGURPSBaseTrait<TType extends Exclude<TraitType, `modifier`> = 
     long?: string[] // UserNotes()
   }
   //
-  modes: unknown[]
+  modes: IGURPSMode[]
   modifiers: IGURPSModifier[]
-  //
+  bonuses: IGURPSBonus[]
+  // __
   radius: number // owner::radius
   //
   // GCABaseTrait
@@ -99,7 +101,31 @@ export interface IGURPSPointsBasedTrait {
 export interface IGURPSLevelBasedTraitOrModifier {
   level: {
     value: number // level — final level for invested points
+    //
+    bonuses?: Record<string, number> // { bonus origin -> bonus index -> bonus target } -> { bonus value }
+    bonus?: number // sum of all bonuses
   }
+}
+
+// #endregion
+
+// #region UTILS? SUMFIN
+
+export interface IGURPSTraitExpression {
+  expression: string // expression to calculate both LEVEL and DISPLAY
+  //
+  trait: string // reference of trait responsible for skill
+  isKnown: boolean // if reference trait is EFFECTIVELLY KNOWN (any attribute or, specifically, known skill — skills with invested points)
+  value: number // trait level value
+}
+
+export interface IGURPSTraitDefaults<TTraitExpression extends IGURPSTraitExpression = IGURPSTraitExpression> {
+  defaults: Nullable<{
+    // Default(), SkillUsed()
+    list: TTraitExpression[] // list of expressions targeting traits
+    // CharSkillUsed()
+    best: number // index of defaults corresponding to BEST DEFAULT LEVEL
+  }>
 }
 
 // #endregion
@@ -138,22 +164,10 @@ export interface IGURPSAttribute extends IGURPSBaseTrait<`attribute`>, IGURPSPoi
   // _score: MaybeUndefined<number> // calcs.score; !calculate from baseScore + sysLevels + modifiers maybe
 }
 
-export interface IGURPSSkillOrSpellOrTechnique extends IGURPSBaseTrait<`skill` | `spell` | `technique`>, IGURPSPointsBasedTrait, IGURPSLevelBasedTraitOrModifier {
+export interface IGURPSSkillOrSpellOrTechnique extends IGURPSBaseTrait<`skill` | `spell` | `technique`>, IGURPSPointsBasedTrait, IGURPSLevelBasedTraitOrModifier, IGURPSTraitDefaults<IGURPSTraitExpression & { points: number }> {
   level: MergeDeep<
     IGURPSLevelBasedTraitOrModifier[`level`],
     {
-      // Default()
-      defaults: Nullable<
-        {
-          expression: string // expression to calculate both LEVEL and DISPLAY
-          //
-          trait: string // reference of trait responsible for default
-          isKnown: boolean // if reference trait is EFFECTIVELLY KNOWN (any attribute or, specifically, known skill — skills with invested points)
-          value: number // default level value
-          points: number // free points gained by defaulting to this level
-        }[]
-      >
-      default: number // index of defaults corresponding to BEST DEFAULT LEVEL
       base: { type: `default`; index: number } | { type: `attribute`; level: number }
       bought: number // points * difficulty
     }
@@ -243,10 +257,8 @@ export interface IGURPSModifier extends IGURPSTraitOrModifier<`modifier`>, IGURP
   // tier: MaybeUndefined<number> // Tier()
 }
 
-export interface IGURPSGeneralTrait<TType extends Exclude<TraitType, `attribute` | `skill` | `spell` | `equipment` | `modifier`> = Exclude<TraitType, `attribute` | `skill` | `spell` | `equipment` | `modifier`>>
-  extends IGURPSBaseTrait<TType>,
-    IGURPSPointsBasedTrait,
-    IGURPSLevelBasedTraitOrModifier {
+export type GeneralTraitType = Exclude<TraitType, `attribute` | `skill` | `spell` | `technique` | `equipment` | `modifier`>
+export interface IGURPSGeneralTrait<TType extends GeneralTraitType = GeneralTraitType> extends IGURPSBaseTrait<TType>, IGURPSPointsBasedTrait, IGURPSLevelBasedTraitOrModifier {
   level: MergeDeep<
     IGURPSLevelBasedTraitOrModifier[`level`],
     {
@@ -255,8 +267,22 @@ export interface IGURPSGeneralTrait<TType extends Exclude<TraitType, `attribute`
     }
   >
   cost: LevelCost // Cost(), Formula()
+  points: MergeDeep<
+    IGURPSPointsBasedTrait[`points`],
+    {
+      full: number // apparent full cost of trait by level, before any modifiers
+    }
+  >
   //
   // GCABaseNonAttribute
+}
+
+export interface IGURPSMode extends IGURPSTraitDefaults {
+  name: string // Mode(), <attackmode><name /></attackmode>
+  //
+  level: {
+    value: number // level — final level of mode
+  }
 }
 
 // #endregion

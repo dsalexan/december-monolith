@@ -5,26 +5,26 @@ import assert from "assert"
 
 import { Match } from "@december/utils"
 
-import { getTokenKind, TokenKind, TokenKindName } from "../../token/kind"
+import { TokenKind } from "../../token/kind"
 import { AnyObject, Nullable } from "tsdef"
 
 export { DEFAULT_GRAMMAR, KEYWORD_PRIORITY } from "./default"
 
 export interface LexicalTestOptions {
-  kinds?: TokenKindName[]
+  kinds?: TokenKind[]
 }
 
 export type LexicalGrammarCustomTest = (word: string, options: LexicalTestOptions) => { isMatch: boolean }
 
-export interface LexicalGrammarEntry {
+export interface LexicalGrammarEntry<TKind extends string = TokenKind> {
   priority: number // lower is worse
-  kind: TokenKind
+  kind: TKind
   test: Match.Pattern | LexicalGrammarCustomTest
 }
 
 /** Creates a LexicalGrammarEntry */
-export function createEntry(priority: number, kind: TokenKind | TokenKindName, test: Match.Pattern | LexicalGrammarCustomTest): LexicalGrammarEntry {
-  return { priority, kind: isString(kind) ? getTokenKind(kind) : kind, test }
+export function createEntry<TKind extends string = TokenKind>(priority: number, kind: TKind, test: Match.Pattern | LexicalGrammarCustomTest): LexicalGrammarEntry<TKind> {
+  return { priority, kind, test }
 }
 
 export interface LexicalGrammarMatch extends Omit<LexicalGrammarEntry, `test`> {
@@ -32,18 +32,18 @@ export interface LexicalGrammarMatch extends Omit<LexicalGrammarEntry, `test`> {
 }
 
 export default class LexicalGrammar {
-  entries: Map<TokenKindName, LexicalGrammarEntry>
+  entries: Map<string, LexicalGrammarEntry<any>>
 
   constructor() {
     this.entries = new Map()
   }
 
   /** Adds a pattern to the grammar */
-  public add(...entries: LexicalGrammarEntry[]) {
+  public add(...entries: LexicalGrammarEntry<any>[]) {
     for (const entry of entries) {
-      assert(!this.entries.has(entry.kind.name), `TokenKind "${entry.kind.name}" already exists in LexicalGrammar`)
+      assert(!this.entries.has(entry.kind), `TokenKind "${entry.kind}" already exists in LexicalGrammar`)
 
-      this.entries.set(entry.kind.name, entry)
+      this.entries.set(entry.kind, entry)
     }
 
     return this
@@ -55,7 +55,7 @@ export default class LexicalGrammar {
 
     // 1. Get relevant entries
     const allEntries = [...this.entries.values()]
-    const entries = options.kinds ? allEntries.filter(entry => options.kinds!.includes(entry.kind.name)) : allEntries
+    const entries = options.kinds ? allEntries.filter(entry => options.kinds!.includes(entry.kind)) : allEntries
 
     // 2. Test word against all entries
     for (const entry of entries) {

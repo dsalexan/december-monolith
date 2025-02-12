@@ -49,12 +49,12 @@ export class NodeEvaluator<TEvaluations extends BaseEvaluationsProvider, TConver
   }
 
   public addDictionaries<TEvaluations extends AnyObject, TConversions extends AnyObject, TPostProcess extends AnyObject>(
-    { evaluations, conversions, postProcess }: { evaluations: TEvaluations; conversions: TConversions; postProcess: TPostProcess },
+    { evaluations, conversions, postProcess }: { evaluations: TEvaluations; conversions?: TConversions; postProcess?: TPostProcess },
     override?: boolean,
   ): void {
     this.addDictionary(`evaluations`, evaluations, override)
-    this.addDictionary(`conversions`, conversions, override)
-    this.addDictionary(`postProcess`, postProcess, override)
+    if (conversions) this.addDictionary(`conversions`, conversions, override)
+    if (postProcess) this.addDictionary(`postProcess`, postProcess, override)
   }
 
   // #endregion

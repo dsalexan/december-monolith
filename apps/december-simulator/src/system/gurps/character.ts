@@ -1,6 +1,6 @@
 import assert from "assert"
-import { MaybeNull } from "tsdef"
-import { isString } from "lodash"
+import { MaybeNull, MaybeUndefined, Nullable } from "tsdef"
+import { isNumber, isString } from "lodash"
 
 import { Reference } from "@december/utils/access"
 import { MutableObject, ObjectController } from "@december/compiler"
@@ -42,6 +42,16 @@ export default class GURPSCharacter extends ObjectController {
     this.tags = { traits: [], stats: [] } as any
   }
 
+  public tagObject(object: MutableObject, tag: GURPSCharacterTag) {
+    if (tag === `data`) {
+      assert(this.tags.data === undefined, `data already tagged`)
+      this.tags.data = object.id
+    } else {
+      assert(!this.tags[tag].includes(object.id), `Object already tagged`)
+      this.tags[tag].push(object.id)
+    }
+  }
+
   protected getTrait(idOrReference: string | Reference<`alias` | `id`>): MaybeNull<IGURPSTrait> {
     const reference = isString(idOrReference) ? new Reference(`id`, idOrReference) : idOrReference
     const objects = this.store.getByReference(reference, false) as MutableObject<IGURPSTrait>[]
@@ -52,13 +62,22 @@ export default class GURPSCharacter extends ObjectController {
     return object ? object.getData() : null
   }
 
-  public tagObject(object: MutableObject, tag: GURPSCharacterTag) {
-    if (tag === `data`) {
-      assert(this.tags.data === undefined, `data already tagged`)
-      this.tags.data = object.id
-    } else {
-      assert(!this.tags[tag].includes(object.id), `Object already tagged`)
-      this.tags[tag].push(object.id)
+  public getBestTrait(...references: Reference<`alias` | `id`>[]): Nullable<MutableObject<IGURPSTrait, GURPSCharacter>> {
+    const objects = references.flatMap(reference => this.store.getByReference(reference, false) as MutableObject<IGURPSTrait, GURPSCharacter>[])
+
+    let bestObject: Nullable<{ index: number; value: number }> = null
+    for (const [index, object] of objects.entries()) {
+      const type = object.getProperty(`type`)
+
+      let value: MaybeUndefined<number> = undefined
+      if (type === `attribute`) value = object.getProperty(`score.value`) as number
+      else value = object.getProperty(`level.value`) as number
+
+      assert(value === undefined || (isNumber(value) && !isNaN(value)), `Value must be a number`)
+
+      if (value !== undefined) if (bestObject === null || value > bestObject.value) bestObject = { index, value }
     }
+
+    return bestObject ? objects[bestObject.index] : null
   }
 }

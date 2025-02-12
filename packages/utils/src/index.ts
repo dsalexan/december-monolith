@@ -247,6 +247,10 @@ export function arrayJoin(array: any[], separator: any = `, `) {
     .slice(0, -1)
 }
 
+export function split(string: string): string[] {
+  return string.split(/ *, */).map(mod => mod.trim())
+}
+
 export function conditionalSet<TObject extends object = object>(object: TObject, key: string | number | symbol, value: any, refuseIf: `nil` | `empty` | `nilOrEmpty` = `nilOrEmpty`) {
   let doSet = true
 

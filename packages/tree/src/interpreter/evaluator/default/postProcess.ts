@@ -6,7 +6,7 @@ import { isNumber } from "lodash"
 
 import type Interpreter from "../.."
 
-import { ArtificialToken, getTokenKind } from "../../../token"
+import { ArtificialToken } from "../../../token"
 
 import { BinaryExpression, BooleanLiteral, Expression, Node, NumericLiteral, StringLiteral, UnitLiteral } from "../../../tree"
 import { BooleanValue, ExpressionValue, NumericValue, ObjectValue, QuantityValue, RuntimeEvaluation, RuntimeValue, StringValue, UnitValue } from "../../runtime"

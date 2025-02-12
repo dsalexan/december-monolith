@@ -3,7 +3,7 @@ import { Token } from "../../token/core"
 import { Node } from "../../tree"
 import { RuntimeEvaluation } from "./evaluation"
 
-export const RUNTIME_VALUE_TYPES = [`undefined`, `boolean`, `number`, `string`, `function`, `variable`, `unit`, `quantity`, `object`, `expression`, `property`] as const
+export const RUNTIME_VALUE_TYPES = [`undefined`, `boolean`, `number`, `string`, `array`, `function`, `variable`, `unit`, `quantity`, `object`, `expression`, `property`] as const
 export type RuntimeValueType = (typeof RUNTIME_VALUE_TYPES)[number]
 
 export class RuntimeValue<TValue> {

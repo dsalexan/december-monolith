@@ -5,7 +5,7 @@
 import assert from "assert"
 
 import { BinaryExpression, Node, NumericLiteral } from "../../../tree"
-import { ArtificialToken, getTokenKind } from "../../../token"
+import { ArtificialToken, TokenKind } from "../../../token"
 
 import { isBinaryExpression, isLiteral, isNumericLiteral } from "../../../utils/guards"
 import { artificialize, artificializeTree, makeConstantLiteral } from "../../../utils/factories"
@@ -136,8 +136,8 @@ STACK_OVERFLOW_RULESET.push(
         artificializeTree(node)
 
         const TWO = makeConstantLiteral(2)
-        const INNER_PLUS = new ArtificialToken(getTokenKind(`plus`), `*`)
-        const PLUS = new ArtificialToken(getTokenKind(`plus`), `+`)
+        const INNER_PLUS = new ArtificialToken<TokenKind>(`plus`, `*`)
+        const PLUS = new ArtificialToken<TokenKind>(`plus`, `+`)
 
         let _2: Node, _1: Node
         if (match.target === `F`) {
@@ -163,8 +163,8 @@ STACK_OVERFLOW_RULESET.push(
         artificializeTree(node)
 
         const ONE = makeConstantLiteral(1)
-        const ASTERISK = new ArtificialToken(getTokenKind(`asterisk`), `*`)
-        const PLUS = new ArtificialToken(getTokenKind(`plus`), `+`)
+        const ASTERISK = new ArtificialToken<TokenKind>(`asterisk`, `*`)
+        const PLUS = new ArtificialToken<TokenKind>(`plus`, `+`)
 
         let _2: Node, _1: Node
         if (match.target === `J`) {
@@ -186,12 +186,12 @@ STACK_OVERFLOW_RULESET.push(
         const addition = new BinaryExpression(_2, PLUS, ONE)
         return new BinaryExpression(addition, ASTERISK, _1)
       }
-      if (operator === `-` || operator === `/`) return new NumericLiteral(new ArtificialToken(getTokenKind(`number`), operator === `-` ? `0` : `1`))
+      if (operator === `-` || operator === `/`) return new NumericLiteral(new ArtificialToken<TokenKind>(`number`, operator === `-` ? `0` : `1`))
 
       artificializeTree(node)
 
       const TWO = makeConstantLiteral(2)
-      const ASTERISK = new ArtificialToken(getTokenKind(`asterisk`), `*`)
+      const ASTERISK = new ArtificialToken<TokenKind>(`asterisk`, `*`)
       return new BinaryExpression(TWO, ASTERISK, node.right)
     },
   ),
@@ -233,8 +233,8 @@ STACK_OVERFLOW_RULESET.push(
 
       assert(_1 && _2 && _3, `Expected _1, _2, _3 to be defined`)
 
-      const addition = new BinaryExpression(_1, new ArtificialToken(getTokenKind(`plus`), `+`), _3)
-      return new BinaryExpression(addition, new ArtificialToken(getTokenKind(`asterisk`), `*`), _2)
+      const addition = new BinaryExpression(_1, new ArtificialToken<TokenKind>(`plus`, `+`), _3)
+      return new BinaryExpression(addition, new ArtificialToken<TokenKind>(`asterisk`, `*`), _2)
     },
   ),
 )
@@ -320,8 +320,8 @@ STACK_OVERFLOW_RULESET.push(
       const _L1 = left.right
       const _L2 = node.right
 
-      let INNER = new ArtificialToken(getTokenKind(`dash`), `-`)
-      let OUTER = new ArtificialToken(getTokenKind(`plus`), `+`)
+      let INNER = new ArtificialToken<TokenKind>(`dash`, `-`)
+      let OUTER = new ArtificialToken<TokenKind>(`plus`, `+`)
 
       let _LA = _L1
       let _LB = _L2
@@ -330,12 +330,12 @@ STACK_OVERFLOW_RULESET.push(
         _LA = _L2
         _LB = _L1
       } else if (match.target === `B`) {
-        OUTER = new ArtificialToken(getTokenKind(`dash`), `-`)
-        INNER = new ArtificialToken(getTokenKind(`plus`), `+`)
+        OUTER = new ArtificialToken<TokenKind>(`dash`, `-`)
+        INNER = new ArtificialToken<TokenKind>(`plus`, `+`)
       } else if (match.target === `C`) {
         // pass
       } else if (match.target === `D`) {
-        INNER = new ArtificialToken(getTokenKind(`plus`), `+`)
+        INNER = new ArtificialToken<TokenKind>(`plus`, `+`)
       }
 
       // slightly modified
@@ -391,8 +391,8 @@ STACK_OVERFLOW_RULESET.push(
       return false
     },
     (node: BinaryExpression, { match }: { match: PatternTargetMatch }) => {
-      let INNER = new ArtificialToken(getTokenKind(`plus`), `+`)
-      let OUTER = new ArtificialToken(getTokenKind(`plus`), `+`)
+      let INNER = new ArtificialToken<TokenKind>(`plus`, `+`)
+      let OUTER = new ArtificialToken<TokenKind>(`plus`, `+`)
 
       let _L: Node, _NL1: Node, _NL2: Node
 
@@ -409,21 +409,21 @@ STACK_OVERFLOW_RULESET.push(
       if (match.target === `A`) {
         // pass
       } else if (match.target === `B`) {
-        INNER = new ArtificialToken(getTokenKind(`dash`), `-`)
+        INNER = new ArtificialToken<TokenKind>(`dash`, `-`)
       } else if (match.target === `C`) {
-        OUTER = new ArtificialToken(getTokenKind(`dash`), `-`)
+        OUTER = new ArtificialToken<TokenKind>(`dash`, `-`)
       } else if (match.target === `D`) {
-        INNER = new ArtificialToken(getTokenKind(`dash`), `-`)
-        OUTER = new ArtificialToken(getTokenKind(`dash`), `-`)
+        INNER = new ArtificialToken<TokenKind>(`dash`, `-`)
+        OUTER = new ArtificialToken<TokenKind>(`dash`, `-`)
       } else if (match.target === `E`) {
         // pass
       } else if (match.target === `F`) {
-        INNER = new ArtificialToken(getTokenKind(`dash`), `-`)
+        INNER = new ArtificialToken<TokenKind>(`dash`, `-`)
       } else if (match.target === `G`) {
-        OUTER = new ArtificialToken(getTokenKind(`dash`), `-`)
+        OUTER = new ArtificialToken<TokenKind>(`dash`, `-`)
       } else if (match.target === `H`) {
-        INNER = new ArtificialToken(getTokenKind(`dash`), `-`)
-        OUTER = new ArtificialToken(getTokenKind(`dash`), `-`)
+        INNER = new ArtificialToken<TokenKind>(`dash`, `-`)
+        OUTER = new ArtificialToken<TokenKind>(`dash`, `-`)
       }
 
       const innerOperation = new BinaryExpression(_NL1, INNER, _NL2)

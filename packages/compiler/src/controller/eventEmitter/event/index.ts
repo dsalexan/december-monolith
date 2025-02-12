@@ -1,3 +1,7 @@
+import { Nullable, WithOptionalKeys } from "tsdef"
+import { omit } from "lodash"
+import assert from "assert"
+
 import { arrayJoin } from "@december/utils"
 import { BasePatternMatch } from "@december/utils/match"
 import { Indexed } from "@december/utils/typing"
@@ -8,10 +12,9 @@ import { IntegrityEntryAddedEvent, TargetIntegrityEntryAddedEvent, IntegrityEntr
 import { ReferenceAddedEvent, TargetReferenceAddedEvent, ReferenceEventTypes, ReferenceEvents, TargetReferenceEvents } from "./events/reference"
 import { PropertyUpdatedEvent, TargetPropertyUpdatedEvent, PropertyEventTypes, PropertyEvents, TargetPropertyEvents } from "./events/property"
 import { ImportEvent, ImportEvents } from "./events/import"
+import { InvokeEvents } from "./events/invoke"
+
 import type { BaseEventTrace } from "./base"
-import { Nullable, WithOptionalKeys } from "tsdef"
-import { omit } from "lodash"
-import assert from "assert"
 import type ObjectEventEmitter from ".."
 
 export { INTEGRITY_ENTRY_ADDED, INTEGRITY_ENTRY_UPDATED } from "./events/integrityEntry"
@@ -22,8 +25,9 @@ export type { IntegrityEntryAddedEvent, TargetIntegrityEntryAddedEvent, Integrit
 export type { ReferenceAddedEvent, TargetReferenceAddedEvent, ReferenceEventTypes, ReferenceEvents, TargetReferenceEvents } from "./events/reference"
 export type { PropertyUpdatedEvent, TargetPropertyUpdatedEvent, PropertyEventTypes, PropertyEvents, TargetPropertyEvents } from "./events/property"
 export type { ImportEvent, ImportEvents } from "./events/import"
+export type { InvokeEvent, InvokeEvents } from "./events/invoke"
 
-export type Event = IntegrityEntryEvents | ReferenceEvents | PropertyEvents | ImportEvents
+export type Event = IntegrityEntryEvents | ReferenceEvents | PropertyEvents | ImportEvents | InvokeEvents
 export type TargetEvent = TargetIntegrityEntryEvents | TargetReferenceEvents | TargetPropertyEvents
 export type EventTypes = Event[`type`]
 

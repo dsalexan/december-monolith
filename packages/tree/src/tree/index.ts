@@ -8,6 +8,6 @@ export { print } from "./printer"
 
 export { Statement, ExpressionStatement } from "./statement"
 
-export { Expression } from "./expression"
+export { Expression, ExpressionList } from "./expression"
 export { BinaryExpression, CallExpression, MemberExpression, PrefixExpression, IfExpression } from "./expression"
 export { Identifier, BooleanLiteral, NumericLiteral, StringLiteral, UnitLiteral } from "./expression"

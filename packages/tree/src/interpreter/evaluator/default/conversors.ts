@@ -3,7 +3,7 @@ import { isNumber } from "lodash"
 
 import type Interpreter from "../.."
 
-import { ArtificialToken, getTokenKind } from "../../../token"
+import { ArtificialToken } from "../../../token"
 
 import { BinaryExpression, BooleanLiteral, Identifier, MemberExpression, Node, NumericLiteral, StringLiteral, UnitLiteral } from "../../../tree"
 import { BooleanValue, ExpressionValue, NumericValue, ObjectValue, PropertyValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../../runtime"
@@ -12,15 +12,15 @@ import { Nullable } from "tsdef"
 
 export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i: Interpreter<DefaultNodeConversionProvider>, value: RuntimeValue<any>, sourceNode: Nullable<Node>): Node => {
   if (BooleanValue.isBooleanValue(value)) return new BooleanLiteral(value.value)
-  if (NumericValue.isNumericValue(value)) return new NumericLiteral(new ArtificialToken(getTokenKind(`number`), String(value.value)))
-  if (StringValue.isStringValue(value)) return new StringLiteral(new ArtificialToken(getTokenKind(`string`), value.value))
-  if (UnitValue.isUnitValue(value)) return new UnitLiteral(value.value, new ArtificialToken(getTokenKind(`string`), value.value.symbol))
+  if (NumericValue.isNumericValue(value)) return new NumericLiteral(new ArtificialToken(`number`, String(value.value)))
+  if (StringValue.isStringValue(value)) return new StringLiteral(new ArtificialToken(`string`, value.value))
+  if (UnitValue.isUnitValue(value)) return new UnitLiteral(value.value, new ArtificialToken(`string`, value.value.symbol))
   if (QuantityValue.isQuantityValue(value)) {
     // assert(isNumber(value.value.value), `Quantity value must be a number.`)
     const numericValue = value.value.value as number
     assert(isNumber(numericValue), `Quantity value must be a number.`)
 
-    const ASTERISK = new ArtificialToken(getTokenKind(`asterisk`), `*`)
+    const ASTERISK = new ArtificialToken(`asterisk`, `*`)
 
     const numericLeft = i.evaluator.convertToNode<NumericLiteral>(i, new NumericValue(numericValue), null)
     const unitRight = i.evaluator.convertToNode<UnitLiteral>(i, new UnitValue(value.value.unit), null)
@@ -28,17 +28,17 @@ export const convertToNode: NodeConversionFunction<Node, RuntimeValue<any>> = (i
     return new BinaryExpression(numericLeft, ASTERISK, unitRight)
   }
   if (ObjectValue.isObjectValue(value)) {
-    if (value.hasNumericRepresentation()) return new NumericLiteral(new ArtificialToken(getTokenKind(`number`), String(value.asNumber())))
+    if (value.hasNumericRepresentation()) return new NumericLiteral(new ArtificialToken(`number`, String(value.asNumber())))
     if (sourceNode) return sourceNode
 
     throw new Error(`Cannot parse runtime value to expression string: ${value.type}`)
   }
   if (ExpressionValue.isExpressionValue(value)) return value.value
   if (PropertyValue.isPropertyValue(value)) {
-    const OBJECT = new Identifier(new ArtificialToken(getTokenKind(`string`), value.value.objectVariableName))
+    const OBJECT = new Identifier(new ArtificialToken(`string`, value.value.objectVariableName))
 
     // check any re-typing rules from grammar (usually for identifiers)
-    const propertyToken = new ArtificialToken(getTokenKind(`string`), value.value.propertyName)
+    const propertyToken = new ArtificialToken(`string`, value.value.propertyName)
 
     let PROPERTY: Node = new StringLiteral(propertyToken)
 

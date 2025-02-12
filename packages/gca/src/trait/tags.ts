@@ -234,6 +234,24 @@ export const TAG_NAMES = [
   `WeightCapacityUnits`,
   `WeightFormula`,
   `Where`,
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  // TARGET TAGS FOR BONUSES
+  `Bulk`,
+  `Deflect`,
+  `EffectiveST`,
+  `FencingPenalty`,
+  `Fortify`,
+  `Location`,
+  `ParryScore`,
+  `Points`,
+  `RaiseRuleOf`,
+  `SkillScore`,
 ] as const
 export type TagName = (typeof TAG_NAMES)[number]
 

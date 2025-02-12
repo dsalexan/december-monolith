@@ -20,8 +20,7 @@ import churchill, { Block, paint, Paint } from "../logger"
 
 import LexicalGrammar, { LexicalGrammarMatch, LexicalGrammarEntry, LexicalGrammarCustomTest, LexicalTestOptions } from "./grammar"
 
-import { LexicalToken, Token } from "../token/core"
-import { getTokenKind, getTokenKindBlocks, getTokenKindColor, TokenKind } from "../token/kind"
+import { LexicalToken, Token, TokenCategory, TokenKind, getTokenKindBlocks, getTokenKindColor } from "../token"
 import { Lexeme } from "../token/lexeme"
 import type { RuntimeValue } from "../interpreter"
 
@@ -32,12 +31,14 @@ export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
 export interface LexerOptions extends LexicalTestOptions {
   logger: typeof _logger
+  kindCategoryMap: Record<string, TokenCategory>
 }
 
 export interface InjectionData {
   index: number
   name: string
   expression: string
+  // cursor: number // cursor position in expression FROM END
   content: string
   result?: {
     runtimeValue: RuntimeValue<any>
@@ -93,21 +94,17 @@ export default class Lexer {
   public removeInjections(injectedExpression: InjectedExpression, cursor: number): InjectedExpression {
     const { injections, expression } = injectedExpression
 
-    // 1. Find "$"
-    const start = expression.indexOf(`$`, cursor)
-    //        (no $ in expression)
-    if (start === -1) return injectedExpression
+    // 1. Match "$<name>("
+    const match = expression.match(/\$(\w+)\(/)
+    if (match === null) return injectedExpression
 
     // 2. Consume function name
-    const parenthesis = expression.indexOf(`(`, start)
-    //        (not a valid function name, lacking parenthesis after $<word>)
-    if (parenthesis === -1) debugger
-
-    const functionName = `$` + expression.slice(start + 1, parenthesis)
+    const functionName = `$${match[1]}`
     const injectionMatches = this.grammar.match(functionName, { kinds: [`injection_function`] })
     //        (not a valid function name as per lexical definition)
     if (injectionMatches.length === 0) debugger
 
+    const start = (match as any).index
     const innerStart = start + functionName.length + 1
 
     // 3. Find corresponding close_parenthesis
@@ -140,13 +137,14 @@ export default class Lexer {
     const newInjection: InjectionData = {
       index: injections.length,
       name: functionName.slice(1),
+      // cursor: xxx,
       expression: expression.substring(innerStart, end), // w/o parenthesis wrapper
       content: expression.slice(start, end + 1),
     }
 
     const newExpression = `${expression.slice(0, start)}$${newInjection.index}${expression.slice(end + 1)}`
 
-    const newCursor = end + 1 - (expression.length - newInjection.content.length)
+    const newCursor = start + newInjection.index.toString().length + 1
 
     return this.removeInjections({ expression: newExpression, injections: [...injections, newInjection] }, newCursor)
   }
@@ -224,9 +222,12 @@ export default class Lexer {
 
       // 1. Word kind was defined by spliting
       if (word.kind !== `word`) {
+        const category = this.options.kindCategoryMap[word.kind]
+        assert(category, `No category was found for kind "${word.kind}"`)
+
         lexemes.push({
-          lexeme: new Lexeme(word.kind, expression, this.cursor, word.content.length),
-          match: { priority: Infinity, kind: getTokenKind(word.kind), data: {} }, // artifical match
+          lexeme: new Lexeme<string>(word.kind, category, expression, this.cursor, word.content.length),
+          match: { priority: Infinity, kind: word.kind, data: {} }, // artifical match
         })
 
         // advance cursor
@@ -334,8 +335,11 @@ export default class Lexer {
     const sorted = orderBy(possibilities, [`match.priority`, `length`], [`desc`, `desc`])
     const lexeme = sorted[0]
 
+    const category = this.options.kindCategoryMap[lexeme.match.kind]
+    assert(category, `No category was found for kind "${lexeme.match.kind}"`)
+
     return {
-      lexeme: new Lexeme(lexeme.match.kind, expression, lexeme.start, lexeme.length),
+      lexeme: new Lexeme(lexeme.match.kind, category, expression, lexeme.start, lexeme.length),
       match: lexeme.match,
     }
   }
@@ -369,7 +373,10 @@ export default class Lexer {
 
     // PRINT EACH TOKEN INLINE
     for (const token of this.tokens) {
-      const color = getTokenKindColor(token.kind) ?? paint.grey
+      const category = this.options.kindCategoryMap[token.kind]
+      assert(category, `No category was found for kind "${token.kind}"`)
+
+      const color = getTokenKindColor(token.kind, category) ?? paint.grey
       logger.add(color(token.content))
     }
     logger.info()
@@ -380,13 +387,16 @@ export default class Lexer {
       logger.add(paint.grey(``))
 
       // 1. Token content
-      const content = token.kind.name === `whitespace` ? paint.bgGray : paint.white
+      const content = token.kind === `whitespace` ? paint.bgGray : paint.white
       logger.add(content(token.content), ` `)
 
       // 2. Token kind
-      const color = getTokenKindColor(token.kind, true) ?? paint.bgRed.white.bold
+      const category = this.options.kindCategoryMap[token.kind]
+      assert(category, `No category was found for kind "${token.kind}"`)
+
+      const color = getTokenKindColor(token.kind, category, true) ?? paint.bgRed.white.bold
       logger.add(
-        ...color(...getTokenKindBlocks(token.kind)), //
+        ...color(...getTokenKindBlocks(token.kind, category)), //
         paint.grey(` `),
         paint.grey.dim(token.getInterval().toString()),
       )
@@ -403,8 +413,8 @@ export interface Word {
 
 export const NO_MATCH_DISCARD_UNKNOWN_CHARACTER: LexicalGrammarMatch = {
   priority: -Infinity,
-  kind: getTokenKind(`unknown`),
+  kind: `unknown`,
   data: null as any,
 }
 
-export type LexemeAndMatch = { lexeme: Lexeme; match: LexicalGrammarMatch }
+export type LexemeAndMatch = { lexeme: Lexeme<string>; match: LexicalGrammarMatch }

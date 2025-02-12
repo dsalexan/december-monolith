@@ -11,6 +11,8 @@ import { getMutationFrameID } from "./frameRegistry/mutationFrame"
 import { GenericListener, getListenerID, Listener } from "./eventEmitter/listener"
 import ObjectDependencyGraph from "./dependencyGraph"
 
+export type { WithStrategyProcessState, StrategyProcessState } from "./strategy"
+
 /**
  * An Object Controller is a centralized manager for all objects.
  * It also centralizes general functions, such as event emitting and object mutation.

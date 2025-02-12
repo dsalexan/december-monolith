@@ -8,7 +8,7 @@ import { Node, Statement } from "@december/tree/tree"
 import { SyntacticalContext } from "@december/tree/parser"
 import { Environment, InterpreterOptions, RuntimeEvaluation, RuntimeValue, VariableName } from "@december/tree/interpreter"
 import Processor, { BaseProcessorRunOptions, makeDefaultProcessor, ProcessorFactoryFunction } from "@december/tree/processor"
-import { Token } from "@december/tree/token/core"
+import { Token, TokenCategory } from "@december/tree/token"
 import { InjectionData } from "@december/tree/lexer"
 
 import { PropertyReferencePattern } from "@december/utils/access"
@@ -34,12 +34,14 @@ export interface MutationInput {
 
 export interface StrategyProcessorParseOptions {
   unitManager: UnitManager
+  kindCategoryMap: Record<string, TokenCategory>
   syntacticalContext: SyntacticalContext
   //
   processorFactory?: ProcessorFactoryFunction
 }
 
 export interface StrategyProcessorResolveOptions {
+  kindCategoryMap: Record<string, TokenCategory>
   syntacticalContext: SyntacticalContext
   environmentUpdateCallback: Exclude<BaseProcessorRunOptions[`environmentUpdateCallback`], undefined>
   isValidFunctionName?: InterpreterOptions[`isValidFunctionName`]
@@ -107,7 +109,12 @@ export class StrategyProcessor {
   }
 
   /** Process expression into evaluation */
-  public static process(expression: string, environment: Environment, locallyUpdatedVariables: VariableName[], options: StrategyProcessorParseOptions & StrategyProcessorResolveOptions): StrategyProcessState & StrategyProcessResolvedState {
+  public static process(
+    expression: string,
+    environment: Environment,
+    locallyUpdatedVariables: VariableName[],
+    options: StrategyProcessorParseOptions & StrategyProcessorResolveOptions & { parseOnly?: boolean },
+  ): StrategyProcessState & StrategyProcessResolvedState {
     const state = StrategyProcessor.parse(expression, environment, locallyUpdatedVariables, options)
     return StrategyProcessor.resolve(state, environment, locallyUpdatedVariables, options)
   }
@@ -133,6 +140,8 @@ export class StrategyProcessor {
   /** Listen for all "listenable" symbols indexed in table */
   public static listenForSymbols(state: StrategyProcessState, object: MutableObject, path: string, options: StrategyProcessorListenOptions): Listener[] {
     const { symbolTable, integrityEntries, listenedSymbols } = state
+
+    // if (object.id === `11176`) debugger // ST:Basic Speed
 
     // 1. Get all symbols invoked by interpreter and contextualized by environment
     const allSymbols = symbolTable.getAllSymbols(state.environment!)
@@ -245,4 +254,10 @@ export class StrategyProcessState {
 
     return this.evaluation!.runtimeValue! as TRuntimeValue
   }
+
+  public static fromAST(AST: Node, originalExpression: string, symbolTable: SymbolTable, processor: Processor): StrategyProcessState {
+    return new StrategyProcessState(originalExpression, symbolTable, processor, [], [], AST)
+  }
 }
+
+export type WithStrategyProcessState<T> = T & { state: StrategyProcessState }

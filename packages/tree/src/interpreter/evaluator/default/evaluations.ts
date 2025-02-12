@@ -1,3 +1,4 @@
+import { expression } from "mathjs"
 import { get, isNil } from "lodash"
 import { MaybeUndefined, Nullable } from "tsdef"
 import assert from "assert"
@@ -5,15 +6,30 @@ import assert from "assert"
 import { Quantity } from "@december/utils/unit"
 
 import { ArtificialToken, Token } from "../../../token/core"
-import { BinaryExpression, BooleanLiteral, CallExpression, Expression, ExpressionStatement, Identifier, IfExpression, MemberExpression, Node, NumericLiteral, PrefixExpression, StringLiteral, UnitLiteral } from "../../../tree"
+import {
+  BinaryExpression,
+  BooleanLiteral,
+  CallExpression,
+  Expression,
+  ExpressionStatement,
+  Identifier,
+  IfExpression,
+  MemberExpression,
+  Node,
+  NumericLiteral,
+  PrefixExpression,
+  StringLiteral,
+  UnitLiteral,
+  ExpressionList,
+} from "../../../tree"
 
 import type Interpreter from "../.."
-import { ExpressionValue, FunctionValue, makeRuntimeValue, ObjectValue, RuntimeEvaluation } from "./../../runtime"
+import { ArrayValue, ExpressionValue, FunctionValue, makeRuntimeValue, ObjectValue, RuntimeEvaluation } from "./../../runtime"
 import { BooleanValue, NumericValue, QuantityValue, RuntimeValue, StringValue, UnitValue } from "../../runtime"
 import Environment, { VARIABLE_NOT_FOUND } from "../../environment"
 import { EvaluationFunction, EvaluationOutput } from ".."
 import { makeConstantLiteral, makeIdentifier } from "../../../utils/factories"
-import { getTokenKind } from "../../../token"
+
 import type Parser from "../../../parser"
 import { DefaultExpressionParserProvider } from "../../../parser/grammar/default/parsers/expression"
 
@@ -30,12 +46,36 @@ export const evaluate: EvaluationFunction = (i: Interpreter<DefaultEvaluationsPr
   else if (node.type === `IfExpression`) return i.evaluator.call(`evaluateIfExpression`, i, node as IfExpression, environment)
   //
   else if (node.type === `ExpressionStatement`) return i.evaluator.call(`evaluateExpressionStatement`, i, node as ExpressionStatement, environment)
+  else if (node.type === `ExpressionList`) return i.evaluator.call(`evaluateExpressionList`, i, node as ExpressionList, environment)
   //
   else throw new Error(`Node type not implemented for interpretation/evaluation: ${node.type}`)
 }
 
 export const evaluateExpressionStatement: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, expressionStatement: ExpressionStatement, environment: Environment): EvaluationOutput => {
   return i.evaluator.evaluate(i, expressionStatement.expression, environment)
+}
+
+export const evaluateExpressionList: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, expressionList: ExpressionList, environment: Environment): EvaluationOutput => {
+  // 1. Evaluate expressions individually
+  const evaluations: RuntimeEvaluation[] = []
+  const expressions: (Expression | null)[] = []
+  for (const expression of expressionList.expressions) {
+    const evaluation = i.evaluator.evaluate(i, expression, environment)
+    if (!RuntimeEvaluation.isResolved(evaluation)) expressions.push(evaluation.toNode(i))
+
+    expressions.push(null)
+    evaluations.push(evaluation)
+  }
+
+  // 2. If any expression could not be evaluated, bail out
+  if (expressions.some(expression => expression !== null)) {
+    const _expressions = expressions.map((expression, index) => expression ?? expressionList.expressions[index])
+    return new RuntimeEvaluation(new ExpressionList(..._expressions))
+  }
+
+  assert(!evaluations.some(evaluation => evaluation.runtimeValue === null), `Evaluation must have a runtime value`)
+
+  return new ArrayValue(evaluations.map(evaluation => evaluation.runtimeValue!)).getEvaluation(expressionList)
 }
 
 export const evaluatePrefixExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, prefixExpression: PrefixExpression, environment: Environment): RuntimeEvaluation => {
@@ -79,17 +119,41 @@ export const evaluateBinaryExpression: EvaluationFunction = (i: Interpreter<Defa
 
   let output: EvaluationOutput = undefined
 
+  // if (global.__CALL_QUEUE_CONTEXT_OBJECT.id === `11176`) debugger
+
   if (isLogical) return logicalBinaryOperation(left.runtimeValue, right.runtimeValue, operator).getEvaluation(binaryExpression)
   else if (isLogicalConnective) return logicalConnectiveBinaryOperation(left.runtimeValue, right.runtimeValue, operator).getEvaluation(binaryExpression)
   else if (isAlgebraic) {
-    if (left.runtimeValue.hasNumericRepresentation()) {
+    const leftIsNumberLike = left.runtimeValue.hasNumericRepresentation()
+
+    if (leftIsNumberLike) {
+      const rightIsNumberLike = right.runtimeValue.hasNumericRepresentation()
+      // 0. Not really a binary expression, just a string with some operator in the middle (most likely)
+      if (!rightIsNumberLike) {
+        const leftIsStringLike = StringValue.isStringValue(left.runtimeValue) || [`StringLiteral`, `Identifier`].includes(left.node.type)
+        const rightIsStringLike = StringValue.isStringValue(right.runtimeValue) || [`StringLiteral`, `Identifier`].includes(right.node.type)
+
+        if (leftIsStringLike && rightIsStringLike) {
+          const tokens = [...left.node.tokens, binaryExpression.operator, ...right.node.tokens]
+          let string: Node = new StringLiteral(...tokens)
+
+          const transformedNode = i.parser.grammar.shouldTransformNode(string)
+          if (transformedNode) string = transformedNode
+
+          const evaluation = i.evaluator.evaluate(i, string, environment)
+          if (!RuntimeEvaluation.isResolved(evaluation)) debugger
+
+          return evaluation
+        }
+      }
+
       // ???
       if (StringValue.isStringValue(right.runtimeValue)) debugger
 
-      // 1. Simple algebra with numbers
-      if (right.runtimeValue.hasNumericRepresentation()) return numericAlgebraicOperation(left.runtimeValue, right.runtimeValue, operator).getEvaluation(binaryExpression)
+      // 2. Simple algebra with numbers
+      if (rightIsNumberLike) return numericAlgebraicOperation(left.runtimeValue, right.runtimeValue, operator).getEvaluation(binaryExpression)
 
-      // 2. Try number x unknown algebraic operation (injectable)
+      // 3. Try number x unknown algebraic operation (injectable)
       if (output === undefined) output = i.evaluator.call(`evaluateNumericAndOtherAlgebraicOperation`, left.runtimeValue, right.runtimeValue, operator)
     }
   }
@@ -145,9 +209,9 @@ export const evaluateCallExpression: EvaluationFunction = (i: Interpreter<Defaul
     const stringLiteral = new StringLiteral()
     stringLiteral.tokens.push(...callExpression.callee.tokens)
     // debugger // TODO: How do I detect if there were a WHITESPACE here?
-    stringLiteral.tokens.push(new ArtificialToken(getTokenKind(`open_parenthesis`), `(`))
+    stringLiteral.tokens.push(new ArtificialToken(`open_parenthesis`, `(`))
     stringLiteral.tokens.push(...callExpression.arguments.flatMap(arg => arg.tokens))
-    stringLiteral.tokens.push(new ArtificialToken(getTokenKind(`close_parenthesis`), `)`))
+    stringLiteral.tokens.push(new ArtificialToken(`close_parenthesis`, `)`))
 
     const parser: Parser<DefaultExpressionParserProvider> = i.parser
     const expression: Expression = parser.grammar.call(`parseStringExpression`)(parser, stringLiteral, null as any)
@@ -210,7 +274,7 @@ export const evaluateCallExpression: EvaluationFunction = (i: Interpreter<Defaul
 
 export const evaluateMemberExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, memberExpression: MemberExpression, environment: Environment): RuntimeEvaluation => {
   // always index symbol, regardless of it being found or not
-  //    (actually indexing root object->property1->property2)
+  //    (actually indexing root object::property1::property2)
   if (memberExpression.parent?.type !== `MemberExpression`) i.indexNodeAsSymbol(memberExpression)
 
   const object = i.evaluator.evaluate(i, memberExpression.object, environment)
@@ -236,7 +300,7 @@ export const evaluateMemberExpression: EvaluationFunction = (i: Interpreter<Defa
 
   // 3. If property could not be found, bail out
   const content = memberExpression.getContent()
-  if (![`level`, `base`].includes(propertyName as any) && !content.endsWith(`score->base->value`) && !content.endsWith(`score->value`)) assert(object.runtimeValue.hasProperty(propertyName), `Property "${propertyName}" not found in object.`)
+  if (![`level`, `base`].includes(propertyName as any) && !content.endsWith(`score::base::value`) && !content.endsWith(`score::value`)) assert(object.runtimeValue.hasProperty(propertyName), `Property "${propertyName}" not found in object.`)
   if (!object.runtimeValue.hasProperty(propertyName)) return new RuntimeEvaluation(memberExpression)
 
   // 4. Get property value from object
@@ -247,6 +311,7 @@ export const evaluateMemberExpression: EvaluationFunction = (i: Interpreter<Defa
 }
 
 export const evaluateIfExpression: EvaluationFunction = (i: Interpreter<DefaultEvaluationsProvider>, ifExpression: IfExpression, environment: Environment): RuntimeEvaluation => {
+  // if (ifExpression.condition.getContent() === `AD:Flight`) debugger
   const condition = i.evaluator.evaluate(i, ifExpression.condition, environment)
 
   if (!RuntimeEvaluation.isResolved(condition)) {
@@ -270,12 +335,15 @@ export const evaluateIfExpression: EvaluationFunction = (i: Interpreter<DefaultE
 
   assert(result !== null, `Result cannot be null (i.e. we could not determine the boolean outcome of condition).`)
 
-  if (result) return i.evaluator.evaluate(i, ifExpression.consequent, environment)
-  else {
+  if (result) {
+    const consequentValue = i.evaluator.evaluate(i, ifExpression.consequent, environment)
+    return consequentValue
+  } else {
     // assert(ifExpression.alternative, `Alternative expression must be present if condition is false`)
     if (ifExpression.alternative === undefined) return new BooleanValue(false).getEvaluation(ifExpression)
 
-    return i.evaluator.evaluate(i, ifExpression.alternative, environment)
+    const alternativeValue = i.evaluator.evaluate(i, ifExpression.alternative, environment)
+    return alternativeValue
   }
 }
 
@@ -313,6 +381,7 @@ export const DEFAULT_EVALUATIONS = {
   evaluate,
   //
   evaluateExpressionStatement,
+  evaluateExpressionList,
   //
   evaluatePrefixExpression,
   evaluateBinaryExpression,

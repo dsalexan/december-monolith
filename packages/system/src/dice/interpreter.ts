@@ -2,6 +2,7 @@ import assert from "assert"
 import { MaybeUndefined, Nilable, Nullable, WithOptionalKeys } from "tsdef"
 import { sum } from "lodash"
 
+import { SyntacticalContext } from "@december/tree"
 import { BinaryExpression, Expression, ExpressionStatement, Node, NumericLiteral, StringLiteral } from "@december/tree/tree"
 import { isBinaryExpression, isNumericLiteral, isPrefixExpression } from "@december/tree/utils/guards"
 
@@ -24,7 +25,6 @@ import { makeConstantLiteral } from "@december/tree/utils/factories"
 
 import { areDiceKeepEquals, DiceKeep, parseDiceNotation } from "./dice"
 import { DiceRollExpression } from "./parser"
-import { SyntacticalContext } from "../../../tree/src"
 
 // #region    OPTIONS
 
@@ -88,7 +88,7 @@ export class DiceRollValue extends RuntimeValue<Nullable<number[]>> {
     return `${size.toString()}d${faces}${keep}`
   }
 
-  public override getContent(): string {
+  public override getContent(options = {}): string {
     if (this.wasRolled()) {
       const roll = sum(this.value!)
       return `${roll} (${this.getNotation()})`

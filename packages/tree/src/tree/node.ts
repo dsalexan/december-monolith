@@ -19,6 +19,14 @@ export interface NodeCloneOptions extends TokenCloneOptions {
   // keepParent?: boolean
 }
 
+export interface NodeContentOptions {
+  depth?: number
+  separator?: string
+  wrap?: boolean
+  injectTokenBeforeFirstChild?: boolean
+  ignoreForceWrap?: `first-only` | `always`
+}
+
 export class Node {
   public id: string = uuid()
   public type: NodeType
@@ -74,6 +82,7 @@ export class Node {
   public index: Nullable<number> = null
   public label: Nullable<string> = null
   public children: Node[] = []
+  protected childrenByLabel: Record<string, Node> = {}
 
   public setParent(parent: Node, index: number, label: string) {
     this.parent = parent
@@ -84,6 +93,15 @@ export class Node {
   public addChild(child: Node, index: number, label: string): this {
     this.children.splice(index, 0, child)
     child.setParent(this, index, label)
+    this.childrenByLabel[label] = child
+
+    return this
+  }
+
+  public setChild(child: Node, label: string): this {
+    assert(!this.childrenByLabel[label], `Child with label "${label}" already exists.`)
+
+    this.addChild(child, this.children.length, label)
 
     return this
   }
@@ -152,13 +170,7 @@ export class Node {
   // #region TOKENS AND CONTENT
   public tokens: Token[] = []
 
-  public getContent({
-    depth,
-    separator,
-    wrap,
-    injectTokenBeforeFirstChild,
-    ignoreForceWrap,
-  }: { depth?: number; separator?: string; wrap?: boolean; injectTokenBeforeFirstChild?: boolean; ignoreForceWrap?: `first-only` | `always` } = {}): string {
+  public getContent({ depth, separator, wrap, injectTokenBeforeFirstChild, ignoreForceWrap }: NodeContentOptions = {}): string {
     // if (this.type === `ExpressionStatement`) debugger
     // if (this.name === `s3.aac` || this.children.some(child => child.name === `s3.aac`)) debugger // COMMENT
 

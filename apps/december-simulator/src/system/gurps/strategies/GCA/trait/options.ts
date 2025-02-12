@@ -23,9 +23,10 @@ import { REFERENCE_ADDED } from "@december/compiler/controller/eventEmitter/even
 import { ANY_PROPERTY, PLACEHOLDER_SELF_REFERENCE, Property, PROPERTY, PropertyReference, REFERENCE, Reference, SELF_PROPERTY } from "@december/utils/access"
 
 import { IGURPSCharacter, IGURPSTrait, Trait } from "@december/gurps"
-import { isNameExtensionValid, Type, isAlias, getAliases, IGURPSAttribute, makeGURPSTraitEnvironment, IGURPSTraitOrModifier } from "@december/gurps/trait"
+import { isNameExtensionValid, Type, isAlias, isAttributeAlias, getAliases, IGURPSAttribute, makeGURPSTraitEnvironment, IGURPSTraitOrModifier } from "@december/gurps/trait"
 import { DamageTable } from "@december/gurps/character"
 import { TraitType } from "@december/gurps/trait/type"
+import { GCA_BONUS_MODULAR_SYNTACTICAL_GRAMMAR, GCA_BONUS_MODULAR_TOKEN_KIND_CATEGORIES, GCA_BONUS_MODULAR_LEXICAL_GRAMMAR } from "@december/gurps/trait/bonus"
 
 import { GCACharacter, GCATrait } from "@december/gca"
 import { MATH_FUNCTIONS_INDEX, ValueType } from "@december/gca/trait/mathFunctions"
@@ -34,9 +35,11 @@ import { unitManager } from "../../../../../unit"
 
 // TODO: uhu
 import { StrategyProcessorListenOptions, StrategyProcessorParseOptions, StrategyProcessorResolveOptions } from "@december/compiler/controller/strategy/processor"
-import { RuntimeIGURPSAttribute, RuntimeIGURPSEquipment, RuntimeIGURPSGeneralTrait, RuntimeIGURPSModifier, RuntimeIGURPSSkillOrSpellOrTechnique, RuntimeIGURPSTrait } from "./parsers"
+import { RuntimeIGURPSAttribute, RuntimeIGURPSEquipment, RuntimeIGURPSGeneralTrait, RuntimeIGURPSModifier, RuntimeIGURPSSkillOrSpellOrTechnique, RuntimeIGURPSTrait } from "./runtime"
 import GURPSCharacter from "../../../character"
-import { SyntaxMode } from "../../../../../../../../packages/tree/src/parser/grammar/parserFunction"
+
+import { SyntaxMode } from "@december/tree/parser/grammar/parserFunction"
+import { TOKEN_KIND_CATEGORIES } from "@december/tree/token"
 
 export const GCAMathFunctionsRecontextualizations: RecontextualizationEntry[] = Object.entries(MATH_FUNCTIONS_INDEX).map(([functionName, definition]) => {
   assert(definition.type === `regular`, `Only regular functions are supported`)
@@ -64,27 +67,46 @@ export const GCAMathFunctionsRecontextualizations: RecontextualizationEntry[] = 
   return createRecontextualizationEntry(functionName, `CallExpression`, EQUALS(`${functionName}`, true), reContextualizationFunction!)
 })
 
+export const GCA_TOKEN_KIND_CATEGORIES = {
+  ...TOKEN_KIND_CATEGORIES,
+  ...GCA_BONUS_MODULAR_TOKEN_KIND_CATEGORIES,
+}
+
 export const GCAStrategyProcessorParseOptions: (object: MutableObject) => Omit<StrategyProcessorParseOptions, `syntacticalContext`> = (object: MutableObject) => ({
   unitManager,
+  kindCategoryMap: GCA_TOKEN_KIND_CATEGORIES,
   processorFactory: options => {
     const processor = makeDefaultProcessor(options)
 
+    // DICE MODULE
     processor.syntacticalGrammar.add(...DICE_MODULAR_SYNTACTICAL_GRAMMAR)
     processor.graphRewriteSystem.add(...DICE_MODULAR_REWRITER_RULESET)
     processor.nodeEvaluator.addDictionaries(DICE_MODULAR_EVALUATOR_PROVIDER, true)
 
+    // GCA BONUS MODULE
+    processor.lexicalGrammar.add(...GCA_BONUS_MODULAR_LEXICAL_GRAMMAR)
+    processor.syntacticalGrammar.add(...GCA_BONUS_MODULAR_SYNTACTICAL_GRAMMAR)
+    // processor.nodeEvaluator.addDictionaries(GCA_BONUS_MODULAR_EVALUATOR_PROVIDER, true)
+
     // GCA RESERVED WORDS
-    processor.syntacticalGrammar.add(createTransformNodeEntry(`char`, `StringLiteral`, EQUALS(`char`), `Identifier`))
-    processor.syntacticalGrammar.add(createTransformNodeEntry(`owner`, `StringLiteral`, EQUALS(`owner`), `Identifier`))
-    processor.syntacticalGrammar.add(createTransformNodeEntry(`me`, `StringLiteral`, EQUALS(`me`), `Identifier`))
+    processor.syntacticalGrammar.add(createTransformNodeEntry(`char`, `StringLiteral`, EQUALS(`char`, true), `Identifier`))
+    processor.syntacticalGrammar.add(createTransformNodeEntry(`owner`, `StringLiteral`, EQUALS(`owner`, true), `Identifier`))
+    processor.syntacticalGrammar.add(createTransformNodeEntry(`me`, `StringLiteral`, EQUALS(`me`, true), `Identifier`))
     processor.syntacticalGrammar.add(createTransformNodeEntry(`thr`, `StringLiteral`, EQUALS(`thr`), `Identifier`))
     processor.syntacticalGrammar.add(createTransformNodeEntry(`sw`, `StringLiteral`, EQUALS(`sw`), `Identifier`))
     processor.syntacticalGrammar.add(createTransformNodeEntry(`alias`, `StringLiteral`, FUNCTION(isAlias), `Identifier`))
 
+    processor.syntacticalGrammar.add(
+      createRecontextualizationEntry(`hasmod`, `CallExpression`, EQUALS(`@hasmod`, true), (originalNode, context) => {
+        // first, and only, argument for @HasMod is a string
+        return { mode: `text` }
+      }),
+    )
+
     // #region GCA -> GURPS COMPAT LAYER
     //    A. Major Property Access (Level/Score/Points)
     processor.syntacticalGrammar.add(
-      // EQUALS(`me->level`, true)
+      // EQUALS(`me::level`, true)
       createTransformNodeEntry(
         `get_value_from_object`,
         `MemberExpression`,
@@ -116,18 +138,18 @@ export const GCAStrategyProcessorParseOptions: (object: MutableObject) => Omit<S
     )
     //    B. Generic Property Access
     const lookup = [
-      [`char->enclevel`, `encumbranceLevel`],
-      [`char->equipmentcost`, `equipmentCost`],
-      [`char->currentload`, `currentLoad`],
-      [`char->campaigntotalmoney`, [`campaign`, `totalMoney`]],
-      [`char->weaponst`, [`modes`, new Identifier(makeToken(`modeIndex`)), `strength`, `minimum`]], // Special Case: Weapon Minimum ST
+      [`char::enclevel`, `encumbranceLevel`],
+      [`char::equipmentcost`, `equipmentCost`],
+      [`char::currentload`, `currentLoad`],
+      [`char::campaigntotalmoney`, [`campaign`, `totalMoney`]],
+      [`char::weaponst`, [`modes`, new Identifier(makeToken(`modeIndex`)), `strength`, `minimum`]], // Special Case: Weapon Minimum ST
     ] as [string, MaybeArray<string | Node>][]
     for (const [from, _toChain] of lookup) {
       const toChain = isArray(_toChain) ? _toChain : [_toChain]
 
       processor.syntacticalGrammar.add(
         createTransformNodeEntry(
-          from.replace(`->`, `_`), //
+          from.replace(`::`, `_`), //
           `MemberExpression`,
           EQUALS(from, false),
           (memberExpression: MemberExpression) => MemberExpression.makeChain(memberExpression.object, ...toChain),
@@ -179,6 +201,7 @@ export function getVariableNameAsRuntimeValue<TObject extends AnyObject = AnyObj
 }
 
 export const GCAStrategyProcessorResolveOptionsGenerator: (object: MutableObject) => Omit<StrategyProcessorResolveOptions, `syntacticalContext`> = (object: MutableObject) => ({
+  kindCategoryMap: GCA_TOKEN_KIND_CATEGORIES,
   isValidFunctionName: (functionName: string) => functionName.startsWith(`@`),
   environmentUpdateCallback: (environment, symbolTable, locallyUpdatedVariables: VariableName[]) => {
     // (a map with unique variables and their first occuring symbol — mostly for reference, we don't care about linked nodes here)
@@ -237,7 +260,7 @@ export const GCAStrategyProcessorListenOptions: Omit<StrategyProcessorListenOpti
   isSymbolListenable: symbol => {
     if (isAlias(symbol.variableName)) return true
 
-    // (here because BaseTHDice is based on char->damageTable) (see below)
+    // (here because BaseTHDice is based on char::damageTable) (see below)
     if (symbol.variableName === `@basethdice`) return true
 
     return false
@@ -251,7 +274,7 @@ export const GCAStrategyProcessorListenOptions: Omit<StrategyProcessorListenOpti
 
       if (symbol.value.type !== `name`) property = symbol.value.properties.join(`.`)
       else {
-        if (alias.startsWith(`ST:`) || [`ST`, `DX`, `IQ`, `HT`, `Will`, `Per`]) property = `score.value`
+        if (alias.startsWith(`ST:`) || isAttributeAlias(alias)) property = `score.value`
         else property = `level.value`
       }
 

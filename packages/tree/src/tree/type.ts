@@ -4,6 +4,7 @@ export const NODE_TYPES = [
   // STATEMENTS
   `ExpressionStatement`,
   // EXPRESSIONS
+  `ExpressionList`,
   `MemberExpression`,
   `CallExpression`,
   `BinaryExpression`,
@@ -24,6 +25,7 @@ export type NodeType = (typeof NODE_TYPES)[number]
 export const NODE_TYPE_PREFIX: Record<NodeType, string> = {
   ExpressionStatement: `ex`,
   //
+  ExpressionList: `el`,
   MemberExpression: `m`,
   CallExpression: `c`,
   BinaryExpression: `o`,

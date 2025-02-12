@@ -9,13 +9,13 @@ import { Interval } from "@december/utils"
 import { TokenKind } from "../kind"
 import { IToken, TokenCloneOptions } from "./base"
 
-export default class ArtificialToken implements IToken {
+export default class ArtificialToken<TKind extends string = TokenKind> implements IToken<TKind> {
   public readonly type: `artificial` = `artificial`
   //
-  public readonly kind: TokenKind
+  public readonly kind: TKind
   public readonly content: string
 
-  constructor(kind: TokenKind, content: string) {
+  constructor(kind: TKind, content: string) {
     this.kind = kind
     this.content = content
   }

@@ -10,10 +10,10 @@ import { TokenKind } from "../kind"
 import { Lexeme } from "../lexeme"
 import { IToken, TokenCloneOptions } from "./base"
 
-export default class LexicalToken implements IToken {
+export default class LexicalToken<TKind extends string = TokenKind> implements IToken<TKind> {
   public readonly type: `lexical` = `lexical`
   //
-  public readonly lexeme: Lexeme
+  public readonly lexeme: Lexeme<TKind>
   //
   public get kind() {
     return this.lexeme.kind
@@ -22,7 +22,7 @@ export default class LexicalToken implements IToken {
     return this.lexeme.expression.slice(this.lexeme.start, this.lexeme.start + this.lexeme.length)
   }
 
-  constructor(lexeme: Lexeme) {
+  constructor(lexeme: Lexeme<any>) {
     this.lexeme = lexeme
   }
 
@@ -32,7 +32,8 @@ export default class LexicalToken implements IToken {
   }
 
   clone(options: TokenCloneOptions = {}): this {
-    const token = new LexicalToken(this.lexeme.clone())
+    const lexeme = this.lexeme.clone()
+    const token = new LexicalToken(lexeme)
 
     return token as this
   }

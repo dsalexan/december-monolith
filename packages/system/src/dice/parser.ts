@@ -3,7 +3,7 @@ import { MaybeUndefined, Nullable } from "tsdef"
 import { cloneDeep, isNumber, sum } from "lodash"
 
 import { BinaryExpression, Expression, ExpressionStatement, Node, NumericLiteral, StringLiteral } from "@december/tree/tree"
-import { getTokenKind, ArtificialToken } from "@december/tree/token"
+import { ArtificialToken, TokenKind } from "@december/tree/token"
 import { makeConstantLiteral } from "@december/tree/utils/factories"
 import { Token } from "@december/tree/token/core"
 
@@ -52,7 +52,7 @@ export class DiceRollExpression extends Expression {
     return `${size.toString()}d${faces}${keep}`
   }
 
-  public override getContent(): string {
+  public override getContent(options): string {
     return this.toString()
   }
 
@@ -66,8 +66,8 @@ export class DiceRollExpression extends Expression {
 
   // TODO: Maybe move this elsewhere?
   public plus(value: number | DiceRollExpression): BinaryExpression | DiceRollExpression {
-    const PLUS = new ArtificialToken(getTokenKind(`plus`), `+`)
-    const MINUS = new ArtificialToken(getTokenKind(`dash`), `-`)
+    const PLUS = new ArtificialToken(`plus`, `+`)
+    const MINUS = new ArtificialToken(`dash`, `-`)
 
     let right: Expression, operator: Token
 
@@ -105,7 +105,7 @@ export const parseImplicitMultiplication: LEDParser = (p: Parser, left: Expressi
   // 2. Check if we should concatenate as a string, not a multiplication TODO:
 
   // 3. Not a dice roll, just return a multiplication
-  const operator = new ArtificialToken(getTokenKind(`asterisk`), `*`)
+  const operator = new ArtificialToken(`asterisk`, `*`)
 
   return new BinaryExpression(numericLiteral, operator, right)
 }
@@ -116,7 +116,7 @@ export const parseStringExpression = (p: Parser, stringLiteral: StringLiteral, c
   const content = stringLiteral.getContent().trim()
   const diceData = parseDiceNotation(content)
   if (diceData) {
-    const oneNumericLiteral = new NumericLiteral(new ArtificialToken(getTokenKind(`number`), `1`))
+    const oneNumericLiteral = new NumericLiteral(new ArtificialToken(`number`, `1`))
     return new DiceRollExpression(oneNumericLiteral, diceData.faces, diceData.keep)
   }
 
@@ -126,7 +126,7 @@ export const parseStringExpression = (p: Parser, stringLiteral: StringLiteral, c
 export const DICE_MODULAR_PARSER_PROVIDER = { parseImplicitMultiplication, parseStringExpression }
 export type DiceModularParserProvider = typeof DICE_MODULAR_PARSER_PROVIDER
 
-export const DICE_MODULAR_SYNTACTICAL_GRAMMAR: SyntacticalGrammarEntry<DiceModularParserProvider>[] = [
+export const DICE_MODULAR_SYNTACTICAL_GRAMMAR: SyntacticalGrammarEntry<DiceModularParserProvider, TokenKind>[] = [
   ...createRegisterParserEntriesFromIndex<DiceModularParserProvider>(DICE_MODULAR_PARSER_PROVIDER, true), //
 ]
 

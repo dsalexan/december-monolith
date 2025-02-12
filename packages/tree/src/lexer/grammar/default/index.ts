@@ -5,20 +5,20 @@ import { Match } from "@december/utils"
 import { EQUALS, REGEX } from "@december/utils/match/element"
 
 import { LexicalGrammarCustomTest, LexicalGrammarEntry } from ".."
-import { getTokenKind, TokenKind, TokenKindName } from "../../../token/kind"
+import { TokenKind } from "../../../token"
 
 /** Creates a LexicalGrammarEntry */
-export function createEntry(priority: number, kind: TokenKind | TokenKindName, test: Match.Pattern | LexicalGrammarCustomTest): LexicalGrammarEntry {
-  return { priority, kind: isString(kind) ? getTokenKind(kind) : kind, test }
+export function createEntry<TKind extends string = TokenKind>(priority: number, kind: TKind, test: Match.Pattern | LexicalGrammarCustomTest): LexicalGrammarEntry<TKind> {
+  return { priority, kind, test }
 }
 
 // #region LITERALS
 
 export const LITERAL_PRIORITY = 10 ** 11
 
-export const NUMBER = createEntry(LITERAL_PRIORITY + 2, `number`, REGEX(/^(([0-9]+)|([\.][0-9]+)|([0-9]+[\.][0-9]+))$/))
+export const NUMBER = createEntry<TokenKind>(LITERAL_PRIORITY + 2, `number`, REGEX(/^(([0-9]+)|([\.][0-9]+)|([0-9]+[\.][0-9]+))$/))
 const _stringPattern = `[0-9A-Za-z_$@:\\.\\?\\!]`
-export const STRING = createEntry(LITERAL_PRIORITY + 1, `string`, REGEX(new RegExp(`^${_stringPattern}+$`))) //  /^[0-9A-Za-z_$@:\.]+$/
+export const STRING = createEntry<TokenKind>(LITERAL_PRIORITY + 1, `string`, REGEX(new RegExp(`^${_stringPattern}+$`))) //  /^[0-9A-Za-z_$@:\.]+$/
 
 export const LITERAL = [NUMBER, STRING]
 
@@ -28,46 +28,46 @@ export const LITERAL = [NUMBER, STRING]
 
 export const SEPARATOR_PRIORITY = 10 ** 3
 
-export const COMMA = createEntry(SEPARATOR_PRIORITY + 15, `comma`, EQUALS(`,`))
-export const SEMI_COLON = createEntry(SEPARATOR_PRIORITY + 14, `semi_colon`, EQUALS(`;`))
-export const DOUBLE_COLON = createEntry(LITERAL_PRIORITY + 14, `double_colon`, EQUALS(`::`)) // REGEX(new RegExp(`^${_stringPattern}*(::)${_stringPattern}*$`))
-// export const COLON = createEntry(SEPARATOR_PRIORITY + 13, `colon`, EQUALS(`:`))
+export const COMMA = createEntry<TokenKind>(SEPARATOR_PRIORITY + 15, `comma`, EQUALS(`,`))
+export const SEMI_COLON = createEntry<TokenKind>(SEPARATOR_PRIORITY + 14, `semi_colon`, EQUALS(`;`))
+export const DOUBLE_COLON = createEntry<TokenKind>(LITERAL_PRIORITY + 14, `double_colon`, EQUALS(`::`)) // REGEX(new RegExp(`^${_stringPattern}*(::)${_stringPattern}*$`))
+// export const COLON = createEntry<TokenKind>(SEPARATOR_PRIORITY + 13, (`colon`), EQUALS(`:`))
 
-export const OPEN_PARENTHESIS = createEntry(SEPARATOR_PRIORITY + 7, `open_parenthesis`, EQUALS(`(`))
-export const CLOSE_PARENTHESIS = createEntry(SEPARATOR_PRIORITY + 7, `close_parenthesis`, EQUALS(`)`))
-export const OPEN_BRACES = createEntry(SEPARATOR_PRIORITY + 6, `open_braces`, EQUALS(`[`))
-export const CLOSE_BRACES = createEntry(SEPARATOR_PRIORITY + 6, `close_braces`, EQUALS(`]`))
-export const OPEN_BRACKETS = createEntry(SEPARATOR_PRIORITY + 5, `open_brackets`, EQUALS(`{`))
-export const CLOSE_BRACKETS = createEntry(SEPARATOR_PRIORITY + 5, `close_brackets`, EQUALS(`}`))
-export const QUOTES = createEntry(SEPARATOR_PRIORITY + 4, `quotes`, EQUALS(`"`))
-export const PERCENTAGE = createEntry(SEPARATOR_PRIORITY + 3, `percentage`, EQUALS(`%`))
+export const OPEN_PARENTHESIS = createEntry<TokenKind>(SEPARATOR_PRIORITY + 7, `open_parenthesis`, EQUALS(`(`))
+export const CLOSE_PARENTHESIS = createEntry<TokenKind>(SEPARATOR_PRIORITY + 7, `close_parenthesis`, EQUALS(`)`))
+export const OPEN_BRACES = createEntry<TokenKind>(SEPARATOR_PRIORITY + 6, `open_braces`, EQUALS(`[`))
+export const CLOSE_BRACES = createEntry<TokenKind>(SEPARATOR_PRIORITY + 6, `close_braces`, EQUALS(`]`))
+export const OPEN_BRACKETS = createEntry<TokenKind>(SEPARATOR_PRIORITY + 5, `open_brackets`, EQUALS(`{`))
+export const CLOSE_BRACKETS = createEntry<TokenKind>(SEPARATOR_PRIORITY + 5, `close_brackets`, EQUALS(`}`))
+export const QUOTES = createEntry<TokenKind>(SEPARATOR_PRIORITY + 4, `quotes`, EQUALS(`"`))
+export const PERCENTAGE = createEntry<TokenKind>(SEPARATOR_PRIORITY + 3, `percentage`, EQUALS(`%`))
 
 export const SEPARATORS_WITHOUT_PIPE = [COMMA, SEMI_COLON, DOUBLE_COLON, OPEN_PARENTHESIS, CLOSE_PARENTHESIS, OPEN_BRACES, CLOSE_BRACES, OPEN_BRACKETS, CLOSE_BRACKETS, QUOTES, PERCENTAGE]
 
 // #endregion
 
 // both SEPARATOR and OPERATOR
-export const PIPE = createEntry(SEPARATOR_PRIORITY + 13, `pipe`, EQUALS(`|`))
+export const PIPE = createEntry<TokenKind>(SEPARATOR_PRIORITY + 13, `pipe`, EQUALS(`|`))
 export const SEPARATORS = [...SEPARATORS_WITHOUT_PIPE, PIPE]
 
 // #region OPERATORS
 
 export const OPERATOR_PRIORITY = 10 ** 6
 
-export const AMPERSAND = createEntry(OPERATOR_PRIORITY + 2, `ampersand`, EQUALS(`&`))
+export const AMPERSAND = createEntry<TokenKind>(OPERATOR_PRIORITY + 2, `ampersand`, EQUALS(`&`))
 
-export const NOT_EQUALS = createEntry(OPERATOR_PRIORITY + 16, `not_equals`, EQUALS(`!=`))
-export const _EQUALS = createEntry(OPERATOR_PRIORITY + 15, `equals`, EQUALS(`=`))
-export const GREATER_OR_EQUAL = createEntry(OPERATOR_PRIORITY + 12, `greater_or_equal`, EQUALS(`>=`))
-export const SMALLER_OR_EQUAL = createEntry(OPERATOR_PRIORITY + 12, `smaller_or_equal`, EQUALS(`<=`))
-export const GREATER = createEntry(OPERATOR_PRIORITY + 11, `greater`, EQUALS(`>`))
-export const SMALLER = createEntry(OPERATOR_PRIORITY + 11, `smaller`, EQUALS(`<`))
+export const NOT_EQUALS = createEntry<TokenKind>(OPERATOR_PRIORITY + 16, `not_equals`, EQUALS(`!=`))
+export const _EQUALS = createEntry<TokenKind>(OPERATOR_PRIORITY + 15, `equals`, EQUALS(`=`))
+export const GREATER_OR_EQUAL = createEntry<TokenKind>(OPERATOR_PRIORITY + 12, `greater_or_equal`, EQUALS(`>=`))
+export const SMALLER_OR_EQUAL = createEntry<TokenKind>(OPERATOR_PRIORITY + 12, `smaller_or_equal`, EQUALS(`<=`))
+export const GREATER = createEntry<TokenKind>(OPERATOR_PRIORITY + 11, `greater`, EQUALS(`>`))
+export const SMALLER = createEntry<TokenKind>(OPERATOR_PRIORITY + 11, `smaller`, EQUALS(`<`))
 
-export const CARET = createEntry(OPERATOR_PRIORITY + 109, `caret`, EQUALS(`^`))
-export const ASTERISK = createEntry(OPERATOR_PRIORITY + 107, `asterisk`, EQUALS(`*`))
-export const SLASH = createEntry(OPERATOR_PRIORITY + 107, `slash`, EQUALS(`/`))
-export const PLUS = createEntry(OPERATOR_PRIORITY + 105, `plus`, EQUALS(`+`))
-export const DASH = createEntry(OPERATOR_PRIORITY + 105, `dash`, EQUALS(`-`))
+export const CARET = createEntry<TokenKind>(OPERATOR_PRIORITY + 109, `caret`, EQUALS(`^`))
+export const ASTERISK = createEntry<TokenKind>(OPERATOR_PRIORITY + 107, `asterisk`, EQUALS(`*`))
+export const SLASH = createEntry<TokenKind>(OPERATOR_PRIORITY + 107, `slash`, EQUALS(`/`))
+export const PLUS = createEntry<TokenKind>(OPERATOR_PRIORITY + 105, `plus`, EQUALS(`+`))
+export const DASH = createEntry<TokenKind>(OPERATOR_PRIORITY + 105, `dash`, EQUALS(`-`))
 
 export const OPERATORS = [PIPE, AMPERSAND, _EQUALS, GREATER_OR_EQUAL, SMALLER_OR_EQUAL, GREATER, SMALLER, CARET, ASTERISK, SLASH, PLUS, DASH]
 
@@ -77,12 +77,12 @@ export const OPERATORS = [PIPE, AMPERSAND, _EQUALS, GREATER_OR_EQUAL, SMALLER_OR
 
 export const KEYWORD_PRIORITY = 10 ** 20
 
-export const _IF = createEntry(KEYWORD_PRIORITY + 1, `if`, EQUALS(`@if`, true))
-export const _THEN = createEntry(KEYWORD_PRIORITY + 2, `then`, EQUALS(`then`, true))
-export const _ELSE = createEntry(KEYWORD_PRIORITY + 2, `else`, EQUALS(`else`, true))
+export const _IF = createEntry<TokenKind>(KEYWORD_PRIORITY + 1, `if`, EQUALS(`@if`, true))
+export const _THEN = createEntry<TokenKind>(KEYWORD_PRIORITY + 2, `then`, EQUALS(`then`, true))
+export const _ELSE = createEntry<TokenKind>(KEYWORD_PRIORITY + 2, `else`, EQUALS(`else`, true))
 
-export const INJECTION_FUNCTION = createEntry(KEYWORD_PRIORITY + 3, `injection_function`, REGEX(/^\$[a-z\_A-Z]+$/i))
-export const INJECTION_PLACEHOLDER = createEntry(KEYWORD_PRIORITY + 3, `injection_placeholder`, REGEX(/^\$\d+$/i))
+export const INJECTION_FUNCTION = createEntry<TokenKind>(KEYWORD_PRIORITY + 3, `injection_function`, REGEX(/^\$[a-z\_A-Z]+$/i))
+export const INJECTION_PLACEHOLDER = createEntry<TokenKind>(KEYWORD_PRIORITY + 3, `injection_placeholder`, REGEX(/^\$\d+$/i))
 
 export const KEYWORDS = [_IF, _THEN, _ELSE, INJECTION_FUNCTION, INJECTION_PLACEHOLDER]
 

@@ -13,6 +13,7 @@ import Rewriter, { GraphRewritingSystem } from "../rewriter"
 import { Node, Statement } from "../tree"
 import { Simbol, SymbolTable } from "../symbolTable"
 import { Token } from "../token/core"
+import { TokenCategory } from "../token"
 
 export const _logger = churchill.child(`node`, undefined, { separator: `` })
 
@@ -22,6 +23,7 @@ export type { ProcessorOptions, ProcessorFactoryFunction } from "./default"
 export interface BaseProcessorRunOptions {
   logger?: typeof _logger
   debug?: boolean
+  kindCategoryMap: Record<string, TokenCategory>
   environmentUpdateCallback?: (environment: Environment, symbolTable: SymbolTable, locallyUpdatedVariables: VariableName[]) => void
   syntacticalContext: SyntacticalContext
   //
@@ -91,7 +93,7 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
       // 4. Replace injection placeholder with evaluated value's token version
       for (let j = 0; j < tokens.length; j++) {
         const token = tokens[j]
-        if (token.kind.name === `injection_placeholder` && token.content === `$${injection.index}`) {
+        if (token.kind === `injection_placeholder` && token.content === `$${injection.index}`) {
           const newToken = evaluation!.runtimeValue!.toToken()
 
           injection.result = {
@@ -118,7 +120,7 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
 
     const injection = options.injection ?? `⌀`
 
-    const { tokens, injections } = this.lexer.process(`${injection}`, this.lexicalGrammar, expression, {})
+    const { tokens, injections } = this.lexer.process(`${injection}`, this.lexicalGrammar, expression, { kindCategoryMap: options.kindCategoryMap })
     if (DEBUG) this.lexer.print() // COMMENT
 
     const noPendingInjections = this.inject(tokens, injections, environment, symbolTable, locallyUpdatedVariables, { ...options })
@@ -184,7 +186,7 @@ export default class Processor<TInterpreterOptions extends WithOptionalKeys<Inte
       const currentVersion = environment.getVersion()
       // 2. If environment was updated, try to resolve again
       assert(RESOLUTION_RUN + 1 < STACK_OVERFLOW_PROTECTION, `Stack overflow protection triggered`) // COMMENT
-      if (previousVersion !== currentVersion) return this.resolve(latestTree, environment, symbolTable, locallyUpdatedVariables, { ...options, resolutionRun: RESOLUTION_RUN + 1 })
+      if (previousVersion !== currentVersion) return this.resolve(AST, environment, symbolTable, locallyUpdatedVariables, { ...options, resolutionRun: RESOLUTION_RUN + 1 })
       // }
     }
 

@@ -15,11 +15,11 @@ import { RegexPatternMatchInfo } from "@december/utils/match/element"
 import { VariableName } from "@december/tree/interpreter"
 
 import logger, { paint } from "../../logger"
-import MutableObject from "../../object"
+import MutableObject, { ObjectReference } from "../../object"
 
 import ObjectIntegrityRegistry, { IntegrityEntry } from "../integrityRegistry"
 import { GenericMutationFrame } from "../frameRegistry"
-import { EventDispatcher, PROPERTY_UPDATED, PropertyUpdatedEvent, TargetEvent, TargetPropertyUpdatedEvent } from "../eventEmitter/event"
+import { EventDispatcher, InvokeEvent, makeArtificilEventDispatcher, PROPERTY_UPDATED, PropertyUpdatedEvent, TargetEvent, TargetPropertyUpdatedEvent } from "../eventEmitter/event"
 import { GenericListener, getListenerID, Listener } from "../eventEmitter/listener"
 import { BareExecutionContext } from "../callQueue"
 
@@ -32,9 +32,11 @@ import { ArgumentProvider } from "../callQueue/executionContext"
 import { MutationFunctionMetadata, MutationFunctionOutput } from "../frameRegistry/mutationFrame"
 import { MutationInput, ReProcessingFunction, StrategyProcessor, StrategyProcessorListenOptions, StrategyProcessorParseOptions, StrategyProcessorResolveOptions, StrategyProcessState } from "./processor"
 import { DependencyEntry } from "../dependencyGraph"
+import { moveMessagePortToContext } from "worker_threads"
 
 export type Generator<TReturn> = (object: MutableObject) => TReturn
-export type { MutationInput } from "./processor"
+export type { MutationInput, WithStrategyProcessState } from "./processor"
+export { StrategyProcessState } from "./processor"
 
 export interface ProxyListenerOptions {
   // arguments?: BareExecutionContext[`arguments`]
@@ -46,6 +48,8 @@ export interface ProxyListenerOptions {
 export interface StrategyProcessorInputOptions {
   expression?: string
   environment?: Environment
+  skipListen?: boolean
+  parseOnly?: boolean
 }
 
 export class Strategy {
@@ -120,7 +124,7 @@ export class Strategy {
   }
 
   /** Adds a proxy listener to another function. Exclusively called inside mutation functions */
-  public static addProxyListener(targetEvent: TargetEvent, name: GenericMutationFrame[`name`], options: ProxyListenerOptions = {}) {
+  public static addProxyListener(targetEvent: TargetEvent, name: GenericMutationFrame[`name`], options: ProxyListenerOptions = {}, queueOptions: Nullable<{ targetObjectReference: ObjectReference; origin: InvokeEvent[`origin`] }> = null) {
     // 1. Build callback generator
     const callbackGenerator: Generator<GenericListener[`callback`]> = (origin: MutableObject) => {
       return (event, { listener, eventEmitter }) => {
@@ -156,6 +160,17 @@ export class Strategy {
     return (origin: MutableObject) => {
       const listener: Listener = listenerGenerator(origin)
       origin.controller.eventEmitter.addListener(listener)
+
+      if (queueOptions !== null) {
+        // 5. Invoke it once (well, actually queue it once)
+        const InvokeEvent = makeArtificilEventDispatcher({ type: `invoke`, origin: { ...queueOptions.origin } })
+        origin.controller.callQueue.enqueue(queueOptions.targetObjectReference, {
+          eventDispatcher: InvokeEvent,
+          name,
+          hashableArguments: { ...(options.hashableArguments ?? {}) },
+          otherArguments: { ...(options.otherArguments ?? {}), originReference: origin.reference() },
+        })
+      }
     }
   }
 
@@ -187,7 +202,7 @@ export class Strategy {
       assert(options.expression, `Expression must be provided for new expressions`) // COMMENT
       assert(options.environment, `Environment must be provided for new expressions`) // COMMENT
       // 1.A. Process expression
-      state = StrategyProcessor.process(options.expression, options.environment, locallyUpdatedVariables, options)
+      state = options.parseOnly ? StrategyProcessor.parse(options.expression, options.environment, locallyUpdatedVariables, options) : StrategyProcessor.process(options.expression, options.environment, locallyUpdatedVariables, options)
 
       // 1.B. Store state in metadata
       skipMutation = true
@@ -197,6 +212,7 @@ export class Strategy {
     }
     // 2. Resolve expression (well, actually resolve processing state)
     else {
+      assert(!options.parseOnly, `Cannot parse only if state already exists`)
       // if (state.expression === `thr`) debugger
 
       environment = options.environment ?? state.environment!
@@ -205,8 +221,11 @@ export class Strategy {
     }
 
     // 3. Listen for new symbols
-    listeners.push(...StrategyProcessor.listenForSymbols(state, object, path, options))
-    for (const listener of listeners) object.controller.eventEmitter.addListener(listener)
+    if (!options.skipListen) {
+      const listenersFromState = StrategyProcessor.listenForSymbols(state, object, path, options)
+      listeners.push(...listenersFromState)
+      for (const listener of listeners) object.controller.eventEmitter.addListener(listener)
+    }
 
     // 4. If processing is finished, update value in object's data
     if (state.isReady()) {
@@ -235,7 +254,7 @@ export class Strategy {
   /** Process multiple expressions */
   public static bulkProcess(
     object: MutableObject,
-    inputs: { expression: string; path: string; environment: Environment; reProcessingFunction?: ReProcessingFunction | string }[],
+    inputs: { expression: string; path: string; environment: Environment; reProcessingFunction?: ReProcessingFunction | string; syntacticalContext?: SyntacticalContext }[],
     options: WithOptionalKeys<StrategyProcessorInputOptions & StrategyProcessorParseOptions & StrategyProcessorResolveOptions & StrategyProcessorListenOptions, `reProcessingFunction`>,
   ): (MutationInput & {
     state: StrategyProcessState
@@ -244,14 +263,14 @@ export class Strategy {
       state: StrategyProcessState
     })[] = []
 
-    for (const { expression, path, environment, reProcessingFunction } of inputs) {
+    for (const { expression, path, environment, reProcessingFunction, syntacticalContext } of inputs) {
       const output = Strategy.process(object, path, {
         ...options,
         //
         expression,
         environment,
         //
-        syntacticalContext: { mode: `expression` },
+        syntacticalContext: syntacticalContext ?? options.syntacticalContext,
         reProcessingFunction: reProcessingFunction ?? options.reProcessingFunction ?? `compute:re-processing`,
       })
 
@@ -323,37 +342,54 @@ export class Strategy {
   // #region EVENT -> ARGUMENTS PARSING
 
   /** PropertyUpdated regex index to arguments */
-  public static argumentProvider_PropertyUpdatedRegexIndexes(key: string = `index`): ArgumentProvider {
-    return ({ eventDispatcher: event }: BareExecutionContext<PropertyUpdatedEvent>) => {
+  public static argumentProvider_PropertyUpdatedRegexIndexes(...keys: string[]): ArgumentProvider {
+    return ({ eventDispatcher: event }: BareExecutionContext<PropertyUpdatedEvent>): { hashableArguments?: AnyObject; otherArguments?: AnyObject } => {
       assert(event.type === `property:updated`, `Event must be of type "property:updated"`)
 
-      let args: AnyObject = {}
+      let args: { hashableArguments: AnyObject; otherArguments?: AnyObject } = {
+        hashableArguments: {},
+      }
 
-      let possibleIndexes: MaybeUndefined<number>[] = []
+      let possibleIndexes: MaybeUndefined<number[]>[] = []
+      let target: `hashableArguments` | `otherArguments` = `hashableArguments`
 
       const matches: PropertyReferencePatternMatchInfo[] = (event.matches ?? []) as PatternMatchInfo[] as PropertyReferencePatternMatchInfo[]
       for (const [matchIndex, match] of matches.entries()) {
         if (match.propertyMatch.type === `regex`) {
           const regexMatch = match.propertyMatch as PatternMatchInfo as RegexPatternMatchInfo
           if (regexMatch.regexResult) {
-            const index = parseInt(regexMatch.regexResult[1])
-            assert(!isNil(index) && !isNaN(index), `Index must be a number`)
+            possibleIndexes[matchIndex] = []
 
-            possibleIndexes[matchIndex] = index
+            for (let i = 0; i < regexMatch.regexResult.length; i++) {
+              const index = parseInt(regexMatch.regexResult[1])
+              assert(!isNil(index) && !isNaN(index), `Index must be a number`)
+
+              possibleIndexes[matchIndex]!.push(index)
+            }
           }
           //
         } else if (match.propertyMatch.type === `equals`) {
-          // pass
+          // if some match
+          // target = `otherArguments`
+          if (matches.length > 1) debugger
         } else throw new Error(`Unimplemented for match of pattern "${match.propertyMatch.type}"`)
       }
 
-      const validIndexes: number[] = uniq(possibleIndexes.filter(index => !isNil(index)) as number[])
+      if (keys.length === 0) keys = [`index`]
+      const validIndexes: number[][] = possibleIndexes.filter(index => !isNil(index)) as number[][]
 
       if (validIndexes.length > 0) {
-        assert(validIndexes.length === 1, `Only one valid index must be found`)
+        assert(validIndexes.length === 1, `Only one index can be provided`)
 
-        args[key] = validIndexes[0]
+        for (const [index, key] of keys.entries()) {
+          const i = validIndexes[0][index]
+          assert(!isNil(i) && !isNaN(i), `Index must be defined`)
+
+          args.hashableArguments[key] = i
+        }
       }
+
+      // for (const [index, key] of keys.entries()) args[key] = validIndexes[index]
 
       return args
     }

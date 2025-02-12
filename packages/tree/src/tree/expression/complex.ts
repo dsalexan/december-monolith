@@ -2,7 +2,7 @@ import { NodeType } from "../type"
 import { Expression } from "./expression"
 
 import { Token } from "../../token/core"
-import { Node } from "../node"
+import { Node, NodeContentOptions } from "../node"
 import { SyntacticalContext } from "../../parser"
 import { cloneDeep, isString } from "lodash"
 import { MaybeUndefined, Nullable } from "tsdef"
@@ -87,6 +87,7 @@ export class MemberExpression extends Expression {
     clone.quoted = this.quoted
     return clone
   }
+
   public get object(): Expression {
     return this.children[0]
   }
@@ -111,9 +112,9 @@ export class MemberExpression extends Expression {
     return this.property.getContent()
   }
 
-  public override getContent(): string {
+  public override getContent(options = {}): string {
     const [opener, closer] = this.forceWrap() ? this.getWrappers() : [``, ``]
-    return `${opener}${this.getObjectVariableName()}->${this.getPropertyName()}${closer}`
+    return `${opener}${this.getObjectVariableName()}::${this.getPropertyName()}${closer}`
   }
 
   public static makeChain(object: Expression, ...accessChain: (string | Expression)[]): MemberExpression {
@@ -162,8 +163,11 @@ export class PrefixExpression extends Expression {
     return this.children[0]
   }
 
-  public override getContent(): string {
-    return super.getContent({ injectTokenBeforeFirstChild: true })
+  public override getContent(options: NodeContentOptions = {}): string {
+    const operator = this.operator.content
+    const right = this.right.getContent(options)
+
+    return `${operator}${right}`
   }
 }
 

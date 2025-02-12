@@ -17,7 +17,7 @@ import { ObjectReference, StrictObjectReference } from "../../object"
 import { CallQueue } from "./queue"
 import type ObjectController from ".."
 
-export type ArgumentProvider = (bareExecutionContext: BareExecutionContext) => AnyObject
+export type ArgumentProvider = (bareExecutionContext: BareExecutionContext) => { hashableArguments?: AnyObject; otherArguments?: AnyObject }
 
 export interface BareExecutionContext<TEvent extends Event = Event> {
   name: GenericMutationFrame[`name`] // name of the mutation function to run

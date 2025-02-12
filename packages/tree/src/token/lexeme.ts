@@ -5,18 +5,22 @@
  * A LEXEME IS A STRING OF CHARACTERS KNOWN TO BE OF A CERTAIN CATEGORY
  */
 
-import { isString } from "lodash"
-import { getTokenKind, TokenKind, TokenKindName } from "./kind"
+import { cloneDeep, isString } from "lodash"
+import { TokenKind, TokenCategory } from "./kind"
+import assert from "assert"
 
-export class Lexeme {
-  public kind: TokenKind
+export class Lexeme<TKind extends string = TokenKind> {
+  public kind: TKind
+  public category: TokenCategory
   //
   public expression: string // original expression
   public start: number // index of starting character for sequence of characters that matches the lexeme
   public length: number // number of characters in sequence
 
-  constructor(kind: TokenKind | TokenKindName, expression: string, start: number, length: number) {
-    this.kind = isString(kind) ? getTokenKind(kind) : kind
+  constructor(kind: TKind, category: TokenCategory, expression: string, start: number, length: number) {
+    this.kind = kind
+    this.category = category
+
     this.expression = expression
     this.start = start
     this.length = length
@@ -26,7 +30,7 @@ export class Lexeme {
     return this.expression.slice(this.start, this.start + this.length)
   }
 
-  public clone() {
-    return new Lexeme(this.kind, this.expression, this.start, this.length)
+  public clone(): this {
+    return new Lexeme(this.kind, this.category, this.expression, this.start, this.length) as this
   }
 }

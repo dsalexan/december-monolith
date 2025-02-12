@@ -12,12 +12,12 @@ export type { IntegrityEntry } from "./controller/integrityRegistry"
 export { default as ObjectEventEmitter, makeArtificialEventTrace } from "./controller/eventEmitter"
 export { default as ObjectFrameRegistry } from "./controller/frameRegistry"
 export { default as ObjectCallQueue } from "./controller/callQueue"
-export { Strategy, mergeMutationInput } from "./controller/strategy"
-export type { MutationInput } from "./controller/strategy"
+export { Strategy, mergeMutationInput, StrategyProcessState } from "./controller/strategy"
+export type { MutationInput, WithStrategyProcessState } from "./controller/strategy"
 
 export { default as MutableObject } from "./object"
 
-export { SET, OVERRIDE } from "./mutation"
+export { SET, OVERRIDE, MERGE } from "./mutation"
 export type { Mutation } from "./mutation/mutation"
 // export { DYNAMIC_MUTATION_HASH } from "./manager/mutator"
 

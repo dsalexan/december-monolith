@@ -7,7 +7,7 @@ import { AnyObject } from "tsdef"
 
 import uuid from "@december/utils/uuid"
 import { PropertyReference, Reference, METADATA_PROPERTY } from "@december/utils/access"
-import { getDeepProperties, isPrimitive } from "@december/utils/typing"
+import { getDeepProperties, guessType, isPrimitive } from "@december/utils/typing"
 
 import churchill, { Block, paint, Paint } from "../logger"
 
@@ -66,10 +66,28 @@ export default class MutableObject<TData extends AnyObject = any, TController ex
   public controller: TController
   public id: ObjectID
   //
-  public readonly data: TData = {} as any
+  private _data: {
+    0: TData
+    1: TData
+    slot: 0 | 1
+  } = { slot: 0, 0: {} as any, 1: {} as any }
+
   protected setData(data: TData) {
-    // @ts-ignore
-    this.data = Object.freeze(data)
+    const slot = this._data.slot === 0 ? 1 : 0
+
+    this._data[slot] = Object.freeze(data)
+    this._data.slot = slot
+  }
+
+  public get data() {
+    const data = this._data[this._data.slot]
+    assert(data !== undefined, `Data slot is not defined`)
+
+    return data
+  }
+
+  public get previousData() {
+    return this._data[this._data.slot === 0 ? 1 : 0]
   }
 
   public metadata: Record<string, any> = {}
@@ -295,6 +313,7 @@ export default class MutableObject<TData extends AnyObject = any, TController ex
   protected mutate(mutableData: TData, mutation: Mutation): MutationInstruction {
     if (mutation.type === `SET` || mutation.type === `OVERRIDE`) return this.SET(mutableData, mutation)
     else if (mutation.type === `DELETE`) return this.DELETE(mutableData, mutation)
+    else if (mutation.type === `MERGE`) return this.MERGE(mutableData, mutation)
 
     // @ts-ignore
     throw new Error(`Method "${mutation.type}" not implemented.`)
@@ -311,7 +330,7 @@ export default class MutableObject<TData extends AnyObject = any, TController ex
       if (currentValue !== undefined) {
         const mergeMutation: MergeMutation = { type: `MERGE`, property, value: value as AnyObject }
         const canMerge = this.canMerge(currentValue, value, mergeMutation, false)
-        if (canMerge) return this.MERGE(mutableData, mergeMutation, true)
+        if (!canMerge.startsWith(`error:`)) return this.MERGE(mutableData, mergeMutation, true)
       }
 
       assert(currentValue === undefined, `Property "${property}" already exists in data`)
@@ -340,7 +359,10 @@ export default class MutableObject<TData extends AnyObject = any, TController ex
     const currentValue = get(mutableData, property)
 
     // 1. Check if it is eligible for merge
-    if (!skipCheck) this.canMerge(currentValue, value, mutation, true)
+    let command: `continue` | `skip` | `error:not-objects` | `error:override-required` = `continue`
+    if (!skipCheck) command = this.canMerge(currentValue, value, mutation, true)
+
+    if (command === `skip`) return { type: `skip` }
 
     // 2. Merge objects
     const newValue = mergeWith({}, currentValue)
@@ -352,23 +374,38 @@ export default class MutableObject<TData extends AnyObject = any, TController ex
     return { type: `mutate`, oldValue: currentValue }
   }
 
-  private canMerge(currentValue: any, value: any, { override }: MergeMutation, throwExceptions = true): boolean {
-    const isCurrentlyAObject = isObject(currentValue) && !isArray(currentValue)
+  private canMerge(currentValue: any, value: any, { override }: MergeMutation, throwExceptions = true): `continue` | `skip` | `error:not-objects` | `error:override-required` {
+    const isCurrentlyAObject = (isObject(currentValue) && !isArray(currentValue)) || currentValue === undefined
+
     const isValueAObject = isObject(value) && !isArray(value)
 
-    if (throwExceptions) assert(isCurrentlyAObject && isValueAObject, `We can only merge two objects`)
-    else if (!(isCurrentlyAObject && isValueAObject)) return false
+    if (!(isCurrentlyAObject && isValueAObject)) {
+      assert(throwExceptions, `We can only merge two objects`)
+      return `error:not-objects`
+    }
 
     if (!override) {
       const currentLeafKeys = getLeafKeys(currentValue)
       const valueLeafKeys = getLeafKeys(value)
 
       const intersectionKeys = intersection(currentLeafKeys, valueLeafKeys)
-      if (throwExceptions) assert(intersectionKeys.length === 0, `Cannot merge objects with shared leaf keys w/o override flag`)
-      else if (!(intersectionKeys.length === 0)) return false
+      if (intersectionKeys.length > 0) {
+        assert(
+          intersectionKeys.every(key => key.startsWith(`.`)),
+          `Unimplemented`,
+        )
+
+        // Check if all new values are the same in currentValue
+        const differingPathsAtNewValue = checkObjectEquality(currentValue, value)
+        if (differingPathsAtNewValue.length === 0) return `skip`
+
+        debugger
+        assert(throwExceptions, `Cannot merge objects with shared leaf keys w/o override flag`)
+        return `error:override-required`
+      }
     }
 
-    return true
+    return `continue`
   }
 }
 
@@ -409,4 +446,55 @@ function getLeafKeys(object: any, path: string = ``): string[] {
   }
 
   return keys
+}
+
+function checkObjectEquality(target: AnyObject, object: AnyObject, parentPath: string = ``): string[] {
+  const differingPaths: string[] = []
+
+  const keys = Object.keys(object)
+  for (const key of keys) {
+    const path = parentPath === `` ? key : `${parentPath}.${key}`
+    const value = object[key]
+
+    const valueAtTarget = target[key]
+
+    if (!isUnknownEqual(value, valueAtTarget)) differingPaths.push(path)
+  }
+
+  return differingPaths
+}
+
+function isUnknownEqual(A: unknown, B: unknown): boolean {
+  // 1. First, compare types
+  const aType = guessType(A)
+  const bType = guessType(B)
+
+  if (aType !== bType) return false
+
+  // 2. Now compare values
+  if (isPrimitive(A)) return A === B
+
+  if (isArray(A)) {
+    if (!isArray(B)) return false
+
+    if (A.length !== B.length) return false
+
+    for (let i = 0; i < A.length; i++) if (!isUnknownEqual(A[i], B[i])) return false
+
+    return true
+  }
+
+  // 3. Now compare as objects
+  const alpha = A as AnyObject
+  const beta = B as AnyObject
+
+  const aKeys = Object.keys(alpha)
+  const bKeys = Object.keys(beta)
+
+  if (aKeys.length !== bKeys.length) return false
+  if (aKeys.some(key => !bKeys.includes(key))) return false
+
+  for (const key of aKeys) if (!isUnknownEqual(alpha[key], beta[key])) return false
+
+  return true
 }

@@ -229,15 +229,15 @@ export default class ObjectEventEmitter extends ObjectManager {
         eventEmitter: this,
       }
 
-      if (this.__DEBUG) {
-        logger.add(...paint.grey(`[`, paint.cyan.dim(`emit`), `] ${listener.targetEvent.type}`)).add(` `)
-        logger.add(...explainEvent(event, { eventEmitter: this })).add(` `)
-        logger.add(paint.cyan.bold.dim(listener.id))
+      // if (this.__DEBUG) {
+      //   logger.add(...paint.grey(`[`, paint.cyan.dim(`emit`), `] ${listener.targetEvent.type}`)).add(` `)
+      //   logger.add(...explainEvent(event, { eventEmitter: this })).add(` `)
+      //   logger.add(paint.cyan.bold.dim(listener.id))
 
-        if (listener.integrityEntries) logger.add(paint.grey.dim(` {${listener.integrityEntries.map(e => `${e.key}, ${e.value}`).join(`, `)}}`))
+      //   if (listener.integrityEntries) logger.add(paint.grey.dim(` {${listener.integrityEntries.map(e => `${e.key}, ${e.value}`).join(`, `)}}`))
 
-        logger.info()
-      }
+      //   logger.info()
+      // }
 
       if (listener.id === `11178::property:updated::7594cfc8`) debugger
 

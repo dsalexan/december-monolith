@@ -1,3 +1,4 @@
+import assert from "assert"
 import { isString } from "lodash"
 
 import { Environment, Node, SymbolTable, SyntacticalContext } from "@december/tree"
@@ -5,13 +6,13 @@ import { Simbol } from "@december/tree/symbolTable"
 import Processor, { makeDefaultProcessor, ProcessorOptions, ResolutionOutput } from "@december/tree/processor"
 import { VariableName } from "@december/tree/interpreter"
 import { makeConstantLiteral } from "@december/tree/utils/factories"
+import { TOKEN_KIND_CATEGORIES } from "@december/tree/token"
 
 import { defaultUnitManager } from "../units"
 import { DICE_MODULAR_SYNTACTICAL_GRAMMAR, DiceRollExpression } from "./parser"
 import { DICE_RULESET } from "./rewriter"
 import { DICE_MODULAR_EVALUATOR_PROVIDER, DiceInterpreterOptions } from "./interpreter"
 import { DiceKeep } from "./dice"
-import assert from "assert"
 
 /** Make a processor using default modules and dice modules */
 export function makeDefaultDiceProcessor(options: ProcessorOptions): Processor<DiceInterpreterOptions> {
@@ -41,18 +42,19 @@ export function rollDice(diceNotationOrAST: string | Node, processor?: Processor
 
   processor ??= DEFAULT_DICE_PROCESSOR
   const syntacticalContext: SyntacticalContext = { mode: `expression` }
+  const kindCategoryMap = TOKEN_KIND_CATEGORIES
 
   const environment = new Environment(`root`)
   const locallyUpdatedVariables: VariableName[] = []
 
   let AST: Node
   if (isString(diceNotationOrAST)) {
-    const parsedOutput = processor.parse(diceNotationOrAST, environment, processor.symbolTable, locallyUpdatedVariables, { syntacticalContext })
+    const parsedOutput = processor.parse(diceNotationOrAST, environment, processor.symbolTable, locallyUpdatedVariables, { kindCategoryMap, syntacticalContext })
     assert(parsedOutput.AST, `Failed to parse expression.`)
     AST = parsedOutput.AST
   } else AST = diceNotationOrAST
 
-  const resolvedOutput = processor.resolve(AST, environment, processor.symbolTable, locallyUpdatedVariables, { syntacticalContext, rollDice: true })
+  const resolvedOutput = processor.resolve(AST, environment, processor.symbolTable, locallyUpdatedVariables, { kindCategoryMap, syntacticalContext, rollDice: true })
 
   const { originalContent, evaluation, content, isReady } = resolvedOutput
 
